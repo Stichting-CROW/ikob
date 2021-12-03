@@ -5,27 +5,30 @@ def alomwerk (mod, voorkeur):
     if mod == 'Fiets':
         alpha = 0.225
         omega = 25
-    elif mod == 'Efiets':
+    elif mod == 'EFiets':
         alpha = 0.175
         omega = 35
     if voorkeur == 'Auto':
-        if mod == 'OV':
+        if mod == 'Auto' :
+            omega = 50
+        elif mod == 'OV':
             omega = 30
             weging = 0.95
     elif voorkeur == 'OV':
-        alpha = 0.12
-        omega = 60
         if mod == 'Auto':
-            weging = 0.75
+            weging = 0.96
             alpha = 0.125
             omega = 45
+        elif mod == 'OV' :
+            alpha = 0.12
+            omega = 60
     elif voorkeur == 'Fiets':
         if mod == 'Auto':
             weging = 0.75
         elif mod == 'Fiets':
             alpha = 0.175
             omega = 35
-        elif mod == 'Efiets':
+        elif mod == 'EFiets':
             alpha = 0.125
             omega = 55
     return alpha, omega, weging
