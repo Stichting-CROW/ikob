@@ -54,11 +54,13 @@ def lijstvolnullen (lengte) :
         lijst.append (0)
     return lijst
 
-def xlswegschrijven (matrix, filenaam):
+def xlswegschrijven (matrix, filenaam, header):
     import xlsxwriter
     workbook = xlsxwriter.Workbook ( filenaam + '.xlsx' )
     worksheet = workbook.add_worksheet ( )
-    for r in range ( 0, 1425 ):
+    worksheet.write_row (0,0,header)
+    for r in range ( 0, len(matrix) ):
+        worksheet.write( r+1 , 0 , r+1)
         worksheet.write_row ( r + 1, 1, matrix[r] )
     workbook.close ( )
 
@@ -125,7 +127,65 @@ def csvlezen (filenaam, aantal_lege_regels=0):
     if row_count == 1:
         tussenmatrix.append ( matrix[0] )
         for elem in tussenmatrix[0]:
-            uitmatrix.append ( float ( elem ) )
+            uitmatrix.append ( elem )
+    else:
+        for r in range ( 0, row_count - aantal_lege_regels ):
+            tussenmatrix.append (matrix[r])
+            uitmatrix.append ([])
+            for elem in tussenmatrix[r]:
+                uitmatrix[r].append ( elem )
+    return uitmatrix
+
+def csvintlezen (filenaam, aantal_lege_regels=0):
+    import Routines
+    import csv
+    matrix = []
+    filenaam2=filenaam + '.csv'
+    with open ( filenaam2, 'r' ) as csvfile:
+        reader = csv.reader ( csvfile )
+        for i in range (aantal_lege_regels):
+            next(reader)
+        for row in reader:
+            matrix.append ( row )
+    lengte = len ( matrix[0] )
+    with open ( filenaam2, 'r' ) as csvfile:
+        reader = csv.reader ( csvfile )
+        row_count = sum ( 1 for row in reader )
+    uitmatrix = []
+    tussenmatrix = []
+    if row_count == 1:
+        tussenmatrix.append ( matrix[0] )
+        for elem in tussenmatrix[0]:
+            uitmatrix.append ( int(elem) )
+    else:
+        for r in range ( 0, row_count - aantal_lege_regels ):
+            tussenmatrix.append (matrix[r])
+            uitmatrix.append ([])
+            for elem in tussenmatrix[r]:
+                uitmatrix[r].append ( int(elem) )
+    return uitmatrix
+
+def csvfloatlezen (filenaam, aantal_lege_regels=0):
+    import Routines
+    import csv
+    matrix = []
+    filenaam2=filenaam + '.csv'
+    with open ( filenaam2, 'r' ) as csvfile:
+        reader = csv.reader ( csvfile )
+        for i in range (aantal_lege_regels):
+            next(reader)
+        for row in reader:
+            matrix.append ( row )
+    lengte = len ( matrix[0] )
+    with open ( filenaam2, 'r' ) as csvfile:
+        reader = csv.reader ( csvfile )
+        row_count = sum ( 1 for row in reader )
+    uitmatrix = []
+    tussenmatrix = []
+    if row_count == 1:
+        tussenmatrix.append ( matrix[0] )
+        for elem in tussenmatrix[0]:
+            uitmatrix.append ( float(elem) )
     else:
         for r in range ( 0, row_count - aantal_lege_regels ):
             tussenmatrix.append (matrix[r])
@@ -161,6 +221,17 @@ def csvwegschrijven (matrix, filenaam, soort = "matrix"):
     f = open ( filenaam + '.csv', 'w', newline='' )
     with f:
         writer = csv.writer ( f )
+        if soort == "matrix":
+            writer.writerows ( matrix )
+        else:
+            writer.writerow ( matrix )
+
+def csvwegschrijvenmetheader (matrix, filenaam, header, soort = "matrix" ):
+    import csv
+    f = open ( filenaam + '.csv', 'w', newline='' )
+    with f:
+        writer = csv.writer ( f )
+        writer.writerow(header)
         if soort == "matrix":
             writer.writerows ( matrix )
         else:
@@ -220,11 +291,11 @@ def maak_totale_buurten_file (Invoerexcel, aantal_zones = 1425):
                 Samenstelling_alle_zones[i].append ( 0 )
     return Samenstelling_alle_zones
 
-def minmaxmatrix (Matrix1, Matrix2, aantal_zones=1425, minmax = "max"):
+def minmaxmatrix (Matrix1, Matrix2, minmax = "max"):
     Eindmatrix = []
-    for i in range (aantal_zones):
+    for i in range (0,len(Matrix1)) :
         Eindmatrix.append([])
-        for j in range (aantal_zones):
+        for j in range (0,len(Matrix1)) :
             if minmax == "max":
                 Eindmatrix[i].append ( max ( Matrix1[i][j], Matrix2[i][j] ) )
             else:

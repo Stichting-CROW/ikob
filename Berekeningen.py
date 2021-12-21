@@ -17,7 +17,7 @@ def correctie_voor_parkeren (Basisdirectory, Parkeerdirectory, motief, aantal_gr
         else:
             Parkeeraankomsten = Routines.csvlezen ( Parkeeraankomstenfile )
             Parkeervertrekken = Routines.csvlezen ( Parkeervertrekkenfile )
-        Nieuweskim = Berekeningen.parkeeroptel(Parkeeraankomsten, Parkeervertrekken, Autobasisskim)
+        Nieuweskim = Berekeningen.parkeeroptel( Parkeeraankomsten, Parkeervertrekken, Autobasisskim )
         Uitvoerfile = Basisdirectory + motief + '/skims/Auto_' + str(groep)
         Routines.csvwegschrijven(Nieuweskim, Uitvoerfile)
 
@@ -29,7 +29,7 @@ def correctie_fiets_vs_auto (Basisdirectory, motief, aantal_groepen=20):
         Fietsskimfile = Basisdirectory + 'skims/Fiets_' + str ( groep )
         Autoskimmatrix = Routines.csvlezen ( Autoskimfile )
         Fietsskimmatrix = Routines.csvlezen ( Fietsskimfile )
-        Nieuwe_Auto_matrix = Berekeningen.correctie_voor_korter_fietsen_dan_auto(Fietsskimmatrix,Autoskimmatrix)
+        Nieuwe_Auto_matrix = Berekeningen.correctie_voor_korter_fietsen_dan_auto( Fietsskimmatrix, Autoskimmatrix )
         Uitvoerfile_Auto = Basisdirectory + motief + '/skims/Auto_' + str(groep)
         Uitvoerfile_Fiets = Basisdirectory + motief + '/skims/Fiets_' + str(groep)
         Routines.csvwegschrijven(Nieuwe_Auto_matrix, Uitvoerfile_Auto)
@@ -64,7 +64,7 @@ def aanpassingen_zonder_auto_en_ov (Basisdirectory, motief, aantal_groepen = 20)
     for groep in range (aantal_groepen+1):
         OVskimfile = Basisdirectory + 'skims/OV_' + str ( groep )
         OVskim = Routines.csvlezen ( OVskimfile )
-        NieuweOVskim = Berekeningen.correctie_voor_reizen_binnen_zone(OVskim)
+        NieuweOVskim = Berekeningen.correctie_voor_reizen_binnen_zone( OVskim )
         NieuweOVskimfile = Basisdirectory + motief + '/skims/OV_' + str ( groep)
         Routines.csvwegschrijven(NieuweOVskim, NieuweOVskimfile)
 
@@ -72,7 +72,7 @@ def aanpassingen_zonder_auto_en_ov (Basisdirectory, motief, aantal_groepen = 20)
     for groep in groepen_zonder_auto:
         Autoskimfile = Basisdirectory + motief + '/skims/Auto_' + str ( groep )
         Autoskim = Routines.csvlezen ( Autoskimfile )
-        NieuweAutoskim = Berekeningen.correctie_voor_reizen_binnen_zone(Autoskim)
+        NieuweAutoskim = Berekeningen.correctie_voor_reizen_binnen_zone( Autoskim )
         NieuweAutoskimfile = Basisdirectory + motief + '/skims/Auto_' + str ( groep )
         Routines.csvwegschrijven(NieuweAutoskim, NieuweAutoskimfile)
 
@@ -83,20 +83,25 @@ def correctie_voor_reizen_binnen_zone (skim, omvang_matrix = 1425):
         skim[r][r] = 9999
     return skim
 
-def gewichten (skim, Alpha, Omega, aantal_rijen = 1425) :
+def gewichten (skim, wegingstriplet) :
 
     import math
+    alpha = wegingstriplet[0]
+    omega = wegingstriplet[1]
+    weging = wegingstriplet[2]
     Gewichtenmatrix = []
 
-    for r in range(0, aantal_rijen):
+    for r in range(0, len(skim)):
         Gewichtenmatrix.append([])
-        for k in range(0, aantal_rijen):
-            Ervaren_reistijd = skim[r][k]
-            if Ervaren_reistijd  < 180:
-                Reistijdwaarde = 1 / (1 + math.exp((-Omega + Ervaren_reistijd)*Alpha))
+        for k in range(0, len(skim)):
+            ervaren_reistijd = skim[r][k]
+            if ervaren_reistijd  < 180:
+                reistijdwaarde = (1 / (1 + math.exp((-omega + ervaren_reistijd)*alpha)))*weging
             else:
-                Reistijdwaarde = 0
-            Gewichtenmatrix[r].append( Reistijdwaarde )
+                reistijdwaarde = 0
+            if reistijdwaarde < 0.001 :
+                reistijdwaarde = 0
+            Gewichtenmatrix[r].append( int(10000*reistijdwaarde) )
     return Gewichtenmatrix
 
 def Berekenengewichten_en_wegschrijven (Motievendirectory, aantal_groepen = 20):
@@ -172,9 +177,8 @@ def bereken_best_of_herk (Gewichtenmatrix, SEGSlijst, aantal_zones = 1425):
     Aantal_bestemmingen_matrix = []
     for z in range ( aantal_zones ):
         Aantal_bestemmingen_matrix.append ( [] )
-        lijst = Gewichtenmatrix[z]
-        for gewicht, SEGSwaarde in zip ( lijst, SEGSlijst ):
-            Aantal_bestemmingen_matrix[z].append ( gewicht * SEGSwaarde )
+        for i in range (aantal_zones) :
+            Aantal_bestemmingen_matrix[z].append ( Gewichtenmatrix [z][i] * SEGSlijst[i] )
     return Aantal_bestemmingen_matrix
 
 def bereken_alle_bestemmings_of_herkomstmatrices (Basisdirectory, SEGSdirectory, motief, functie = "bestemming", aantal_groepen = 20,
@@ -419,5 +423,8 @@ def Concurrentie_positie_herk_of_bestemming (Basisdirectory, motief, h_of_b,aant
     Getallenlijst = Routines.getallenlijst_maken ( 1425 )
     Routines.xlswegschrijven_totalen ( Alleverhoudingenuitvoer, Headers, Getallenlijst, Uitvoerfile )
 
+def Transponeren (Matrix) :
+    Transp = [[Matrix[j][i] for j in range(len(Matrix))] for i in range(len(Matrix[0]))]
+    return Transp
 
 
