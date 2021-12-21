@@ -1,8 +1,10 @@
 # scripts
 
-Hier moet nog een goede beschijving van het project komen.
+## IKOB - Integrale Kijk Op Bereikbaarheid
 
-Dit is de ontwikkelversie van Hans
+TODO: Introductie
 
+## Hoe te gebruiken
 
+TODO: Workflow
 
