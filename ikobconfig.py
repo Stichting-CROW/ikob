@@ -50,11 +50,127 @@ def defaultConfig():
   }
 
 
+def defaultConfig_idee():
+  """
+  Dit is de standaard configuratie zoals gebruikt door IKOB
+  """
+  return {
+    'project': {
+      'label': 'Project naam',
+      'type': 'text',
+      'default': 'Project 1'
+    },
+    'paden': {
+      'invoer_skims_directory': {
+        'label': 'Skims directory',
+        'type': 'directory',
+        'default': 'skims'
+      },
+      'uitvoer_directory': {
+        'label': 'Uitvoer directory',
+        'type': 'directory',
+        'default:': 'uitvoer'
+      },
+    },
+    'skims': {
+      'OV kosten': {
+        'Benaderen': {
+          'label': 'Benader OV kosten',
+          'type': 'checkbox',
+          'default': True
+        },
+        'Uit bestand': {
+          'label': 'OV kosten bestand',
+          'type': 'file',
+          'default': ''
+        }
+      },
+      'dagsoort': {
+        'label': 'Dagsoorten',
+        'type': 'checklist',
+        'items': [ 'Ochtendspits', 'Restdag', 'Avondspits' ],
+        'default': [ 'Restdag' ]
+      },
+      'motieven': {
+        'label': 'Motieven',
+        'type': 'checklist',
+        'items': [ 'werk', 'overig' ],
+        'default': [ 'werk', 'overig' ]
+      },
+      'aspect': {
+        'label': 'Aspecten',
+        'type': 'checklist',
+        'items': [ 'Tijd', 'Kosten' ],
+        'default': [ 'Tijd', 'Kosten' ]
+      },
+      'TVOMwerk': {
+        'hoog': 4,
+        'middelhoog': 6,
+        'middellaag': 9,
+        'laag': 12
+      },
+      'TVOMoverig': {
+        'hoog': 4.8,
+        'middelhoog': 7.25,
+        'middellaag': 10.9,
+        'laag': 15.5
+      },
+      'varkosten': {
+        'label': 'Variabele kosten',
+        'type': 'number',
+        'unit': 'Euro',
+        'range': [ 0, 9999 ],
+        'default': 0.16,
+      },
+      'kmheffing': {
+        'label': 'Kilometer heffing',
+        'type': 'number',
+        'unit': 'Euro',
+        'range': [ 0, 9999 ],
+        'default': 0
+      },
+      'varkostenga': {
+        'label': 'Variabele kosten geen auto',
+        'GeenAuto': {
+          'label': 'Bezit geen auto',
+          'type': 'number',
+          'unit': 'Euro',
+          'range': [ 0, 9999 ],
+          'default': 0.33
+        },
+        'GeenRijbewijs': {
+          'label': 'Bezit geen rijbewijs',
+          'type': 'number',
+          'unit': 'Euro',
+          'range': [ 0, 9999 ],
+          'default': 2.40
+        }
+      },
+      'tijdkostenga': {
+        'label': 'Tijd kosten geen auto',
+        'GeenAuto': {
+          'label': 'Bezit geen auto',
+          'type': 'number',
+          'unit': 'Euro/Minuut',
+          'range': [ 0, 9999 ],
+          'default': 0.01
+        },
+        'GeenRijbewijs': {
+          'label': 'Bezit geen rijbewijs',
+          'type': 'number',
+          'unit': 'Euro/Minuut',
+          'range': [ 0, 9999 ],
+          'default': 0.40
+        }
+      }
+    }
+  }
+
 def getConfigFromArgs():
   """
   Reads the filename from script command-line and loads a config.
   Returns: A valid config dictionary.
-  Throws: IOError if file could not be loaded, or 
+  Throws: IOError if file could not be loaded, or
           ValueError if the content is not a valid config.
   """
   parser = argparse.ArgumentParser()
@@ -89,7 +205,7 @@ def saveConfig(filename, config):
 def _validateDict(this_dict, other_dict, strict = True):
   """
   Validate this_dict against other_dict by comparing keys and types.
-  Optional: strict = True, requires both key sets to be exactly equal. 
+  Optional: strict = True, requires both key sets to be exactly equal.
             strict = False, allows _only_ this_dict to have additional keys.
   Returns True if both dicts contain the same keys (recursively)
   and all their values are of the same type.
@@ -143,6 +259,108 @@ def _fromItemList(tkvars, itemlist, valueset):
       tkvars[i].set(True)
   return
 
+def _buildTkVarsFromDict(dictionary):
+  """
+  Build a dictionary containing tk.<type>Vars mirroring the
+  types of the supplied dictionary. The output can be used
+  to bind to a set of widgets for editing the content.
+  Note: Lists are interpreted as a set of boolean options.
+  """
+  variables = {}
+  for key in set(dictionary.keys()):
+    item = dictionary[key]
+    itype = type(item)
+    if itype is dict:
+      value = _buildTkVarsFromDict(item)
+    elif itype is list:
+      value = [ { 'label': key, 'checked': tk.BooleanVar(True) } for _ in item]
+    elif itype is int:
+      value = tk.IntVar(item)
+    elif itype is str:
+      value = tk.StringVar(item)
+    elif itype is float:
+      value = tk.DoubleVar(item)
+    elif itype is bool:
+      value = tk.BooleanVar(item)
+    else:
+      value = None
+    if value:
+      variables[key] = value
+  return variables
+
+def _collectTkVarsIntoDict(variables):
+  """
+  Collect the values from a dictionary containing tk.Var leaves
+  into a regular Python dictionary with regular typed leaf values.
+  This function is supposed to rebuild the original dictionary
+  from the output of _buildTkVarsFromDict().
+  """
+  dictionary = {}
+  for key in set(variables.keys()):
+    vitem = variables[key]
+    vtype = type(vitem)
+    value = None
+    if vtype is dict:
+      value = _collectTkVarsIntoDict(vitem)
+    elif vtype is list:
+      for i in vitem:
+        if vitem[i]['checked'].get():
+          value.append(vitem[i]['label'])
+    else:
+      value = vitem.get()
+    if value:
+      dictionary[key] = value
+  return dictionary
+
+def cmd_browse(sv):
+  initpath = os.getcwd()
+  if len(sv.get()) > 0:
+    initpath = sv.get()
+  selectedpath = filedialog.askdirectory(initialdir = initpath, title = "Selecteer directory")
+  if selectedpath:
+    sv.set(selectedpath)
+
+
+def _buildTkWidgetsFromDict(dictionary, variables, master=None, packing=''):
+  """
+  Build UI widgets from dict based in structure and types.
+  """
+  padding = {'padx': 5, 'pady': 5}
+  ipadding = {'ipadx': 5, 'ipady':5}
+  widgets = []
+  count = 0
+  for key in set(dictionary.keys()):
+    item = dictionary[key]
+    itype = type(item)
+    if itype is dict:
+      # Build Frame
+      widgets.append(ttk.LabelFrame(master=master, text=key, borderwidth=2))
+      widgets[-1].pack(fill=tk.X, side=tk.TOP, expand=True, **padding)
+      widgets.extend(_buildTkWidgetsFromDict(
+        dictionary = dictionary[key],
+        variables = variables[key],
+        master=widgets[-1],
+        packing=packing[count:]))
+    elif itype is list:
+      # Build Frame with boolean options
+      pass
+    else:
+      # (text) Entry type (with browse button for a directory)
+      widgets.append(ttk.Label(master=master, text=key))
+      widgets[-1].grid(row=count, column=0, sticky='ne', **padding)
+      widgets.append(ttk.Entry(master=master, textvariable=variables[key], width=40))
+      widgets[-1].grid(row=count, column=1, sticky='new', **padding)
+      if 'directory' in key:
+        widgets.append(ttk.Button(master=master, text='Browse ...', command=lambda:cmd_browse(variables[key])))
+        widgets[-1].grid(row=count, column=2, sticky='new', **padding)
+      count = count + 1
+  return widgets
+
+
+def _buildInterfaceFromDict(dictionary):
+  variables = _buildTkVarsFromDict(dictionary)
+  widgets = _buildTkWidgetsFromDict(dictionary, variables)
+  return widgets
 
 class ConfigApp(tk.Tk):
   def __init__(self):
@@ -242,6 +460,7 @@ class ConfigApp(tk.Tk):
 
   def _get_config(self):
     # Collect data from GUI elements and fill config
+    print(f'[DEBUG] _config = {self._config}')
     self._config['projectnaam'] = self.projectname_var.get()
     self._config['paden']['invoer_skims_directory'] = self.skimsdirectory_var.get()
     self._config['paden']['uitvoer_directory'] = self.outputdirectory_var.get()
@@ -270,11 +489,12 @@ class ConfigApp(tk.Tk):
     print(f'filename={filename}')
     if filename:
       try:
-        self._config = loadConfig(filename)
+        read_config = loadConfig(filename)
       except:
         messagebox.showerror(title='Fout', message=f'Het bestand {filename} kan niet worden geladen.')
       else:
-        if validateConfig(self._config):
+        if validateConfig(read_config):
+          self._config = read_config
           self._set_config()
         else:
           messagebox.showerror(title='Fout', message=f'Het bestand {filename} bevat geen geldige configuratie.')
