@@ -5,14 +5,19 @@ from tkinter import filedialog
 from tkinter import *
 import os
 
-skims = Tk()
-skims.geometry = ("10x10")
-skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims staan in")
-skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory skimsdirectory",)
-skims.destroy()
-Skimsdirectory = skims.directory + '/'
+from ikobconfig import getConfigFromArgs
+
+# Deze routine kijkt naar de command-line en leest
+# het opgegeven configuratie bestand in een dict.
+# Indien er een probleem is, sluit het script hier af.
+config = getConfigFromArgs()
+paden_config = config['project']['paden']
+
+# Ophalen van instellingen
+Skimsdirectory = paden_config['invoer_skims_directory']
 SEGSdirectory = os.path.join (Skimsdirectory, 'SEGS')
 
+# TODO: Haal een aantal van inderstaande zaken aar config.
 Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
            'WelAuto_vkNeutraal_laag', 'WelAuto_vkFiets_laag','WelAuto_vkOV_laag','GeenAuto_GratisOV_laag',
            'GeenAuto_vkNeutraal_laag','GeenAuto_vkFiets_laag', 'GeenAuto_vkOV_laag','GeenRijbewijs_GratisOV_laag',

@@ -128,7 +128,7 @@ def _addWidgets(master, template):
         if 'type' in template[key]:
           leaf = template[key]
           vartype = leaf['type']
-          label = ''
+          label = key
           unit = ''
           items = []
           if 'label' in leaf:

@@ -2,14 +2,23 @@ import Routines
 from tkinter import filedialog
 from tkinter import *
 import os
-import Berekeningen
+#import Berekeningen
+from ikobconfig import getConfigFromArgs
 
-skims = Tk()
-skims.geometry = ("10x10")
-skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims staan in")
-skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory skimsdirectory",)
-skims.destroy()
-Skimsdirectory = skims.directory + '/'
+# Deze routine kijkt naar de command-line en leest
+# het opgegeven configuratie bestand in een dict.
+# Indien er een probleem is, sluit het script hier af.
+config = getConfigFromArgs()
+paden_config = config['project']['paden']
+skims_config = config['skims']
+verdeling_config = config['verdeling']
+
+# Ophalen van instellingen
+Skimsdirectory = paden_config['invoer_skims_directory']
+inkomens = verdeling_config['inkomens']
+Gratisautopercentage = verdeling_config['Gratisautopercentage']
+GratisOVpercentage = verdeling_config['GratisOVpercentage']
+
 SEGSdirectory = os.path.join(Skimsdirectory, 'SEGS')
 Inkomensverdelingfilenaam = os.path.join ( SEGSdirectory, 'Inkomensverdeling_per_zone')
 Inkomensverdelinggegevens = Routines.csvintlezen (Inkomensverdelingfilenaam,aantal_lege_regels=1)
@@ -21,10 +30,10 @@ Stedelijkheidsgraadfilenaam = os.path.join ( SEGSdirectory, 'Stedelijkheidsgraad
 Stedelijkheidsgraadgegevens = Routines.csvlezen (Stedelijkheidsgraadfilenaam)
 #Stedelijkheidsgraadgegevens[0] = '1'
 #Stedelijkheidsgraadgegevens[900] = '1'
-inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
-Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275]
-Gratisautopercentage = {'laag':0, 'middellaag':0.1, 'middelhoog':0.35, 'hoog':0.55}
-GratisOVpercentage = 0.03
+#inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
+Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275] # TODO: Maak dit een dict?
+#Gratisautopercentage = {'laag':0, 'middellaag':0.1, 'middelhoog':0.35, 'hoog':0.55}
+#GratisOVpercentage = 0.03
 
 Sted = []
 for i in range (0,len(Stedelijkheidsgraadgegevens)):

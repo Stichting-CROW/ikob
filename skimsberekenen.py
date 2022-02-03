@@ -27,6 +27,7 @@ tijdkostenga = skims_config['tijdkostenga']
 dagsoort = skims_config['dagsoort']
 soortgeenauto = skims_config['soortgeenauto']
 
+
 def KostenOV(afstand):
     """
     Kosten OV per KM:

@@ -74,7 +74,7 @@ def checklistWidget(master, label, items, vars, row=0):
   F.grid(row=row, column=0, columnspan=3, sticky='ew', **PAD)
   w = [ F ]
   for i, item in enumerate(items):
-     w.extend(checkboxWidget(F, item, vars[i], row=int(i/3), column=i%3, cspan=1))
+     w.extend(checkboxWidget(F, item, vars[i], row=int(i/4), column=i%4, cspan=1))
   return w
 
 

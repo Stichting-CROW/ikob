@@ -4,19 +4,24 @@ import Constantengenerator
 from tkinter import filedialog
 from tkinter import *
 import os
+from ikobconfig import getConfigFromArgs
 
-skims = Tk()
-skims.geometry = ("10x10")
-skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims staan in")
-skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory skimsdirectory",)
-skims.destroy()
-Skimsdirectory = skims.directory + '/'
+# Deze routine kijkt naar de command-line en leest
+# het opgegeven configuratie bestand in een dict.
+# Indien er een probleem is, sluit het script hier af.
+config = getConfigFromArgs()
+paden_config = config['project']['paden']
+skims_config = config['skims']
 
-motieven = ['werk']
-# 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs' verwijderd
+# Ophalen van instellingen
+Skimsdirectory = paden_config['invoer_skims_directory']
+motieven = skims_config['motieven']
+dagsoort = skims_config['dagsoort']
+
+#motieven = ['werk'] # 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs' verwijderd
 inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
 voorkeuren = ['Auto','Neutraal','Fiets','OV']
-dagsoort = ['Restdag']
+#dagsoort = ['Restdag']
 modaliteitenfiets = ['Fiets', 'EFiets']
 
 def constantenwerk (mod, voorkeur):

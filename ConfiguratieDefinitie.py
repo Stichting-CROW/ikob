@@ -17,6 +17,7 @@ def StandaardConfiguratieDefinitie():
   """
   return {
     'project': {
+      'label': 'Project',
       'naam': {
         'label': 'Project naam',
         'type': 'text',
@@ -34,9 +35,16 @@ def StandaardConfiguratieDefinitie():
           'type': 'directory',
           'default': 'uitvoer'
         },
+      },
+      'motieven': {
+        'label': 'Motieven',
+        'type': 'checklist',
+        'items': [ 'werk', 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs' ],
+        'default': [ 'werk' ]
       }
     },
     'skims': {
+      'label': 'Skims Berekenen',
       'OV kosten': {
         'Benaderen': {
           'label': 'Benader OV kosten',
@@ -55,11 +63,11 @@ def StandaardConfiguratieDefinitie():
         'items': [ 'Ochtendspits', 'Restdag', 'Avondspits' ],
         'default': [ 'Restdag' ]
       },
-      'motieven': {
-        'label': 'Motieven',
+      'inkomen': {
+        'label': 'Inkomensgroepen',
         'type': 'checklist',
-        'items': [ 'werk', 'overig' ],
-        'default': [ 'werk', 'overig' ]
+        'items': ['laag', 'middellaag', 'middelhoog', 'hoog'],
+        'default': ['laag', 'middellaag', 'middelhoog', 'hoog']
       },
       'aspect': {
         'label': 'Aspecten',
@@ -174,6 +182,56 @@ def StandaardConfiguratieDefinitie():
           'range': [ 0, 9999 ],
           'default': 0.40
         }
+      }
+    },
+    'verdeling': {
+      'label': 'Verdeling Over Groepen',
+      'inkomens': {
+        'label': 'Inkomensgroepen',
+        'type': 'checklist',
+        'items': ['laag', 'middellaag', 'middelhoog', 'hoog'],
+        'default': ['laag', 'middellaag', 'middelhoog', 'hoog']
+      },
+#      'Gratisautonaarinkomens': {
+#        [0, 0.02, 0.175, 0.275]
+#      },
+      'Gratisautopercentage': {
+        'label': 'Gratis Auto',
+        'laag': {
+          'label': 'Laag',
+          'type': 'number',
+          'unit': '%',
+          'range': [ 0, 100 ],
+          'default': 0
+        },
+        'middellaag': {
+          'label': 'Middellaag',
+          'type': 'number',
+          'unit': '%',
+          'range': [ 0, 100 ],
+          'default': 0.1
+        },
+        'middelhoog': {
+          'label': 'Middelhoog',
+          'type': 'number',
+          'unit': '%',
+          'range': [ 0, 100 ],
+          'default': 0.35
+        },
+        'hoog': {
+          'label': 'Hoog',
+          'type': 'number',
+          'unit': '%',
+          'range': [ 0, 100 ],
+          'default': 0.55
+        }
+      },
+      'GratisOVpercentage': {
+        'label': 'Gratis OV',
+        'type': 'number',
+        'unit': 'fractie',
+        'range': [0, 100],
+        'default': 0.03
       }
     }
   }
