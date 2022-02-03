@@ -65,7 +65,7 @@ def gewichtenberekenen (skim, alpha, omega, weging):
         Gewichtenmatrix.append([])
         for k in range(0, len(skim)):
             ervaren_reistijd = skim[r][k]
-            if ervaren_reistijd  < 180:
+            if ervaren_reistijd < 180:
                 reistijdwaarde = (1 / (1 + math.exp((-omega + ervaren_reistijd)*alpha)))*weging
             else:
                 reistijdwaarde = 0

@@ -11,7 +11,12 @@ skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims sta
 skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory skimsdirectory",)
 skims.destroy()
 Skimsdirectory = skims.directory + '/'
-SEGSdirectory = os.path.join (Skimsdirectory, 'SEGS')
+SEGS = Tk()
+SEGS.geometry = ("10x10")
+SEGS.label = ("Voer de directory waar de SEGS staan in")
+SEGS.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de SEGSdirectory",)
+SEGS.destroy()
+SEGSdirectory = SEGS.directory + '/'
 
 Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
            'WelAuto_vkNeutraal_laag', 'WelAuto_vkFiets_laag','WelAuto_vkOV_laag','GeenAuto_GratisOV_laag',

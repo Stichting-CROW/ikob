@@ -11,7 +11,12 @@ skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims sta
 skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory skimsdirectory",)
 skims.destroy()
 Skimsdirectory = skims.directory + '/'
-SEGSdirectory = os.path.join (Skimsdirectory, 'SEGS')
+SEGS = Tk()
+SEGS.geometry = ("10x10")
+SEGS.label = ("Voer de directory waar de SEGS staan in")
+SEGS.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de SEGSdirectory",)
+SEGS.destroy()
+SEGSdirectory = SEGS.directory + '/'
 
 Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
            'WelAuto_vkNeutraal_laag', 'WelAuto_vkFiets_laag','WelAuto_vkOV_laag','GeenAuto_GratisOV_laag',
@@ -66,9 +71,9 @@ Groepverdelingfile=verdeling.file
 Groepverdelingfile=Groepverdelingfile.replace('.csv','')
 Verdelingsmatrix = Routines.csvintlezen(Groepverdelingfile, aantal_lege_regels=1)
 Verdelingstransmatrix = Berekeningen.Transponeren (Verdelingsmatrix)
-Inkomensverdelingsfilenaam = os.path.join (Skimsdirectory, 'SEGS', 'Inkomensverdeling_per_zone')
+Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
 Inkomensverdeling = Routines.csvintlezen (Inkomensverdelingsfilenaam, aantal_lege_regels=1)
-Inwonersperklassenaam = os.path.join (Skimsdirectory, 'SEGS', f'Inwoners_per_klasse{Jaar}')
+Inwonersperklassenaam = os.path.join (SEGSdirectory, f'Inwoners_per_klasse{Jaar}')
 Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam,aantal_lege_regels=1)
 Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, f'Arbeidsplaatsen_inkomensklasse{Jaar}')
 Arbeidsplaatsen = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
