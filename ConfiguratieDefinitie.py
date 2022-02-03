@@ -124,30 +124,36 @@ def StandaardConfiguratieDefinitie():
       'varkosten': {
         'label': 'Variabele kosten auto',
         'type': 'number',
-        'unit': 'Euro',
+        'unit': 'Euro/km',
         'range': [ 0, 9999 ],
         'default': 0.16,
       },
       'kmheffing': {
         'label': 'Kilometer heffing',
         'type': 'number',
-        'unit': 'Euro',
+        'unit': 'Euro/km',
         'range': [ 0, 9999 ],
         'default': 0
+      },
+      'soortgeenauto': {
+        'label': 'Soort geen auto',
+        'type': 'checklist',
+        'items': ['GeenAuto', 'GeenRijbewijs'],
+        'default': ['GeenAuto', 'GeenRijbewijs']
       },
       'varkostenga': {
         'label': 'Variabele kosten geen auto',
         'GeenAuto': {
           'label': 'Bezit geen auto',
           'type': 'number',
-          'unit': 'Euro',
+          'unit': 'Euro/km',
           'range': [ 0, 9999 ],
           'default': 0.33
         },
         'GeenRijbewijs': {
           'label': 'Bezit geen rijbewijs',
           'type': 'number',
-          'unit': 'Euro',
+          'unit': 'Euro/km',
           'range': [ 0, 9999 ],
           'default': 2.40
         }

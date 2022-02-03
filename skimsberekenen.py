@@ -1,45 +1,31 @@
 import os
 import Routines
 import Berekeningen
-#from tkinter import filedialog
-#from tkinter import *
 
 from ikobconfig import getConfigFromArgs
 
-#skims = Tk()
-#skims.geometry = ("10x10")
-#skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims staan in")
-#skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory skimsdirectory")
-#skims.destroy()
-#Skimsdirectory = skims.directory + '/'
-
-#motieven = ['werk']
-#aspect = ['Tijd', 'Kosten']
-#inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
-#TVOMwerk = {'hoog':4, 'middelhoog':6, 'middellaag':9, 'laag':12}
-#TVOMoverig = {'hoog':4.8 , 'middelhoog': 7.25, 'middellaag': 10.9, 'laag':15.5}
-#varkosten = 0.16
-#kmheffing = 0
-#varkostenga = {'GeenAuto' : 0.33, 'GeenRijbewijs' : 2.40}
-#tijdkostenga = {'GeenAuto' : 0.01, 'GeenRijbewijs' : 0.40}
-#dagsoort = ['Restdag']
-
+# Deze routine kijkt naar de command-line en leest
+# het opgegeven configuratie bestand in een dict.
+# Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
-paden = config['paden']
-skims = config['skims']
 
-Skimsdirectory = paden['invoer_skims_directory']
-motieven = skims['motieven']
-aspect = skims['aspect']
-inkomen = skims['inkomen']
-TVOMwerk = skims['TVOMwerk']
-TVOMoverig = skims['TVOMoverig']
-varkosten = skims['varkosten']
-kmheffing = skims['kmheffing']
-varkostenga = skims['varkostenga']
-tijdkostenga = skims['tijdkostenga']
-dagsoort = skims['dagsoort']
-soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
+# Haal (voor het gemak) de twee onderdelen voor dit script er uit.
+paden_config = config['project']['paden']
+skims_config = config['skims']
+
+# Ophalen van instellingen
+Skimsdirectory = paden_config['invoer_skims_directory']
+motieven = skims_config['motieven']
+aspect = skims_config['aspect']
+inkomen = skims_config['inkomen']
+TVOMwerk = skims_config['TVOMwerk']
+TVOMoverig = skims_config['TVOMoverig']
+varkosten = skims_config['varkosten']
+kmheffing = skims_config['kmheffing']
+varkostenga = skims_config['varkostenga']
+tijdkostenga = skims_config['tijdkostenga']
+dagsoort = skims_config['dagsoort']
+soortgeenauto = skims_config['soortgeenauto']
 
 def KostenOV(afstand):
     """
@@ -51,9 +37,7 @@ def KostenOV(afstand):
     """
     # EM: ^^^ Deze info klopt niet met de formule?
     flaf = float(afstand)
-    if flaf <= 0:
-        return 0
-    else :
+    if flaf > 0:
         return flaf * 0.121 + 0.75
     return 0
 
