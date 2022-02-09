@@ -4,20 +4,28 @@ import Constantengenerator
 from tkinter import filedialog
 from tkinter import *
 import os
+from ikobconfig import getConfigFromArgs
 
-skims = Tk()
-skims.geometry = ("10x10")
-skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims staan in")
-skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory skimsdirectory",)
-skims.destroy()
-Skimsdirectory = skims.directory + '/'
+# Deze routine kijkt naar de command-line en leest
+# het opgegeven configuratie bestand in een dict.
+# Indien er een probleem is, sluit het script hier af.
+config = getConfigFromArgs()
+project_config = config['project']
+paden_config = config['project']['paden']
+skims_config = config['skims']
 
-motieven = ['werk']
-# 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs' verwijderd
+# Ophalen van instellingen
+Skimsdirectory = paden_config['skims_directory']
+dagsoort = skims_config['dagsoort']
+Scenario = project_config['scenario']
+motieven = project_config['motieven']
+
+
+# Vaste waarden
 inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
 voorkeuren = ['Auto','Neutraal','Fiets','OV']
-dagsoort = ['Restdag']
 modaliteitenfiets = ['Fiets', 'EFiets']
+
 
 def constantenwerk (mod, voorkeur):
     alpha = 0.125
@@ -63,7 +71,7 @@ def gewichtenberekenen (skim, alpha, omega, weging):
         Gewichtenmatrix.append([])
         for k in range(0, len(skim)):
             ervaren_reistijd = skim[r][k]
-            if ervaren_reistijd  < 180:
+            if ervaren_reistijd < 180:
                 reistijdwaarde = (1 / (1 + math.exp((-omega + ervaren_reistijd)*alpha)))*weging
             else:
                 reistijdwaarde = 0
@@ -76,9 +84,9 @@ def gewichtenberekenen (skim, alpha, omega, weging):
 
 for ds in dagsoort:
     for mot in motieven:
-        Gewichtendirectory = os.path.join (Skimsdirectory,'Gewichten', ds, mot)
+        Gewichtendirectory = os.path.join (Skimsdirectory,'Gewichten', Scenario,ds)
         os.makedirs(Gewichtendirectory,exist_ok=True)
-        Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', ds)
+        Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', Scenario, ds)
         for mod in modaliteitenfiets:
             for vk in voorkeuren:
                 if vk == 'Auto' or vk == 'Fiets':
@@ -105,7 +113,8 @@ for ds in dagsoort:
                     soort = 'overig'
                 else:
                     soort = 'werk'
-                ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{soort}_{ink}')
+                ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{ink}')
+                #ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{soort}_{ink}')
                 GGRskim = Routines.csvintlezen(ErvarenReistijdfilenaam)
                 alpha = constantenwerk ('Auto',vk)[0]
                 omega = constantenwerk ( 'Auto', vk )[1]
@@ -124,7 +133,8 @@ for ds in dagsoort:
                         soort = 'overig'
                     else:
                         soort = 'werk'
-                    ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{sga}_{soort}_{ink}' )
+                    ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{sga}_{ink}' )
+                    #ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{sga}_{soort}_{ink}' )
                     GGRskim = Routines.csvfloatlezen ( ErvarenReistijdfilenaam )
                     if mot == 'werk':
                         constanten = Constantengenerator.alomwerk ( 'Auto',vk )
@@ -146,7 +156,8 @@ for ds in dagsoort:
                         soort = 'overig'
                     else:
                         soort = 'werk'
-                    ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'{modOV}_{soort}_{ink}')
+                    #ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'{modOV}_{soort}_{ink}')
+                    ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{modOV}_{ink}' )
                     GGRskim = Routines.csvintlezen(ErvarenReistijdfilenaam)
 
                     if mot == 'werk':
@@ -165,7 +176,8 @@ for ds in dagsoort:
                 soort = 'overig'
             else:
                 soort = 'werk'
-            ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisAuto_{soort}_{ink}')
+            #ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisAuto_{soort}_{ink}')
+            ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisAuto_{ink}' )
             GGRskim = Routines.csvintlezen ( ErvarenReistijdfilenaam )
             if mot == 'werk':
                 constanten = Constantengenerator.alomwerk ( 'Auto', 'Auto' )

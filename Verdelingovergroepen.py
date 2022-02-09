@@ -2,33 +2,67 @@ import Routines
 from tkinter import filedialog
 from tkinter import *
 import os
-import Berekeningen
+from ikobconfig import getConfigFromArgs
 
-skims = Tk()
-skims.geometry = ("10x10")
-skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims staan in")
-skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory skimsdirectory",)
-skims.destroy()
-Skimsdirectory = skims.directory + '/'
-SEGSdirectory = os.path.join(Skimsdirectory, 'SEGS')
+# Deze routine kijkt naar de command-line en leest
+# het opgegeven configuratie bestand in een dict.
+# Indien er een probleem is, sluit het script hier af.
+config = getConfigFromArgs()
+project_config = config['project']
+paden_config = config['project']['paden']
+skims_config = config['skims']
+verdeling_config = config['verdeling']
+
+# Ophalen van instellingen
+Skimsdirectory = paden_config['skims_directory']
+SEGSdirectory = paden_config['segs_directory']
+Jaar = project_config['jaar']
+Elektrischpercentage = verdeling_config['elektrischeautos']
+Kunst = verdeling_config['kunstmab']['gebruiken']
+Kunstmautobezitfile = verdeling_config['kunstmab']['bestand']
+GratisOVpercentage = verdeling_config['GratisOVpercentage']
+Uitvoernaam = verdeling_config['uitvoernaam']
+
+
+# Vaste waarden
+inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
+
 Inkomensverdelingfilenaam = os.path.join ( SEGSdirectory, 'Inkomensverdeling_per_zone')
 Inkomensverdelinggegevens = Routines.csvintlezen (Inkomensverdelingfilenaam,aantal_lege_regels=1)
+print ('Lengte Inkomensverdelingsgegevens', len (Inkomensverdelinggegevens), len (Inkomensverdelinggegevens[0]))
 CBSAutobezitfilenaam = os.path.join ( SEGSdirectory, 'CBS_autos_per_huishouden')
 CBSAutobezitegevens = Routines.csvintlezen (CBSAutobezitfilenaam)
-Inwoners18plusfilenaam = os.path.join(SEGSdirectory, 'Volwasseninwoners')
+Inwoners18plusfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{Jaar}')
+print (Inwoners18plusfilenaam)
 Inwoners18plus = Routines.csvintlezen (Inwoners18plusfilenaam)
 Stedelijkheidsgraadfilenaam = os.path.join ( SEGSdirectory, 'Stedelijkheidsgraad')
 Stedelijkheidsgraadgegevens = Routines.csvlezen (Stedelijkheidsgraadfilenaam)
+print ('Lengte Stedelijkheidsgraadgegevens', len (Stedelijkheidsgraadgegevens), len (Stedelijkheidsgraadgegevens[0]))
+
 #Stedelijkheidsgraadgegevens[0] = '1'
 #Stedelijkheidsgraadgegevens[900] = '1'
-inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
-Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275]
-Gratisautopercentage = {'laag':0, 'middellaag':0.1, 'middelhoog':0.35, 'hoog':0.55}
-GratisOVpercentage = 0.03
+
+if Elektrischpercentage == '40':
+    Gratisautonaarinkomens = [0, 0.17, 0.58, 0.95]
+elif Elektrischpercentage == '20' :
+    Gratisautonaarinkomens = [0, 0.05, 0.25, 0.5]
+else :
+    Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275]
+
+if Kunst:
+    Kunstmautobezitfile = Kunstmautobezitfile.replace ( '.csv', '' )
+    Kunstmatigautobezit = Routines.csvintlezen ( Kunstmautobezitfile, aantal_lege_regels=0)
 
 Sted = []
+
 for i in range (0,len(Stedelijkheidsgraadgegevens)):
     Sted.append(int (Stedelijkheidsgraadgegevens[i]))
+if Kunst:
+    Minimumautobezit = []
+    for i in range (0, len(CBSAutobezitegevens)):
+        Minimumautobezit.append(min(CBSAutobezitegevens[i],Kunstmatigautobezit[i]))
+else:
+    Minimumautobezit = CBSAutobezitegevens
 GeenRijbewijsfilenaam = os.path.join ( SEGSdirectory, 'GeenRijbewijs')
 GRijbewijs = Routines.csvintlezen (GeenRijbewijsfilenaam,aantal_lege_regels=1)
 GeenAutofilenaam = os.path.join ( SEGSdirectory, 'GeenAuto')
@@ -39,9 +73,12 @@ Voorkeurenfilenaam = os.path.join ( SEGSdirectory, 'Voorkeuren')
 Voorkeuren = Routines.csvintlezen (Voorkeurenfilenaam,aantal_lege_regels=1)
 VoorkeurenGeenAutofilenaam = os.path.join ( SEGSdirectory, 'VoorkeurenGeenAuto')
 VoorkeurenGeenAuto = Routines.csvintlezen (VoorkeurenGeenAutofilenaam,aantal_lege_regels=1)
+
+inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
 voorkeuren = ['Auto','Neutraal', 'Fiets', 'OV']
 voorkeurengeenauto = ['Neutraal', 'Fiets', 'OV']
 soorten = ['GratisAuto', 'WelAuto', 'GeenAuto', 'GeenRijbewijs' ]
+
 def Corrigeren (Matrix, Lijst) :
     Matrix2 =[]
     for i in range ( len ( Matrix ) ):
@@ -82,6 +119,7 @@ for ink in inkomens:
                 Header.append ( f'{srt}_vk{vkg}_{ink}' )
 
             # Eerst "theoretosch auto- en rijbewijsbezit" vaststellen
+
 for i in range ( len ( Inkomensverdelinggegevens ) ):
     WelAuto.append([])
     GeenAutoWelRijbewijs.append([])
@@ -93,10 +131,10 @@ for i in range ( len ( Inkomensverdelinggegevens ) ):
     Autobezitpercentages = sum (Autobezitpercentage)
 
     #Kijken of het werkelijke autobezit lager is:
-    if CBSAutobezitegevens[i] > 0 :
-        if CBSAutobezitegevens[i]/100 < Autobezitpercentages :
-            Autobezitcorrectiefactor = (CBSAutobezitegevens[i]/100) / Autobezitpercentages
-            Autobezitpercentages = CBSAutobezitegevens [i]/100
+    if Minimumautobezit[i] > 0 :
+        if Minimumautobezit[i]/100 < Autobezitpercentages :
+            Autobezitcorrectiefactor = (Minimumautobezit[i]/100) / Autobezitpercentages
+            Autobezitpercentages = Minimumautobezit [i]/100
         else :
             Autobezitcorrectiefactor = 1
     else :
@@ -140,7 +178,7 @@ for i in range ( len ( Inkomensverdelinggegevens ) ):
             Aandeelvk = GeenRB * (1 - GratisOVpercentage) * VoorkeurenGeenAuto[Sted[i] - 1][voorkeurengeenauto.index ( vkg )] / 100
             Totaaloverzicht[i].append ( round (Aandeelvk * 10000 * Inkomensaandeel)) # Dan de diverse voorkeuren
 
-Totaaloverzichtfilenaam = os.path.join ( SEGSdirectory, f'Nieuweverdelingbuurtenrelatief' )
+Totaaloverzichtfilenaam = os.path.join ( SEGSdirectory, f'{Uitvoernaam}' )
 Routines.csvwegschrijvenmetheader ( Totaaloverzicht, Totaaloverzichtfilenaam, Header )
 Header.insert(0, 'Zone')
 Routines.xlswegschrijven ( Totaaloverzicht, Totaaloverzichtfilenaam, Header )

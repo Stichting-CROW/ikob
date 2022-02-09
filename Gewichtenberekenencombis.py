@@ -1,26 +1,27 @@
 import Routines
-from tkinter import filedialog
-from tkinter import *
 import os
+from ikobconfig import getConfigFromArgs
 
-skims = Tk()
-skims.geometry = ("10x10")
-skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims staan in")
-skims.directory = filedialog.askdirectory(initialdir=os.getcwd(), title="Selecteer de directory skimsdirectory",)
-skims.destroy()
-Skimsdirectory = skims.directory + '/'
-Ervarenreistijddirectory = os.path.join(Skimsdirectory, 'Ervarenreistijd')
+# Deze routine kijkt naar de command-line en leest
+# het opgegeven configuratie bestand in een dict.
+# Indien er een probleem is, sluit het script hier af.
+config = getConfigFromArgs()
+paden_config = config['project']['paden']
+skims_config = config['skims']
 
-motieven = ['werk']
-# 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs' verwijderd
+# Ophalen van instellingen
+Skimsdirectory = paden_config['skims_directory']
+motieven = skims_config['motieven']
+dagsoort = skims_config['dagsoort']
+Scenario = config['project']['scenario']
+
+# Vaste waarden
 inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
 voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
-dagsoort = ['Restdag']
-# Avondspits en Ochtendspits eruit verwijderd
 modaliteitenfiets = ['Fiets', 'EFiets']
 soortauto = ['Auto', 'GeenAuto', 'GeenRijbewijs', 'GratisAuto']
 soortOV = ['OV', 'GratisOV']
-
+Ervarenreistijddirectory = os.path.join(Skimsdirectory, 'Ervarenreistijd')
 
 def minmaxmatrix(matrix1, matrix2, minmax="max"):
     eindmatrix = []
@@ -89,16 +90,51 @@ def Maxberekenen_en_wegschrijvenvan3 (Matrix1, Matrix2, Matrix3, mod1, mod2, mod
     return
 
 for ds in dagsoort:
-    for mot in motieven:
-        Combinatiedirectory = os.path.join(Skimsdirectory, 'Gewichten', ds, mot, 'Combinaties')
-        Enkeldirectory = os.path.join(Skimsdirectory, 'Gewichten', ds, mot)
-        os.makedirs(Combinatiedirectory, exist_ok=True)
 
-        for ink in inkomen:
-            for vk in voorkeuren:
-                for modft in modaliteitenfiets:
-                    for srtOV in soortOV:
-                        if kanvoorkeur ('Auto', srtOV, vk):
+    Combinatiedirectory = os.path.join(Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, ds)
+    Enkeldirectory = os.path.join(Skimsdirectory, 'Gewichten', Scenario, ds)
+    os.makedirs(Combinatiedirectory, exist_ok=True)
+
+    for ink in inkomen:
+        for vk in voorkeuren:
+            for modft in modaliteitenfiets:
+                for srtOV in soortOV:
+                    if kanvoorkeur ('Auto', srtOV, vk):
+                        if vk == 'Fiets':
+                            vkklad = 'Fiets'
+                        else:
+                            vkklad = ''
+                        Fietsfile = os.path.join (Enkeldirectory, f'{modft}_vk{vkklad}')
+                        Fietsmatrix = Routines.csvintlezen(Fietsfile)
+                        OVfile = os.path.join (Enkeldirectory, f'{srtOV}_vk{vk}_{ink}')
+                        OVmatrix = Routines.csvintlezen(OVfile)
+                        Maxberekenen_en_wegschrijven(Fietsmatrix,OVmatrix, srtOV, modft, vk, ink)
+
+                for srtauto in soortauto:
+                    if kanvoorkeur (srtauto, 'OV', vk):
+                        if vk == 'Fiets':
+                            vkklad = 'Fiets'
+                        else:
+                            vkklad = ''
+                        Fietsfile = os.path.join ( Enkeldirectory, f'{modft}_vk{vkklad}' )
+                        Fietsmatrix = Routines.csvintlezen ( Fietsfile )
+                        Autofile = os.path.join ( Enkeldirectory, f'{srtauto}_vk{vk}_{ink}' )
+                        Automatrix = Routines.csvintlezen ( Autofile )
+                        Maxberekenen_en_wegschrijven ( Fietsmatrix, Automatrix, srtauto, modft, vk, ink )
+
+            for srtOV in soortOV:
+                for srtauto in soortauto:
+                    if kanvoorkeur (srtauto, srtOV, vk):
+                        OVfile = os.path.join ( Enkeldirectory, f'{srtOV}_vk{vk}_{ink}' )
+                        OVmatrix = Routines.csvintlezen ( OVfile )
+                        Autofile = os.path.join ( Enkeldirectory, f'{srtauto}_vk{vk}_{ink}' )
+                        Automatrix = Routines.csvintlezen ( Autofile )
+                        Maxberekenen_en_wegschrijven ( OVmatrix, Automatrix, srtauto, srtOV, vk, ink )
+
+            for modft in modaliteitenfiets:
+                for srtOV in soortOV:
+                    for srtauto in soortauto:
+                        if kanvoorkeur (srtauto, srtOV, vk):
                             if vk == 'Fiets':
                                 vkklad = 'Fiets'
                             else:
@@ -107,41 +143,6 @@ for ds in dagsoort:
                             Fietsmatrix = Routines.csvintlezen(Fietsfile)
                             OVfile = os.path.join (Enkeldirectory, f'{srtOV}_vk{vk}_{ink}')
                             OVmatrix = Routines.csvintlezen(OVfile)
-                            Maxberekenen_en_wegschrijven(Fietsmatrix,OVmatrix, srtOV, modft, vk, ink)
-
-                    for srtauto in soortauto:
-                        if kanvoorkeur (srtauto, 'OV', vk):
-                            if vk == 'Fiets':
-                                vkklad = 'Fiets'
-                            else:
-                                vkklad = ''
-                            Fietsfile = os.path.join ( Enkeldirectory, f'{modft}_vk{vkklad}' )
-                            Fietsmatrix = Routines.csvintlezen ( Fietsfile )
                             Autofile = os.path.join ( Enkeldirectory, f'{srtauto}_vk{vk}_{ink}' )
                             Automatrix = Routines.csvintlezen ( Autofile )
-                            Maxberekenen_en_wegschrijven ( Fietsmatrix, Automatrix, srtauto, modft, vk, ink )
-
-                for srtOV in soortOV:
-                    for srtauto in soortauto:
-                        if kanvoorkeur (srtauto, srtOV, vk):
-                            OVfile = os.path.join ( Enkeldirectory, f'{srtOV}_vk{vk}_{ink}' )
-                            OVmatrix = Routines.csvintlezen ( OVfile )
-                            Autofile = os.path.join ( Enkeldirectory, f'{srtauto}_vk{vk}_{ink}' )
-                            Automatrix = Routines.csvintlezen ( Autofile )
-                            Maxberekenen_en_wegschrijven ( OVmatrix, Automatrix, srtauto, srtOV, vk, ink )
-
-                for modft in modaliteitenfiets:
-                    for srtOV in soortOV:
-                        for srtauto in soortauto:
-                            if kanvoorkeur (srtauto, srtOV, vk):
-                                if vk == 'Fiets':
-                                    vkklad = 'Fiets'
-                                else:
-                                    vkklad = ''
-                                Fietsfile = os.path.join (Enkeldirectory, f'{modft}_vk{vkklad}')
-                                Fietsmatrix = Routines.csvintlezen(Fietsfile)
-                                OVfile = os.path.join (Enkeldirectory, f'{srtOV}_vk{vk}_{ink}')
-                                OVmatrix = Routines.csvintlezen(OVfile)
-                                Autofile = os.path.join ( Enkeldirectory, f'{srtauto}_vk{vk}_{ink}' )
-                                Automatrix = Routines.csvintlezen ( Autofile )
-                                Maxberekenen_en_wegschrijvenvan3(Automatrix, Fietsmatrix, OVmatrix, srtauto, srtOV, modft, vk, ink)
+                            Maxberekenen_en_wegschrijvenvan3(Automatrix, Fietsmatrix, OVmatrix, srtauto, srtOV, modft, vk, ink)

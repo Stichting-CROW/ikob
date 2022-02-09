@@ -1,18 +1,26 @@
 import Routines
 import Berekeningen
-import Constantengenerator
-from tkinter import filedialog
-from tkinter import *
 import os
+from ikobconfig import getConfigFromArgs
 
-skims = Tk()
-skims.geometry = ("10x10")
-skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims staan in")
-skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory skimsdirectory",)
-skims.destroy()
-Skimsdirectory = skims.directory + '/'
-SEGSdirectory = os.path.join (Skimsdirectory, 'SEGS')
+# Deze routine kijkt naar de command-line en leest
+# het opgegeven configuratie bestand in een dict.
+# Indien er een probleem is, sluit het script hier af.
+config = getConfigFromArgs()
+project_config=config['project']
+paden_config = config['project']['paden']
+skims_config = config['skims']
+conc_config = config['bedrijven']
 
+# Ophalen van instellingen
+Skimsdirectory = paden_config['skims_directory']
+SEGSdirectory = paden_config['segs_directory']
+Jaar = project_config['jaar']
+Scenario = project_config['Scenario']
+Naamuitvoer = conc_config['uitvoer_directory_naam']
+Groepverdelingfile=conc_config['verdeling_file']
+
+# Vaste waarden
 Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
            'WelAuto_vkNeutraal_laag', 'WelAuto_vkFiets_laag','WelAuto_vkOV_laag','GeenAuto_GratisOV_laag',
            'GeenAuto_vkNeutraal_laag','GeenAuto_vkFiets_laag', 'GeenAuto_vkOV_laag','GeenRijbewijs_GratisOV_laag',
@@ -45,21 +53,17 @@ headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiet
                   'Auto_OV_Fiets', 'Auto_OV_EFiets']
 
 Vermenigvuldig = []
-Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Restdag', 'werk', 'Combinaties')
-Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Restdag', 'werk')
-Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, 'herkomsten', 'Restdag', 'werk', 'Totalenbedrijven')
+Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
+Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
+Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, 'Herkomsten', Scenario, 'Restdag', Naamuitvoer)
 os.makedirs ( Totalendirectoryherkomsten, exist_ok=True )
-verdeling = Tk()
-verdeling.geometry = ("10x10")
-verdeling.label = ("Voer de invoerfile in")
-verdeling.file = filedialog.askopenfilename(initialdir=os.getcwd(),title="Selecteer de file met de verdeling over de buurten",)
-verdeling.destroy()
-Groepverdelingfile=verdeling.file
+
+
 Groepverdelingfile=Groepverdelingfile.replace('.csv','')
 Verdelingsmatrix = Routines.csvintlezen(Groepverdelingfile, aantal_lege_regels=1)
-Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, 'Arbeidsplaatsen_inkomensklasse')
+Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, f'Arbeidsplaatsen_inkomensklasse{Jaar}')
 Arbeidsplaatsenperklasse = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
-Volwassenenfilenaam = os.path.join(SEGSdirectory, 'Volwasseninwoners')
+Volwassenenfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{Jaar}')
 Volwassenen = Routines.csvintlezen (Volwassenenfilenaam)
 print ('Lengte inwoners is', len(Volwassenen))
 
@@ -222,10 +226,10 @@ for inkgr in inkgroepen:
         Totaalmodfilenaam = os.path.join (Totalendirectoryherkomsten, f'Totaal_{mod}_{inkgr}')
         Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
         Generaaltotaal_potenties.append(Totaalrij)
-        Generaaltotaaltrans = Berekeningen.Transponeren(Generaaltotaal_potenties)
-        Uitvoerfilenaam = os.path.join(Totalendirectoryherkomsten, f'Pot_totaal_{inkgr}')
-        Routines.csvwegschrijvenmetheader(Generaaltotaaltrans, Uitvoerfilenaam, headstring)
-        Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel)
+    Generaaltotaaltrans = Berekeningen.Transponeren(Generaaltotaal_potenties)
+    Uitvoerfilenaam = os.path.join(Totalendirectoryherkomsten, f'Pot_totaal_{inkgr}')
+    Routines.csvwegschrijvenmetheader(Generaaltotaaltrans, Uitvoerfilenaam, headstring)
+    Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel)
 
 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
 for mod in modaliteiten:
@@ -236,7 +240,7 @@ for mod in modaliteiten:
         Totaalmodfilenaam = os.path.join (Totalendirectoryherkomsten, f'Totaal_{mod}_{inkgr}')
         Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
         Generaalmatrix.append(Totaalrij)
-        Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+    Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
     for i in range (len(Arbeidsplaatsenperklasse)):
         Generaalmatrixproduct.append([])
         for j in range (len(Arbeidsplaatsenperklasse[0])):
