@@ -10,22 +10,21 @@ from ikobconfig import getConfigFromArgs
 # het opgegeven configuratie bestand in een dict.
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
+project_config = config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['invoer_skims_directory']
-motieven = skims_config['motieven']
+Skimsdirectory = paden_config['skims_directory']
 dagsoort = skims_config['dagsoort']
+Scenario = project_config['scenario']
+motieven = project_config['motieven']
 
-#motieven = ['werk'] # 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs' verwijderd
-mot = input ('Welk motief?')
-# 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs' verwijderd
+
+# Vaste waarden
 inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
 voorkeuren = ['Auto','Neutraal','Fiets','OV']
-#dagsoort = ['Restdag']
 modaliteitenfiets = ['Fiets', 'EFiets']
-Scenario = input('Voor welk scenario moet de berekening zijn?')
 
 
 def constantenwerk (mod, voorkeur):
@@ -84,6 +83,7 @@ def gewichtenberekenen (skim, alpha, omega, weging):
 # Avondspits en Ochtendspits eruit verwijderd
 
 for ds in dagsoort:
+    for mot in motieven:
         Gewichtendirectory = os.path.join (Skimsdirectory,'Gewichten', Scenario,ds)
         os.makedirs(Gewichtendirectory,exist_ok=True)
         Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', Scenario, ds)

@@ -162,6 +162,7 @@ def _addWidgets(master, template):
           if 'label' in template[key]:
             label = template[key]['label']
           frame = LabelFrame(master=master, text=label, borderwidth=2)
+          frame.columnconfigure((1), weight=1)
           frame.grid(row=row, column=0, columnspan=3, sticky='ew', **PAD)
           widgets.append(frame)
           _addWidgets(frame, template[key])
@@ -174,16 +175,17 @@ def buildTkInterface(root, tkvartemplate, cmdNew=None, cmdLoad=None, cmdSave=Non
   for key in tkvartemplate:
     if type(tkvartemplate[key]) == dict:
       tab = ttk.Frame(notebook)
+      tab.columnconfigure((1), weight=1)
       label = key
       if 'label' in tkvartemplate[key]:
         label = tkvartemplate[key]['label']
       notebook.add(tab, text=label)
       widgets.append(tab)
       widgets.extend(_addWidgets(tab, tkvartemplate[key]))
-  notebook.pack(expand=1, fill="both")
+  notebook.pack(expand=True, fill="both")
   # Add load/save/new buttons.
   BF = Frame()
-  BF.pack(fill=X, ipadx=5, ipady=5)
+  BF.pack(expand=True, fill=X, ipadx=5, ipady=5)
   BS = Button(master=BF, text='Opslaan ...', command=cmdSave)
   BS.pack(side=RIGHT, padx=10, ipadx=10)
   BL = Button(master=BF, text='Laden ...', command=cmdLoad)

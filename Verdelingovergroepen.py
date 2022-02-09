@@ -8,25 +8,25 @@ from ikobconfig import getConfigFromArgs
 # het opgegeven configuratie bestand in een dict.
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
+project_config = config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
 verdeling_config = config['verdeling']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['invoer_skims_directory']
-inkomens = verdeling_config['inkomens']
-Gratisautopercentage = verdeling_config['Gratisautopercentage']
+Skimsdirectory = paden_config['skims_directory']
+SEGSdirectory = paden_config['segs_directory']
+Jaar = project_config['jaar']
+Elektrischpercentage = verdeling_config['elektrischeautos']
+Kunst = verdeling_config['kunstmab']['gebruiken']
+Kunstmautobezitfile = verdeling_config['kunstmab']['bestand']
 GratisOVpercentage = verdeling_config['GratisOVpercentage']
+Uitvoernaam = verdeling_config['uitvoernaam']
 
-SEGSdirectory = os.path.join(Skimsdirectory, 'SEGS')
 
-segs = Tk()
-segs.geometry = ("10x10")
-segs.label = ("Voer de directory waar de pure reistijdsegs en afstandsegs staan in")
-segs.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de segsdirectory",)
-segs.destroy()
-Jaar = input ('Welk jaar gaat het om?')
-SEGSdirectory = segs.directory + '/'
+# Vaste waarden
+inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
+
 Inkomensverdelingfilenaam = os.path.join ( SEGSdirectory, 'Inkomensverdeling_per_zone')
 Inkomensverdelinggegevens = Routines.csvintlezen (Inkomensverdelingfilenaam,aantal_lege_regels=1)
 print ('Lengte Inkomensverdelingsgegevens', len (Inkomensverdelinggegevens), len (Inkomensverdelinggegevens[0]))
@@ -41,31 +41,15 @@ print ('Lengte Stedelijkheidsgraadgegevens', len (Stedelijkheidsgraadgegevens), 
 
 #Stedelijkheidsgraadgegevens[0] = '1'
 #Stedelijkheidsgraadgegevens[900] = '1'
-inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
-Elektrischeautos = input ('Toename elektrische autos (J/N)?')
-if 'J' in Elektrischeautos:
-    Elektrischpercentage = input('Welk percentage elektrische autos (20% of 40%)')
-    if Elektrischpercentage == '40':
-        Gratisautonaarinkomens = [0, 0.17, 0.58, 0.95]
-    elif Elektrischpercentage == '20' :
-        Gratisautonaarinkomens = [0, 0.05, 0.25, 0.5]
-    else:
-        print ('Wel een percentage noemen...')
+
+if Elektrischpercentage == '40':
+    Gratisautonaarinkomens = [0, 0.17, 0.58, 0.95]
+elif Elektrischpercentage == '20' :
+    Gratisautonaarinkomens = [0, 0.05, 0.25, 0.5]
 else :
     Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275]
-GratisOVpercentage = 0.03
 
-Kunstmatig = input ('Is er een file met kunstmatig autobezit?')
-Kunst = False
-if 'J' in Kunstmatig:
-    Kunst = True
-    kunstmautobezit = Tk ( )
-    kunstmautobezit.geometry = ("10x10")
-    kunstmautobezit.label = ("Voer de invoerfile in")
-    kunstmautobezit.file = filedialog.askopenfilename ( initialdir=os.getcwd ( ),
-                                                        title="Selecteer de file met de kunstmatige autobezittabel", )
-    kunstmautobezit.destroy ( )
-    Kunstmautobezitfile = kunstmautobezit.file
+if Kunst:
     Kunstmautobezitfile = Kunstmautobezitfile.replace ( '.csv', '' )
     Kunstmatigautobezit = Routines.csvintlezen ( Kunstmautobezitfile, aantal_lege_regels=0)
 
@@ -89,9 +73,12 @@ Voorkeurenfilenaam = os.path.join ( SEGSdirectory, 'Voorkeuren')
 Voorkeuren = Routines.csvintlezen (Voorkeurenfilenaam,aantal_lege_regels=1)
 VoorkeurenGeenAutofilenaam = os.path.join ( SEGSdirectory, 'VoorkeurenGeenAuto')
 VoorkeurenGeenAuto = Routines.csvintlezen (VoorkeurenGeenAutofilenaam,aantal_lege_regels=1)
+
+inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
 voorkeuren = ['Auto','Neutraal', 'Fiets', 'OV']
 voorkeurengeenauto = ['Neutraal', 'Fiets', 'OV']
 soorten = ['GratisAuto', 'WelAuto', 'GeenAuto', 'GeenRijbewijs' ]
+
 def Corrigeren (Matrix, Lijst) :
     Matrix2 =[]
     for i in range ( len ( Matrix ) ):
@@ -191,7 +178,6 @@ for i in range ( len ( Inkomensverdelinggegevens ) ):
             Aandeelvk = GeenRB * (1 - GratisOVpercentage) * VoorkeurenGeenAuto[Sted[i] - 1][voorkeurengeenauto.index ( vkg )] / 100
             Totaaloverzicht[i].append ( round (Aandeelvk * 10000 * Inkomensaandeel)) # Dan de diverse voorkeuren
 
-Uitvoernaam = input ('Wat moet de naam van de uitvoerfile zijn?')
 Totaaloverzichtfilenaam = os.path.join ( SEGSdirectory, f'{Uitvoernaam}' )
 Routines.csvwegschrijvenmetheader ( Totaaloverzicht, Totaaloverzichtfilenaam, Header )
 Header.insert(0, 'Zone')

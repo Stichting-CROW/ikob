@@ -13,15 +13,10 @@ config = getConfigFromArgs()
 paden_config = config['project']['paden']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['invoer_skims_directory']
-segs = Tk()
-segs.geometry = ("10x10")
-segs.label = ("Voer de directory waar de pure reistijdsegs en afstandsegs staan in")
-segs.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory segsdirectory",)
-segs.destroy()
-SEGSdirectory = segs.directory + '/'
+Skimsdirectory = paden_config['skims_directory']
+SEGSdirectory = paden_config['segs_directory']
+Jaar=config['project']['jaar']
 
-Jaar=input ('Welk jaar gaat het om?')
 Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
 Inwonersaantalfilenaam = os.path.join (SEGSdirectory, f'Beroepsbevolking{Jaar}')
 Inkomensverdeling = Routines.csvintlezen(Inkomensverdelingsfilenaam,aantal_lege_regels=1)

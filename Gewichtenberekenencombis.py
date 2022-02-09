@@ -1,6 +1,4 @@
 import Routines
-from tkinter import filedialog
-from tkinter import *
 import os
 from ikobconfig import getConfigFromArgs
 
@@ -12,19 +10,18 @@ paden_config = config['project']['paden']
 skims_config = config['skims']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['invoer_skims_directory']
-Ervarenreistijddirectory = os.path.join(Skimsdirectory, 'Ervarenreistijd')
+Skimsdirectory = paden_config['skims_directory']
 motieven = skims_config['motieven']
 dagsoort = skims_config['dagsoort']
+Scenario = config['project']['scenario']
 
-#motieven = ['werk'] # 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs' verwijderd
+# Vaste waarden
 inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
 voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
-#dagsoort = ['Restdag'] # Avondspits en Ochtendspits eruit verwijderd
 modaliteitenfiets = ['Fiets', 'EFiets']
 soortauto = ['Auto', 'GeenAuto', 'GeenRijbewijs', 'GratisAuto']
 soortOV = ['OV', 'GratisOV']
-Scenario = input('Voor welk scenario moet de berekening zijn?')
+Ervarenreistijddirectory = os.path.join(Skimsdirectory, 'Ervarenreistijd')
 
 def minmaxmatrix(matrix1, matrix2, minmax="max"):
     eindmatrix = []

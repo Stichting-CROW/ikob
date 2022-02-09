@@ -4,7 +4,6 @@ import Constantengenerator
 from tkinter import filedialog
 from tkinter import *
 import os
-
 from ikobconfig import getConfigFromArgs
 
 # Deze routine kijkt naar de command-line en leest
@@ -12,24 +11,18 @@ from ikobconfig import getConfigFromArgs
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
 paden_config = config['project']['paden']
+conc_config = config['bedrijven']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['invoer_skims_directory']
-SEGSdirectory = os.path.join (Skimsdirectory, 'SEGS')
-skims = Tk()
-skims.geometry = ("10x10")
-skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims staan in")
-skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de hoofddirectory",)
-skims.destroy()
-Skimsdirectory = skims.directory + '/'
-SEGS = Tk()
-SEGS.geometry = ("10x10")
-SEGS.label = ("Voer de directory waar de SEGS staan in")
-SEGS.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de SEGSdirectory",)
-SEGS.destroy()
-SEGSdirectory = SEGS.directory + '/'
+Skimsdirectory = paden_config['skims_directory']
+SEGSdirectory = paden_config['segs_directory']
+Herkomstendirectory = conc_config['arbeid']['herkomsten_directory']
+Jaar = config['project']['jaar']
+Scenario = config['project']['scenario']
+Naamuitvoer = conc_config['uitvoer_directory_naam']
+Groepverdelingfile=conc_config['verdeling_file']
 
-# TODO: Haal een aantal van inderstaande zaken naar config.
+# Vaste intellingen
 Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
            'WelAuto_vkNeutraal_laag', 'WelAuto_vkFiets_laag','WelAuto_vkOV_laag','GeenAuto_GratisOV_laag',
            'GeenAuto_vkNeutraal_laag','GeenAuto_vkFiets_laag', 'GeenAuto_vkOV_laag','GeenRijbewijs_GratisOV_laag',
@@ -60,26 +53,12 @@ headstring = ['Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_E
                   'Auto_OV_Fiets', 'Auto_OV_EFiets']
 headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_EFiets', 'OV_EFiets', 'Auto_OV',
                   'Auto_OV_Fiets', 'Auto_OV_EFiets']
-hrkomsten = Tk()
-hrkomsten.geometry = ("10x10")
-hrkomsten.label = ("Voer de directory waar de pure herkomsten in staan")
-hrkomsten.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de herkomstendirectory",)
-hrkomsten.destroy()
-Herkomstendirectory = hrkomsten.directory + '/'
-Jaar = input ('Welk jaar gaat het om?')
-Scenario = input ('Welk scenario gaat het om?')
+
+
 Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
 Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
-Naamuitvoer = input ('Geef de naam van de directory waar de uitvoer heen moet')
 Concurrentiedirectory = os.path.join (Skimsdirectory, 'Concurrrentie', 'arbeidsplaatsen', Naamuitvoer)
 os.makedirs (Concurrentiedirectory, exist_ok=True)
-verdeling = Tk()
-verdeling.geometry = ("10x10")
-verdeling.label = ("Voer de invoerfile in")
-verdeling.file = filedialog.askopenfilename(initialdir=os.getcwd(),title="Selecteer de file met de verdeling over de buurten",)
-verdeling.destroy()
-
-Groepverdelingfile=verdeling.file
 Groepverdelingfile=Groepverdelingfile.replace('.csv','')
 Verdelingsmatrix = Routines.csvintlezen(Groepverdelingfile, aantal_lege_regels=1)
 Verdelingstransmatrix = Berekeningen.Transponeren (Verdelingsmatrix)

@@ -10,19 +10,17 @@ from ikobconfig import getConfigFromArgs
 # het opgegeven configuratie bestand in een dict.
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
+project_config = config['project']
 paden_config = config['project']['paden']
-skims_config = config['skims']
+ontpl_config = config['ontplooiing']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['invoer_skims_directory']
-# TODO: Add to config
-SEGS = Tk()
-SEGS.geometry = ("10x10")
-SEGS.label = ("Voer de directory waar de SEGS staan in")
-SEGS.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de SEGSdirectory",)
-SEGS.destroy()
-SEGSdirectory = SEGS.directory + '/'
-
+Skimsdirectory = paden_config['skims_directory']
+SEGSdirectory = paden_config['segs_directory']
+Jaar = project_config['jaar']
+Scenario = project_config['scenario']
+Groepverdelingfile = ontpl_config['verdeling_file']
+Naamuitvoer = ontpl_config['uitvoerdirectorynaam']
 
 Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
            'WelAuto_vkNeutraal_laag', 'WelAuto_vkFiets_laag','WelAuto_vkOV_laag','GeenAuto_GratisOV_laag',
@@ -56,22 +54,11 @@ headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiet
                   'Auto_OV_Fiets', 'Auto_OV_EFiets']
 
 Vermenigvuldig = []
-Jaar=input('Welk jaar gaat het om?')
-Scenario=input('Welk scenario gaat het om?')
 Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
 Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
-Naamuitvoer = input ('Geef de naam van de directory waar de uitvoer heen moet')
-Totalendirectorybestemmingen = os.path.join ( Skimsdirectory, 'Bestemmingen', Scenario, 'Restdag',Naamuitvoer)
-#Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Restdag', 'werk', 'Combinaties')
-#Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Restdag', 'werk')
-#Totalendirectorybestemmingen = os.path.join ( Skimsdirectory, 'Bestemmingen', 'Restdag', 'werk', Naamuitvoer)
+Totalendirectorybestemmingen = os.path.join ( Skimsdirectory, 'Bestemmingen', Scenario, 'Restdag', Naamuitvoer)
+
 os.makedirs ( Totalendirectorybestemmingen, exist_ok=True )
-verdeling = Tk()
-verdeling.geometry = ("10x10")
-verdeling.label = ("Voer de invoerfile in")
-verdeling.file = filedialog.askopenfilename(initialdir=os.getcwd(),title="Selecteer de file met de verdeling over de buurten",)
-verdeling.destroy()
-Groepverdelingfile=verdeling.file
 Groepverdelingfile=Groepverdelingfile.replace('.csv','')
 Verdelingsmatrix = Routines.csvintlezen(Groepverdelingfile, aantal_lege_regels=1)
 Verdelingstransmatrix = Berekeningen.Transponeren (Verdelingsmatrix)

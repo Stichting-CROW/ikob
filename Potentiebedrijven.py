@@ -1,8 +1,5 @@
 import Routines
 import Berekeningen
-import Constantengenerator
-from tkinter import filedialog
-from tkinter import *
 import os
 from ikobconfig import getConfigFromArgs
 
@@ -10,18 +7,20 @@ from ikobconfig import getConfigFromArgs
 # het opgegeven configuratie bestand in een dict.
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
+project_config=config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
+conc_config = config['bedrijven']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['invoer_skims_directory']
-SEGS = Tk()
-SEGS.geometry = ("10x10")
-SEGS.label = ("Voer de directory waar de SEGS staan in")
-SEGS.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de SEGSdirectory",)
-SEGS.destroy()
-SEGSdirectory = SEGS.directory + '/'
+Skimsdirectory = paden_config['skims_directory']
+SEGSdirectory = paden_config['segs_directory']
+Jaar = project_config['jaar']
+Scenario = project_config['Scenario']
+Naamuitvoer = conc_config['uitvoer_directory_naam']
+Groepverdelingfile=conc_config['verdeling_file']
 
+# Vaste waarden
 Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
            'WelAuto_vkNeutraal_laag', 'WelAuto_vkFiets_laag','WelAuto_vkOV_laag','GeenAuto_GratisOV_laag',
            'GeenAuto_vkNeutraal_laag','GeenAuto_vkFiets_laag', 'GeenAuto_vkOV_laag','GeenRijbewijs_GratisOV_laag',
@@ -53,25 +52,13 @@ headstring = ['Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_E
 headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_EFiets', 'OV_EFiets', 'Auto_OV',
                   'Auto_OV_Fiets', 'Auto_OV_EFiets']
 
-Jaar = input ('Welk jaar gaat het om?')
-Scenario = input ('Welk scenario gaat het om?')
 Vermenigvuldig = []
 Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
 Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
-Naamuitvoer = input ('Geef de naam van de directory waar de uitvoer heen moet')
-Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, 'Herkomsten', Scenario, 'Restdag',Naamuitvoer)
-#os.makedirs ( Totalendirectoryherkomsten, exist_ok=True )
-#Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Restdag', 'werk', 'Combinaties')
-#Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Restdag', 'werk')
-#Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, 'herkomsten','Restdag','werk', Naamuitvoer)
+Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, 'Herkomsten', Scenario, 'Restdag', Naamuitvoer)
 os.makedirs ( Totalendirectoryherkomsten, exist_ok=True )
 
-verdeling = Tk()
-verdeling.geometry = ("10x10")
-verdeling.label = ("Voer de invoerfile in")
-verdeling.file = filedialog.askopenfilename(initialdir=os.getcwd(),title="Selecteer de file met de verdeling over de buurten",)
-verdeling.destroy()
-Groepverdelingfile=verdeling.file
+
 Groepverdelingfile=Groepverdelingfile.replace('.csv','')
 Verdelingsmatrix = Routines.csvintlezen(Groepverdelingfile, aantal_lege_regels=1)
 Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, f'Arbeidsplaatsen_inkomensklasse{Jaar}')

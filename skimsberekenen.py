@@ -9,57 +9,41 @@ from ikobconfig import getConfigFromArgs
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
 
-# Haal (voor het gemak) de twee onderdelen voor dit script er uit.
+# Haal (voor het gemak) onderdelen voor dit script er uit.
+project_config = config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
+tvom_config = config['tvom']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['invoer_skims_directory']
+jaar = project_config['jaar']
+Skimsdirectory = paden_config['skims_directory']
 motieven = skims_config['motieven']
 aspect = skims_config['aspect']
-inkomen = skims_config['inkomen']
-TVOMwerk = skims_config['TVOMwerk']
-TVOMoverig = skims_config['TVOMoverig']
-varkosten = skims_config['varkosten']
+TVOMwerk = tvom_config['TVOMwerk']
+TVOMoverig = tvom_config['TVOMoverig']
+varautotarief = skims_config['varautotarief']
 kmheffing = skims_config['kmheffing']
 varkostenga = skims_config['varkostenga']
 tijdkostenga = skims_config['tijdkostenga']
 dagsoort = skims_config['dagsoort']
 soortgeenauto = skims_config['soortgeenauto']
+benader_kosten = skims_config['OV Kosten']['benaderen']['gebruiken']
+kmtarief = skims_config['OV Kosten']['benaderen']['kmkosten']
+starttarief = skims_config['OV Kosten']['benaderen']['starttarief']
+Parkeerzoektijdfile = skims_config['parkeerzoektijden_bestand']
 
 
-Ervarenreistijddirectory = Skimsdirectory.replace ('skims', 'Ervarenreistijd')
-os.makedirs ( Ervarenreistijddirectory, exist_ok=True )
+# Vaste waarden
+inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
 
-# TODO: Remove
-from tkinter import *
-from tkinter import filedialog
-
-# TODO: Add this to config
-parkeerzoektijd = Tk()
-parkeerzoektijd.geometry = ("10x10")
-parkeerzoektijd.label = ("Voer de invoerfile in")
-parkeerzoektijd.file = filedialog.askopenfilename(initialdir=os.getcwd(),title="Selecteer de file met de parkeerzoektijdtabel",)
-parkeerzoektijd.destroy()
-Parkeerzoektijdfile = parkeerzoektijd.file
+kmtarief = float(kmtarief)/100
+starttarief = float(starttarief)/100
+varautotarief = float(varautotarief)/100
 Parkeerzoektijdfile=Parkeerzoektijdfile.replace('.csv','')
 Parkeertijdlijst = Routines.csvintlezen (Parkeerzoektijdfile, aantal_lege_regels=1)
-
-# TODO: Check numbers with defaults
-#TVOMwerk = {'hoog':4, 'middelhoog':6, 'middellaag':9, 'laag':12}
-#TVOMoverig = {'hoog':4.8 , 'middelhoog': 7.25, 'middellaag': 10.9, 'laag':15.5}
-#varkostenga = {'GeenAuto' : 0.33, 'GeenRijbewijs' : 2.40}
-#tijdkostenga = {'GeenAuto' : 0.01, 'GeenRijbewijs' : 0.40}
-
-# TODO: Add this to config
-jaar = input ('Welk jaar hebben we het over?')
-kmtarief = input ('Wat is het kilometertarief in eurocenten')
-kmtarief = float(kmtarief)/100
-print (kmtarief)
-starttarief = input ('Wat is het starttarief in eurocenten')
-starttarief = float(starttarief)/100
-varautotarief = input ('Wat is het variabele autotarief per km in eurocenten')
-varautotarief = float(varautotarief)/100
+Ervarenreistijddirectory = Skimsdirectory.replace ('skims', 'Ervarenreistijd')
+os.makedirs ( Ervarenreistijddirectory, exist_ok=True )
 
 def KostenOV(afstand, kmtarief, starttarief):
     flaf = float(afstand)
@@ -100,7 +84,6 @@ for ds in dagsoort:
     aantal_zones = aantal_zones_tijd
 
     #kostenmatrix
-    benader_kosten = True
 
     if benader_kosten:
         print("Bezig kosten berekenen.")
@@ -135,7 +118,7 @@ for ds in dagsoort:
     Uitvoerfilenaam = os.path.join(Uitvoerdirectory, 'Fiets')
     Routines.csvwegschrijven(GGRskim,Uitvoerfilenaam)
 
-    for ink in inkomen:
+    for ink in inkomens:
         GGRskim = []
         Vermenigvuldigingsfactor = TVOMwerk.get(ink)
         for i in range (0,aantal_zones):
@@ -184,7 +167,7 @@ for ds in dagsoort:
             Routines.csvwegschrijven(GGRskim, Uitvoerfilenaam)
 
         # Nu GratisAuto
-        for ink in inkomen:
+        for ink in inkomens:
             GGRskim = []
             Vermenigvuldigingsfactor = TVOMwerk.get ( ink )
             for i in range ( 0, aantal_zones ):
