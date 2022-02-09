@@ -15,7 +15,14 @@ skims_config = config['skims']
 
 # Ophalen van instellingen
 Skimsdirectory = paden_config['invoer_skims_directory']
-SEGSdirectory = os.path.join (Skimsdirectory, 'SEGS')
+# TODO: Add to config
+SEGS = Tk()
+SEGS.geometry = ("10x10")
+SEGS.label = ("Voer de directory waar de SEGS staan in")
+SEGS.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de SEGSdirectory",)
+SEGS.destroy()
+SEGSdirectory = SEGS.directory + '/'
+
 
 Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
            'WelAuto_vkNeutraal_laag', 'WelAuto_vkFiets_laag','WelAuto_vkOV_laag','GeenAuto_GratisOV_laag',
@@ -49,9 +56,15 @@ headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiet
                   'Auto_OV_Fiets', 'Auto_OV_EFiets']
 
 Vermenigvuldig = []
-Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Restdag', 'werk', 'Combinaties')
-Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Restdag', 'werk')
-Totalendirectorybestemmingen = os.path.join ( Skimsdirectory, 'Bestemmingen', 'Restdag', 'werk', 'Totalenvolwassenen')
+Jaar=input('Welk jaar gaat het om?')
+Scenario=input('Welk scenario gaat het om?')
+Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
+Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
+Naamuitvoer = input ('Geef de naam van de directory waar de uitvoer heen moet')
+Totalendirectorybestemmingen = os.path.join ( Skimsdirectory, 'Bestemmingen', Scenario, 'Restdag',Naamuitvoer)
+#Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Restdag', 'werk', 'Combinaties')
+#Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Restdag', 'werk')
+#Totalendirectorybestemmingen = os.path.join ( Skimsdirectory, 'Bestemmingen', 'Restdag', 'werk', Naamuitvoer)
 os.makedirs ( Totalendirectorybestemmingen, exist_ok=True )
 verdeling = Tk()
 verdeling.geometry = ("10x10")
@@ -62,11 +75,12 @@ Groepverdelingfile=verdeling.file
 Groepverdelingfile=Groepverdelingfile.replace('.csv','')
 Verdelingsmatrix = Routines.csvintlezen(Groepverdelingfile, aantal_lege_regels=1)
 Verdelingstransmatrix = Berekeningen.Transponeren (Verdelingsmatrix)
-Inkomensverdelingsfilenaam = os.path.join (Skimsdirectory, 'SEGS', 'Inkomensverdeling_per_zone')
+Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
 Inkomensverdeling = Routines.csvintlezen (Inkomensverdelingsfilenaam, aantal_lege_regels=1)
-Inwonersperklassenaam = os.path.join (Skimsdirectory, 'SEGS', 'Inwoners_per_klasse')
-Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam)
-Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, 'Arbeidsplaatsen_inkomensklasse')
+Inkomenstransverdeling = Berekeningen.Transponeren (Inkomensverdeling)
+Inwonersperklassenaam = os.path.join (SEGSdirectory, f'Inwoners_per_klasse{Jaar}')
+Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam, aantal_lege_regels=1)
+Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, f'Arbeidsplaatsen_inkomensklasse{Jaar}')
 Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
 Arbeidsplaatsen = Berekeningen.Transponeren(Arbeidsplaats)
 print ('Lengte arbeidsplaatsen is', len(Arbeidsplaats))
@@ -163,13 +177,16 @@ def combigroep(mod, gr) :
 
 
 
-def bereken_potenties (Matrix, Arbeidsplaatsen, Inwoners, inkgr, gr):
+def bereken_potenties (Matrix, Arbeidsplaatsen, Inwoners, Inwonersaandeel, inkgr, gr):
     Dezegroeplijst = []
     for i in range ( len ( Matrix ) ):
         Gewogenmatrix = []
         for Getal1, Getal2 in zip ( Matrix[i], Arbeidsplaatsen[inkgroepen.index ( inkgr )] ):
             Gewogenmatrix.append ( Getal1 * Getal2 * Inwoners[Groepen.index ( gr )][i] )
-        Dezegroeplijst.append ( sum ( Gewogenmatrix ) )
+        if Inwonersaandeel[i]>0:
+            Dezegroeplijst.append ( sum ( Gewogenmatrix )/Inwonersaandeel[i] )
+        else:
+            Dezegroeplijst.append ( 0 )
     return Dezegroeplijst
 
 for inkgr in inkgroepen:
@@ -193,26 +210,28 @@ for inkgr in inkgroepen:
                     Fietsfilenaam = os.path.join (Enkelemodaliteitdirectory, f'{mod}_vk{vkklad}')
                     Fietsmatrix = Routines.csvintlezen (Fietsfilenaam)
                     print('Lengte Fietsmatrix is', len(Fietsmatrix))
-                    Dezegroeplijst = bereken_potenties (Fietsmatrix, Arbeidsplaatsen, Verdelingstransmatrix, inkgr, gr)
-
+                    Dezegroeplijst = bereken_potenties (Fietsmatrix, Arbeidsplaatsen, Verdelingstransmatrix,
+                                                        Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr)
                     for i in range(0, len(Fietsmatrix) ):
-                        Bijhoudlijst[i]+= int(Dezegroeplijst[i]/100000000)
+                        Bijhoudlijst[i]+= int(Dezegroeplijst[i]/1000000)
                 elif mod == 'Auto' or mod == 'OV':
                     String = enkelegroep (mod,gr)
                     print (String)
                     Filenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
                     Matrix = Routines.csvintlezen(Filenaam)
-                    Dezegroeplijst = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix, inkgr, gr )
+                    Dezegroeplijst = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
+                                                         Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr )
                     for i in range(0, len(Matrix) ):
-                        Bijhoudlijst[i]+= int(Dezegroeplijst[i]/100000000)
+                        Bijhoudlijst[i]+= int(Dezegroeplijst[i]/1000000)
                 else:
                     String = combigroep (mod,gr)
                     print (String)
                     Filenaam = os.path.join (Combinatiedirectory, f'{String}_vk{vk}_{ink}')
                     Matrix = Routines.csvintlezen ( Filenaam )
-                    Dezegroeplijst = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix, inkgr, gr )
+                    Dezegroeplijst = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
+                                                         Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr )
                     for i in range ( 0, len ( Matrix ) ):
-                        Bijhoudlijst[i] += int ( Dezegroeplijst[i] / 100000000)
+                        Bijhoudlijst[i] += int ( Dezegroeplijst[i] / 1000000)
         Bijhoudfilenaam = os.path.join(Totalendirectorybestemmingen, f'Totaal_{mod}_{inkgr}')
         Routines.csvwegschrijven (Bijhoudlijst,Bijhoudfilenaam,soort='lijst')
     # En tot slot alles bij elkaar harken:
@@ -221,21 +240,20 @@ for inkgr in inkgroepen:
         Totaalmodfilenaam = os.path.join (Totalendirectorybestemmingen, f'Totaal_{mod}_{inkgr}')
         Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
         Generaaltotaal_potenties.append(Totaalrij)
-        Generaaltotaaltrans = Berekeningen.Transponeren(Generaaltotaal_potenties)
-        Uitvoerfilenaam = os.path.join(Totalendirectorybestemmingen, f'Ontpl_totaal_{inkgr}')
-        Routines.csvwegschrijvenmetheader(Generaaltotaaltrans, Uitvoerfilenaam, headstring)
-        Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel)
+    Generaaltotaaltrans = Berekeningen.Transponeren(Generaaltotaal_potenties)
+    Uitvoerfilenaam = os.path.join(Totalendirectorybestemmingen, f'Ontpl_totaal_{inkgr}')
+    Routines.csvwegschrijvenmetheader(Generaaltotaaltrans, Uitvoerfilenaam, headstring)
+    Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel)
 
 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
 for mod in modaliteiten:
     Generaalmatrixproduct = []
     Generaalmatrix = []
     for inkgr in inkgroepen:
-
         Totaalmodfilenaam = os.path.join (Totalendirectorybestemmingen, f'Totaal_{mod}_{inkgr}')
         Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
         Generaalmatrix.append(Totaalrij)
-        Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+    Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
     for i in range (len(Inwonersperklasse)):
         Generaalmatrixproduct.append([])
         for j in range (len(Inwonersperklasse[0])):

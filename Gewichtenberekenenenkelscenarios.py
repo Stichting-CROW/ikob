@@ -19,10 +19,14 @@ motieven = skims_config['motieven']
 dagsoort = skims_config['dagsoort']
 
 #motieven = ['werk'] # 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs' verwijderd
+mot = input ('Welk motief?')
+# 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs' verwijderd
 inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
 voorkeuren = ['Auto','Neutraal','Fiets','OV']
 #dagsoort = ['Restdag']
 modaliteitenfiets = ['Fiets', 'EFiets']
+Scenario = input('Voor welk scenario moet de berekening zijn?')
+
 
 def constantenwerk (mod, voorkeur):
     alpha = 0.125
@@ -68,7 +72,7 @@ def gewichtenberekenen (skim, alpha, omega, weging):
         Gewichtenmatrix.append([])
         for k in range(0, len(skim)):
             ervaren_reistijd = skim[r][k]
-            if ervaren_reistijd  < 180:
+            if ervaren_reistijd < 180:
                 reistijdwaarde = (1 / (1 + math.exp((-omega + ervaren_reistijd)*alpha)))*weging
             else:
                 reistijdwaarde = 0
@@ -80,10 +84,9 @@ def gewichtenberekenen (skim, alpha, omega, weging):
 # Avondspits en Ochtendspits eruit verwijderd
 
 for ds in dagsoort:
-    for mot in motieven:
-        Gewichtendirectory = os.path.join (Skimsdirectory,'Gewichten', ds, mot)
+        Gewichtendirectory = os.path.join (Skimsdirectory,'Gewichten', Scenario,ds)
         os.makedirs(Gewichtendirectory,exist_ok=True)
-        Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', ds)
+        Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', Scenario, ds)
         for mod in modaliteitenfiets:
             for vk in voorkeuren:
                 if vk == 'Auto' or vk == 'Fiets':
@@ -110,7 +113,8 @@ for ds in dagsoort:
                     soort = 'overig'
                 else:
                     soort = 'werk'
-                ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{soort}_{ink}')
+                ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{ink}')
+                #ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{soort}_{ink}')
                 GGRskim = Routines.csvintlezen(ErvarenReistijdfilenaam)
                 alpha = constantenwerk ('Auto',vk)[0]
                 omega = constantenwerk ( 'Auto', vk )[1]
@@ -129,7 +133,8 @@ for ds in dagsoort:
                         soort = 'overig'
                     else:
                         soort = 'werk'
-                    ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{sga}_{soort}_{ink}' )
+                    ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{sga}_{ink}' )
+                    #ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{sga}_{soort}_{ink}' )
                     GGRskim = Routines.csvfloatlezen ( ErvarenReistijdfilenaam )
                     if mot == 'werk':
                         constanten = Constantengenerator.alomwerk ( 'Auto',vk )
@@ -151,7 +156,8 @@ for ds in dagsoort:
                         soort = 'overig'
                     else:
                         soort = 'werk'
-                    ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'{modOV}_{soort}_{ink}')
+                    #ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'{modOV}_{soort}_{ink}')
+                    ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{modOV}_{ink}' )
                     GGRskim = Routines.csvintlezen(ErvarenReistijdfilenaam)
 
                     if mot == 'werk':
@@ -170,7 +176,8 @@ for ds in dagsoort:
                 soort = 'overig'
             else:
                 soort = 'werk'
-            ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisAuto_{soort}_{ink}')
+            #ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisAuto_{soort}_{ink}')
+            ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisAuto_{ink}' )
             GGRskim = Routines.csvintlezen ( ErvarenReistijdfilenaam )
             if mot == 'werk':
                 constanten = Constantengenerator.alomwerk ( 'Auto', 'Auto' )
