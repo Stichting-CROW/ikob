@@ -33,7 +33,7 @@ def getConfigFromArgs():
   parser = argparse.ArgumentParser()
   parser.add_argument('project', type=str, help='Het .json project bestand.')
   args = parser.parse_args()
-  return loadConfig(_projectFilename(args.project))
+  return loadConfig(args.project)
 
 
 def loadConfig(filename):
