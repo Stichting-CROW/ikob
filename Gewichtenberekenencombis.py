@@ -6,12 +6,14 @@ from ikobconfig import getConfigFromArgs
 # het opgegeven configuratie bestand in een dict.
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
+project_config = config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
 
+
 # Ophalen van instellingen
 Skimsdirectory = paden_config['skims_directory']
-motieven = skims_config['motieven']
+motieven = project_config['motieven']
 dagsoort = skims_config['dagsoort']
 Scenario = config['project']['scenario']
 

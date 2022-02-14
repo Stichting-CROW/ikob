@@ -1,4 +1,6 @@
 import subprocess
+import sys
+import os
 from tkinter import *
 from tkinter import filedialog, messagebox
 from config import widgets
@@ -6,7 +8,7 @@ from ConfiguratieDefinitie import *
 from ikobconfig import loadConfig
 
 
-pythonexe = 'python3'
+pythonexe = sys.executable
 stappen = (
   ("skimsberekenen.py", "skimsberekenen.py"),
   ("Inwonersperklasse.py", "Inwonersperklasse.py"),
@@ -48,13 +50,16 @@ class ConfigApp(Tk):
 
   def cmdRun(self):
     self._project = self._configvar.get()
+    thisscript = os.path.realpath(__file__)
+    scriptdir = os.path.dirname(thisscript)
     try:
       for i, stap in enumerate(stappen):
         if self._checks[i].get():
           print(f'Uitvoeren van stap: {stap[0]}.')
-          result = subprocess.call(f'{pythonexe} {stap[1]} {self._project}', shell=True)
+          script = os.path.join(scriptdir, stap[1])
+          result = subprocess.call(f'{pythonexe} {script} \"{self._project}\"', shell=True)
           if result!=0:
-            messagebox.showerror(title='FOUT', message=f'{pythonexe} gaf fout code: {result} in stap {stap[0]}.')
+            messagebox.showerror(title='FOUT', message=f'Python gaf fout code: {result} in stap {stap[0]}.')
             return
         else:
           print(f'Stap {stap[0]} wordt overgeslagen.')
