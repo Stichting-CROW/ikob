@@ -1,0 +1,84 @@
+import subprocess
+from tkinter import *
+from tkinter import filedialog, messagebox
+from config import widgets
+from ConfiguratieDefinitie import *
+from ikobconfig import loadConfig
+
+
+pythonexe = 'python3'
+stappen = (
+  ("skimsberekenen.py", "skimsberekenen.py"),
+  ("Inwonersperklasse.py", "Inwonersperklasse.py"),
+  ("Verdelingovergroepen.py", "Verdelingovergroepen.py"),
+  ("Gewichtenberekenenenkelscenarios.py", "Gewichtenberekenenenkelscenarios.py"),
+  ("Gewichtenberekenencombis.py", "Gewichtenberekenencombis.py"),
+  ("Ontplooiingsmogelijkhedenechteinwoners.py", "Ontplooiingsmogelijkhedenechteinwoners.py"),
+  ("Potentiebedrijven.py", "Potentiebedrijven.py"),
+  ("Concurrentieomarbeidsplaatsen.py", "Concurrentieomarbeidsplaatsen.py"),
+  ("Concurrentieominwoners.py", "Concurrentieominwoners.py")
+)
+
+PAD = {'padx': 5, 'pady': 5}
+IPAD = {'ipadx': 5, 'ipady': 5 }
+
+### User interface
+
+class ConfigApp(Tk):
+  def __init__(self):
+    super().__init__()
+    self.title('IKOB Runner')
+    self._project = ''
+    self._checks = [BooleanVar(value=True) for _ in stappen]
+    self._configvar = StringVar()
+    self.create_widgets()
+
+
+  def create_widgets(self):
+    self.widgets = []
+    F1 = Frame()
+    F1.pack(expand=1, fill="both", **PAD)
+    self.widgets.extend(widgets.pathWidget(F1, "Project", self._configvar, file=True))
+    self.widgets.append(F1)
+    labels = [ x[0] for x in stappen ]
+    self.widgets.extend(widgets.checklistWidget(F1, "Stappen", labels, self._checks, row=1, itemsperrow=1))
+    B = Button(master=F1, text='Start', command=self.cmdRun)
+    B.grid(row=2, column=2, sticky='ew', **PAD)
+    self.widgets.append(B)
+
+  def cmdRun(self):
+    self._project = self._configvar.get()
+    try:
+      for i, stap in enumerate(stappen):
+        if self._checks[i].get():
+          print(f'Uitvoeren van stap: {stap[0]}.')
+          result = subprocess.call(f'{pythonexe} {stap[1]} {self._project}', shell=True)
+          if result!=0:
+            messagebox.showerror(title='FOUT', message=f'{pythonexe} gaf fout code: {result} in stap {stap[0]}.')
+            return
+        else:
+          print(f'Stap {stap[0]} wordt overgeslagen.')
+    except BaseException as err:
+      messagebox.showerror(title='FOUT', message=f'Fout in Stap {stap[0]}: {err}')
+    else:
+      messagebox.showinfo(title='Gereed', message='Alle stappen zijn suksesvol uitegevoerd.')
+
+  def cmdLaadProject(self):
+    filename = filedialog.askopenfilename(title='Kies een .json project bestand.', filetypes=[('project file', '.json')])
+    if filename:
+      try:
+        read_config = loadConfig(filename)
+      except ValueError:
+        messagebox.showerror(title='Fout', message=f'Het bestand bevat geen geldige configuratie.')
+      except IOError:
+        messagebox.showerror(title='Fout', message=f'Het bestand kan niet worden geladen.')
+
+
+### Main 
+def main():
+  App = ConfigApp()
+  App.mainloop()
+
+
+if __name__ == '__main__':
+  main()

@@ -7,7 +7,6 @@ from tkinter import filedialog, messagebox
 from config import *
 from ConfiguratieDefinitie import *
 
-
 ### Interface: load/save config files.
 
 def _projectFilename(projectname, make_safe = True):
