@@ -3,13 +3,20 @@ from tkinter import *
 from tkinter import filedialog, messagebox
 from config import widgets
 from ConfiguratieDefinitie import *
+from ikobconfig import loadConfig
 
 
 pythonexe = 'python3'
 stappen = (
-  ( 'Stap 1', 'worker.py' ),
-  ( 'Stap 2', 'master.py' ),
-  ( 'Stap 3', 'fout.py' )
+  ("skimsberekenen.py", "skimsberekenen.py"),
+  ("Inwonersperklasse.py", "Inwonersperklasse.py"),
+  ("Verdelingovergroepen.py", "Verdelingovergroepen.py"),
+  ("Gewichtenberekenenenkelscenarios.py", "Gewichtenberekenenenkelscenarios.py"),
+  ("Gewichtenberekenencombis.py", "Gewichtenberekenencombis.py"),
+  ("Ontplooiingsmogelijkhedenechteinwoners.py", "Ontplooiingsmogelijkhedenechteinwoners.py"),
+  ("Potentiebedrijven.py", "Potentiebedrijven.py"),
+  ("Concurrentieomarbeidsplaatsen.py", "Concurrentieomarbeidsplaatsen.py"),
+  ("Concurrentieominwoners.py", "Concurrentieominwoners.py")
 )
 
 PAD = {'padx': 5, 'pady': 5}

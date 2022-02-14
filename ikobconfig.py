@@ -6,7 +6,6 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from config import *
 from ConfiguratieDefinitie import *
-from ikobconfig import loadConfig
 
 ### Interface: load/save config files.
 
