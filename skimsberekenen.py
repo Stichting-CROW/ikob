@@ -17,7 +17,9 @@ tvom_config = config['TVOM']
 
 # Ophalen van instellingen
 jaar = project_config['jaar']
-Skimsdirectory = paden_config['skims_directory']
+Basisdirectory = paden_config['skims_directory']
+Skimsdirectory = os.path.join (Basisdirectory, 'skims')
+os.makedirs ( Skimsdirectory, exist_ok=True )
 motieven = project_config['motieven']
 aspect = skims_config['aspect']
 TVOMwerk = tvom_config['werk']
@@ -32,7 +34,12 @@ benader_kosten = skims_config['OV kosten']['benaderen']['gebruiken']
 kmtarief = skims_config['OV kosten']['benaderen']['kmkosten']
 starttarief = skims_config['OV kosten']['benaderen']['starttarief']
 Parkeerzoektijdfile = skims_config['parkeerzoektijden_bestand']
+Additionele_kosten = skims_config['additionele_kosten']['gebruiken']
+Additionele_kostenfile = skims_config['additionele_kosten']['bestand']
 
+if Additionele_kosten:
+    Additionele_kostenfile=Additionele_kostenfile.replace('.csv','')
+    Additionele_kostenmatrix = Routines.csvintlezen(Additionele_kostenfile , aantal_lege_regels=0)
 
 # Vaste waarden
 inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
@@ -41,7 +48,7 @@ kmtarief = float(kmtarief)/100
 starttarief = float(starttarief)/100
 varautotarief = float(varautotarief)/100
 Parkeerzoektijdfile=Parkeerzoektijdfile.replace('.csv','')
-Parkeertijdlijst = Routines.csvintlezen (Parkeerzoektijdfile, aantal_lege_regels=1)
+Parkeertijdlijst = Routines.csvlezen (Parkeerzoektijdfile, aantal_lege_regels=1)
 Ervarenreistijddirectory = Skimsdirectory.replace ('skims', 'Ervarenreistijd')
 os.makedirs ( Ervarenreistijddirectory, exist_ok=True )
 
@@ -53,10 +60,10 @@ def KostenOV(afstand, kmtarief, starttarief):
         return flaf * kmtarief + starttarief
     return 0
 
-Jaardirectory = os.path.join (Ervarenreistijddirectory, jaar)
+Jaardirectory = os.path.join (Ervarenreistijddirectory)
 os.makedirs ( Jaardirectory, exist_ok=True )
 print (Jaardirectory)
-Jaarinvoerdirectory  = os.path.join (Skimsdirectory, jaar)
+Jaarinvoerdirectory  = os.path.join (Skimsdirectory)
 for ds in dagsoort:
     Invoerdirectory = os.path.join(Jaarinvoerdirectory, ds)
     Uitvoerdirectory = os.path.join (Jaardirectory, ds)
@@ -124,8 +131,12 @@ for ds in dagsoort:
         for i in range (0,aantal_zones):
             GGRskim.append([])
             for j in range (0,aantal_zones):
-                totaleTijd = Autotijdmatrix[i][j] + Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2]
-                GGRskim[i].append(int(totaleTijd + Vermenigvuldigingsfactor * Autoafstandmatrix [i][j] *
+                totaleTijd = Autotijdmatrix[i][j] + round(float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
+                if Additionele_kosten:
+                    GGRskim[i].append ( int ( totaleTijd + Vermenigvuldigingsfactor * (Autoafstandmatrix[i][j] *
+                                              (varautotarief + kmheffing) + Additionele_kostenmatrix[i][j]/100) ))
+                else:
+                    GGRskim[i].append(int(totaleTijd + Vermenigvuldigingsfactor * Autoafstandmatrix [i][j] *
                                       (varautotarief+kmheffing)))
 
         Uitvoerfilenaam = os.path.join(Uitvoerdirectory, f'Auto_{ink}')
@@ -158,7 +169,7 @@ for ds in dagsoort:
                     if Autotijdmatrix[i][j] < 7:
                         GGRskim[i].append(99999)
                     else:
-                        totaleTijd = Autotijdmatrix[i][j] + Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2]
+                        totaleTijd = Autotijdmatrix[i][j] +round(float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
                         totaleKosten = Autotijdmatrix[i][j] * tijdkostenga.get(sga) + \
                                        Autoafstandmatrix[i][j] * (varkostenga.get(sga) + kmheffing)
                         GGRskim[i].append(int(totaleTijd + Vermenigvuldigingsfactor * totaleKosten))
@@ -173,10 +184,13 @@ for ds in dagsoort:
             for i in range ( 0, aantal_zones ):
                 GGRskim.append ( [] )
                 for j in range ( 0, aantal_zones ):
-                    totaleTijd = Autotijdmatrix[i][j] + Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2]
-                    GGRskim[i].append ( int ( totaleTijd + Vermenigvuldigingsfactor * Autoafstandmatrix[i][j] *
-                                              (kmheffing) ) )
-
+                    totaleTijd = Autotijdmatrix[i][j] + round(float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
+                    if Additionele_kosten:
+                        GGRskim[i].append ( int ( totaleTijd + Vermenigvuldigingsfactor * (Autoafstandmatrix[i][j] *
+                                              kmheffing + Additionele_kostenmatrix[i][j]/100)) )
+                    else:
+                        GGRskim[i].append ( int ( totaleTijd + Vermenigvuldigingsfactor * Autoafstandmatrix[i][j] *
+                                                kmheffing) )
             Uitvoerfilenaam = os.path.join ( Uitvoerdirectory, f'GratisAuto_{ink}' )
             Routines.csvwegschrijven ( GGRskim, Uitvoerfilenaam )
 

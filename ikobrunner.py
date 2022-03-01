@@ -10,15 +10,14 @@ from ikobconfig import loadConfig
 
 pythonexe = sys.executable
 stappen = (
-  ("skimsberekenen.py", "skimsberekenen.py"),
-  ("Inwonersperklasse.py", "Inwonersperklasse.py"),
-  ("Verdelingovergroepen.py", "Verdelingovergroepen.py"),
-  ("Gewichtenberekenenenkelscenarios.py", "Gewichtenberekenenenkelscenarios.py"),
-  ("Gewichtenberekenencombis.py", "Gewichtenberekenencombis.py"),
-  ("Ontplooiingsmogelijkhedenechteinwoners.py", "Ontplooiingsmogelijkhedenechteinwoners.py"),
-  ("Potentiebedrijven.py", "Potentiebedrijven.py"),
-  ("Concurrentieomarbeidsplaatsen.py", "Concurrentieomarbeidsplaatsen.py"),
-  ("Concurrentieominwoners.py", "Concurrentieominwoners.py")
+  ("Ervaren reistijd berekenen uit tijd en kosten", "skimsberekenen.py"),
+  ("Verdeling van de groepen over de buurten of zones", "Verdelingovergroepen.py"),
+  ("Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart", "Gewichtenberekenenenkelscenarios.py"),
+  ("Maximum gewichten van meerdere modaliteiten", "Gewichtenberekenencombis.py"),
+  ("Bereikbaarheid arbeidsplaatsen voor inwoners", "Ontplooiingsmogelijkhedenechteinwoners.py"),
+  ("Potentie bereikbaarheid voor bedrijven en instellingen", "Potentiebedrijven.py"),
+  ("Concurrentiepositie voor bereik arbeidsplaatsen", "Concurrentieomarbeidsplaatsen.py"),
+  ("Concurrentiepositie voor bedrijven qua bereikbaarheid", "Concurrentieominwoners.py")
 )
 
 PAD = {'padx': 5, 'pady': 5}
@@ -66,7 +65,7 @@ class ConfigApp(Tk):
     except BaseException as err:
       messagebox.showerror(title='FOUT', message=f'Fout in Stap {stap[0]}: {err}')
     else:
-      messagebox.showinfo(title='Gereed', message='Alle stappen zijn suksesvol uitegevoerd.')
+      messagebox.showinfo(title='Gereed', message='Alle stappen zijn succesvol uitegevoerd.')
 
   def cmdLaadProject(self):
     filename = filedialog.askopenfilename(title='Kies een .json project bestand.', filetypes=[('project file', '.json')])
