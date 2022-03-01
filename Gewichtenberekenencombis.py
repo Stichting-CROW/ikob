@@ -15,7 +15,7 @@ skims_config = config['skims']
 Skimsdirectory = paden_config['skims_directory']
 motieven = project_config['motieven']
 dagsoort = skims_config['dagsoort']
-Scenario = config['project']['scenario']
+#Scenario = config['project']['scenario']
 
 # Vaste waarden
 inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
@@ -93,8 +93,10 @@ def Maxberekenen_en_wegschrijvenvan3 (Matrix1, Matrix2, Matrix3, mod1, mod2, mod
 
 for ds in dagsoort:
 
-    Combinatiedirectory = os.path.join(Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, ds)
-    Enkeldirectory = os.path.join(Skimsdirectory, 'Gewichten', Scenario, ds)
+    Combinatiedirectory = os.path.join(Skimsdirectory, 'Gewichten', 'Combinaties', ds)
+    Enkeldirectory = os.path.join(Skimsdirectory, 'Gewichten', ds)
+    #Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, ds )
+    #Enkeldirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
     os.makedirs(Combinatiedirectory, exist_ok=True)
 
     for ink in inkomen:

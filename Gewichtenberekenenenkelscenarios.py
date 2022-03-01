@@ -17,7 +17,7 @@ skims_config = config['skims']
 # Ophalen van instellingen
 Skimsdirectory = paden_config['skims_directory']
 dagsoort = skims_config['dagsoort']
-Scenario = project_config['scenario']
+#Scenario = project_config['scenario']
 motieven = project_config['motieven']
 
 
@@ -84,16 +84,17 @@ def gewichtenberekenen (skim, alpha, omega, weging):
 
 for ds in dagsoort:
     for mot in motieven:
-        Gewichtendirectory = os.path.join (Skimsdirectory,'Gewichten', Scenario,ds)
+        Gewichtendirectory = os.path.join ( Skimsdirectory, 'Gewichten', ds )
+        #Gewichtendirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
         os.makedirs(Gewichtendirectory,exist_ok=True)
-        Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', Scenario, ds)
+        Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', ds)
+        #Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', Scenario, ds )
         for mod in modaliteitenfiets:
             for vk in voorkeuren:
                 if vk == 'Auto' or vk == 'Fiets':
                     Filenaam = os.path.join(Ervarenreistijddirectory,'Fiets')
                     GGRskim = Routines.csvintlezen(Filenaam, aantal_lege_regels=0)
 
-                    print("GGRskim heeft {} regels.".format(len(GGRskim)))
                     if mot == 'werk':
                         constanten = Constantengenerator.alomwerk ( mod, vk )
                     elif mot == 'winkeldagelijkszorg':
@@ -142,7 +143,6 @@ for ds in dagsoort:
                         constanten = Constantengenerator.alomwinkeldagelijkszorg ( 'Auto', vk )
                     else:
                         constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( 'Auto', vk )
-                    print ('Ik ben nu bezig met {}, {}, {},{}', ds, mot, sga, ink)
                     Gewichten = Berekeningen.gewichten( GGRskim, constanten)
                     Uitvoerfilenaam = os.path.join ( Gewichtendirectory, f'{sga}_vk{vk}_{ink}' )
                     Routines.csvwegschrijven ( Gewichten, Uitvoerfilenaam )
@@ -194,7 +194,6 @@ for ds in dagsoort:
             ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisOV' )
             GGRskim = Routines.csvintlezen ( ErvarenReistijdfilenaam )
             GGRskimLen = len(GGRskim)
-            print("GGRskim heeft {} regels.".format(GGRskimLen))
             if mot == 'werk':
                 constanten = Constantengenerator.alomwerk ( 'OV', 'OV' )
             elif mot == 'winkeldagelijkszorg':
