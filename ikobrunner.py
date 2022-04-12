@@ -10,14 +10,14 @@ from ikobconfig import loadConfig
 
 pythonexe = sys.executable
 stappen = (
-  ("Ervaren reistijd berekenen uit tijd en kosten", "skimsberekenen.py"),
-  ("Verdeling van de groepen over de buurten of zones", "Verdelingovergroepen.py"),
-  ("Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart", "Gewichtenberekenenenkelscenarios.py"),
-  ("Maximum gewichten van meerdere modaliteiten", "Gewichtenberekenencombis.py"),
-  ("Bereikbaarheid arbeidsplaatsen voor inwoners", "Ontplooiingsmogelijkhedenechteinwoners.py"),
-  ("Potentie bereikbaarheid voor bedrijven en instellingen", "Potentiebedrijven.py"),
-  ("Concurrentiepositie voor bereik arbeidsplaatsen", "Concurrentieomarbeidsplaatsen.py"),
-  ("Concurrentiepositie voor bedrijven qua bereikbaarheid", "Concurrentieominwoners.py")
+  ("Ervaren reistijd berekenen uit tijd en kosten", "skimsberekenen"),
+  ("Verdeling van de groepen over de buurten of zones", "Verdelingovergroepen"),
+  ("Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart", "Gewichtenberekenenenkelscenarios"),
+  ("Maximum gewichten van meerdere modaliteiten", "Gewichtenberekenencombis"),
+  ("Bereikbaarheid arbeidsplaatsen voor inwoners", "Ontplooiingsmogelijkhedenechteinwoners"),
+  ("Potentie bereikbaarheid voor bedrijven en instellingen", "Potentiebedrijven"),
+  ("Concurrentiepositie voor bereik arbeidsplaatsen", "Concurrentieomarbeidsplaatsen"),
+  ("Concurrentiepositie voor bedrijven qua bereikbaarheid", "Concurrentieominwoners")
 )
 
 PAD = {'padx': 5, 'pady': 5}
@@ -33,6 +33,15 @@ class ConfigApp(Tk):
     self._checks = [BooleanVar(value=True) for _ in stappen]
     self._configvar = StringVar()
     self.create_widgets()
+    python_filename = os.path.splitext(os.path.basename(pythonexe))[0]
+    script_filename = os.path.splitext(os.path.basename(__file__))[0]
+    if python_filename == script_filename:
+      # exe mode
+      self.runmode = 'exe'
+    else:
+      # python mode
+      self.runmode = 'py'
+
 
 
   def create_widgets(self):
@@ -55,8 +64,11 @@ class ConfigApp(Tk):
       for i, stap in enumerate(stappen):
         if self._checks[i].get():
           print(f'Uitvoeren van stap: {stap[0]}.')
-          script = os.path.join(scriptdir, stap[1])
-          result = subprocess.call(f'{pythonexe} {script} \"{self._project}\"', shell=True)
+          script = os.path.join(scriptdir, f'{stap[1]}.{self.runmode}')
+          if self.runmode == 'exe':
+            result = subprocess.call(f'{script} \"{self._project}\"', shell=True)
+          else:
+            result = subprocess.call(f'{pythonexe} {script} \"{self._project}\"', shell=True)
           if result!=0:
             messagebox.showerror(title='FOUT', message=f'Python gaf fout code: {result} in stap {stap[0]}.')
             return
