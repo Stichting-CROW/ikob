@@ -46,6 +46,7 @@ def loadConfig(filename):
   if config:
     if not valideerConfiguratie(config):
       raise ValueError('Configuratie heeft een incompatibel formaat.')
+    config['__filename__'] = os.path.splitext(os.path.basename(filename))[0]
   return config
 
 
@@ -103,7 +104,7 @@ class ConfigApp(tk.Tk):
     else:
       messagebox.showinfo(title='Opgeslagen', message=f'Configuratie opgeslagen.')
 
-### Main 
+### Main
 
 def main():
   #homedir = os.path.expanduser('~/')
