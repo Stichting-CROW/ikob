@@ -97,6 +97,7 @@ class ConfigApp(tk.Tk):
     filename = filedialog.asksaveasfilename(title='Kies een .json project bestand.',
                                             initialfile=_projectFilename(projectNaam(config)),
                                             filetypes=[('project file', '.json')])
+    filename = _projectFilename(filename, make_safe=False)
     try:
       saveConfig(filename, config)
     except:
