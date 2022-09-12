@@ -24,7 +24,7 @@ ikobconfig_pyz = PYZ(
             cipher=block_cipher)
 ikobconfig_exe = EXE(
             ikobconfig_pyz,
-            ikobconfig_a.scripts, 
+            ikobconfig_a.scripts,
             [],
             exclude_binaries=True,
             name='ikobconfig',
@@ -58,7 +58,7 @@ ikobrunner_pyz = PYZ(
             cipher=block_cipher)
 ikobrunner_exe = EXE(
             ikobrunner_pyz,
-            ikobrunner_a.scripts, 
+            ikobrunner_a.scripts,
             [],
             exclude_binaries=True,
             name='ikobrunner',
@@ -92,7 +92,7 @@ skims_pyz = PYZ(
             cipher=block_cipher)
 skims_exe = EXE(
             skims_pyz,
-            skims_a.scripts, 
+            skims_a.scripts,
             [],
             exclude_binaries=True,
             name='skimsberekenen',
@@ -126,7 +126,7 @@ verdeling_pyz = PYZ(
             cipher=block_cipher)
 verdeling_exe = EXE(
             verdeling_pyz,
-            verdeling_a.scripts, 
+            verdeling_a.scripts,
             [],
             exclude_binaries=True,
             name='Verdelingovergroepen',
@@ -160,7 +160,7 @@ enkel_pyz = PYZ(
             cipher=block_cipher)
 enkel_exe = EXE(
             enkel_pyz,
-            enkel_a.scripts, 
+            enkel_a.scripts,
             [],
             exclude_binaries=True,
             name='Gewichtenberekenenenkelscenarios',
@@ -194,7 +194,7 @@ combi_pyz = PYZ(
             cipher=block_cipher)
 combi_exe = EXE(
             combi_pyz,
-            combi_a.scripts, 
+            combi_a.scripts,
             [],
             exclude_binaries=True,
             name='Gewichtenberekenencombis',
@@ -228,7 +228,7 @@ ontplooiing_pyz = PYZ(
             cipher=block_cipher)
 ontplooiing_exe = EXE(
             ontplooiing_pyz,
-            ontplooiing_a.scripts, 
+            ontplooiing_a.scripts,
             [],
             exclude_binaries=True,
             name='Ontplooiingsmogelijkhedenechteinwoners',
@@ -262,7 +262,7 @@ potentie_pyz = PYZ(
             cipher=block_cipher)
 potentie_exe = EXE(
             potentie_pyz,
-            potentie_a.scripts, 
+            potentie_a.scripts,
             [],
             exclude_binaries=True,
             name='Potentiebedrijven',
@@ -297,7 +297,7 @@ arbeid_pyz = PYZ(
 
 arbeid_exe = EXE(
             arbeid_pyz,
-            arbeid_a.scripts, 
+            arbeid_a.scripts,
             [],
             exclude_binaries=True,
             name='Concurrentieomarbeidsplaatsen',
@@ -332,7 +332,7 @@ inwoners_pyz = PYZ(
 
 inwoners_exe = EXE(
             inwoners_pyz,
-            inwoners_a.scripts, 
+            inwoners_a.scripts,
             [],
             exclude_binaries=True,
             name='Concurrentieominwoners',
@@ -349,23 +349,23 @@ inwoners_exe = EXE(
 coll = COLLECT(ikobconfig_exe,
                ikobconfig_a.binaries,
                ikobconfig_a.zipfiles,
-               ikobconfig_a.datas, 
+               ikobconfig_a.datas,
                ikobrunner_exe,
                ikobrunner_a.binaries,
                ikobrunner_a.zipfiles,
-               ikobrunner_a.datas, 
+               ikobrunner_a.datas,
                skims_exe,
                skims_a.binaries,
                skims_a.zipfiles,
-               skims_a.datas, 
+               skims_a.datas,
                verdeling_exe,
                verdeling_a.binaries,
                verdeling_a.zipfiles,
-               verdeling_a.datas, 
+               verdeling_a.datas,
                enkel_exe,
                enkel_a.binaries,
                enkel_a.zipfiles,
-               enkel_a.datas, 
+               enkel_a.datas,
                combi_exe,
                combi_a.binaries,
                combi_a.zipfiles,
@@ -373,19 +373,19 @@ coll = COLLECT(ikobconfig_exe,
                ontplooiing_exe,
                ontplooiing_a.binaries,
                ontplooiing_a.zipfiles,
-               ontplooiing_a.datas, 
+               ontplooiing_a.datas,
                potentie_exe,
                potentie_a.binaries,
                potentie_a.zipfiles,
-               potentie_a.datas, 
+               potentie_a.datas,
                arbeid_exe,
                arbeid_a.binaries,
                arbeid_a.zipfiles,
-               arbeid_a.datas, 
+               arbeid_a.datas,
                inwoners_exe,
                inwoners_a.binaries,
                inwoners_a.zipfiles,
-               inwoners_a.datas, 
+               inwoners_a.datas,
                strip=False,
                upx=True,
                upx_exclude=[],

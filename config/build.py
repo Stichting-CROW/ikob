@@ -43,7 +43,7 @@ def _get_value(leaf):
         if var.get():
           value.append(valitems[i])
     else:
-      value = valvar.get()    
+      value = valvar.get()
   else:
     value = _default_value(leaf)
   return value

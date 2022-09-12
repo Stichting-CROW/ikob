@@ -27,17 +27,29 @@ Uitvoernaam = verdeling_config['uitvoernaam']
 # Vaste waarden
 inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
 
-Inkomensverdelingfilenaam = os.path.join ( SEGSdirectory, 'Inkomensverdeling_per_zone')
-Inkomensverdelinggegevens = Routines.csvintlezen (Inkomensverdelingfilenaam,aantal_lege_regels=1)
-print ('Lengte Inkomensverdelingsgegevens', len (Inkomensverdelinggegevens), len (Inkomensverdelinggegevens[0]))
+Inwonersperklassenaam = os.path.join (SEGSdirectory, f'Inwoners_per_klasse{Jaar}')
+Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam, aantal_lege_regels=1)
+Inwonerstotalen = []
+for i in range (len(Inwonersperklasse)):
+    Inwonerstotalen.append(sum(Inwonersperklasse[i]))
+Inkomensverdeling = []
+for i in range (len(Inwonersperklasse)):
+    Inkomensverdeling.append([])
+    for j in range (len(Inwonersperklasse[0])):
+        if Inwonerstotalen[i]>0:
+            Inkomensverdeling[i].append(Inwonersperklasse[i][j]/Inwonerstotalen[i])
+        else:
+            Inkomensverdeling[i].append (0)
+#Inkomensverdelingfilenaam = os.path.join ( SEGSdirectory, 'Inkomensverdeling_per_zone')
+#Inkomensverdeling = Routines.csvintlezen (Inkomensverdelingfilenaam,aantal_lege_regels=1)
+print ('Lengte Inkomensverdelingsgegevens', len (Inkomensverdeling), len (Inkomensverdeling[0]))
 CBSAutobezitfilenaam = os.path.join ( SEGSdirectory, 'CBS_autos_per_huishouden')
 CBSAutobezitegevens = Routines.csvintlezen (CBSAutobezitfilenaam)
-Inwoners18plusfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{Jaar}')
-print (Inwoners18plusfilenaam)
-Inwoners18plus = Routines.csvintlezen (Inwoners18plusfilenaam)
+#Inwoners18plusfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{Jaar}')
+#print (Inwoners18plusfilenaam)
+#Inwoners18plus = Routines.csvintlezen (Inwoners18plusfilenaam)
 Stedelijkheidsgraadfilenaam = os.path.join ( SEGSdirectory, 'Stedelijkheidsgraad')
 Stedelijkheidsgraadgegevens = Routines.csvlezen (Stedelijkheidsgraadfilenaam)
-print ('Lengte Stedelijkheidsgraadgegevens', len (Stedelijkheidsgraadgegevens), len (Stedelijkheidsgraadgegevens[0]))
 
 #Stedelijkheidsgraadgegevens[0] = '1'
 #Stedelijkheidsgraadgegevens[900] = '1'
@@ -63,6 +75,7 @@ if Kunst:
         Minimumautobezit.append(min(CBSAutobezitegevens[i],Kunstmatigautobezit[i]))
 else:
     Minimumautobezit = CBSAutobezitegevens
+
 GeenRijbewijsfilenaam = os.path.join ( SEGSdirectory, 'GeenRijbewijs')
 GRijbewijs = Routines.csvintlezen (GeenRijbewijsfilenaam,aantal_lege_regels=1)
 GeenAutofilenaam = os.path.join ( SEGSdirectory, 'GeenAuto')
@@ -89,10 +102,11 @@ def Corrigeren (Matrix, Lijst) :
         else:
             Correctiefactor = 1
         for j in range ( len ( Matrix[0] ) ):
-            Matrix2[i].append(round(Matrix[i][j]*Correctiefactor))
+            Correctie = Matrix[i][j]*Correctiefactor
+            Matrix2[i].append(round(Correctie,4))
     return Matrix2
 
-print ('de lengte is', len(Inkomensverdelinggegevens))
+print ('de lengte is', len(Inkomensverdeling))
 
 
 Totaaloverzicht = []
@@ -120,14 +134,14 @@ for ink in inkomens:
 
             # Eerst "theoretosch auto- en rijbewijsbezit" vaststellen
 
-for i in range ( len ( Inkomensverdelinggegevens ) ):
+for i in range ( len ( Inkomensverdeling ) ):
     WelAuto.append([])
     GeenAutoWelRijbewijs.append([])
     GeenRijbewijs.append([])
     Totaaloverzicht.append([])
     Autobezitpercentage = []
-    for Getal1,Getal2 in zip (Inkomensverdelinggegevens[i], WAuto[Sted[i]-1]) :
-        Autobezitpercentage.append ( Getal1/100 * Getal2/100)
+    for Getal1,Getal2 in zip (Inkomensverdeling[i], WAuto[Sted[i]-1]) :
+        Autobezitpercentage.append ( Getal1 * Getal2/100)
     Autobezitpercentages = sum (Autobezitpercentage)
 
     #Kijken of het werkelijke autobezit lager is:
@@ -157,26 +171,34 @@ for i in range ( len ( Inkomensverdelinggegevens ) ):
 
     for ink in inkomens :
         #Van de auto's de gratisauto's en gratisauto en OV-bepalen en de rest overhouden
-        Inkomensaandeel = Inkomensverdelinggegevens [i][inkomens.index(ink)]/100
+        Inkomensaandeel = Inkomensverdeling [i][inkomens.index(ink)]
         GratisAuto = WelAuto[i][inkomens.index(ink)] * Gratisautonaarinkomens [inkomens.index(ink)]
         NietGratisAuto= WelAuto[i][inkomens.index(ink)] - GratisAuto
-        Totaaloverzicht[i].append( round(GratisAuto * (1-GratisOVpercentage)*10000 * Inkomensaandeel)) # Eerst GratisAuto
-        Totaaloverzicht[i].append( round (GratisAuto * GratisOVpercentage*10000 * Inkomensaandeel)) # Dan GratisOV
-        Totaaloverzicht[i].append( round (NietGratisAuto * GratisOVpercentage *10000 * Inkomensaandeel)) # WelAuto, maar gratisOV
+        GratisAutoaandeel = GratisAuto * (1-GratisOVpercentage) * Inkomensaandeel
+        Totaaloverzicht[i].append( round(GratisAutoaandeel,4)) # Eerst GratisAuto
+        GratisAutoenOVaandeel = GratisAuto * GratisOVpercentage * Inkomensaandeel
+        Totaaloverzicht[i].append( round (GratisAutoenOVaandeel,4)) # Dan GratisOV
+        GratisOVaandeel = NietGratisAuto * GratisOVpercentage * Inkomensaandeel
+        Totaaloverzicht[i].append( round (GratisOVaandeel,4)) # WelAuto, maar gratisOV
         for vk in voorkeuren :
             Aandeelvk = NietGratisAuto * (1-GratisOVpercentage) * Voorkeuren[Sted[i] - 1][voorkeuren.index ( vk )] / 100
-            Totaaloverzicht[i].append ( round (Aandeelvk * 10000 * Inkomensaandeel)) # Dan de diverse voorkeuren
+            Voorkeursaandeel = Aandeelvk * Inkomensaandeel
+            Totaaloverzicht[i].append ( round (Voorkeursaandeel,4)) # Dan de diverse voorkeuren
         GeenAuto = GeenAutoWelRijbewijs[i][inkomens.index(ink)]
-        Totaaloverzicht[i].append ( round(GeenAuto * GratisOVpercentage * 10000 * Inkomensaandeel)) # Gratis OV voor Geen Auto
+        GeenAutoGratisOVaandeel = GeenAuto * GratisOVpercentage * Inkomensaandeel
+        Totaaloverzicht[i].append ( round(GeenAutoGratisOVaandeel,4)) # Gratis OV voor Geen Auto
 
         for vkg in voorkeurengeenauto:
             Aandeelvk = GeenAuto * (1 - GratisOVpercentage) * VoorkeurenGeenAuto[Sted[i] - 1][voorkeurengeenauto.index ( vkg )] / 100
-            Totaaloverzicht[i].append ( round (Aandeelvk * 10000 * Inkomensaandeel)) # Dan de diverse voorkeuren
+            Voorkeursaandeel = Aandeelvk * Inkomensaandeel
+            Totaaloverzicht[i].append ( round (Voorkeursaandeel,4)) # Dan de diverse voorkeuren
         GeenRB = GeenRijbewijs[i][inkomens.index(ink)]
-        Totaaloverzicht[i].append ( round(GeenRB * GratisOVpercentage * 10000 * Inkomensaandeel)) # Gratis OV voor Geen Rijbewijs
+        GeenRBGratisOVaandeel = GeenRB * GratisOVpercentage * Inkomensaandeel
+        Totaaloverzicht[i].append ( round(GeenRBGratisOVaandeel,4)) # Gratis OV voor Geen Rijbewijs
         for vkg in voorkeurengeenauto:
             Aandeelvk = GeenRB * (1 - GratisOVpercentage) * VoorkeurenGeenAuto[Sted[i] - 1][voorkeurengeenauto.index ( vkg )] / 100
-            Totaaloverzicht[i].append ( round (Aandeelvk * 10000 * Inkomensaandeel)) # Dan de diverse voorkeuren
+            Voorkeursaandeel = Aandeelvk * Inkomensaandeel
+            Totaaloverzicht[i].append ( round (Voorkeursaandeel,4)) # Dan de diverse voorkeuren
 
 Totaaloverzichtfilenaam = os.path.join ( SEGSdirectory, f'{Uitvoernaam}' )
 Routines.csvwegschrijvenmetheader ( Totaaloverzicht, Totaaloverzichtfilenaam, Header )

@@ -10,6 +10,7 @@ from ikobconfig import getConfigFromArgs
 # het opgegeven configuratie bestand in een dict.
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
+Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
 paden_config = config['project']['paden']
 verdeling_config = config['verdeling']
 skims_config = config ['skims']
@@ -56,12 +57,25 @@ headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiet
 
 Grverdelingfile=Grverdelingfile.replace('.csv','')
 Groepverdelingfile=os.path.join(SEGSdirectory,Grverdelingfile)
-Verdelingsmatrix = Routines.csvintlezen(Groepverdelingfile, aantal_lege_regels=1)
+Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
 Verdelingstransmatrix = Berekeningen.Transponeren (Verdelingsmatrix)
-Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
-Inkomensverdeling = Routines.csvintlezen (Inkomensverdelingsfilenaam, aantal_lege_regels=1)
+#Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
+#Inkomensverdeling = Routines.csvintlezen (Inkomensverdelingsfilenaam, aantal_lege_regels=1)
+
 Inwonersperklassenaam = os.path.join (SEGSdirectory, f'Inwoners_per_klasse{Jaar}')
-Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam,aantal_lege_regels=1)
+Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam, aantal_lege_regels=1)
+Inwonerstotalen = []
+for i in range (len(Inwonersperklasse)):
+    Inwonerstotalen.append(sum(Inwonersperklasse[i]))
+Inkomensverdeling = []
+for i in range (len(Inwonersperklasse)):
+    Inkomensverdeling.append([])
+    for j in range (len(Inwonersperklasse[0])):
+        if Inwonerstotalen[i]>0:
+            Inkomensverdeling[i].append(Inwonersperklasse[i][j]/Inwonerstotalen[i])
+        else:
+            Inkomensverdeling[i].append (0)
+
 Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, f'Arbeidsplaatsen_inkomensklasse{Jaar}')
 Arbeidsplaatsen = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
 
@@ -173,10 +187,12 @@ def bereken_concurrentie (Matrix, Inwoners, Bereik, inkgr):
     return Dezegroeplijst
 
 for ds in dagsoort:
-    Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', ds)
-    Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', ds)
-    Concurrentiedirectory = os.path.join (Skimsdirectory, 'Concurrrentie', 'inwoners', 'Resultaten')
-    Bestemmingendirectory = os.path.join ( Skimsdirectory, 'Bestemmingen', 'Resultaten', ds )
+    Combinatiedirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', 'Combinaties', ds)
+    Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory,Projectbestandsnaam, 'Gewichten', ds)
+    Concurrentiedirectory = os.path.join (Skimsdirectory, Projectbestandsnaam, 'Resultaten',
+                                          'Concurrentie', 'inwoners', ds)
+    Bestemmingendirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Resultaten' , 'Bestemmingen',
+                                           ds )
     os.makedirs (Concurrentiedirectory, exist_ok=True)
     for inkgr in inkgroepen:
 
@@ -196,7 +212,7 @@ for ds in dagsoort:
                             vkklad = ''
 
                         Fietsfilenaam = os.path.join ( Enkelemodaliteitdirectory, f'{mod}_vk{vkklad}' )
-                        Fietsmatrix = Routines.csvintlezen ( Fietsfilenaam )
+                        Fietsmatrix = Routines.csvlezen ( Fietsfilenaam )
                         print ( 'Lengte Fietsmatrix is', len ( Fietsmatrix ) )
                         Bereikfilenaam = os.path.join(Bestemmingendirectory,f'Totaal_{mod}_{inkgr}')
                         Bereik = Routines.csvintlezen (Bereikfilenaam)
@@ -204,37 +220,37 @@ for ds in dagsoort:
 
                         for i in range ( 0, len ( Fietsmatrix ) ):
                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
-                                Bijhoudlijst[i] += round(Dezegroeplijst[i])
+                                Bijhoudlijst[i] += Dezegroeplijst[i]
 
                     elif mod == 'Auto' or mod == 'OV':
                         String = enkelegroep(mod, gr)
                         print ( String )
                         Filenaam = os.path.join ( Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}' )
-                        Matrix = Routines.csvintlezen ( Filenaam )
+                        Matrix = Routines.csvlezen ( Filenaam )
                         Bereikfilenaam = os.path.join(Bestemmingendirectory,f'Totaal_{mod}_{inkgr}')
                         Bereik = Routines.csvintlezen (Bereikfilenaam)
                         Dezegroeplijst = bereken_concurrentie ( Matrix, Inwonersperklasse, Bereik, inkgr)
                         for i in range ( 0, len ( Matrix ) ):
                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
-                                Bijhoudlijst[i] += round ( Dezegroeplijst[i])
+                                Bijhoudlijst[i] += Dezegroeplijst[i]
                     else:
                         String = combigroep ( mod, gr )
                         print ( String )
                         Filenaam = os.path.join ( Combinatiedirectory, f'{String}_vk{vk}_{ink}' )
-                        Matrix = Routines.csvintlezen ( Filenaam )
+                        Matrix = Routines.csvlezen ( Filenaam )
                         Bereikfilenaam = os.path.join ( Bestemmingendirectory, f'Totaal_{mod}_{inkgr}' )
                         Bereik = Routines.csvintlezen ( Bereikfilenaam )
                         Dezegroeplijst = bereken_concurrentie ( Matrix, Inwonersperklasse, Bereik, inkgr)
                         for i in range ( 0, len ( Matrix ) ):
                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
-                                Bijhoudlijst[i] += round ( Dezegroeplijst[i])
+                                Bijhoudlijst[i] += Dezegroeplijst[i]
             Bijhoudfilenaam = os.path.join ( Concurrentiedirectory, f'Totaal_{mod}_{inkgr}' )
             Routines.csvwegschrijven ( Bijhoudlijst, Bijhoudfilenaam, soort='lijst' )
         # En tot slot alles bij elkaar harken:
         Generaaltotaal_potenties = []
         for mod in modaliteiten:
             Totaalmodfilenaam = os.path.join ( Concurrentiedirectory, f'Totaal_{mod}_{inkgr}' )
-            Totaalrij = Routines.csvintlezen ( Totaalmodfilenaam )
+            Totaalrij = Routines.csvlezen ( Totaalmodfilenaam )
             Generaaltotaal_potenties.append ( Totaalrij )
             Generaaltotaaltrans = Berekeningen.Transponeren ( Generaaltotaal_potenties )
             Uitvoerfilenaam = os.path.join ( Concurrentiedirectory, f'Ontpl_conc_{inkgr}' )
@@ -249,7 +265,7 @@ for ds in dagsoort:
         for inkgr in inkgroepen:
 
             Totaalmodfilenaam = os.path.join (Concurrentiedirectory, f'Totaal_{mod}_{inkgr}')
-            Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
+            Totaalrij = Routines.csvlezen(Totaalmodfilenaam)
             Generaalmatrix.append(Totaalrij)
             Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
         for i in range (len(Inwonersperklasse)):
@@ -260,7 +276,7 @@ for ds in dagsoort:
                 else:
                     Generaalmatrixproduct[i].append(0)
 
-        Uitvoerfilenaam = os.path.join(Concurrentiedirectory, f'Ontpl_conc_{mod}')
-        Uitvoerfilenaamproduct = os.path.join(Concurrentiedirectory, f'Ontpl_concproduct_{mod}')
+        Uitvoerfilenaam = os.path.join(Concurrentiedirectory, f'Pot_conc_{mod}')
+        Uitvoerfilenaamproduct = os.path.join(Concurrentiedirectory, f'Pot_concproduct_{mod}')
         Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, header)
         Routines.xlswegschrijven(Generaalmatrixproduct,Uitvoerfilenaamproduct, header)

@@ -5,8 +5,8 @@ def _validateDefaultType(valtype, defvalue):
   defvaluetype = type(defvalue)
   if defvaluetype is dict:
     return False
-  if (valtype == 'text' 
-    or valtype == 'file' 
+  if (valtype == 'text'
+    or valtype == 'file'
     or valtype == 'directory'
     or valtype == 'choice') and defvaluetype is not str:
       return False
@@ -35,7 +35,7 @@ def validateTemplate(template):
             return False
           if len(t['items']) < 1:
             print(f"Geen opties in 'items' voor type '{valtype}' in '{key}'.")
-            return False      
+            return False
       if 'range' in t:
         valrange = t['range']
         if valtype != 'number':
@@ -124,6 +124,3 @@ def validateConfigWithTemplate(config, template, strict=False):
     elif type(template[key]) is dict:
       return validateConfigWithTemplate(config[key], template[key], strict = strict)
   return True
-
-
-

@@ -43,7 +43,7 @@ def _browseFile(var):
   if selectedfile:
     var.set(selectedfile)
     _LastFile = selectedfile
-  
+
 
 def _browseDir(var):
   global _LastDir
@@ -113,7 +113,7 @@ if __name__ == '__main__':
   N1 = ttk.Notebook(root)
   T1 = ttk.Frame(N1)
   N1.add(T1, text='Tab 1')
-  
+
   var = IntVar()
 
   F1 = LabelFrame(master=T1, text="Frame", borderwidth=4)

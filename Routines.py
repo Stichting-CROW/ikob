@@ -127,13 +127,13 @@ def csvlezen (filenaam, aantal_lege_regels=0):
     if row_count == 1:
         tussenmatrix.append ( matrix[0] )
         for elem in tussenmatrix[0]:
-            uitmatrix.append ( elem )
+            uitmatrix.append ( float(elem) )
     else:
         for r in range ( 0, row_count - aantal_lege_regels ):
             tussenmatrix.append (matrix[r])
             uitmatrix.append ([])
             for elem in tussenmatrix[r]:
-                uitmatrix[r].append ( elem )
+                uitmatrix[r].append ( float (elem) )
     return uitmatrix
 
 def csvintlezen (filenaam, aantal_lege_regels=0):

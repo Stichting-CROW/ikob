@@ -10,6 +10,7 @@ from ikobconfig import getConfigFromArgs
 # het opgegeven configuratie bestand in een dict.
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
+Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
 project_config = config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
@@ -77,17 +78,17 @@ def gewichtenberekenen (skim, alpha, omega, weging):
                 reistijdwaarde = 0
             if reistijdwaarde < 0.001 :
                 reistijdwaarde = 0
-            Gewichtenmatrix[r].append( int(10000*reistijdwaarde) )
+            Gewichtenmatrix[r].append( round(reistijdwaarde,4) )
     return Gewichtenmatrix
 
 # Avondspits en Ochtendspits eruit verwijderd
 
 for ds in dagsoort:
     for mot in motieven:
-        Gewichtendirectory = os.path.join ( Skimsdirectory, 'Gewichten', ds )
+        Gewichtendirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', ds )
         #Gewichtendirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
         os.makedirs(Gewichtendirectory,exist_ok=True)
-        Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', ds)
+        Ervarenreistijddirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Ervarenreistijd', ds)
         #Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', Scenario, ds )
         for mod in modaliteitenfiets:
             for vk in voorkeuren:
@@ -101,7 +102,11 @@ for ds in dagsoort:
                         constanten = Constantengenerator.alomwinkeldagelijkszorg ( mod, vk )
                     else:
                         constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( mod, vk )
-                    Gewichten = Berekeningen.gewichten( GGRskim, constanten)
+                    alpha = constanten[0]
+                    omega = constanten[1]
+                    weging = constanten[2]
+                    print ( alpha, omega, weging )
+                    Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
                     if vk == 'Auto':
                         Uitvoerfilenaam = os.path.join(Gewichtendirectory, f'{mod}_vk')
                     else :
@@ -117,11 +122,17 @@ for ds in dagsoort:
                 ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{ink}')
                 #ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{soort}_{ink}')
                 GGRskim = Routines.csvintlezen(ErvarenReistijdfilenaam)
-                alpha = constantenwerk ('Auto',vk)[0]
-                omega = constantenwerk ( 'Auto', vk )[1]
-                weging = constantenwerk ( 'Auto', vk )[2]
-                print(alpha,omega,weging)
-                Gewichten = gewichtenberekenen( GGRskim, alpha, omega, weging )
+                if mot == 'werk':
+                    constanten = Constantengenerator.alomwerk ('Auto', vk )
+                elif mot == 'winkeldagelijkszorg':
+                    constanten = Constantengenerator.alomwinkeldagelijkszorg ('Auto', vk )
+                else:
+                    constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ('Auto', vk )
+                alpha = constanten[0]
+                omega = constanten[1]
+                weging = constanten[2]
+                print ( alpha, omega, weging )
+                Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
                 Uitvoerfilenaam = os.path.join (Gewichtendirectory,f'Auto_vk{vk}_{ink}')
                 Routines.csvwegschrijven(Gewichten,Uitvoerfilenaam)
 
@@ -143,7 +154,11 @@ for ds in dagsoort:
                         constanten = Constantengenerator.alomwinkeldagelijkszorg ( 'Auto', vk )
                     else:
                         constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( 'Auto', vk )
-                    Gewichten = Berekeningen.gewichten( GGRskim, constanten)
+                    alpha = constanten[0]
+                    omega = constanten[1]
+                    weging = constanten[2]
+                    print ( alpha, omega, weging )
+                    Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
                     Uitvoerfilenaam = os.path.join ( Gewichtendirectory, f'{sga}_vk{vk}_{ink}' )
                     Routines.csvwegschrijven ( Gewichten, Uitvoerfilenaam )
 
@@ -166,8 +181,11 @@ for ds in dagsoort:
                         constanten = Constantengenerator.alomwinkeldagelijkszorg ( modOV, vk )
                     else:
                         constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( modOV, vk )
-                    print (modOV,vk,constanten)
-                    Gewichten = Berekeningen.gewichten( GGRskim, constanten )
+                    alpha = constanten[0]
+                    omega = constanten[1]
+                    weging = constanten[2]
+                    print ( alpha, omega, weging )
+                    Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
                     Uitvoerfilenaam = os.path.join(Gewichtendirectory, f'{modOV}_vk{vk}_{ink}')
                     Routines.csvwegschrijven(Gewichten,Uitvoerfilenaam)
 
@@ -185,7 +203,11 @@ for ds in dagsoort:
                 constanten = Constantengenerator.alomwinkeldagelijkszorg ( 'Auto', 'Auto' )
             else:
                 constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( 'Auto', 'Auto' )
-            Gewichten = Berekeningen.gewichten ( GGRskim, constanten)
+            alpha = constanten[0]
+            omega = constanten[1]
+            weging = constanten[2]
+            print ( alpha, omega, weging )
+            Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
             specialauto = ['Neutraal', 'Auto']
             for vks in specialauto:
                 Uitvoerfilenaam = os.path.join ( Gewichtendirectory, f'GratisAuto_vk{vks}_{ink}' )
@@ -200,7 +222,11 @@ for ds in dagsoort:
                 constanten = Constantengenerator.alomwinkeldagelijkszorg ( 'OV', 'OV' )
             else:
                 constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( 'OV', 'OV' )
-            Gewichten = Berekeningen.gewichten( GGRskim, constanten )
+            alpha = constanten[0]
+            omega = constanten[1]
+            weging = constanten[2]
+            print ( alpha, omega, weging )
+            Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
             specialOV = ['Neutraal', 'OV']
             for vks in specialOV:
                 Uitvoerfilenaam = os.path.join ( Gewichtendirectory, f'GratisOV_vk{vks}_{ink}' )

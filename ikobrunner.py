@@ -66,9 +66,9 @@ class ConfigApp(Tk):
           print(f'Uitvoeren van stap: {stap[0]}.')
           script = os.path.join(scriptdir, f'{stap[1]}.{self.runmode}')
           if self.runmode == 'exe':
-            result = subprocess.call(f'\"{script}\" \"{self._project}\"', shell=True)
+            result = subprocess.call(f'{script} \"{self._project}\"', shell=True)
           else:
-            result = subprocess.call(f'{pythonexe} \"{script}\" \"{self._project}\"', shell=True)
+            result = subprocess.call(f'{pythonexe} {script} \"{self._project}\"', shell=True)
           if result!=0:
             messagebox.showerror(title='FOUT', message=f'Python gaf fout code: {result} in stap {stap[0]}.')
             return

@@ -8,13 +8,13 @@ def StandaardConfiguratieDefinitie():
   - Overal:
     - label: De tekst voor een label voor invoer veld, tab, of frame.
   - Alleen in 'bladen' (het diepste niveau) van de definitie:
-    - type (verplicht): (soort invoer) 
-        text, 
-        number, 
-        directory, 
-        file, 
-        checkbox, 
-        checklist, 
+    - type (verplicht): (soort invoer)
+        text,
+        number,
+        directory,
+        file,
+        checkbox,
+        checklist,
         choice.
       ('file' en 'directory' krijgen een 'browse' knop achter het veld)
     - unit: label achter het invoerveld: (alleen text en number)
@@ -63,6 +63,19 @@ def StandaardConfiguratieDefinitie():
                 'type': 'checklist',
                 'items': ['werk', 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs'],
                 'default': ['werk']
+            },
+            'ketens': {
+                'label': 'Wordt er ook gewerkt met ketenverplaatsingen (hubs?',
+                'gebruiken': {
+                    'label': 'Wel ketens en hubs',
+                        'type': 'checkbox',
+                        'default': False
+                },
+                'naam hub': {
+                    'label': 'Wat is de naam van de hub?',
+                    'type': 'text',
+                    'default': ''
+                }
             }
         },
         'skims': {
@@ -80,25 +93,19 @@ def StandaardConfiguratieDefinitie():
                 'default': ['Tijd', 'Kosten']
             },
             'OV kosten': {
-                'benaderen': {
-                    'gebruiken': {
-                        'label': 'Gebruik benadering',
-                        'type': 'checkbox',
-                        'default': True
-                    },
-                    'starttarief': {
-                        'label': 'Starttarief',
-                        'type': 'number',
-                        'unit': 'Eurocent',
-                        'default': 75
-                    },
-                    'kmkosten': {
-                        'label': 'Variable kosten',
-                        'type': 'number',
-                        'unit': 'Eurocent/km',
-                        'default': 12
-                    }
-                }  # ,
+                'starttarief': {
+                    'label': 'Starttarief',
+                    'type': 'number',
+                    'unit': 'Eurocent',
+                    'default': 75
+                },
+                'kmkosten': {
+                    'label': 'Variable kosten',
+                    'type': 'number',
+                    'unit': 'Eurocent/km',
+                    'default': 12
+                }
+                # ,
                 # 'Uit bestand': {
                 #  'label': 'OV kosten bestand',
                 #  'type': 'file',
@@ -124,8 +131,21 @@ def StandaardConfiguratieDefinitie():
                 'type': 'file',
                 'default': ''
             },
+            'parkeerkosten': {
+                'label': 'Is er een bestand met parkeerkosten per zone?',
+                'gebruiken': {
+                    'label': 'Parkeerkosten',
+                    'type': 'checkbox',
+                    'default': False
+                },
+                'bestand': {
+                    'label': 'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
+                    'type': 'file',
+                    'default': ''
+                },
+            },
             'additionele_kosten': {
-                'label': 'Is er een bestand met additionele kosten?',
+                'label': 'Is er een bestand met additionele kosten (bedragen zijn in euros?',
                 'gebruiken': {
                     'label': 'Additionele kosten',
                     'type': 'checkbox',
@@ -138,7 +158,7 @@ def StandaardConfiguratieDefinitie():
                 },
             },
             'soortgeenauto': {
-                'label': 'Soort geen auto',
+                'label': 'Onderverdeling van niet-autobezitters (GeenAuto betekent bezit geen auto wel een rijbewijs)',
                 'type': 'checklist',
                 'items': ['GeenAuto', 'GeenRijbewijs'],
                 'default': ['GeenAuto', 'GeenRijbewijs']
@@ -146,14 +166,14 @@ def StandaardConfiguratieDefinitie():
             'varkostenga': {
                 'label': 'Variabele kosten geen auto',
                 'GeenAuto': {
-                    'label': 'Bezit geen auto',
+                    'label': 'Deelauto (bezit geen auto, wel rijbewijs)',
                     'type': 'number',
                     'unit': 'Euro/km',
                     'range': [0, 9999],
                     'default': 0.33
                 },
                 'GeenRijbewijs': {
-                    'label': 'Bezit geen rijbewijs',
+                    'label': 'Taxi (bezit geen rijbewijs)',
                     'type': 'number',
                     'unit': 'Euro/km',
                     'range': [0, 9999],
@@ -163,14 +183,14 @@ def StandaardConfiguratieDefinitie():
             'tijdkostenga': {
                 'label': 'Tijd kosten geen auto',
                 'GeenAuto': {
-                    'label': 'Bezit geen auto',
+                    'label': 'Deelauto (bezit geen auto, wel rijbewijs)',
                     'type': 'number',
                     'unit': 'Euro/Minuut',
                     'range': [0, 9999],
                     'default': 0.01
                 },
                 'GeenRijbewijs': {
-                    'label': 'Bezit geen rijbewijs',
+                    'label': 'Taxi (bezit geen rijbewijs)',
                     'type': 'number',
                     'unit': 'Euro/Minuut',
                     'range': [0, 9999],

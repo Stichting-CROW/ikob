@@ -7,6 +7,7 @@ from ikobconfig import getConfigFromArgs
 # het opgegeven configuratie bestand in een dict.
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
+Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
 project_config=config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
@@ -58,7 +59,7 @@ headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiet
 Vermenigvuldig = []
 Grverdelingfile=Grverdelingfile.replace('.csv','')
 Groepverdelingfile=os.path.join(SEGSdirectory,Grverdelingfile)
-Verdelingsmatrix = Routines.csvintlezen(Groepverdelingfile, aantal_lege_regels=1)
+Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
 Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, f'Arbeidsplaatsen_inkomensklasse{Jaar}')
 Arbeidsplaatsenperklasse = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
 Volwassenenfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{Jaar}')
@@ -160,7 +161,7 @@ def inwonersfile_maken (Verdelingsmatrix, Volwassenen):
     for i in range (len(Volwassenen)) :
         Inwonersfile.append([])
         for j in range (len(Verdelingsmatrix[0])) :
-            Inwonersfile[i].append(round(Volwassenen[i]*Verdelingsmatrix[i][j]/10000))
+            Inwonersfile[i].append(round(Volwassenen[i]*Verdelingsmatrix[i][j]))
     return Inwonersfile
 
 def bereken_potenties (Matrix, Inwonerstrans, gr):
@@ -168,7 +169,7 @@ def bereken_potenties (Matrix, Inwonerstrans, gr):
     for i in range ( len ( Matrix ) ):
         Gewogenmatrix = []
         for Getal1, Getal2 in zip ( Matrix[i], Inwonerstrans[Groepen.index ( gr )] ):
-            Gewogenmatrix.append ( Getal1 * Getal2/10000 )
+            Gewogenmatrix.append ( Getal1 * Getal2 )
         Dezegroeplijst.append ( sum ( Gewogenmatrix ) )
     return Dezegroeplijst
 
@@ -176,9 +177,9 @@ Inwoners = inwonersfile_maken (Verdelingsmatrix, Volwassenen)
 Inwonerstransmatrix = Berekeningen.Transponeren(Inwoners)
 
 for ds in dagsoort:
-    Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', ds )
-    Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', ds )
-    Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, 'Herkomsten', 'Resultaten', ds )
+    Combinatiedirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', 'Combinaties', ds )
+    Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', ds )
+    Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Resultaten', 'Herkomsten', ds )
     # Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
     # Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
     # Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, 'Herkomsten', Scenario, 'Restdag', Naamuitvoer)
@@ -202,7 +203,7 @@ for ds in dagsoort:
                             vkklad = ''
 
                         Fietsfilenaam = os.path.join (Enkelemodaliteitdirectory, f'{mod}_vk{vkklad}')
-                        Fietsmatrix = Routines.csvintlezen (Fietsfilenaam)
+                        Fietsmatrix = Routines.csvlezen (Fietsfilenaam)
                         Dezegroeplijst = bereken_potenties (Fietsmatrix, Inwonerstransmatrix, gr)
 
                         for i in range(0, len(Fietsmatrix) ):
@@ -211,7 +212,7 @@ for ds in dagsoort:
                         String = enkelegroep (mod,gr)
                         print (String)
                         Filenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
-                        Matrix = Routines.csvintlezen(Filenaam)
+                        Matrix = Routines.csvlezen(Filenaam)
                         Dezegroeplijst = bereken_potenties ( Matrix, Inwonerstransmatrix, gr )
                         for i in range(0, len(Matrix) ):
                             Bijhoudlijst[i]+= round(Dezegroeplijst[i])
@@ -219,7 +220,7 @@ for ds in dagsoort:
                         String = combigroep (mod,gr)
                         print (String)
                         Filenaam = os.path.join (Combinatiedirectory, f'{String}_vk{vk}_{ink}')
-                        Matrix = Routines.csvintlezen ( Filenaam )
+                        Matrix = Routines.csvlezen ( Filenaam )
                         Dezegroeplijst = bereken_potenties ( Matrix, Inwonerstransmatrix, gr )
                         for i in range ( 0, len ( Matrix ) ):
                             Bijhoudlijst[i] += round ( Dezegroeplijst[i])
