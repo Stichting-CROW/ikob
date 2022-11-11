@@ -1,0 +1,76 @@
+{
+  "verdeling": {
+    "GratisOVpercentage": 0.03,
+    "elektrischeautos": "0",
+    "kunstmab": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "uitvoernaam": "verdelingovergroepen_duurparkeren"
+  },
+  "TVOM": {
+    "overig": {
+      "hoog": 4.8,
+      "middelhoog": 7.25,
+      "laag": 15.5,
+      "middellaag": 10.9
+    },
+    "werk": {
+      "hoog": 4.0,
+      "middelhoog": 6.0,
+      "laag": 12.0,
+      "middellaag": 9.0
+    }
+  },
+  "project": {
+    "naam": "Duurparkeren",
+    "jaar": "2015",
+    "paden": {
+      "skims_directory": "C:/Users/hansv/OneDrive - Een nieuwe kijk/Tilburg-Breda/De 4 hoekpunten/Basisjaar",
+      "segs_directory": "C:/Users/hansv/OneDrive - Een nieuwe kijk/Tilburg-Breda/De 4 hoekpunten/SEGS"
+    },
+    "motieven": [
+      "werk"
+    ],
+    "ketens": {
+      "naam hub": "",
+      "gebruiken": false
+    }
+  },
+  "skims": {
+    "soortgeenauto": [
+      "GeenAuto",
+      "GeenRijbewijs"
+    ],
+    "dagsoort": [
+      "Restdag"
+    ],
+    "varautotarief": 16.0,
+    "varkostenga": {
+      "GeenAuto": 0.33,
+      "GeenRijbewijs": 2.4
+    },
+    "parkeerzoektijden_bestand": "C:/Users/hansv/OneDrive - Een nieuwe kijk/Tilburg-Breda/De 4 hoekpunten/SEGS/Parkeerzoektijd.csv",
+    "kmheffing": 0.0,
+    "OV kosten": {
+      "kmkosten": 12.0,
+      "starttarief": 75.0
+    },
+    "parkeerkosten": {
+      "bestand": "C:/Users/hansv/OneDrive - Een nieuwe kijk/Tilburg-Breda/De 4 hoekpunten/SEGS/Parkeerkosten_Test.csv",
+      "gebruiken": true
+    },
+    "tijdkostenga": {
+      "GeenAuto": 0.01,
+      "GeenRijbewijs": 0.4
+    },
+    "additionele_kosten": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "aspect": [
+      "Tijd",
+      "Kosten"
+    ]
+  }
+}

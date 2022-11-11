@@ -7,4 +7,3 @@ TODO: Introductie
 ## Hoe te gebruiken
 
 TODO: Workflow
-
