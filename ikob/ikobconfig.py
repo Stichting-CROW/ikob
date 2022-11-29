@@ -45,7 +45,9 @@ def loadConfig(filename):
     raise IOError(f'Kan niet lezen uit: {filename}.')
   if config:
     if not valideerConfiguratie(config):
-      raise ValueError('Configuratie heeft een incompatibel formaat.')
+      if not valideerConfiguratie(config, repair=True):
+        raise ValueError('Configuratie heeft een incompatibel formaat.')
+      messagebox.showwarning(title='Waarschuwing', message=f'Het bestand bevatte fouten en is gerepareerd.')
     config['__filename__'] = os.path.splitext(os.path.basename(filename))[0]
   return config
 

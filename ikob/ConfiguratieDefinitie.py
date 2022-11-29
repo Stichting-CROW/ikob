@@ -374,11 +374,14 @@ def projectNaam(config):
     return config['project']['naam']
 
 
-def valideerConfiguratie(config, strict=True):
+def valideerConfiguratie(config, strict=True, repair=False):
     """
   Valideer een configuratie dictionary.
   """
-    return validate.validateConfigWithTemplate ( config, StandaardConfiguratieDefinitie ( ), strict=strict )
+    return validate.validateConfigWithTemplate (
+      config, StandaardConfiguratieDefinitie(),
+      strict=strict,
+      repair=repair)
 
 
 def StandaardConfiguratie():
