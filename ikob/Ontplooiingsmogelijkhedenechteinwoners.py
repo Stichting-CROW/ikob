@@ -19,9 +19,9 @@ dagsoort = skims_config['dagsoort']
 #ontpl_config = config['ontplooiing']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['skims_directory']
+Basisdirectory = paden_config['skims_directory']
 SEGSdirectory = paden_config['segs_directory']
-Jaar = project_config['jaar']
+scenario = project_config['scenario']
 #Scenario = project_config['scenario']
 Grverdelingfile = verdeling_config['uitvoernaam']
 
@@ -65,7 +65,7 @@ Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
 Verdelingstransmatrix = Berekeningen.Transponeren (Verdelingsmatrix)
 #Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
 #Inkomensverdeling = Routines.csvintlezen (Inkomensverdelingsfilenaam, aantal_lege_regels=1)
-Inwonersperklassenaam = os.path.join (SEGSdirectory, f'Inwoners_per_klasse{Jaar}')
+Inwonersperklassenaam = os.path.join (SEGSdirectory, scenario, f'Inwoners_per_klasse')
 Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam, aantal_lege_regels=1)
 Inwonerstotalen = []
 for i in range (len(Inwonersperklasse)):
@@ -80,7 +80,7 @@ for i in range (len(Inwonersperklasse)):
             Inkomensverdeling[i].append (0)
 Inkomenstransverdeling = Berekeningen.Transponeren (Inkomensverdeling)
 
-Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, f'Arbeidsplaatsen_inkomensklasse{Jaar}')
+Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
 print (Arbeidsplaatsenfilenaam)
 Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
 Arbeidsplaatsen = Berekeningen.Transponeren(Arbeidsplaats)
@@ -191,9 +191,9 @@ def bereken_potenties (Matrix, Arbeidsplaatsen, Inwoners, Inwonersaandeel, inkgr
     return Dezegroeplijst
 
 for ds in dagsoort:
-    Combinatiedirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', 'Combinaties', ds )
-    Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', ds )
-    Totalendirectorybestemmingen = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Resultaten',
+    Combinatiedirectory = os.path.join ( Basisdirectory, 'Gewichten', 'Combinaties', ds )
+    Enkelemodaliteitdirectory = os.path.join ( Basisdirectory, 'Gewichten', ds )
+    Totalendirectorybestemmingen = os.path.join ( Basisdirectory, Projectbestandsnaam, 'Resultaten',
                                                   'Bestemmingen', ds )
     os.makedirs ( Totalendirectorybestemmingen, exist_ok=True )
     print ("De bestemmingen komen in",Totalendirectorybestemmingen)

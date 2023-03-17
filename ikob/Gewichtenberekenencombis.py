@@ -13,7 +13,7 @@ skims_config = config['skims']
 
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['skims_directory']
+Basisdirectory = paden_config['skims_directory']
 motieven = project_config['motieven']
 dagsoort = skims_config['dagsoort']
 #Scenario = config['project']['scenario']
@@ -24,7 +24,7 @@ voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
 modaliteitenfiets = ['Fiets', 'EFiets']
 soortauto = ['Auto', 'GeenAuto', 'GeenRijbewijs', 'GratisAuto']
 soortOV = ['OV', 'GratisOV']
-Ervarenreistijddirectory = os.path.join(Skimsdirectory, Projectbestandsnaam, 'Ervarenreistijd')
+
 
 def minmaxmatrix(matrix1, matrix2, minmax="max"):
     eindmatrix = []
@@ -94,8 +94,8 @@ def Maxberekenen_en_wegschrijvenvan3 (Matrix1, Matrix2, Matrix3, mod1, mod2, mod
 
 for ds in dagsoort:
 
-    Combinatiedirectory = os.path.join(Skimsdirectory, Projectbestandsnaam, 'Gewichten', 'Combinaties', ds)
-    Enkeldirectory = os.path.join(Skimsdirectory, Projectbestandsnaam, 'Gewichten', ds)
+    Combinatiedirectory = os.path.join(Basisdirectory, 'Gewichten', 'Combinaties', ds)
+    Enkeldirectory = os.path.join(Basisdirectory, 'Gewichten', ds)
     #Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, ds )
     #Enkeldirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
     os.makedirs(Combinatiedirectory, exist_ok=True)

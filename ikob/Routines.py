@@ -48,6 +48,14 @@ def matrixvolnullen (rijen,kolommen) :
             matrix[r].append (0)
     return matrix
 
+def matrixvol99999 (rijen,kolommen) :
+    matrix = []
+    for r in range (0,rijen):
+        matrix.append ([])
+        for k in range (0,kolommen):
+            matrix[r].append (99999)
+    return matrix
+
 def lijstvolnullen (lengte) :
     lijst = []
     for r in range (0,lengte):

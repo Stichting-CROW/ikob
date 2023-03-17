@@ -10,7 +10,7 @@ from ikobconfig import loadConfig
 
 pythonexe = sys.executable
 stappen = (
-  ("Ervaren reistijd berekenen uit tijd en kosten", "skimsberekenen"),
+  ("Ervaren reistijd berekenen uit tijd en kosten", "Ervarenreistijdberekenen"),
   ("Verdeling van de groepen over de buurten of zones", "Verdelingovergroepen"),
   ("Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart", "Gewichtenberekenenenkelscenarios"),
   ("Maximum gewichten van meerdere modaliteiten", "Gewichtenberekenencombis"),
@@ -65,6 +65,7 @@ class ConfigApp(Tk):
         if self._checks[i].get():
           print(f'Uitvoeren van stap: {stap[0]}.')
           script = os.path.join(scriptdir, f'{stap[1]}.{self.runmode}')
+          print (script)
           if self.runmode == 'exe':
             result = subprocess.call(f'\"{script}\" \"{self._project}\"', shell=True)
           else:

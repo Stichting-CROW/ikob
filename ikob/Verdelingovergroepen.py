@@ -16,18 +16,18 @@ verdeling_config = config['verdeling']
 # Ophalen van instellingen
 Skimsdirectory = paden_config['skims_directory']
 SEGSdirectory = paden_config['segs_directory']
-Jaar = project_config['jaar']
+scenario = project_config['scenario']
 Elektrischpercentage = verdeling_config['elektrischeautos']
 Kunst = verdeling_config['kunstmab']['gebruiken']
 Kunstmautobezitfile = verdeling_config['kunstmab']['bestand']
 GratisOVpercentage = verdeling_config['GratisOVpercentage']
-Uitvoernaam = verdeling_config['uitvoernaam']
+
 
 
 # Vaste waarden
 inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
 
-Inwonersperklassenaam = os.path.join (SEGSdirectory, f'Inwoners_per_klasse{Jaar}')
+Inwonersperklassenaam = os.path.join (SEGSdirectory, scenario, f'Inwoners_per_klasse')
 Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam, aantal_lege_regels=1)
 Inwonerstotalen = []
 for i in range (len(Inwonersperklasse)):
@@ -45,7 +45,7 @@ for i in range (len(Inwonersperklasse)):
 print ('Lengte Inkomensverdelingsgegevens', len (Inkomensverdeling), len (Inkomensverdeling[0]))
 CBSAutobezitfilenaam = os.path.join ( SEGSdirectory, 'CBS_autos_per_huishouden')
 CBSAutobezitegevens = Routines.csvintlezen (CBSAutobezitfilenaam)
-#Inwoners18plusfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{Jaar}')
+#Inwoners18plusfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{scenario}')
 #print (Inwoners18plusfilenaam)
 #Inwoners18plus = Routines.csvintlezen (Inwoners18plusfilenaam)
 Stedelijkheidsgraadfilenaam = os.path.join ( SEGSdirectory, 'Stedelijkheidsgraad')
@@ -200,7 +200,7 @@ for i in range ( len ( Inkomensverdeling ) ):
             Voorkeursaandeel = Aandeelvk * Inkomensaandeel
             Totaaloverzicht[i].append ( round (Voorkeursaandeel,4)) # Dan de diverse voorkeuren
 
-Totaaloverzichtfilenaam = os.path.join ( SEGSdirectory, f'{Uitvoernaam}' )
+Totaaloverzichtfilenaam = os.path.join ( SEGSdirectory, scenario, f'Verdeling_over_groepen' )
 Routines.csvwegschrijvenmetheader ( Totaaloverzicht, Totaaloverzichtfilenaam, Header )
 Header.insert(0, 'Zone')
 Routines.xlswegschrijven ( Totaaloverzicht, Totaaloverzichtfilenaam, Header )

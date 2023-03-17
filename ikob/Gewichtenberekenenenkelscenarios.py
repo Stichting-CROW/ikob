@@ -16,7 +16,7 @@ paden_config = config['project']['paden']
 skims_config = config['skims']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['skims_directory']
+Basisdirectory = paden_config['skims_directory']
 dagsoort = skims_config['dagsoort']
 #Scenario = project_config['scenario']
 motieven = project_config['motieven']
@@ -85,10 +85,10 @@ def gewichtenberekenen (skim, alpha, omega, weging):
 
 for ds in dagsoort:
     for mot in motieven:
-        Gewichtendirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', ds )
+        Gewichtendirectory = os.path.join ( Basisdirectory, 'Gewichten', ds )
         #Gewichtendirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
         os.makedirs(Gewichtendirectory,exist_ok=True)
-        Ervarenreistijddirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Ervarenreistijd', ds)
+        Ervarenreistijddirectory = os.path.join ( Basisdirectory, 'Ervarenreistijd', ds)
         #Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', Scenario, ds )
         for mod in modaliteitenfiets:
             for vk in voorkeuren:
