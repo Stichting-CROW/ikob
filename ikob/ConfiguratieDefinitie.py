@@ -35,7 +35,7 @@ def StandaardConfiguratieDefinitie():
             # 'type': 'text',
             # 'default': 'normaal'
             # },
-            'jaar': {
+            'scenario': {
                 'label': 'Welk verstedelijkingsscenario wordt gebruikt',
                 'type': 'text',
                 'default': '',
@@ -156,12 +156,6 @@ def StandaardConfiguratieDefinitie():
                     'type': 'file',
                     'default': ''
                 },
-            },
-            'soortgeenauto': {
-                'label': 'Onderverdeling van niet-autobezitters (GeenAuto betekent bezit geen auto wel een rijbewijs)',
-                'type': 'checklist',
-                'items': ['GeenAuto', 'GeenRijbewijs'],
-                'default': ['GeenAuto', 'GeenRijbewijs']
             },
             'varkostenga': {
                 'label': 'Variabele kosten geen auto',
@@ -315,11 +309,6 @@ def StandaardConfiguratieDefinitie():
                 'range': [0, 100],
                 'default': 0.03
             },
-            'uitvoernaam': {
-                'label': 'Naam van uitvoerbestand',
-                'type': 'text',
-                'default': 'verdelingovergroepen'
-            }
         },
 
         # 'ontplooiing': {
@@ -374,14 +363,11 @@ def projectNaam(config):
     return config['project']['naam']
 
 
-def valideerConfiguratie(config, strict=True, repair=False):
+def valideerConfiguratie(config, strict=True):
     """
   Valideer een configuratie dictionary.
   """
-    return validate.validateConfigWithTemplate (
-      config, StandaardConfiguratieDefinitie(),
-      strict=strict,
-      repair=repair)
+    return validate.validateConfigWithTemplate ( config, StandaardConfiguratieDefinitie ( ), strict=strict )
 
 
 def StandaardConfiguratie():

@@ -16,9 +16,9 @@ verdeling_config = config['verdeling']
 #ontpl_config = config['ontplooiing']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['skims_directory']
+Basisdirectory = paden_config['skims_directory']
 SEGSdirectory = paden_config['segs_directory']
-Jaar = project_config['jaar']
+scenario = project_config['scenario']
 #Scenario = project_config['Scenario']
 #Naamuitvoer = conc_config['uitvoer_directory_naam']
 #Groepverdelingfile=conc_config['verdeling_file']
@@ -60,13 +60,18 @@ Vermenigvuldig = []
 Grverdelingfile=Grverdelingfile.replace('.csv','')
 Groepverdelingfile=os.path.join(SEGSdirectory,Grverdelingfile)
 Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
-Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, f'Arbeidsplaatsen_inkomensklasse{Jaar}')
+Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
 Arbeidsplaatsenperklasse = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
-Volwassenenfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{Jaar}')
-Volwassenen = Routines.csvintlezen (Volwassenenfilenaam)
-print ('Lengte inwoners is', len(Volwassenen))
+Inwonersperklassefilenaam = os.path.join (SEGSdirectory, scenario, f'Inwoners_per_klasse')
+Inwoners_per_klasse = Routines.csvintlezen(Inwonersperklassefilenaam, aantal_lege_regels=1)
+Beroepsbevolking = []
+for i in range (len(Inwoners_per_klasse)):
+    Beroepsbevolking.append(sum(Inwoners_per_klasse[i]))
+#Volwassenenfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{scenario}')
+#Volwassenen = Routines.csvintlezen (Volwassenenfilenaam)
+print ('Lengte inwoners is', len(Beroepsbevolking))
 
-def Lijstvolnullen(lengte=len(Volwassenen)) :
+def Lijstvolnullen(lengte=len(Beroepsbevolking)) :
     Lijst = [] 
     for i in range (lengte) :
         Lijst.append(0)
@@ -156,12 +161,12 @@ def combigroep(mod, gr) :
         string = string + '_Fiets'
     return string
 
-def inwonersfile_maken (Verdelingsmatrix, Volwassenen):
+def inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking):
     Inwonersfile = []
-    for i in range (len(Volwassenen)) :
+    for i in range (len(Beroepsbevolking)) :
         Inwonersfile.append([])
         for j in range (len(Verdelingsmatrix[0])) :
-            Inwonersfile[i].append(round(Volwassenen[i]*Verdelingsmatrix[i][j]))
+            Inwonersfile[i].append(round(Beroepsbevolking[i]*Verdelingsmatrix[i][j]))
     return Inwonersfile
 
 def bereken_potenties (Matrix, Inwonerstrans, gr):
@@ -173,13 +178,13 @@ def bereken_potenties (Matrix, Inwonerstrans, gr):
         Dezegroeplijst.append ( sum ( Gewogenmatrix ) )
     return Dezegroeplijst
 
-Inwoners = inwonersfile_maken (Verdelingsmatrix, Volwassenen)
+Inwoners = inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking)
 Inwonerstransmatrix = Berekeningen.Transponeren(Inwoners)
 
 for ds in dagsoort:
-    Combinatiedirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', 'Combinaties', ds )
-    Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', ds )
-    Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Resultaten', 'Herkomsten', ds )
+    Combinatiedirectory = os.path.join ( Basisdirectory, 'Gewichten', 'Combinaties', ds )
+    Enkelemodaliteitdirectory = os.path.join ( Basisdirectory,  'Gewichten', ds )
+    Totalendirectoryherkomsten = os.path.join ( Basisdirectory, Projectbestandsnaam, 'Resultaten', 'Herkomsten', ds )
     # Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
     # Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
     # Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, 'Herkomsten', Scenario, 'Restdag', Naamuitvoer)

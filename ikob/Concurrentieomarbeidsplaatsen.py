@@ -18,7 +18,7 @@ dagsoort = skims_config['dagsoort']
 #conc_config = config['bedrijven']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['skims_directory']
+Basisdirectory = paden_config['skims_directory']
 SEGSdirectory = paden_config['segs_directory']
 #Herkomstendirectory = conc_config['arbeid']['herkomsten_directory']
 Jaar = config['project']['jaar']
@@ -191,11 +191,11 @@ def bereken_concurrentie (Matrix, Arbeidsplaatsen, Bereik, inkgr):
     return Dezegroeplijst
 
 for ds in dagsoort:
-    Combinatiedirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', 'Combinaties', ds)
-    Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Gewichten', ds)
-    Concurrentiedirectory = os.path.join (Skimsdirectory, Projectbestandsnaam, 'Resultaten', 'Concurrentie',
+    Combinatiedirectory = os.path.join ( Basisdirectory, 'Gewichten', 'Combinaties', ds)
+    Enkelemodaliteitdirectory = os.path.join ( Basisdirectory, 'Gewichten', ds)
+    Concurrentiedirectory = os.path.join (Basisdirectory, Projectbestandsnaam, 'Resultaten', 'Concurrentie',
                                           'arbeidsplaatsen',  ds)
-    Herkomstendirectory = os.path.join ( Skimsdirectory, Projectbestandsnaam, 'Resultaten' , 'Herkomsten', ds )
+    Herkomstendirectory = os.path.join ( Basisdirectory, Projectbestandsnaam, 'Resultaten' , 'Herkomsten', ds )
     #Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
     #Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
     #Concurrentiedirectory = os.path.join (Skimsdirectory, 'Concurrrentie', 'arbeidsplaatsen', Naamuitvoer)
