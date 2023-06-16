@@ -12,17 +12,18 @@ project_config=config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
 dagsoort = skims_config['dagsoort']
-verdeling_config = config['verdeling']
+#verdeling_config = config['verdeling']
 #ontpl_config = config['ontplooiing']
 
 # Ophalen van instellingen
 Basisdirectory = paden_config['skims_directory']
 SEGSdirectory = paden_config['segs_directory']
-scenario = project_config['scenario']
+scenario = project_config['verstedelijkingsscenario']
+regime = project_config['beprijzingsregime']
 #Scenario = project_config['Scenario']
 #Naamuitvoer = conc_config['uitvoer_directory_naam']
 #Groepverdelingfile=conc_config['verdeling_file']
-Grverdelingfile = verdeling_config['uitvoernaam']
+#Grverdelingfile = verdeling_config['uitvoernaam']
 
 # Vaste waarden
 Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
@@ -57,16 +58,16 @@ headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiet
                   'Auto_OV_Fiets', 'Auto_OV_EFiets']
 
 Vermenigvuldig = []
-Grverdelingfile=Grverdelingfile.replace('.csv','')
-Groepverdelingfile=os.path.join(SEGSdirectory,Grverdelingfile)
+#Grverdelingfile=Grverdelingfile.replace('.csv','')
+Groepverdelingfile=os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen')
 Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
 Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
 Arbeidsplaatsenperklasse = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
-Inwonersperklassefilenaam = os.path.join (SEGSdirectory, scenario, f'Inwoners_per_klasse')
-Inwoners_per_klasse = Routines.csvintlezen(Inwonersperklassefilenaam, aantal_lege_regels=1)
+Inwonersperklassefilenaam = os.path.join (SEGSdirectory, scenario, f'Beroepsbevolking_inkomensklasse')
+Beroepsbevolking_inkomensklasse = Routines.csvintlezen(Inwonersperklassefilenaam, aantal_lege_regels=1)
 Beroepsbevolking = []
-for i in range (len(Inwoners_per_klasse)):
-    Beroepsbevolking.append(sum(Inwoners_per_klasse[i]))
+for i in range (len(Beroepsbevolking_inkomensklasse)):
+    Beroepsbevolking.append(sum(Beroepsbevolking_inkomensklasse[i]))
 #Volwassenenfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{scenario}')
 #Volwassenen = Routines.csvintlezen (Volwassenenfilenaam)
 print ('Lengte inwoners is', len(Beroepsbevolking))
@@ -182,8 +183,8 @@ Inwoners = inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking)
 Inwonerstransmatrix = Berekeningen.Transponeren(Inwoners)
 
 for ds in dagsoort:
-    Combinatiedirectory = os.path.join ( Basisdirectory, 'Gewichten', 'Combinaties', ds )
-    Enkelemodaliteitdirectory = os.path.join ( Basisdirectory,  'Gewichten', ds )
+    Combinatiedirectory = os.path.join ( Basisdirectory, regime, 'Gewichten', 'Combinaties', ds )
+    Enkelemodaliteitdirectory = os.path.join ( Basisdirectory, regime, 'Gewichten', ds )
     Totalendirectoryherkomsten = os.path.join ( Basisdirectory, Projectbestandsnaam, 'Resultaten', 'Herkomsten', ds )
     # Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
     # Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')

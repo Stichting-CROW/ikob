@@ -17,6 +17,7 @@ verdeling_config = config['verdeling']
 Skimsdirectory = paden_config['skims_directory']
 SEGSdirectory = paden_config['segs_directory']
 scenario = project_config['verstedelijkingsscenario']
+Elektrischpercentage = verdeling_config['elektrischeautos']
 Kunst = verdeling_config['kunstmab']['gebruiken']
 Kunstmautobezitfile = verdeling_config['kunstmab']['bestand']
 GratisOVpercentage = verdeling_config['GratisOVpercentage']
@@ -53,7 +54,12 @@ Stedelijkheidsgraadgegevens = Routines.csvlezen (Stedelijkheidsgraadfilenaam)
 #Stedelijkheidsgraadgegevens[0] = '1'
 #Stedelijkheidsgraadgegevens[900] = '1'
 
-Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275]
+if Elektrischpercentage == '40':
+    Gratisautonaarinkomens = [0, 0.17, 0.58, 0.95]
+elif Elektrischpercentage == '20' :
+    Gratisautonaarinkomens = [0, 0.05, 0.25, 0.5]
+else :
+    Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275]
 
 if Kunst:
     Kunstmautobezitfile = Kunstmautobezitfile.replace ( '.csv', '' )

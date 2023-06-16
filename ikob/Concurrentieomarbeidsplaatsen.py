@@ -11,9 +11,10 @@ from ikobconfig import getConfigFromArgs
 # Indien er een probleem is, sluit het script hier af.
 config = getConfigFromArgs()
 Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
+project_config = config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
-verdeling_config = config['verdeling']
+#verdeling_config = config['verdeling']
 dagsoort = skims_config['dagsoort']
 #conc_config = config['bedrijven']
 
@@ -21,10 +22,11 @@ dagsoort = skims_config['dagsoort']
 Basisdirectory = paden_config['skims_directory']
 SEGSdirectory = paden_config['segs_directory']
 #Herkomstendirectory = conc_config['arbeid']['herkomsten_directory']
-Jaar = config['project']['jaar']
+scenario = project_config['verstedelijkingsscenario']
+regime = project_config['beprijzingsregime']
 #Scenario = config['project']['scenario']
 #Naamuitvoer = conc_config['uitvoer_directory_naam']
-Grverdelingfile = verdeling_config['uitvoernaam']
+#Grverdelingfile = verdeling_config['uitvoernaam']
 
 # Vaste intellingen
 Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
@@ -59,14 +61,14 @@ headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiet
                   'Auto_OV_Fiets', 'Auto_OV_EFiets']
 
 
-Grverdelingfile=Grverdelingfile.replace('.csv','')
-Groepverdelingfile=os.path.join(SEGSdirectory,Grverdelingfile)
+#Grverdelingfile=Grverdelingfile.replace('.csv','')
+Groepverdelingfile=os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen')
 Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
 Verdelingstransmatrix = Berekeningen.Transponeren (Verdelingsmatrix)
 #Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
 #Inkomensverdeling = Routines.csvintlezen (Inkomensverdelingsfilenaam, aantal_lege_regels=1)
 
-Inwonersperklassenaam = os.path.join (SEGSdirectory, f'Inwoners_per_klasse{Jaar}')
+Inwonersperklassenaam = os.path.join (SEGSdirectory, scenario,  f'Beroepsbevolking_inkomensklasse')
 Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam, aantal_lege_regels=1)
 Inwonerstotalen = []
 for i in range (len(Inwonersperklasse)):
@@ -80,7 +82,7 @@ for i in range (len(Inwonersperklasse)):
         else:
             Inkomensverdeling[i].append (0)
 
-Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, f'Arbeidsplaatsen_inkomensklasse{Jaar}')
+Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
 Arbeidsplaatsen = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
 
 
@@ -191,8 +193,8 @@ def bereken_concurrentie (Matrix, Arbeidsplaatsen, Bereik, inkgr):
     return Dezegroeplijst
 
 for ds in dagsoort:
-    Combinatiedirectory = os.path.join ( Basisdirectory, 'Gewichten', 'Combinaties', ds)
-    Enkelemodaliteitdirectory = os.path.join ( Basisdirectory, 'Gewichten', ds)
+    Combinatiedirectory = os.path.join ( Basisdirectory, regime, 'Gewichten', 'Combinaties', ds)
+    Enkelemodaliteitdirectory = os.path.join ( Basisdirectory, regime, 'Gewichten', ds)
     Concurrentiedirectory = os.path.join (Basisdirectory, Projectbestandsnaam, 'Resultaten', 'Concurrentie',
                                           'arbeidsplaatsen',  ds)
     Herkomstendirectory = os.path.join ( Basisdirectory, Projectbestandsnaam, 'Resultaten' , 'Herkomsten', ds )

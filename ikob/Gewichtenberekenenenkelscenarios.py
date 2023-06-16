@@ -15,18 +15,19 @@ project_config = config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
 
+
 # Ophalen van instellingen
 Basisdirectory = paden_config['skims_directory']
 dagsoort = skims_config['dagsoort']
 #Scenario = project_config['scenario']
 motieven = project_config['motieven']
-
+regime = project_config['beprijzingsregime']
 
 # Vaste waarden
 inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
 voorkeuren = ['Auto','Neutraal','Fiets','OV']
-modaliteitenfiets = ['Fiets', 'EFiets']
-
+modaliteitenfiets = ['Fiets']
+soortbrandstof = ['fossiel','elektrisch']
 
 def constantenwerk (mod, voorkeur):
     alpha = 0.125
@@ -85,10 +86,10 @@ def gewichtenberekenen (skim, alpha, omega, weging):
 
 for ds in dagsoort:
     for mot in motieven:
-        Gewichtendirectory = os.path.join ( Basisdirectory, 'Gewichten', ds )
+        Gewichtendirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', ds )
         #Gewichtendirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
         os.makedirs(Gewichtendirectory,exist_ok=True)
-        Ervarenreistijddirectory = os.path.join ( Basisdirectory, 'Ervarenreistijd', ds)
+        Ervarenreistijddirectory = os.path.join ( Basisdirectory, regime, mot, 'Ervarenreistijd', ds)
         #Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', Scenario, ds )
         for mod in modaliteitenfiets:
             for vk in voorkeuren:
@@ -96,7 +97,7 @@ for ds in dagsoort:
                     Filenaam = os.path.join(Ervarenreistijddirectory,'Fiets')
                     GGRskim = Routines.csvintlezen(Filenaam, aantal_lege_regels=0)
 
-                    if mot == 'werk':
+                    if mot == 'werk' or mot == 'sociaal-recreatief':
                         constanten = Constantengenerator.alomwerk ( mod, vk )
                     elif mot == 'winkeldagelijkszorg':
                         constanten = Constantengenerator.alomwinkeldagelijkszorg ( mod, vk )
@@ -115,40 +116,33 @@ for ds in dagsoort:
         # Nu Auto
         for ink in inkomen:
             for vk in voorkeuren:
-                if mot != 'werk':
-                    soort = 'overig'
-                else:
-                    soort = 'werk'
-                ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{ink}')
-                #ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{soort}_{ink}')
-                GGRskim = Routines.csvintlezen(ErvarenReistijdfilenaam)
-                if mot == 'werk':
-                    constanten = Constantengenerator.alomwerk ('Auto', vk )
-                elif mot == 'winkeldagelijkszorg':
-                    constanten = Constantengenerator.alomwinkeldagelijkszorg ('Auto', vk )
-                else:
-                    constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ('Auto', vk )
-                alpha = constanten[0]
-                omega = constanten[1]
-                weging = constanten[2]
-                print ( alpha, omega, weging )
-                Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
-                Uitvoerfilenaam = os.path.join (Gewichtendirectory,f'Auto_vk{vk}_{ink}')
-                Routines.csvwegschrijven(Gewichten,Uitvoerfilenaam)
+                for srtbr in soortbrandstof:
+                    ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{srtbr}_{ink}')
+                    GGRskim = Routines.csvintlezen(ErvarenReistijdfilenaam)
+                    if mot == 'werk' or mot == 'sociaal-recreatief':
+                        constanten = Constantengenerator.alomwerk ('Auto', vk )
+                    elif mot == 'winkeldagelijkszorg':
+                        constanten = Constantengenerator.alomwinkeldagelijkszorg ('Auto', vk )
+                    else:
+                        constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ('Auto', vk )
+                    alpha = constanten[0]
+                    omega = constanten[1]
+                    weging = constanten[2]
+                    print ( alpha, omega, weging )
+                    Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
+                    Brandstofgewichtendirectory = os.path.join (Gewichtendirectory,f'{srtbr}')
+                    os.makedirs(Brandstofgewichtendirectory, exist_ok=True)
+                    Uitvoerfilenaam = os.path.join (Brandstofgewichtendirectory,f'Auto_vk{vk}_{ink}')
+                    Routines.csvwegschrijven(Gewichten,Uitvoerfilenaam)
 
         soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
         voorkeurengeenauto = ['Neutraal', 'OV', 'Fiets']
         for sga in soortgeenauto:
             for vk in voorkeurengeenauto :
                 for ink in inkomen:
-                    if mot != 'werk':
-                        soort = 'overig'
-                    else:
-                        soort = 'werk'
                     ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{sga}_{ink}' )
-                    #ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{sga}_{soort}_{ink}' )
                     GGRskim = Routines.csvfloatlezen ( ErvarenReistijdfilenaam )
-                    if mot == 'werk':
+                    if mot == 'werk' or mot == 'sociaal-recreatief':
                         constanten = Constantengenerator.alomwerk ( 'Auto',vk )
                     elif mot == 'winkeldagelijkszorg':
                         constanten = Constantengenerator.alomwinkeldagelijkszorg ( 'Auto', vk )
@@ -167,15 +161,10 @@ for ds in dagsoort:
         for modOV in modaliteitenOV:
             for ink in inkomen:
                 for vk in voorkeuren:
-                    if mot != 'werk':
-                        soort = 'overig'
-                    else:
-                        soort = 'werk'
-                    #ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'{modOV}_{soort}_{ink}')
                     ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{modOV}_{ink}' )
                     GGRskim = Routines.csvintlezen(ErvarenReistijdfilenaam)
 
-                    if mot == 'werk':
+                    if mot == 'werk' or mot == 'sociaal-recreatief':
                         constanten = Constantengenerator.alomwerk ( modOV, vk )
                     elif mot == 'winkeldagelijks' or 'onderwijs':
                         constanten = Constantengenerator.alomwinkeldagelijkszorg ( modOV, vk )
@@ -190,14 +179,9 @@ for ds in dagsoort:
                     Routines.csvwegschrijven(Gewichten,Uitvoerfilenaam)
 
         for ink in inkomen:
-            if mot != 'werk':
-                soort = 'overig'
-            else:
-                soort = 'werk'
-            #ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisAuto_{soort}_{ink}')
             ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisAuto_{ink}' )
             GGRskim = Routines.csvintlezen ( ErvarenReistijdfilenaam )
-            if mot == 'werk':
+            if mot == 'werk' or mot == 'sociaal-recreatief':
                 constanten = Constantengenerator.alomwerk ( 'Auto', 'Auto' )
             elif mot == 'winkeldagelijkszorg':
                 constanten = Constantengenerator.alomwinkeldagelijkszorg ( 'Auto', 'Auto' )
@@ -212,11 +196,10 @@ for ds in dagsoort:
             for vks in specialauto:
                 Uitvoerfilenaam = os.path.join ( Gewichtendirectory, f'GratisAuto_vk{vks}_{ink}' )
                 Routines.csvwegschrijven ( Gewichten, Uitvoerfilenaam )
-
             ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisOV' )
             GGRskim = Routines.csvintlezen ( ErvarenReistijdfilenaam )
             GGRskimLen = len(GGRskim)
-            if mot == 'werk':
+            if mot == 'werk' or mot == 'sociaal-recreatief':
                 constanten = Constantengenerator.alomwerk ( 'OV', 'OV' )
             elif mot == 'winkeldagelijkszorg':
                 constanten = Constantengenerator.alomwinkeldagelijkszorg ( 'OV', 'OV' )

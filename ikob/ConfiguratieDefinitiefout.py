@@ -75,18 +75,6 @@ def StandaardConfiguratieDefinitie():
                 'items': ['alle groepen', 'alleen autobezitters'],
                 'default': ['alle groepen']
             },
-            'schatten_of_bekend': {
-                'label': 'Is het percentage autobezit bekend of moet het uit CBS-gegevens geschat worden?',
-                'type' : 'checklist',
-                'items' : ['bekend', 'geschat'],
-                'default' : ['geschat']
-            },
-            'welke_inkomensgroepen': {
-                'label': 'Welke inkomensgroepen moeten worden meegenomen',
-                'type': 'checklist',
-                'items': ['laag', 'middellaag','middelhoog','hoog'],
-                'default': ['laag', 'middellaag','middelhoog','hoog']
-            },
             'conc_afstand': {
                 'label': 'Moet in stap 8 alleen concurrentie of ook afstand worden berekend',
                 'type': 'checklist',
@@ -115,7 +103,12 @@ def StandaardConfiguratieDefinitie():
                 'items': ['Ochtendspits', 'Restdag', 'Avondspits'],
                 'default': ['Restdag']
             },
-
+            'aspect': {
+                'label': 'Aspecten',
+                'type': 'checklist',
+                'items': ['Tijd', 'Kosten'],
+                'default': ['Tijd', 'Kosten']
+            },
             'OV kosten': {
                 'starttarief': {
                     'label': 'Starttarief',
@@ -162,7 +155,7 @@ def StandaardConfiguratieDefinitie():
                     'label': 'Kilometerheffing',
                     'type': 'number',
                     'unit': 'Eurocent/km',
-                    'default': 0
+                    'default': 12
                 },
             },
             'Kosten elektrische auto': {
@@ -170,13 +163,13 @@ def StandaardConfiguratieDefinitie():
                     'label': 'variabele kosten',
                     'type': 'number',
                     'unit': 'Eurocent/km',
-                    'default': 5
+                    'default': 16
                 },
                 'kmheffing': {
                     'label': 'Kilometerheffing',
                     'type': 'number',
                     'unit': 'Eurocent/km',
-                    'default': 0
+                    'default': 12
                 }
             },
 
@@ -185,25 +178,32 @@ def StandaardConfiguratieDefinitie():
                 'type': 'file',
                 'default': ''
             },
-#           'parkeerkosten': {
-#                'label': 'Is er een bestand met parkeerkosten of additionele kosten per zone?',
-#                'gebruiken': {
-#                    'label': 'Parkeerkosten',
-#                    'type': 'checkbox',
-#                    'items': ['Parkeerkosten', 'Additionele kosten'],
-#                    'default': ['']
-#                },
-#                'bestand': {
-#                    'label': 'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
-#                    'type': 'file',
-#                    'default': ''
-#                },
-#                'bestand': {
-#                    'label': 'Additionele kosten bestand',
-#                    'type': 'file',
-#                    'default': ''
-#                },
-#            },
+            'parkeerkosten': {
+                'label': 'Is er een bestand met parkeerkosten per zone?',
+                'gebruiken': {
+                    'label': 'Parkeerkosten',
+                    'type': 'checkbox',
+                    'default': False
+                },
+                'bestand': {
+                    'label': 'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
+                    'type': 'file',
+                    'default': ''
+                },
+            },
+            'additionele_kosten': {
+                'label': 'Is er een bestand met additionele kosten (bedragen zijn in euros?',
+                'gebruiken': {
+                    'label': 'Additionele kosten',
+                    'type': 'checkbox',
+                    'default': False
+                },
+                'bestand': {
+                    'label': 'Additionele kosten bestand',
+                    'type': 'file',
+                    'default': ''
+                },
+            },
             'varkostenga': {
                 'label': 'Variabele kosten geen auto',
                 'GeenAuto': {
@@ -228,7 +228,7 @@ def StandaardConfiguratieDefinitie():
                     'type': 'number',
                     'unit': 'Euro/Minuut',
                     'range': [0, 9999],
-                    'default': 0.05
+                    'default': 0.01
                 },
                 'GeenRijbewijs': {
                     'label': 'Taxi (bezit geen rijbewijs)',
@@ -241,7 +241,6 @@ def StandaardConfiguratieDefinitie():
         },
         'TVOM': {
             'label': 'Waarde van tijd',
-
             'werk': {
                 'label': 'Waarde van 1€ kosten in ervaren reistijd per inkomensgroep, motief werk',
                 'hoog': {
@@ -299,8 +298,9 @@ def StandaardConfiguratieDefinitie():
         },
         'verdeling': {
             'label': 'Verdeling Over Groepen',
+
             'Percelektrisch': {
-                'label': 'Percentage elektrische autos per inkomensgroep',
+                'label': 'Percentage elektrisceh autos per inkomensgroep',
                 'laag': {
                     'label': 'Laag',
                     'type': 'number',
@@ -308,7 +308,7 @@ def StandaardConfiguratieDefinitie():
                     'default': 0
                 },
                 'middellaag': {
-                    'label': 'Middellaag',
+                    'label': 'Middellaagg',
                     'type': 'number',
                     'unit': '%',
                     'default': 0
@@ -378,32 +378,6 @@ def StandaardConfiguratieDefinitie():
                 'range': [0, 100],
                 'default': 0.03
             },
-            'parkeerkosten': {
-                'label': 'Is er een bestand met parkeerkosten per zone?',
-                'gebruiken': {
-                    'label': 'Parkeerkosten',
-                    'type': 'checkbox',
-                    'default': False
-                },
-                'bestand': {
-                    'label': 'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
-                    'type': 'file',
-                    'default': ''
-                },
-            },
-            'additionele_kosten': {
-                'label': 'Is er een bestand met additionele kosten (bedragen zijn in euros?',
-                'gebruiken': {
-                    'label': 'Additionele kosten',
-                    'type': 'checkbox',
-                    'default': False
-                },
-                'bestand': {
-                    'label': 'Additionele kosten bestand',
-                    'type': 'file',
-                    'default': ''
-                },
-            },
         },
 
         # 'ontplooiing': {
@@ -448,7 +422,8 @@ def StandaardConfiguratieDefinitie():
         # 'default': 'uitvoer'
         # }
         # }
-    }
+    },
+
 
 
 def projectNaam(config):

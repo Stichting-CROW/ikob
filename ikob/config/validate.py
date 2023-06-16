@@ -1,8 +1,6 @@
 
 ### Validate the template
 
-from config.build import buildConfigDict
-
 def _validateDefaultType(valtype, defvalue):
   defvaluetype = type(defvalue)
   if defvaluetype is dict:
@@ -94,32 +92,24 @@ def _validateChoice(value, template):
   return True
 
 
-def validateConfigWithTemplate(config, template, strict=False, repair=False):
+def validateConfigWithTemplate(config, template, strict=False):
   """
   Valideert een configuratie gegeven een template.
   Er wordt gekeken naar structuur en waarden van de bladen.
-
-  Args:
-    strict (bool):
-      True = Configuratie moet precies kloppen met het template.
-      False = Het toegestaan om in de config extra velden te hebben die niet
-              in het template staan. In dat geval garandeert de validatie
-              alleen dus de standaard velden. De overige velden en waarden
-              worden klakkeloos overgenomen.
-    repair (bool): Repareer missende velden met standaard waarden van template.
-
-  Return:
-    bool: De configuratie 'klopt' indien True, anders False.
+  Indien strict op False staat, dan is het toegestaan om in de config
+  extra velden te hebben die niet in het template staan. In dat geval
+  garandeert de validatie alleen dus de standaard velden. De overige
+  waarden worden klakkeloos overgenomen.
+  Resultaat: True - Configuratie klopt.
+             False - Configuratie klopt niet.
   """
   templatekeys = [ key for key in template.keys() if key != 'label' ]
-  if strict and set(config.keys()) != set(templatekeys) and not repair:
+  if strict and set(config.keys()) != set(templatekeys):
     return False
   for key in templatekeys:
     if not strict:
       if not key in config:
-        if not repair:
-          return False
-        config[key] = buildConfigDict(template[key])
+        return False
     if 'type' in template[key]:
       check = {
         'text': _validateText,
@@ -130,7 +120,7 @@ def validateConfigWithTemplate(config, template, strict=False, repair=False):
         'checklist': _validateItems,
         'choice': _validateChoice
       }
-      return check.get(template[key]['type'], _false)(config[key], template[key])
+      check.get(template[key]['type'], _false)(config[key], template[key])
     elif type(template[key]) is dict:
-      return validateConfigWithTemplate(config[key], template[key], strict=strict, repair=repair)
+      return validateConfigWithTemplate(config[key], template[key], strict = strict)
   return True
