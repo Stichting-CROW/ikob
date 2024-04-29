@@ -171,4 +171,3 @@ Pplusfietshubplekfilenaam = os.path.join(Skimsdirectory,f'Pplusfiets_{Hubsetnaam
 Routines.csvwegschrijven(Pplusfietshubplek,Pplusfietshubplekfilenaam)
 PplusRhubplekfilenaam = os.path.join(Skimsdirectory,f'PplusR_{Hubsetnaam}_bestehubs')
 Routines.csvwegschrijven(PplusRhubplek,PplusRhubplekfilenaam)
-

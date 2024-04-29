@@ -10,14 +10,14 @@ from ikobconfig import loadConfig
 
 pythonexe = sys.executable
 stappen = (
-  ("Ervaren reistijd berekenen uit tijd en kosten", "Ervarenreistijdberekenen"),
+  ("Gegeneraliseerde reistijd berekenen uit tijd en kosten", "Ervarenreistijdberekenen"),
   ("Verdeling van de groepen over de buurten of zones", "Verdelingovergroepen"),
   ("Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart", "Gewichtenberekenenenkelscenarios"),
   ("Maximum gewichten van meerdere modaliteiten", "Gewichtenberekenencombis"),
   ("Bereikbaarheid arbeidsplaatsen voor inwoners", "Ontplooiingsmogelijkhedenechteinwoners"),
   ("Potentie bereikbaarheid voor bedrijven en instellingen", "Potentiebedrijven"),
   ("Concurrentiepositie voor bereik arbeidsplaatsen", "Concurrentieomarbeidsplaatsen"),
-  ("Concurrentiepositie voor bedrijven qua bereikbaarheid", "Concurrentieominwoners")
+  ("Concurrentiepositie voor bedrijven qua bereikbaarheid", "Concurrentieominwoners"),
 )
 
 PAD = {'padx': 5, 'pady': 5}

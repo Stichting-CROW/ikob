@@ -49,7 +49,8 @@ Additionele_kosten = verdeling_config['additionele_kosten']['gebruiken']
 Additionele_kostenfile = verdeling_config['additionele_kosten']['bestand']
 Parkeerkosten = verdeling_config['parkeerkosten']['gebruiken']
 Parkeerkostenfile = verdeling_config['parkeerkosten']['bestand']
-
+Pricecap = skims_config['pricecap']['gebruiken']
+Pricecapgetal = skims_config['pricecap']['getal']
 
 if Additionele_kosten:
     Additionele_kostenfile=Additionele_kostenfile.replace('.csv','')
@@ -82,11 +83,14 @@ else:
     Correctiefactoren = []
     for i in range(len(Parkeertijdlijst)):
         Correctiefactoren.append([1,1,1,1])
-def KostenOV(afstand, OVkmtarief, starttarief):
+def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
     flaf = float(afstand)
     if flaf < 0:
         return 0
     else :
+        if Pricecap:
+             if flaf * OVkmtarief + starttarief > Pricecapgetal:
+                 return Pricecapgetal
         return flaf * OVkmtarief + starttarief
     return 0
 
@@ -153,11 +157,11 @@ for mot in motieven:
         else:
             print("Bezig kosten berekenen.")
             afmeting = len (OVafstandmatrix)
-            KostenmatrixOV =  [ [ KostenOV(OVafstandmatrix[i][j], OVkmtarief, starttarief,)
+            KostenmatrixOV =  [ [ KostenOV(OVafstandmatrix[i][j], OVkmtarief, starttarief,Pricecap,Pricecapgetal,)
                                     for j in range(afmeting) ]
                                     for i in range(afmeting) ]
         if Ketens:
-            KostenbestemmingsPplusROV = [ [ KostenOV(PplusRbestemmingsOVafstandmatrix[i][j], OVkmtarief, starttarief,)
+            KostenbestemmingsPplusROV = [ [ KostenOV(PplusRbestemmingsOVafstandmatrix[i][j], OVkmtarief, starttarief,Pricecap,Pricecapgetal,)
                                     for j in range(afmeting) ]
                                     for i in range(afmeting) ]
             KostenherkomstPplusROV = [ [ KostenOV(PplusRherkomstOVafstandmatrix[i][j], OVkmtarief, starttarief,)
