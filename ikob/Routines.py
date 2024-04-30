@@ -56,7 +56,7 @@ def matrixvol99999 (rijen,kolommen) :
             matrix[r].append (99999)
     return matrix
 
-def lijstvolnullen (lengte) :
+def lijstvolnullen(lengte) :
     lijst = []
     for r in range (0,lengte):
         lijst.append (0)

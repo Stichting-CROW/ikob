@@ -89,13 +89,6 @@ Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, scenario, f'Arbeidsplaats
 Arbeidsplaatsen = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
 
 
-def Lijstvolnullen(lengte=len(Arbeidsplaatsen)) :
-    print ('Lengtelijstvolnullen is ', lengte)
-    Lijst = []
-    for i in range (lengte) :
-        Lijst.append(0)
-    return Lijst
-
 def inkomensgroepbepalen(naam):
     if naam[-4:] == 'hoog':
         if naam[-10:] == 'middelhoog':
@@ -226,7 +219,7 @@ for ca in conc_afstand:
                         # Eerst de fiets
                         print ( 'We zijn het nu aan het uitrekenen voor de inkomensgroep', inkgr )
                         for mod in modaliteiten:
-                            Bijhoudlijst = Lijstvolnullen ( )
+                            Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaatsen))
                             for gr in Groepen:
                                 print ( 'Bezig met Groep ', gr )
                                 ink = inkomensgroepbepalen ( gr )
@@ -332,7 +325,7 @@ for ca in conc_afstand:
                         print (afstsrt, inkgr)
                         Bereikfilenaam = os.path.join(Bestemmingendirectory, f'Totaal_{afstsrt}_{inkgr}')
                         Bereik = Routines.csvintlezen(Bereikfilenaam)
-                        Bijhoudlijst = Lijstvolnullen()
+                        Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaatsen))
                         for vk in voorkeuren:
                             if afstsrt == 'Auto':
                                 Filenaam = os.path.join(Enkelemodaliteitdirectory, f'{afstsrt}_vk{vk}_{inkgr}')

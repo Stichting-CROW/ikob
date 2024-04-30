@@ -3,13 +3,6 @@ import Berekeningen
 import os
 
 
-def Lijstvolnullen(lengte) :
-    print ('Lengtelijstvolnullen is ', lengte)
-    Lijst = []
-    for i in range (lengte) :
-        Lijst.append(0)
-    return Lijst
-
 def inkomensgroepbepalen(naam):
     if naam[-4:] == 'hoog':
         if naam[-10:] == 'middelhoog':
@@ -219,7 +212,7 @@ def concurrentie_om_inwoners(config):
                     # Eerst de fiets
                     print ( 'We zijn het nu aan het uitrekenen voor de inkomensgroep', inkgr )
                     for mod in modaliteiten:
-                        Bijhoudlijst = Lijstvolnullen(len(Arbeidsplaatsen))
+                        Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaatsen))
                         for gr in Groepen:
                             print ( 'Bezig met Groep ', gr )
                             ink = inkomensgroepbepalen ( gr )
