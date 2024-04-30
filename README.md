@@ -30,3 +30,9 @@ Running tests:
 ```sh
 python3 -m pytest
 ```
+
+Reformatting source code using `ruff`:
+
+```sh
+ruff format path/to/source.py
+```
