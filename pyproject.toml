@@ -18,6 +18,7 @@ where = ["ikob/"]
 
 [project.optional-dependencies]
 dev = [
+    "pandas",
     "pytest",
     "ruff",
 ]
