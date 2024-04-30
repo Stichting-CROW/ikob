@@ -1,14 +1,15 @@
 import Routines
 import Constantengenerator
 import os
+import sys
 from ikobconfig import getConfigFromArgs
 
 
-def gewichten_berekenen_enkel_scenarios():
+def gewichten_berekenen_enkel_scenarios(project):
     # Deze routine kijkt naar de command-line en leest
     # het opgegeven configuratie bestand in een dict.
     # Indien er een probleem is, sluit het script hier af.
-    config = getConfigFromArgs()
+    config = getConfigFromArgs(project)
     project_config = config['project']
     paden_config = config['project']['paden']
     skims_config = config['skims']
@@ -214,4 +215,4 @@ def gewichten_berekenen_enkel_scenarios():
 
 
 if __name__ == "__main__":
-    gewichten_berekenen_enkel_scenarios()
+    gewichten_berekenen_enkel_scenarios(sys.argv[1])

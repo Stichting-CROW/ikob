@@ -1,6 +1,7 @@
 import Routines
 import Berekeningen
 import os
+import sys
 from ikobconfig import getConfigFromArgs
 
 
@@ -110,11 +111,11 @@ def bereken_concurrentie(Matrix, Inwoners, Bereik, inkgr, inkgroepen):
     return Dezegroeplijst
 
 
-def concurrentie_om_inwoners():
+def concurrentie_om_inwoners(project):
     # Deze routine kijkt naar de command-line en leest
     # het opgegeven configuratie bestand in een dict.
     # Indien er een probleem is, sluit het script hier af.
-    config = getConfigFromArgs()
+    config = getConfigFromArgs(project)
     Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
     project_config = config['project']
     paden_config = config['project']['paden']
@@ -379,4 +380,4 @@ def concurrentie_om_inwoners():
 
 
 if __name__ == "__main__":
-    concurrentie_om_inwoners()
+    concurrentie_om_inwoners(sys.argv[1])

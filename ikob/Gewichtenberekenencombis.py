@@ -1,5 +1,6 @@
 import Routines
 import os
+import sys
 from ikobconfig import getConfigFromArgs
 
 
@@ -70,11 +71,11 @@ def Maxberekenen_en_wegschrijvenvan3 (Directory, Matrix1, Matrix2, Matrix3, mod1
     Routines.csvwegschrijven ( Maxmatrix, Uitvoerfilenaam )
     return
 
-def gewichten_berekenen_combis():
+def gewichten_berekenen_combis(project):
     # Deze routine kijkt naar de command-line en leest
     # het opgegeven configuratie bestand in een dict.
     # Indien er een probleem is, sluit het script hier af.
-    config = getConfigFromArgs()
+    config = getConfigFromArgs(project)
     project_config = config['project']
     paden_config = config['project']['paden']
     skims_config = config['skims']
@@ -194,4 +195,4 @@ def gewichten_berekenen_combis():
 
 
 if __name__ == "__main__":
-    gewichten_berekenen_combis()
+    gewichten_berekenen_combis(sys.argv[1])
