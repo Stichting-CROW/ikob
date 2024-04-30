@@ -1,4 +1,5 @@
 import subprocess
+import pathlib
 import sys
 import os
 from tkinter import Tk, Frame, BooleanVar, StringVar
@@ -9,8 +10,6 @@ from config import widgets
 # from ConfiguratieDefinitie import *
 from ikobconfig import loadConfig
 
-
-pythonexe = sys.executable
 
 # fmt: off
 stappen = (
@@ -29,6 +28,12 @@ PAD = {"padx": 5, "pady": 5}
 IPAD = {"ipadx": 5, "ipady": 5}
 
 
+def run_mode(script_path):
+    python_name = pathlib.Path(sys.executable).stem
+    script_name = pathlib.Path(script_path).stem
+    return "exe" if python_name == script_name else "py"
+
+
 # User interface
 
 
@@ -40,14 +45,7 @@ class ConfigApp(Tk):
         self._checks = [BooleanVar(value=True) for _ in stappen]
         self._configvar = StringVar()
         self.create_widgets()
-        python_filename = os.path.splitext(os.path.basename(pythonexe))[0]
-        script_filename = os.path.splitext(os.path.basename(__file__))[0]
-        if python_filename == script_filename:
-            # exe mode
-            self.runmode = "exe"
-        else:
-            # python mode
-            self.runmode = "py"
+        self.runmode = run_mode(__file__)
 
     def create_widgets(self):
         self.widgets = []
@@ -83,7 +81,8 @@ class ConfigApp(Tk):
                         )
                     else:
                         result = subprocess.call(
-                            f'"{pythonexe}" "{script}" "{self._project}"', shell=True
+                            f'"{sys.executable}" "{script}" "{self._project}"',
+                            shell=True,
                         )
                     if result != 0:
                         messagebox.showerror(
