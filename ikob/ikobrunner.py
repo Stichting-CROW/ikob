@@ -1,6 +1,3 @@
-import subprocess
-import pathlib
-import sys
 from tkinter import Tk, Frame, BooleanVar, StringVar
 from tkinter import Button
 from tkinter import filedialog, messagebox
@@ -9,28 +6,31 @@ from config import widgets
 # from ConfiguratieDefinitie import *
 from ikobconfig import loadConfig
 
+from Ervarenreistijdberekenen import ervaren_reistijd_berekenen
+from Verdelingovergroepen import verdeling_over_groepen
+from Gewichtenberekenenenkelscenarios import gewichten_berekenen_enkel_scenarios
+from Gewichtenberekenencombis import gewichten_berekenen_combis
+from Ontplooiingsmogelijkhedenechteinwoners import ontplooingsmogelijkheden_echte_inwoners
+from Potentiebedrijven import potentie_bedrijven
+from Concurrentieomarbeidsplaatsen import concurrentie_om_arbeidsplaatsen
+from Concurrentieominwoners import concurrentie_om_inwoners
+
 
 # fmt: off
 stappen = (
-    ( "Gegeneraliseerde reistijd berekenen uit tijd en kosten", "Ervarenreistijdberekenen",),
-    ( "Verdeling van de groepen over de buurten of zones", "Verdelingovergroepen"),
-    ( "Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart", "Gewichtenberekenenenkelscenarios",),
-    ( "Maximum gewichten van meerdere modaliteiten", "Gewichtenberekenencombis"),
-    ( "Bereikbaarheid arbeidsplaatsen voor inwoners", "Ontplooiingsmogelijkhedenechteinwoners",),
-    ( "Potentie bereikbaarheid voor bedrijven en instellingen", "Potentiebedrijven"),
-    ( "Concurrentiepositie voor bereik arbeidsplaatsen", "Concurrentieomarbeidsplaatsen",),
-    ( "Concurrentiepositie voor bedrijven qua bereikbaarheid", "Concurrentieominwoners"),
+    ( "Gegeneraliseerde reistijd berekenen uit tijd en kosten", ervaren_reistijd_berekenen),
+    ( "Verdeling van de groepen over de buurten of zones", verdeling_over_groepen),
+    ( "Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart", gewichten_berekenen_enkel_scenarios),
+    ( "Maximum gewichten van meerdere modaliteiten", gewichten_berekenen_combis),
+    ( "Bereikbaarheid arbeidsplaatsen voor inwoners", ontplooingsmogelijkheden_echte_inwoners),
+    ( "Potentie bereikbaarheid voor bedrijven en instellingen", potentie_bedrijven),
+    ( "Concurrentiepositie voor bereik arbeidsplaatsen", concurrentie_om_arbeidsplaatsen),
+    ( "Concurrentiepositie voor bedrijven qua bereikbaarheid", concurrentie_om_inwoners),
 )
 # fmt: on
 
 PAD = {"padx": 5, "pady": 5}
 IPAD = {"ipadx": 5, "ipady": 5}
-
-
-def run_mode(script_path):
-    python_name = pathlib.Path(sys.executable).stem
-    script_name = pathlib.Path(script_path).stem
-    return "exe" if python_name == script_name else "py"
 
 
 def run_scripts(project_file, skip_steps):
@@ -39,21 +39,12 @@ def run_scripts(project_file, skip_steps):
     Tests are skipped if skip_steps is set.
     Yields the current step and corresponding return code.
     """
-    scriptdir = pathlib.Path(__file__).parent
-
-    mode = run_mode(__file__)
-    exe = sys.executable if mode == "py" else ""
-
-    for stap, skip in zip(stappen, skip_steps):
+    for (description, method), skip in zip(stappen, skip_steps):
         if skip:
             continue
 
-        description, script = stap
-        script = scriptdir.joinpath(f"{script}.{mode}")
-        cmd = f"{exe} \"{script}\" \"{project_file}\""
-
-        result = subprocess.run(cmd, shell=True, check=True)
-        yield stap, result.returncode
+        result = method(project_file)
+        yield description, result
 
 
 # User interface
@@ -66,7 +57,6 @@ class ConfigApp(Tk):
         self._checks = [BooleanVar(value=True) for _ in stappen]
         self._configvar = StringVar()
         self.create_widgets()
-        self.runmode = run_mode(__file__)
 
     def create_widgets(self):
         self.widgets = []
@@ -97,7 +87,7 @@ class ConfigApp(Tk):
 
         try:
             for step, result in run_scripts(project_file, skip_steps):
-                if result != 0:
+                if result is not None:
                     msg = f"Python gaf fout code: {result} in stap {step}.",
                     messagebox.showerror(title="FOUT", message=msg)
                     return
