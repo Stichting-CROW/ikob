@@ -1,7 +1,6 @@
 import subprocess
 import pathlib
 import sys
-import os
 from tkinter import Tk, Frame, BooleanVar, StringVar
 from tkinter import Button
 from tkinter import filedialog, messagebox
@@ -34,6 +33,29 @@ def run_mode(script_path):
     return "exe" if python_name == script_name else "py"
 
 
+def run_scripts(project_file, skip_steps):
+    """
+    Run through all steps for a given project.
+    Tests are skipped if skip_steps is set.
+    Yields the current step and corresponding return code.
+    """
+    scriptdir = pathlib.Path(__file__).parent
+
+    mode = run_mode(__file__)
+    exe = sys.executable if mode == "py" else ""
+
+    for stap, skip in zip(stappen, skip_steps):
+        if skip:
+            continue
+
+        description, script = stap
+        script = scriptdir.joinpath(f"{script}.{mode}")
+        cmd = f"{exe} \"{script}\" \"{project_file}\""
+
+        result = subprocess.run(cmd, shell=True, check=True)
+        yield stap, result.returncode
+
+
 # User interface
 
 
@@ -41,7 +63,6 @@ class ConfigApp(Tk):
     def __init__(self):
         super().__init__()
         self.title("IKOB Runner")
-        self._project = ""
         self._checks = [BooleanVar(value=True) for _ in stappen]
         self._configvar = StringVar()
         self.create_widgets()
@@ -66,38 +87,26 @@ class ConfigApp(Tk):
         self.widgets.append(B)
 
     def cmdRun(self):
-        self._project = self._configvar.get()
-        thisscript = os.path.realpath(__file__)
-        scriptdir = os.path.dirname(thisscript)
+        project_file = self._configvar.get()
+
+        # Skip the test when its _not_ selected.
+        skip_steps = [not check.get() for check in self._checks]
+
+        # Initialise step in case iterator fails before step is set.
+        step = stappen[0]
+
         try:
-            for i, stap in enumerate(stappen):
-                if self._checks[i].get():
-                    print(f"Uitvoeren van stap: {stap[0]}.")
-                    script = os.path.join(scriptdir, f"{stap[1]}.{self.runmode}")
-                    print(script)
-                    if self.runmode == "exe":
-                        result = subprocess.call(
-                            f'"{script}" "{self._project}"', shell=True
-                        )
-                    else:
-                        result = subprocess.call(
-                            f'"{sys.executable}" "{script}" "{self._project}"',
-                            shell=True,
-                        )
-                    if result != 0:
-                        messagebox.showerror(
-                            title="FOUT",
-                            message=f"Python gaf fout code: {result} in stap {stap[0]}.",
-                        )
-                        return
-                else:
-                    print(f"Stap {stap[0]} wordt overgeslagen.")
+            for step, result in run_scripts(project_file, skip_steps):
+                if result != 0:
+                    msg = f"Python gaf fout code: {result} in stap {step}.",
+                    messagebox.showerror(title="FOUT", message=msg)
+                    return
         except BaseException as err:
-            messagebox.showerror(title="FOUT", message=f"Fout in Stap {stap[0]}: {err}")
+            msg = f"Fout in Stap {step}: {err}"
+            messagebox.showerror(title="FOUT", message=msg)
         else:
-            messagebox.showinfo(
-                title="Gereed", message="Alle stappen zijn succesvol uitegevoerd."
-            )
+            msg = "Alle stappen zijn succesvol uitegevoerd."
+            messagebox.showinfo(title="Gereed", message=msg)
 
     def cmdLaadProject(self):
         filename = filedialog.askopenfilename(
