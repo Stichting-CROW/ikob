@@ -37,27 +37,13 @@ def zoekSEGkolom(kolomkoppen, tekst):
             return k
 
 
-def matrixvolnullen (rijen,kolommen) :
-    matrix = []
-    for r in range (0,rijen):
-        matrix.append ([])
-        for k in range (0,kolommen):
-            matrix[r].append (0)
-    return matrix
-
-def matrixvol99999 (rijen,kolommen) :
-    matrix = []
-    for r in range (0,rijen):
-        matrix.append ([])
-        for k in range (0,kolommen):
-            matrix[r].append (99999)
-    return matrix
-
 def lijstvolnullen(lengte) :
-    lijst = []
-    for r in range (0,lengte):
-        lijst.append (0)
-    return lijst
+    return [0 for _ in range(lengte)]
+
+
+def transponeren (matrix, breedte, hoogte):
+    return [list(i) for i in zip(*matrix)]
+
 
 def xlswegschrijven (matrix, filenaam, header):
     import xlsxwriter
@@ -68,14 +54,6 @@ def xlswegschrijven (matrix, filenaam, header):
         worksheet.write( r+1 , 0 , r+1)
         worksheet.write_row ( r + 1, 1, matrix[r] )
     workbook.close ( )
-
-def transponeren (matrix, breedte, hoogte):
-    uitmatrix = []
-    for i in range (breedte):
-        uitmatrix.append([])
-        for j in range (hoogte):
-            uitmatrix[i].append(matrix[j][i])
-    return uitmatrix
 
 
 def xlswegschrijven_totalen (matrix, header, getallenlijst, filenaam, aantal_zones=1425):
@@ -103,13 +81,9 @@ def matrixen_maken_voor_Excel_totalen (Totalendirectory, groep):
             Matrix.append ( Routines.csvlezen ( Totalendirectory + vvcombis  ) )
     return Matrix
 
+
 def getallenlijst_maken (aantal_getallen):
-    Lijst = []
-    for i in range (aantal_getallen):
-        Lijst.append(i+1)
-    return Lijst
-
-
+    return list(range(1, aantal_getallen + 1))
 
 
 def csvlezen (filenaam, aantal_lege_regels=0):
