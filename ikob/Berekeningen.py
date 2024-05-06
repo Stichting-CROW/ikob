@@ -1,10 +1,10 @@
+import math
+import os
+import pickle
 import Routines
 
 
 def correctie_voor_parkeren (Basisdirectory, Parkeerdirectory, motief, aantal_groepen=20):
-    import Routines
-    import Berekeningen
-    import os
     for groep in range (aantal_groepen+1):
         Autobasisskimfile = Basisdirectory + 'skims/Basis_Auto_' + str (groep)
         Parkeeraankomstenfile = Parkeerdirectory  + 'aankomstzoektijd'
@@ -20,19 +20,17 @@ def correctie_voor_parkeren (Basisdirectory, Parkeerdirectory, motief, aantal_gr
         else:
             Parkeeraankomsten = Routines.csvlezen ( Parkeeraankomstenfile )
             Parkeervertrekken = Routines.csvlezen ( Parkeervertrekkenfile )
-        Nieuweskim = Berekeningen.parkeeroptel( Parkeeraankomsten, Parkeervertrekken, Autobasisskim )
+        Nieuweskim = parkeeroptel( Parkeeraankomsten, Parkeervertrekken, Autobasisskim )
         Uitvoerfile = Basisdirectory + motief + '/skims/Auto_' + str(groep)
         Routines.csvwegschrijven(Nieuweskim, Uitvoerfile)
 
 def correctie_fiets_vs_auto (Basisdirectory, motief, aantal_groepen=20):
-    import Routines
-    import Berekeningen
     for groep in range ( aantal_groepen+1 ):
         Autoskimfile = Basisdirectory + motief + '/skims/Auto_' + str ( groep )
         Fietsskimfile = Basisdirectory + 'skims/Fiets_' + str ( groep )
         Autoskimmatrix = Routines.csvlezen ( Autoskimfile )
         Fietsskimmatrix = Routines.csvlezen ( Fietsskimfile )
-        Nieuwe_Auto_matrix = Berekeningen.correctie_voor_korter_fietsen_dan_auto( Fietsskimmatrix, Autoskimmatrix )
+        Nieuwe_Auto_matrix = correctie_voor_korter_fietsen_dan_auto( Fietsskimmatrix, Autoskimmatrix )
         Uitvoerfile_Auto = Basisdirectory + motief + '/skims/Auto_' + str(groep)
         Uitvoerfile_Fiets = Basisdirectory + motief + '/skims/Fiets_' + str(groep)
         Routines.csvwegschrijven(Nieuwe_Auto_matrix, Uitvoerfile_Auto)
@@ -61,13 +59,11 @@ def correctie_voor_korter_fietsen_dan_auto (fietsskim,autoskim, omvang_matrix=14
     return autoskim
 
 def aanpassingen_zonder_auto_en_ov (Basisdirectory, motief, aantal_groepen = 20):
-    import Berekeningen
-    import Routines
     import Invoer
     for groep in range (aantal_groepen+1):
         OVskimfile = Basisdirectory + 'skims/OV_' + str ( groep )
         OVskim = Routines.csvlezen ( OVskimfile )
-        NieuweOVskim = Berekeningen.correctie_voor_reizen_binnen_zone( OVskim )
+        NieuweOVskim = correctie_voor_reizen_binnen_zone( OVskim )
         NieuweOVskimfile = Basisdirectory + motief + '/skims/OV_' + str ( groep)
         Routines.csvwegschrijven(NieuweOVskim, NieuweOVskimfile)
 
@@ -75,7 +71,7 @@ def aanpassingen_zonder_auto_en_ov (Basisdirectory, motief, aantal_groepen = 20)
     for groep in groepen_zonder_auto:
         Autoskimfile = Basisdirectory + motief + '/skims/Auto_' + str ( groep )
         Autoskim = Routines.csvlezen ( Autoskimfile )
-        NieuweAutoskim = Berekeningen.correctie_voor_reizen_binnen_zone( Autoskim )
+        NieuweAutoskim = correctie_voor_reizen_binnen_zone( Autoskim )
         NieuweAutoskimfile = Basisdirectory + motief + '/skims/Auto_' + str ( groep )
         Routines.csvwegschrijven(NieuweAutoskim, NieuweAutoskimfile)
 
@@ -88,7 +84,6 @@ def correctie_voor_reizen_binnen_zone (skim, omvang_matrix = 1425):
 
 def gewichten (skim, wegingstriplet) :
 
-    import math
     alpha = wegingstriplet[0]
     omega = wegingstriplet[1]
     weging = wegingstriplet[2]
@@ -108,8 +103,6 @@ def gewichten (skim, wegingstriplet) :
     return Gewichtenmatrix
 
 def Berekenengewichten_en_wegschrijven (Motievendirectory, aantal_groepen = 20):
-    import Routines
-    import Berekeningen
     aantal_groepen = 20
     vervoerswijze = ['Fiets', 'Efiets', 'Auto', 'OV']
     Skimdirectory = Motievendirectory + 'skims/'
@@ -127,15 +120,12 @@ def Berekenengewichten_en_wegschrijven (Motievendirectory, aantal_groepen = 20):
                 vvskim = vvw
             Invoernaam2 = Skimdirectory + vvskim + '_' + str ( groep )
             Skimmatrix = Routines.csvlezen ( Invoernaam2 )
-            Gewichtenmatrix = Berekeningen.gewichten ( Skimmatrix, Alpharijtje[groep], Omegarijtje[groep] )
+            Gewichtenmatrix = gewichten ( Skimmatrix, Alpharijtje[groep], Omegarijtje[groep] )
             Uitvoernaam = Gewichtendirectory + vvw + '_' + str ( groep )
             Routines.csvwegschrijven ( Gewichtenmatrix, Uitvoernaam )
 
 
 def berekenen_combigewichten(Gewichtendirectory, aantal_groepen=20, aantal_zones = 1425):
-
-    import Routines
-
     vervoerswijzen = ['Fiets', 'EFiets', 'Auto', 'OV']
     matrices = {}
 
@@ -187,8 +177,6 @@ def bereken_best_of_herk (Gewichtenmatrix, SEGSlijst, aantal_zones = 1425):
 
 def bereken_alle_bestemmings_of_herkomstmatrices (Basisdirectory, SEGSdirectory, motief, functie = "bestemming", aantal_groepen = 20,
                                                   aantal_zones = 1425) :
-    import Routines
-    import Berekeningen
     vervoerscombis = ['Fiets', 'EFiets', 'Auto', 'OV', 'Fiets_Auto', 'Fiets_OV', 'EFiets_Auto', 'Efiets_OV', 'Auto_OV',
                       'Fiets_Auto_OV', 'Efiets_Auto_OV']
     if functie == "bestemming" :
@@ -207,12 +195,11 @@ def bereken_alle_bestemmings_of_herkomstmatrices (Basisdirectory, SEGSdirectory,
         print ("Bezig met: ", vvwcombi)
         for groep in range ( 0, aantal_groepen + 1 ):
             Gewichtenmatrix = Routines.csvlezen(Gewichtendirectory + vvwcombi + '_' + str (groep))
-            Aantal_herk_of_best_matrix = Berekeningen.bereken_best_of_herk ( Gewichtenmatrix, SEGSlijst )
+            Aantal_herk_of_best_matrix = bereken_best_of_herk ( Gewichtenmatrix, SEGSlijst )
             bestemmingen_wegschrijfnaam = Best_of_herk_directory + vvwcombi + '_' + str ( groep )
             Routines.csvwegschrijven ( Aantal_herk_of_best_matrix, bestemmingen_wegschrijfnaam )
 
 def berekenen_ontplooiingstotalen_per_groep (Motievendirectory, type_bestemming, aantal_zones = 1425, aantal_groepen = 20):
-    import Routines
     vervoerscombis = ['Fiets', 'EFiets', 'Auto', 'OV', 'Fiets_Auto', 'Fiets_OV', 'EFiets_Auto', 'Efiets_OV', 'Auto_OV',
                       'Fiets_Auto_OV', 'Efiets_Auto_OV']
     Bestemmingendirectory = Motievendirectory + 'bestemmingen/' + type_bestemming +'/'
@@ -229,7 +216,6 @@ def berekenen_ontplooiingstotalen_per_groep (Motievendirectory, type_bestemming,
 
 def maak_potentielijst (Basisdirectory, motief, correctielijst, aantal_groepen = 20, aantal_zones = 1425, soort_bestemming = "inwoners"):
 
-    import Routines
     vervoerscombis = ['Fiets', 'EFiets', 'Auto', 'OV', 'Fiets_Auto', 'Fiets_OV', 'EFiets_Auto', 'Efiets_OV', 'Auto_OV',
                       'Fiets_Auto_OV', 'Efiets_Auto_OV']
     Herkomstendirectory = Basisdirectory + motief + '/Bestemmingen/' + soort_bestemming +'/'
@@ -275,7 +261,6 @@ def maak_potentielijst (Basisdirectory, motief, correctielijst, aantal_groepen =
         Routines.xlswegschrijven_totalen ( Totaallijst, Headers, Getallenlijst, Uitvoerfile )
 
 def totalen_over_bevolking(Basisdirectory, motief,  aantal_zones = 1425, aantal_groepen = 20):
-    import Routines
     vervoerscombis = ['Fiets', 'EFiets', 'Auto', 'OV', 'Fiets_Auto', 'Fiets_OV', 'EFiets_Auto', 'Efiets_OV', 'Auto_OV',
                       'Fiets_Auto_OV', 'Efiets_Auto_OV']
     Totalenpergroep_directory = Basisdirectory + motief + '/Totalenpergroep/'
@@ -319,7 +304,6 @@ def totalen_over_bevolking(Basisdirectory, motief,  aantal_zones = 1425, aantal_
 
 
 def Mega_matrix_maken(Bestemmingen_directory, Megamatrix_directory, Correctielijst, vvcombis, aantal_groepen = 20, aantal_zones = 1425):
-    import Routines
     Mega_matrix = []
     bestemmingen = {}
 
@@ -339,7 +323,6 @@ def Mega_matrix_maken(Bestemmingen_directory, Megamatrix_directory, Correctielij
                 Mega_matrix[i][j].append(bestemming[i][j]*Factor)
         if i//100 == i/100:
             print(i)
-    import pickle
     Megamatrix_filenaam = Megamatrix_directory + vvcombis + '.bin'
     with open ( Megamatrix_filenaam, 'wb') as f:
         pickle.dump ( Mega_matrix, f )
@@ -361,11 +344,6 @@ def TweeD_matrix_maken (Mega_matrix, Buurtmatrix, aantal_groepen = 20, aantal_zo
     return Tweedimensionele_matrix
 
 def Concurrentie_positie_herk_of_bestemming (Basisdirectory, motief, h_of_b,aantal_zones = 1425, aantal_groepen = 20) :
-    import Routines
-    import os
-    import pickle
-    import Berekeningen
-
     Correctielijst = Routines.csvlezen (Basisdirectory + motief +'/correctielijst')
     vervoerscombis = ['Fiets', 'EFiets', 'Auto', 'OV', 'Fiets_Auto', 'Fiets_OV', 'EFiets_Auto', 'Efiets_OV', 'Auto_OV',
                       'Fiets_Auto_OV', 'Efiets_Auto_OV']
@@ -390,14 +368,14 @@ def Concurrentie_positie_herk_of_bestemming (Basisdirectory, motief, h_of_b,aant
             with open ( filenaam, 'rb' ) as f:
                 Mega_matrix = pickle.load ( f )
         else:
-            Mega_matrix = Berekeningen.Mega_matrix_maken ( H_of_b_directory, Megamatrix_directory, Correctielijst, vvcombis )
+            Mega_matrix = Mega_matrix_maken ( H_of_b_directory, Megamatrix_directory, Correctielijst, vvcombis )
 
         filenaam2 = Megamatrix_directory + '2D_' + vvcombis
 
         if os.path.exists ( filenaam2 ):
             Tweedimensionele_matrix = Routines.csvlezen ( filenaam2 )
         else:
-            Tweedimensionele_matrix = Berekeningen.TweeD_matrix_maken ( Mega_matrix, Buurtmatrix )
+            Tweedimensionele_matrix = TweeD_matrix_maken ( Mega_matrix, Buurtmatrix )
             TweeDmatrix_filenaam = Megamatrix_directory + '2D_' + vvcombis
             Routines.csvwegschrijven ( Tweedimensionele_matrix, TweeDmatrix_filenaam )
 
