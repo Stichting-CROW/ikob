@@ -1,5 +1,9 @@
+import csv
+import openpyxl
+import xlsxwriter
+
+
 def matrixvuller ( filenaam,  kolommen, beginrij = 2, beginkolom = 2,   sheetnaam = 'Sheet1') :
-    import openpyxl
     wb2=openpyxl.load_workbook(filenaam)
     sheet2=wb2[sheetnaam]
     matrix = []
@@ -14,7 +18,6 @@ def matrixvuller ( filenaam,  kolommen, beginrij = 2, beginkolom = 2,   sheetnaa
     return matrix
 
 def kolomkopvuller (filenaam, sheetnaam) :
-    import openpyxl
     wb2=openpyxl.load_workbook(filenaam)
     sheet2=wb2[sheetnaam]
     kolomkoppen = []
@@ -46,7 +49,6 @@ def transponeren (matrix):
 
 
 def xlswegschrijven (matrix, filenaam, header):
-    import xlsxwriter
     workbook = xlsxwriter.Workbook ( filenaam + '.xlsx' )
     worksheet = workbook.add_worksheet ( )
     worksheet.write_row (0,0,header)
@@ -57,9 +59,7 @@ def xlswegschrijven (matrix, filenaam, header):
 
 
 def xlswegschrijven_totalen (matrix, header, getallenlijst, filenaam, aantal_zones=1425):
-    import xlsxwriter
-    import Routines
-    transmatrix = Routines.transponeren(matrix)
+    transmatrix = transponeren(matrix)
     workbook = xlsxwriter.Workbook ( filenaam + '.xlsx' )
     worksheet = workbook.add_worksheet ( )
     worksheet.write_row (0,0,header)
@@ -69,16 +69,15 @@ def xlswegschrijven_totalen (matrix, header, getallenlijst, filenaam, aantal_zon
     workbook.close ( )
 
 def matrixen_maken_voor_Excel_totalen (Totalendirectory, groep):
-    import Routines
     vervoerscombis = ['Fiets', 'EFiets', 'Auto', 'OV', 'Fiets_Auto', 'Fiets_OV', 'EFiets_Auto', 'Efiets_OV', 'Auto_OV',
                       'Fiets_Auto_OV', 'Efiets_Auto_OV']
     Matrix = []
 
     for vvcombis in vervoerscombis:
         if not groep is None:
-            Matrix.append(Routines.csvlezen (Totalendirectory + vvcombis + '_' + str(groep)))
+            Matrix.append(csvlezen (Totalendirectory + vvcombis + '_' + str(groep)))
         else:
-            Matrix.append ( Routines.csvlezen ( Totalendirectory + vvcombis  ) )
+            Matrix.append ( csvlezen ( Totalendirectory + vvcombis  ) )
     return Matrix
 
 
@@ -87,8 +86,6 @@ def getallenlijst_maken (aantal_getallen):
 
 
 def csvlezen (filenaam, aantal_lege_regels=0):
-    import Routines
-    import csv
     matrix = []
     filenaam2=filenaam + '.csv'
     with open ( filenaam2, 'r' ) as csvfile:
@@ -116,8 +113,6 @@ def csvlezen (filenaam, aantal_lege_regels=0):
     return uitmatrix
 
 def csvintlezen (filenaam, aantal_lege_regels=0):
-    import Routines
-    import csv
     matrix = []
     filenaam2=filenaam + '.csv'
     with open ( filenaam2, 'r' ) as csvfile:
@@ -145,8 +140,6 @@ def csvintlezen (filenaam, aantal_lege_regels=0):
     return uitmatrix
 
 def csvfloatlezen (filenaam, aantal_lege_regels=0):
-    import Routines
-    import csv
     matrix = []
     filenaam2=filenaam + '.csv'
     with open ( filenaam2, 'r' ) as csvfile:
@@ -174,8 +167,6 @@ def csvfloatlezen (filenaam, aantal_lege_regels=0):
     return uitmatrix
 
 def Omnitrans_csv_inlezen (filenaam, aantal_zones=1425, aantal_lege_regels=4):
-    import Routines
-    import csv
     lijst = []
     skimmatrix = []
     filenaam2=filenaam + '.csv'
@@ -196,7 +187,6 @@ def Omnitrans_csv_inlezen (filenaam, aantal_zones=1425, aantal_lege_regels=4):
     return skimmatrix
 
 def csvwegschrijven (matrix, filenaam, soort = "matrix"):
-    import csv
     f = open ( filenaam + '.csv', 'w', newline='' )
     with f:
         writer = csv.writer ( f )
@@ -206,7 +196,6 @@ def csvwegschrijven (matrix, filenaam, soort = "matrix"):
             writer.writerow ( matrix )
 
 def csvwegschrijvenmetheader (matrix, filenaam, header, soort = "matrix" ):
-    import csv
     f = open ( filenaam + '.csv', 'w', newline='' )
     with f:
         writer = csv.writer ( f )
@@ -218,7 +207,6 @@ def csvwegschrijvenmetheader (matrix, filenaam, header, soort = "matrix" ):
 
 
 def laad_constanten_reistijdvervalscurve (Gewichtendirectory,  vvwijze, groep, motief ):
-    import openpyxl
     zoekkolom = {'werk':2,'winkeldagelijks':6, 'winkelnietdagelijks':10, 'onderwijs':14, 'zorg':18, 'overig':22}
     optelwaarde = {'Auto':0, 'Fiets':1, 'EFiets':2, 'OV':3}
     filenaam2 = Gewichtendirectory + 'Constanten_reistijdvervalscurve.xlsx'
@@ -233,7 +221,6 @@ def laad_constanten_reistijdvervalscurve (Gewichtendirectory,  vvwijze, groep, m
     return alpha, omega
 
 def laad_alle_constanten_reistijdvervalcurve (Gewichtendirectory, motief, aantal_groepen = 20):
-    import Routines
     vervoerwijze=['Auto', 'Fiets', 'EFiets', 'OV']
 
     for vvwijze in vervoerwijze:
@@ -242,20 +229,19 @@ def laad_alle_constanten_reistijdvervalcurve (Gewichtendirectory, motief, aantal
         for groep in range (0, aantal_groepen + 1):
             Alphasnaam = 'Alphas_'+ vvwijze
             Omegasnaam = 'Omegas_' + vvwijze
-            Alphaomega = Routines.laad_constanten_reistijdvervalscurve(Gewichtendirectory,vvwijze,groep, motief)
+            Alphaomega = laad_constanten_reistijdvervalscurve(Gewichtendirectory,vvwijze,groep, motief)
             Alphas.append(Alphaomega[0])
             Omegas.append(Alphaomega[1])
         Alphafilenaam = Gewichtendirectory + Alphasnaam
         Omegafilenaam = Gewichtendirectory + Omegasnaam
-        Routines.csvwegschrijven(Alphas,Alphafilenaam, soort = "lijst")
-        Routines.csvwegschrijven(Omegas,Omegafilenaam, soort = "lijst")
+        csvwegschrijven(Alphas,Alphafilenaam, soort = "lijst")
+        csvwegschrijven(Omegas,Omegafilenaam, soort = "lijst")
 
 def maak_totale_buurten_file (Invoerexcel, aantal_zones = 1425):
-    import Routines
-    Zonelijst_met_buurtsamenstelling = Routines.matrixvuller ( Invoerexcel, 1, beginrij=3, beginkolom=1,
+    Zonelijst_met_buurtsamenstelling = matrixvuller ( Invoerexcel, 1, beginrij=3, beginkolom=1,
                                                                sheetnaam='Excl_studenten' )
     Zonelijst = [sub[0] for sub in Zonelijst_met_buurtsamenstelling]
-    Buurtsamenstelling = Routines.matrixvuller (Invoerexcel, 20, beginrij=3, beginkolom=2,
+    Buurtsamenstelling = matrixvuller (Invoerexcel, 20, beginrij=3, beginkolom=2,
                                                  sheetnaam='Excl_studenten' )
     Zonelijstnummer = 0
     Samenstelling_alle_zones = []
