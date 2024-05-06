@@ -380,3 +380,32 @@ def enkelegroep(mod, gr) :
         else:
             return 'OV'
 
+
+def combigroep(mod, gr) :
+    string = ''
+    if 'Auto' in mod:
+        if 'GratisAuto' in gr:
+            string = 'GratisAuto'
+        elif 'Wel' in gr:
+            string = 'Auto'
+        if 'GeenAuto' in gr:
+            string = 'GeenAuto'
+        if 'GeenRijbewijs' in gr:
+            string = 'GeenRijbewijs'
+    if 'OV' in mod:
+        if 'GratisOV' in gr:
+            if string == '':
+                string = string + 'GratisOV'
+            else:
+                string = string + '_GratisOV'
+        else:
+            if string == '':
+                string = string + 'OV'
+            else:
+                string = string + '_OV'
+    if 'EFiets' in mod:
+        string = string + '_EFiets'
+    elif 'Fiets' in mod:
+        string = string + '_Fiets'
+    return string
+

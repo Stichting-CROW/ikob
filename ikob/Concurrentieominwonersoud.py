@@ -97,34 +97,6 @@ def Lijstvolnullen(lengte=len(Arbeidsplaatsen)) :
         Lijst.append(0)
     return Lijst
 
-def combigroep(mod, gr) :
-    string = ''
-    if 'Auto' in mod:
-        if 'GratisAuto' in gr:
-            string = 'GratisAuto'
-        elif 'Wel' in gr:
-            string = 'Auto'
-        if 'GeenAuto' in gr:
-            string = 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            string = 'GeenRijbewijs'
-    if 'OV' in mod:
-        if 'GratisOV' in gr:
-            if string == '':
-                string = string + 'GratisOV'
-            else:
-                string = string + '_GratisOV'
-        else:
-            if string == '':
-                string = string + 'OV'
-            else:
-                string = string + '_OV'
-    if 'EFiets' in mod:
-        string = string + '_EFiets'
-    elif 'Fiets' in mod:
-        string = string + '_Fiets'
-    return string
-
 
 
 def bereken_concurrentie (Matrix, Beroepsbevolking, Bereik, inkgr):
@@ -202,7 +174,7 @@ for abg in autobezitgroepen:
                                     if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                         Bijhoudlijst[i] += Dezegroeplijst[i]
                             else:
-                                String = combigroep ( mod, gr )
+                                String = Routines.combigroep ( mod, gr )
                                 print ( String )
                                 Filenaam = os.path.join ( Combinatiedirectory, f'{String}_vk{vk}_{ink}' )
                                 Matrix = Routines.csvlezen ( Filenaam )

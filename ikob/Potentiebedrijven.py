@@ -3,34 +3,6 @@ import Berekeningen
 import os
 
 
-def combigroep(mod, gr) :
-    string = ''
-    if 'Auto' in mod:
-        if 'GratisAuto' in gr:
-            string = 'GratisAuto'
-        elif 'Wel' in gr:
-            string = 'Auto'
-        if 'GeenAuto' in gr:
-            string = 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            string = 'GeenRijbewijs'
-    if 'OV' in mod:
-        if 'GratisOV' in gr:
-            if string == '':
-                string = string + 'GratisOV'
-            else:
-                string = string + '_GratisOV'
-        else:
-            if string == '':
-                string = string + 'OV'
-            else:
-                string = string + '_OV'
-    if 'EFiets' in mod:
-        string = string + '_EFiets'
-    elif 'Fiets' in mod:
-        string = string + '_Fiets'
-    return string
-
 def inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking):
     Inwonersfile = []
     for i in range (len(Beroepsbevolking)) :
@@ -223,7 +195,7 @@ def potentie_bedrijven(config):
                             for i in range(0, len(Matrix) ):
                                 Bijhoudlijst[i]+= round(Dezegroeplijst[i])
                         else:
-                            String = combigroep(mod, gr)
+                            String = Routines.combigroep(mod, gr)
                             print('de gr is', gr)
                             print('de string is', String)
                             if String[0] == 'A':
