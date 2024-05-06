@@ -3,32 +3,6 @@ import Berekeningen
 import os
 
 
-def vindvoorkeur(naam, mod):
-    if 'vk' in naam:
-        Beginvk = naam.find ('vk')
-        if naam[Beginvk + 2] == "A":
-            return 'Auto'
-        elif naam[Beginvk + 2] == "N":
-            return 'Neutraal'
-        elif naam[Beginvk + 2] == "O":
-            return 'OV'
-        elif naam[Beginvk + 2] == "F":
-            return 'Fiets'
-        else:
-            return ''
-    elif 'GratisAuto' in naam:
-        if 'GratisAuto_GratisOV' in naam and 'OV' in mod and 'Auto' in mod:
-            return 'Neutraal'
-        else:
-            if 'Auto' in mod:
-                return 'Auto'
-            else:
-                return 'OV'
-    elif 'GratisOV' in naam:
-        return 'OV'
-    else:
-        return ''
-
 def enkelegroep(mod, gr) :
     if mod == 'Auto':
         if 'GratisAuto' in gr:
@@ -213,7 +187,7 @@ def potentie_bedrijven(config):
                 for gr in Groepen:
                     ink = Routines.inkomensgroepbepalen ( gr )
                     if inkgr == ink or inkgr == 'alle':
-                        vk = vindvoorkeur (gr, mod)
+                        vk = Routines.vindvoorkeur (gr, mod)
                         if mod == 'Fiets' or mod == 'EFiets':
                             if vk == 'Fiets':
                                 vkklad = 'Fiets'
