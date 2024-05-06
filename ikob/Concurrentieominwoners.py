@@ -237,7 +237,7 @@ def concurrentie_om_inwoners(config):
                         Totaalmodfilenaam = os.path.join ( Concurrentiedirectory, f'Totaal_{mod}_{inkgr}' )
                         Totaalrij = Routines.csvlezen ( Totaalmodfilenaam )
                         Generaaltotaal_potenties.append ( Totaalrij )
-                        Generaaltotaaltrans = Berekeningen.Transponeren ( Generaaltotaal_potenties )
+                        Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
                         Uitvoerfilenaam = os.path.join ( Concurrentiedirectory, f'Ontpl_conc_{inkgr}' )
                         Routines.csvwegschrijvenmetheader ( Generaaltotaaltrans, Uitvoerfilenaam, headstring )
                         Routines.xlswegschrijven ( Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel )
@@ -252,7 +252,7 @@ def concurrentie_om_inwoners(config):
                         Totaalmodfilenaam = os.path.join (Concurrentiedirectory, f'Totaal_{mod}_{inkgr}')
                         Totaalrij = Routines.csvlezen(Totaalmodfilenaam)
                         Generaalmatrix.append(Totaalrij)
-                        Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+                        Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                     for i in range (len(Inwonersperklasse)):
                         Generaalmatrixproduct.append([])
                         for j in range (len(Inwonersperklasse[0])):

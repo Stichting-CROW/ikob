@@ -109,7 +109,7 @@ def potentie_bedrijven(config):
     print ('Lengte inwoners is', len(Beroepsbevolking))
 
     Inwoners = inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking)
-    Inwonerstransmatrix = Berekeningen.Transponeren(Inwoners)
+    Inwonerstransmatrix = Routines.transponeren(Inwoners)
 
     for mot in motieven:
         if mot == 'werk':
@@ -122,7 +122,7 @@ def potentie_bedrijven(config):
                                               f'Verdeling_over_groepen_{Doelgroep}_alleen_autobezit')
         Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
         print('Verdelingsmatrix 4 is', Verdelingsmatrix[4])
-        Verdelingstransmatrix = Berekeningen.Transponeren(Verdelingsmatrix)
+        Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
 
     for ds in dagsoort:
         Combinatiedirectory = os.path.join ( Basisdirectory, regime, motieven[0] , 'Gewichten', 'Combinaties', ds )
@@ -230,7 +230,7 @@ def potentie_bedrijven(config):
                 Totaalmodfilenaam = os.path.join (Totalendirectoryherkomsten, f'Totaal_{mod}_{inkgr}')
                 Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
                 Generaaltotaal_potenties.append(Totaalrij)
-            Generaaltotaaltrans = Berekeningen.Transponeren(Generaaltotaal_potenties)
+            Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
             Uitvoerfilenaam = os.path.join(Totalendirectoryherkomsten, f'Pot_totaal_{inkgr}')
             Routines.csvwegschrijvenmetheader(Generaaltotaaltrans, Uitvoerfilenaam, headstring)
             Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel)
@@ -244,7 +244,7 @@ def potentie_bedrijven(config):
                 Totaalmodfilenaam = os.path.join (Totalendirectoryherkomsten, f'Totaal_{mod}_{inkgr}')
                 Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
                 Generaalmatrix.append(Totaalrij)
-            Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+            Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
             for i in range (len(Arbeidsplaatsenperklasse)):
                 Generaalmatrixproduct.append([])
                 for j in range (len(Arbeidsplaatsenperklasse[0])):

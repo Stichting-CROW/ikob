@@ -41,7 +41,7 @@ def lijstvolnullen(lengte) :
     return [0 for _ in range(lengte)]
 
 
-def transponeren (matrix, breedte, hoogte):
+def transponeren (matrix):
     return [list(i) for i in zip(*matrix)]
 
 
@@ -59,7 +59,7 @@ def xlswegschrijven (matrix, filenaam, header):
 def xlswegschrijven_totalen (matrix, header, getallenlijst, filenaam, aantal_zones=1425):
     import xlsxwriter
     import Routines
-    transmatrix = Routines.transponeren (matrix, aantal_zones, len(header)-1)
+    transmatrix = Routines.transponeren(matrix)
     workbook = xlsxwriter.Workbook ( filenaam + '.xlsx' )
     worksheet = workbook.add_worksheet ( )
     worksheet.write_row (0,0,header)

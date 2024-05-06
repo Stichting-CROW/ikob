@@ -83,7 +83,7 @@ for i in range (len(Beroepsbevolkingperklasse)):
             Inkomensverdeling[i].append(Beroepsbevolkingperklasse[i][j]/Beroepsbevolkingtotalen[i])
         else:
             Inkomensverdeling[i].append (0)
-Inkomenstransverdeling = Berekeningen.Transponeren (Inkomensverdeling)
+Inkomenstransverdeling = Routines.transponeren (Inkomensverdeling)
 
 Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
 Arbeidsplaatsen = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
@@ -97,7 +97,7 @@ for ca in conc_afstand:
             else:
                 Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_alleen_autobezit')
             Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
-            Verdelingstransmatrix = Berekeningen.Transponeren(Verdelingsmatrix)
+            Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
             for mot in motieven:
                 if mot == 'werk':
                     Bestemmingen = Arbeidsplaatsen
@@ -172,7 +172,7 @@ for ca in conc_afstand:
                             Totaalmodfilenaam = os.path.join ( Concurrentiedirectory, f'Totaal_{mod}_{inkgr}' )
                             Totaalrij = Routines.csvlezen ( Totaalmodfilenaam )
                             Generaaltotaal_potenties.append ( Totaalrij )
-                            Generaaltotaaltrans = Berekeningen.Transponeren ( Generaaltotaal_potenties )
+                            Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
                             Uitvoerfilenaam = os.path.join ( Concurrentiedirectory, f'Ontpl_conc_{inkgr}' )
                             Routines.csvwegschrijvenmetheader ( Generaaltotaaltrans, Uitvoerfilenaam, headstring )
                             Routines.xlswegschrijven ( Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel )
@@ -187,7 +187,7 @@ for ca in conc_afstand:
                             Totaalmodfilenaam = os.path.join (Concurrentiedirectory, f'Totaal_{mod}_{inkgr}')
                             Totaalrij = Routines.csvlezen(Totaalmodfilenaam)
                             Generaalmatrix.append(Totaalrij)
-                            Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+                            Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                         for i in range (len(Beroepsbevolkingperklasse)):
                             Generaalmatrixproduct.append([])
                             for j in range (len(Beroepsbevolkingperklasse[0])):
@@ -250,7 +250,7 @@ for ca in conc_afstand:
                         Totaalmodfilenaam = os.path.join ( Afstandsdirectory, f'Totaal_{afstsrt}_{inkgr}' )
                         Totaalrij = Routines.csvlezen ( Totaalmodfilenaam )
                         Generaaltotaal_potenties.append ( Totaalrij )
-                        Generaaltotaaltrans = Berekeningen.Transponeren ( Generaaltotaal_potenties )
+                        Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
                         Uitvoerfilenaam = os.path.join ( Afstandsdirectory, f'Afstanden_{inkgr}' )
                         Routines.csvwegschrijvenmetheader ( Generaaltotaaltrans, Uitvoerfilenaam, headstringkort )
                         Routines.xlswegschrijven ( Generaaltotaaltrans, Uitvoerfilenaam, headstringkortExcel )
@@ -265,7 +265,7 @@ for ca in conc_afstand:
                         Totaalmodfilenaam = os.path.join (Afstandsdirectory, f'Totaal_{afstsrt}_{inkgr}')
                         Totaalrij = Routines.csvlezen(Totaalmodfilenaam)
                         Generaalmatrix.append(Totaalrij)
-                        Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+                        Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                     for i in range (len(Beroepsbevolkingperklasse)):
                         Generaalmatrixproduct.append([])
                         for j in range (len(Beroepsbevolkingperklasse[0])):

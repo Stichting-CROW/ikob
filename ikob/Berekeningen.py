@@ -1,3 +1,6 @@
+import Routines
+
+
 def correctie_voor_parkeren (Basisdirectory, Parkeerdirectory, motief, aantal_groepen=20):
     import Routines
     import Berekeningen
@@ -422,14 +425,10 @@ def Concurrentie_positie_herk_of_bestemming (Basisdirectory, motief, h_of_b,aant
     Getallenlijst = Routines.getallenlijst_maken ( 1425 )
     Routines.xlswegschrijven_totalen ( Alleverhoudingenuitvoer, Headers, Getallenlijst, Uitvoerfile )
 
-def Transponeren (Matrix) :
-    Transp = [[Matrix[j][i] for j in range(len(Matrix))] for i in range(len(Matrix[0]))]
-    return Transp
-
 
 def bereken_concurrentie (Matrix, Beroepsbevolking, Bereik, inkgr, inkgroepen):
     Dezegroeplijst = []
-    Beroepsbevolkingtrans = Transponeren ( Beroepsbevolking )
+    Beroepsbevolkingtrans = Routines.transponeren ( Beroepsbevolking )
     for i in range ( len ( Matrix ) ):
         Gewogenmatrix = []
         for Getal1, Getal2, Getal3 in zip ( Matrix[i], Bereik, Beroepsbevolkingtrans[inkgroepen.index ( inkgr )] ):

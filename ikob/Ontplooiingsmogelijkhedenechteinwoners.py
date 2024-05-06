@@ -113,7 +113,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
         Arbeidsplaatsenfilenaam = os.path.join(SEGSdirectory, scenario, f'Leerlingenplaatsen')
         print(Arbeidsplaatsenfilenaam)
         Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
-        Arbeidsplaatsen = Berekeningen.Transponeren(Arbeidsplaats)
+        Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
         print('Lengte Leerlingenplaatsen is', len(Arbeidsplaats))
     else:
         Beroepsbevolkingperklassenaam = os.path.join (SEGSdirectory, scenario, f'Beroepsbevolking_inkomensklasse')
@@ -122,7 +122,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
         Arbeidsplaatsenfilenaam = os.path.join(SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
         print(Arbeidsplaatsenfilenaam)
         Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
-        Arbeidsplaatsen = Berekeningen.Transponeren(Arbeidsplaats)
+        Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
         print('Lengte arbeidsplaatsen is', len(Arbeidsplaats))
     for i in range(len(Beroepsbevolkingperklasse)):
         Beroepsbevolkingtotalen.append(sum(Beroepsbevolkingperklasse[i]))
@@ -146,7 +146,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                 Inkomensverdeling[i].append(Beroepsbevolkingperklasse[i][j]/Beroepsbevolkingtotalen[i])
             else:
                 Inkomensverdeling[i].append (0)
-    Inkomenstransverdeling = Berekeningen.Transponeren (Inkomensverdeling)
+    Inkomenstransverdeling = Routines.transponeren (Inkomensverdeling)
 
     for abg in autobezitgroepen:
         for mot in motieven:
@@ -162,7 +162,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                 Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_{Doelgroep}_alleen_autobezit')
             Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
             print('Verdelingsmatrix 4 is', Verdelingsmatrix[4])
-            Verdelingstransmatrix = Berekeningen.Transponeren(Verdelingsmatrix)
+            Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
             for ds in dagsoort:
                 Combinatiedirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', 'Combinaties', ds )
                 Enkelemodaliteitdirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', ds )
@@ -320,7 +320,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                         Totaalmodfilenaam = os.path.join (Totalendirectorybestemmingen, f'Totaal_{mod}_{inkgr}')
                         Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
                         Generaaltotaal_potenties.append(Totaalrij)
-                    Generaaltotaaltrans = Berekeningen.Transponeren(Generaaltotaal_potenties)
+                    Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
                     Uitvoerfilenaam = os.path.join(Totalendirectorybestemmingen, f'Ontpl_totaal_{inkgr}')
                     Routines.csvwegschrijvenmetheader(Generaaltotaaltrans, Uitvoerfilenaam, headstring)
                     Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel)
@@ -334,7 +334,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                         Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
-                        Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+                        Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                     else:
                         Generaaltotaaltrans = Generaalmatrix
                     for i in range (len(Beroepsbevolkingperklasse)):
