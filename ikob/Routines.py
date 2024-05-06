@@ -74,7 +74,7 @@ def matrixen_maken_voor_Excel_totalen (Totalendirectory, groep):
     Matrix = []
 
     for vvcombis in vervoerscombis:
-        if not groep is None:
+        if groep is not None:
             Matrix.append(csvlezen (Totalendirectory + vvcombis + '_' + str(groep)))
         else:
             Matrix.append ( csvlezen ( Totalendirectory + vvcombis  ) )
@@ -94,7 +94,6 @@ def csvlezen (filenaam, aantal_lege_regels=0):
             next(reader)
         for row in reader:
             matrix.append ( row )
-    lengte = len ( matrix[0] )
     with open ( filenaam2, 'r' ) as csvfile:
         reader = csv.reader ( csvfile )
         row_count = sum ( 1 for row in reader )
@@ -121,7 +120,6 @@ def csvintlezen (filenaam, aantal_lege_regels=0):
             next(reader)
         for row in reader:
             matrix.append ( row )
-    lengte = len ( matrix[0] )
     with open ( filenaam2, 'r' ) as csvfile:
         reader = csv.reader ( csvfile )
         row_count = sum ( 1 for row in reader )
@@ -148,7 +146,6 @@ def csvfloatlezen (filenaam, aantal_lege_regels=0):
             next(reader)
         for row in reader:
             matrix.append ( row )
-    lengte = len ( matrix[0] )
     with open ( filenaam2, 'r' ) as csvfile:
         reader = csv.reader ( csvfile )
         row_count = sum ( 1 for row in reader )
@@ -172,7 +169,6 @@ def Omnitrans_csv_inlezen (filenaam, aantal_zones=1425, aantal_lege_regels=4):
     filenaam2=filenaam + '.csv'
     with open ( filenaam2, 'r' ) as csvfile:
         reader = csv.reader ( csvfile )
-        row_count = sum ( 1 for row in reader )
     with open ( filenaam2, 'r' ) as csvfile:
         reader = csv.reader ( csvfile )
         for i in range (aantal_lege_regels):
@@ -213,7 +209,6 @@ def laad_constanten_reistijdvervalscurve (Gewichtendirectory,  vvwijze, groep, m
     wb=openpyxl.load_workbook(filenaam2)
     sheet=wb['Alphas']
     sheet2=wb['Omegas']
-    sheet3=wb['Weging']
     alphacel = sheet.cell(row=groep + 3, column= zoekkolom.get(motief) + optelwaarde.get(vvwijze))
     alpha = alphacel.value
     omegacel = sheet2.cell(row=groep + 3, column= zoekkolom.get(motief) + optelwaarde.get(vvwijze))
