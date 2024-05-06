@@ -29,16 +29,13 @@ def kolomkopvuller (filenaam, sheetnaam) :
 def zoekrijnummer (i, kolom):
     for j in range ( len ( kolom ) ):
         if kolom[j] == i:
-            rijnummer = j
-            break
-    return rijnummer
+            return j
 
 def zoekSEGkolom(kolomkoppen, tekst):
     for k in range (0,len(kolomkoppen)):
         if kolomkoppen[k] == tekst :
-            zoekkolom = k
-            break
-    return zoekkolom
+            return k
+
 
 def matrixvolnullen (rijen,kolommen) :
     matrix = []
@@ -78,7 +75,7 @@ def transponeren (matrix, breedte, hoogte):
         uitmatrix.append([])
         for j in range (hoogte):
             uitmatrix[i].append(matrix[j][i])
-    return (uitmatrix)
+    return uitmatrix
 
 
 def xlswegschrijven_totalen (matrix, header, getallenlijst, filenaam, aantal_zones=1425):
