@@ -309,3 +309,14 @@ def minmaxmatrix (Matrix1, Matrix2, minmax = "max"):
             else:
                 Eindmatrix[i].append ( min ( Matrix1[i][j], Matrix2[i][j] ) )
     return Eindmatrix
+
+def minmaxmatrix3(matrix1, matrix2, matrix3, minmax="max"):
+    eindmatrix = []
+    for i in range(0, len(matrix1)):
+        eindmatrix.append([])
+        for j in range(0, len(matrix1)):
+            if minmax == "max":
+                eindmatrix[i].append(max(matrix1[i][j], matrix2[i][j], matrix3[i][j]))
+            else:
+                eindmatrix[i].append(min(matrix1[i][j], matrix2[i][j], matrix3[i][j]))
+    return eindmatrix
