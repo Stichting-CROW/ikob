@@ -89,21 +89,6 @@ Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, scenario, f'Arbeidsplaats
 Arbeidsplaatsen = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
 
 
-def bereken_concurrentie (Matrix, Beroepsbevolking, Bereik, inkgr):
-    Dezegroeplijst = []
-    Beroepsbevolkingtrans = Berekeningen.Transponeren ( Beroepsbevolking )
-    for i in range ( len ( Matrix ) ):
-        Gewogenmatrix = []
-        for Getal1, Getal2, Getal3 in zip ( Matrix[i], Bereik, Beroepsbevolkingtrans[inkgroepen.index ( inkgr )] ):
-            if Getal2 > 0:
-                Gewogenmatrix.append ( Getal1 * Getal3 / Getal2 )
-            else :
-                Gewogenmatrix.append (0)
-        Dezegroeplijst.append ( sum ( Gewogenmatrix ) )
-    return Dezegroeplijst
-
-
-
 for ca in conc_afstand:
     if ca == 'Concurrentie':
         for abg in autobezitgroepen:
@@ -151,7 +136,7 @@ for ca in conc_afstand:
                                         print ( 'Lengte Fietsmatrix is', len ( Fietsmatrix ) )
                                         Bereikfilenaam = os.path.join(Bestemmingendirectory,f'Totaal_{mod}_{inkgr}')
                                         Bereik = Routines.csvintlezen (Bereikfilenaam)
-                                        Dezegroeplijst = bereken_concurrentie ( Fietsmatrix, Beroepsbevolkingperklasse, Bereik, inkgr)
+                                        Dezegroeplijst = Berekeningen.bereken_concurrentie ( Fietsmatrix, Beroepsbevolkingperklasse, Bereik, inkgr, inkgroepen)
 
                                         for i in range ( 0, len ( Fietsmatrix ) ):
                                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
@@ -164,7 +149,7 @@ for ca in conc_afstand:
                                         Matrix = Routines.csvlezen ( Filenaam )
                                         Bereikfilenaam = os.path.join(Bestemmingendirectory,f'Totaal_{mod}_{inkgr}')
                                         Bereik = Routines.csvintlezen (Bereikfilenaam)
-                                        Dezegroeplijst = bereken_concurrentie ( Matrix, Beroepsbevolkingperklasse, Bereik, inkgr)
+                                        Dezegroeplijst = Berekeningen.bereken_concurrentie ( Matrix, Beroepsbevolkingperklasse, Bereik, inkgr, inkgroepen)
                                         for i in range ( 0, len ( Matrix ) ):
                                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                                 Bijhoudlijst[i] += Dezegroeplijst[i]
@@ -175,7 +160,7 @@ for ca in conc_afstand:
                                         Matrix = Routines.csvlezen ( Filenaam )
                                         Bereikfilenaam = os.path.join ( Bestemmingendirectory, f'Totaal_{mod}_{inkgr}' )
                                         Bereik = Routines.csvintlezen ( Bereikfilenaam )
-                                        Dezegroeplijst = bereken_concurrentie ( Matrix, Beroepsbevolkingperklasse, Bereik, inkgr)
+                                        Dezegroeplijst = Berekeningen.bereken_concurrentie ( Matrix, Beroepsbevolkingperklasse, Bereik, inkgr, inkgroepen)
                                         for i in range ( 0, len ( Matrix ) ):
                                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                                 Bijhoudlijst[i] += Dezegroeplijst[i]

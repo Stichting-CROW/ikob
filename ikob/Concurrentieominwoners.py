@@ -3,20 +3,6 @@ import Berekeningen
 import os
 
 
-def bereken_concurrentie(Matrix, Inwoners, Bereik, inkgr, inkgroepen):
-    Dezegroeplijst = []
-    Inwonerstrans = Berekeningen.Transponeren ( Inwoners )
-    for i in range ( len ( Matrix ) ):
-        Gewogenmatrix = []
-        for Getal1, Getal2, Getal3 in zip ( Matrix[i], Bereik, Inwonerstrans[inkgroepen.index ( inkgr )] ):
-            if Getal2 > 0:
-                Gewogenmatrix.append ( Getal1 * Getal3 / Getal2 )
-            else :
-                Gewogenmatrix.append (0)
-        Dezegroeplijst.append ( sum ( Gewogenmatrix ) )
-    return Dezegroeplijst
-
-
 def concurrentie_om_inwoners(config):
     Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
     project_config = config['project']
@@ -144,7 +130,7 @@ def concurrentie_om_inwoners(config):
                                     print ( 'Lengte Fietsmatrix is', len ( Fietsmatrix ) )
                                     Bereikfilenaam = os.path.join(Bestemmingendirectory,f'Totaal_{mod}_{inkgr}')
                                     Bereik = Routines.csvintlezen (Bereikfilenaam)
-                                    Dezegroeplijst = bereken_concurrentie ( Fietsmatrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
+                                    Dezegroeplijst = Berekeningen.bereken_concurrentie ( Fietsmatrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
         
                                     for i in range ( 0, len ( Fietsmatrix ) ):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
@@ -163,7 +149,7 @@ def concurrentie_om_inwoners(config):
                                             Matrix = Routines.csvlezen(AutoFilenaam)
                                             Bereikfilenaam = os.path.join(Bestemmingendirectory,f'Totaal_{mod}_{inkgr}')
                                             Bereik = Routines.csvintlezen (Bereikfilenaam)
-                                            Dezegroeplijst1 = bereken_concurrentie ( Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
+                                            Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
                                             if srtbr == 'elektrisch':
                                                 K = percentageelektrisch.get(inkgr) / 100
                                                 print('aandeel elektrisch is', K)
@@ -184,7 +170,7 @@ def concurrentie_om_inwoners(config):
                                         Matrix = Routines.csvlezen(AutoFilenaam)
                                         Bereikfilenaam = os.path.join(Bestemmingendirectory, f'Totaal_{mod}_{inkgr}')
                                         Bereik = Routines.csvintlezen(Bereikfilenaam)
-                                        Dezegroeplijst = bereken_concurrentie(Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
+                                        Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
                                         for i in range(len(Matrix)):
                                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                                 Bijhoudklad = Dezegroeplijst[i] * Verdelingsmatrix[i][Groepen.index(gr)]/\
@@ -198,7 +184,7 @@ def concurrentie_om_inwoners(config):
                                     Matrix = Routines.csvlezen(OVFilenaam)
                                     Bereikfilenaam = os.path.join(Bestemmingendirectory, f'Totaal_{mod}_{inkgr}')
                                     Bereik = Routines.csvintlezen(Bereikfilenaam)
-                                    Dezegroeplijst = bereken_concurrentie(Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
+                                    Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
                                     for i in range(len(Matrix)):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)] > 0:
                                             Bijhoudklad = Dezegroeplijst[i] * Verdelingsmatrix[i][Groepen.index(gr)] / \
@@ -217,7 +203,7 @@ def concurrentie_om_inwoners(config):
                                             Matrix = Routines.csvlezen(CombiFilenaam)
                                             Bereikfilenaam = os.path.join ( Bestemmingendirectory, f'Totaal_{mod}_{inkgr}' )
                                             Bereik = Routines.csvintlezen ( Bereikfilenaam )
-                                            Dezegroeplijst1 = bereken_concurrentie ( Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
+                                            Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
                                             if srtbr == 'elektrisch':
                                                 K = percentageelektrisch.get(inkgr)/100
                                                 DezegroeplijstE = [x * K for x in Dezegroeplijst1]
@@ -236,7 +222,7 @@ def concurrentie_om_inwoners(config):
                                         Matrix = Routines.csvlezen ( CombiFilenaam )
                                         Bereikfilenaam = os.path.join(Bestemmingendirectory, f'Totaal_{mod}_{inkgr}')
                                         Bereik = Routines.csvintlezen(Bereikfilenaam)
-                                        Dezegroeplijst = bereken_concurrentie(Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
+                                        Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
                                         for i in range (len(Matrix)):
                                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                                 Bijhoudklad = Dezegroeplijst[i] * Verdelingsmatrix[i][Groepen.index(gr)]/\

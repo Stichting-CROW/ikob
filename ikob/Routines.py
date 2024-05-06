@@ -408,4 +408,3 @@ def combigroep(mod, gr) :
     elif 'Fiets' in mod:
         string = string + '_Fiets'
     return string
-
