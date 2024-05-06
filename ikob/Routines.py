@@ -363,3 +363,20 @@ def vindvoorkeur(naam, mod):
     else:
         return ''
 
+
+def enkelegroep(mod, gr) :
+    if mod == 'Auto':
+        if 'GratisAuto' in gr:
+            return 'GratisAuto'
+        elif 'Wel' in gr:
+            return 'Auto'
+        if 'GeenAuto' in gr:
+            return 'GeenAuto'
+        if 'GeenRijbewijs' in gr:
+            return 'GeenRijbewijs'
+    if mod == 'OV':
+        if 'GratisOV' in gr:
+            return 'GratisOV'
+        else:
+            return 'OV'
+

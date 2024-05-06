@@ -97,22 +97,6 @@ def Lijstvolnullen(lengte=len(Arbeidsplaatsen)) :
         Lijst.append(0)
     return Lijst
 
-def enkelegroep(mod, gr) :
-    if mod == 'Auto':
-        if 'GratisAuto' in gr:
-            return 'GratisAuto'
-        elif 'Wel' in gr:
-            return 'Auto'
-        if 'GeenAuto' in gr:
-            return 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            return 'GeenRijbewijs'
-    if mod == 'OV':
-        if 'GratisOV' in gr:
-            return 'GratisOV'
-        else:
-            return 'OV'
-
 def combigroep(mod, gr) :
     string = ''
     if 'Auto' in mod:
@@ -207,7 +191,7 @@ for abg in autobezitgroepen:
                                         Bijhoudlijst[i] += Dezegroeplijst[i]
 
                             elif mod == 'Auto' or mod == 'OV':
-                                String = enkelegroep(mod, gr)
+                                String = Routines.enkelegroep(mod, gr)
                                 print ( String )
                                 Filenaam = os.path.join ( Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}' )
                                 Matrix = Routines.csvlezen ( Filenaam )

@@ -3,22 +3,6 @@ import Berekeningen
 import os
 
 
-def enkelegroep(mod, gr) :
-    if mod == 'Auto':
-        if 'GratisAuto' in gr:
-            return 'GratisAuto'
-        elif 'Wel' in gr:
-            return 'Auto'
-        if 'GeenAuto' in gr:
-            return 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            return 'GeenRijbewijs'
-    if mod == 'OV':
-        if 'GratisOV' in gr:
-            return 'GratisOV'
-        else:
-            return 'OV'
-
 def combigroep(mod, gr) :
     string = ''
     if 'Auto' in mod:
@@ -201,7 +185,7 @@ def potentie_bedrijven(config):
                             for i in range(0, len(Fietsmatrix) ):
                                 Bijhoudlijst[i]+= round(Dezegroeplijst[i])
                         elif mod == 'Auto':
-                            String = enkelegroep(mod, gr)
+                            String = Routines.enkelegroep(mod, gr)
                             print(String)
                             if 'WelAuto' in gr:
                                 for srtbr in soortbrandstof:
@@ -231,7 +215,7 @@ def potentie_bedrijven(config):
                                 print('Bijhoudlijst niet fossiel is:', Bijhoudlijst)
 
                         elif mod == 'OV':
-                            String = enkelegroep (mod,gr)
+                            String = Routines.enkelegroep (mod,gr)
                             print (String)
                             Filenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
                             Matrix = Routines.csvlezen(Filenaam)

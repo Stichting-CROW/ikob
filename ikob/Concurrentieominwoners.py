@@ -3,22 +3,6 @@ import Berekeningen
 import os
 
 
-def enkelegroep(mod, gr) :
-    if mod == 'Auto':
-        if 'GratisAuto' in gr:
-            return 'GratisAuto'
-        elif 'Wel' in gr:
-            return 'Auto'
-        if 'GeenAuto' in gr:
-            return 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            return 'GeenRijbewijs'
-    if mod == 'OV':
-        if 'GratisOV' in gr:
-            return 'GratisOV'
-        else:
-            return 'OV'
-
 def combigroep(mod, gr) :
     string = ''
     if 'Auto' in mod:
@@ -198,7 +182,7 @@ def concurrentie_om_inwoners(config):
                                             Bijhoudlijst[i] +=  Bijhoudklad
         
                                 elif mod == 'Auto' :
-                                    String = enkelegroep ( mod, gr )
+                                    String = Routines.enkelegroep ( mod, gr )
                                     print ( String )
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
@@ -236,7 +220,7 @@ def concurrentie_om_inwoners(config):
                                                           Inkomensverdeling[i][inkgroepen.index(inkgr)]
                                                 Bijhoudlijst[i] += Bijhoudklad
                                 elif mod == 'OV':
-                                    String = enkelegroep(mod, gr)
+                                    String = Routines.enkelegroep(mod, gr)
                                     print(String)
                                     OVFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
                                     print('Filenaam is', OVFilenaam)
