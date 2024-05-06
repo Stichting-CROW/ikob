@@ -3,20 +3,6 @@ import Berekeningen
 import os
 
 
-def inkomensgroepbepalen(naam):
-    if naam[-4:] == 'hoog':
-        if naam[-10:] == 'middelhoog':
-            return 'middelhoog'
-        else:
-            return 'hoog'
-    elif naam[-4:] == 'laag':
-        if naam[-10:] == 'middellaag':
-            return 'middellaag'
-        else:
-            return 'laag'
-    else:
-        return ''
-
 def vindvoorkeur(naam, mod):
     if 'vk' in naam:
         Beginvk = naam.find ('vk')
@@ -225,7 +211,7 @@ def potentie_bedrijven(config):
             for mod in modaliteiten:
                 Bijhoudlijst = Routines.lijstvolnullen(len(Beroepsbevolking))
                 for gr in Groepen:
-                    ink = inkomensgroepbepalen ( gr )
+                    ink = Routines.inkomensgroepbepalen ( gr )
                     if inkgr == ink or inkgr == 'alle':
                         vk = vindvoorkeur (gr, mod)
                         if mod == 'Fiets' or mod == 'EFiets':

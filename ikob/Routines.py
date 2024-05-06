@@ -320,3 +320,18 @@ def minmaxmatrix3(matrix1, matrix2, matrix3, minmax="max"):
             else:
                 eindmatrix[i].append(min(matrix1[i][j], matrix2[i][j], matrix3[i][j]))
     return eindmatrix
+
+
+def inkomensgroepbepalen(naam):
+    if naam[-4:] == 'hoog':
+        if naam[-10:] == 'middelhoog':
+            return 'middelhoog'
+        else:
+            return 'hoog'
+    elif naam[-4:] == 'laag':
+        if naam[-10:] == 'middellaag':
+            return 'middellaag'
+        else:
+            return 'laag'
+    else:
+        return ''

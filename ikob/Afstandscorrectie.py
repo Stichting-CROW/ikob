@@ -89,20 +89,6 @@ Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, scenario, f'Arbeidsplaats
 Arbeidsplaatsen = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
 
 
-def inkomensgroepbepalen(naam):
-    if naam[-4:] == 'hoog':
-        if naam[-10:] == 'middelhoog':
-            return 'middelhoog'
-        else:
-            return 'hoog'
-    elif naam[-4:] == 'laag':
-        if naam[-10:] == 'middellaag':
-            return 'middellaag'
-        else:
-            return 'laag'
-    else:
-        return ''
-
 def vindvoorkeur(naam, mod):
     if 'vk' in naam:
         Beginvk = naam.find ('vk')
@@ -222,7 +208,7 @@ for ca in conc_afstand:
                             Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaatsen))
                             for gr in Groepen:
                                 print ( 'Bezig met Groep ', gr )
-                                ink = inkomensgroepbepalen ( gr )
+                                ink = Routines.inkomensgroepbepalen ( gr )
                                 if inkgr == ink or inkgr == 'alle':
                                     vk = vindvoorkeur ( gr, mod )
                                     if mod == 'Fiets' or mod == 'EFiets':
