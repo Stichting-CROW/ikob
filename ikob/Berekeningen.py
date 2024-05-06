@@ -134,6 +134,7 @@ def berekenen_combigewichten(Gewichtendirectory, aantal_groepen=20, aantal_zones
     import Routines
 
     vervoerswijzen = ['Fiets', 'EFiets', 'Auto', 'OV']
+    matrices = {}
 
     for groep in range (aantal_groepen+1):
         elementnummer = 0
@@ -141,7 +142,7 @@ def berekenen_combigewichten(Gewichtendirectory, aantal_groepen=20, aantal_zones
             vvw = vervoerswijzen[elementnummer]
             filenaam = Gewichtendirectory + vvw + '_' + str(groep)
             matrixnaam = 'matrix'+ vvw
-            globals ()[matrixnaam] = Routines.csvlezen(filenaam)
+            matrices[matrixnaam] = Routines.csvlezen(filenaam)
             elementnummer = elementnummer + 1
         for vvw in vervoerswijzen:
             for vvw2 in vervoerswijzen:
@@ -149,8 +150,8 @@ def berekenen_combigewichten(Gewichtendirectory, aantal_groepen=20, aantal_zones
                     if vvw[-1] == vvw2[-1]:
                         continue
                     else:
-                        matrix1 = eval ( 'matrix' + vvw )
-                        matrix2 = eval ( 'matrix' + vvw2 )
+                        matrix1 = matrices['matrix' + vvw]
+                        matrix2 = matrices['matrix' + vvw2]
                         maxmatrix = []
                         for r in range ( 0, aantal_zones ):
                             maxmatrix.append ( [] )
@@ -163,7 +164,7 @@ def berekenen_combigewichten(Gewichtendirectory, aantal_groepen=20, aantal_zones
 
                     for vvw3 in vervoerswijzen:
                         if vervoerswijzen.index ( vvw3 ) > vervoerswijzen.index ( vvw2 ):
-                            matrix3 = eval ( 'matrix' + vvw3 )
+                            matrix3 = matrices['matrix' + vvw3]
                             maxmatrix2 = []
                             for r in range ( 0, aantal_zones ):
                                 maxmatrix2.append ( [] )
@@ -240,9 +241,7 @@ def maak_potentielijst (Basisdirectory, motief, correctielijst, aantal_groepen =
         Finale_lijst = []
         for groep in range ( 1, aantal_groepen + 1 ):
             Filenaam1 = Herkomstendirectory + vvcombis + '_' + str ( groep )
-            Herkomstmatrixnaam = 'Herkomst' + str ( groep )
-            globals ( )[Herkomstmatrixnaam] = Routines.csvlezen ( Filenaam1 )
-            Matrix1 = (eval ( Herkomstmatrixnaam ))
+            Matrix1 = Routines.csvlezen(Filenaam1)
             if len(correctielijst) >0:
                 for groep in range (aantal_groepen):
                     if correctielijst[groep] != 1:
@@ -289,9 +288,7 @@ def totalen_over_bevolking(Basisdirectory, motief,  aantal_zones = 1425, aantal_
 # Eerst maken we een totaalmatrix met als rijen de groepen, als kolommen de zones en als waarde het aantal bestemmingen
         for groep in range ( 1, aantal_groepen + 1 ):
             Filenaam1 = Totalenpergroep_directory + vvcombis + '_' + str ( groep )
-            Totalenmatrixnaam = 'Totalen' + str ( groep )
-            globals ( )[Totalenmatrixnaam] = Routines.csvlezen ( Filenaam1 )
-            Lijst1 = (eval ( Totalenmatrixnaam ))
+            Lijst1 = Routines.csvlezen ( Filenaam1 )
             Factor = 1
             if len (Correctielijst)>0:
                 Factor = Correctielijst [groep-1]
@@ -321,10 +318,11 @@ def totalen_over_bevolking(Basisdirectory, motief,  aantal_zones = 1425, aantal_
 def Mega_matrix_maken(Bestemmingen_directory, Megamatrix_directory, Correctielijst, vvcombis, aantal_groepen = 20, aantal_zones = 1425):
     import Routines
     Mega_matrix = []
+    bestemmingen = {}
+
     for groep in range ( 1, aantal_groepen + 1 ):
         Filenaam1 = Bestemmingen_directory + vvcombis + '_' + str ( groep )
-        Bestemmingmatrixnaam = 'Bestemming' + str ( groep )
-        globals ( )[Bestemmingmatrixnaam] = Routines.csvlezen ( Filenaam1 )
+        bestemmingen['Bestemming' + str(groep)] = Routines.csvlezen ( Filenaam1 )
     for i in range (aantal_zones):
         Mega_matrix.append([])
         for j in range (aantal_zones):
@@ -334,7 +332,8 @@ def Mega_matrix_maken(Bestemmingen_directory, Megamatrix_directory, Correctielij
                     Factor = Correctielijst[groep-1]
                 else:
                     Factor = 1
-                Mega_matrix[i][j].append(eval('Bestemming' + str ( groep ))[i][j]*Factor)
+                bestemming = bestemmingen['Bestemming' + str(groep)]
+                Mega_matrix[i][j].append(bestemming[i][j]*Factor)
         if i//100 == i/100:
             print(i)
     import pickle
