@@ -16,7 +16,10 @@ class DataSource:
         'Arbeidsplaatsen_inkomensklasse': 1,
         'Beroepsbevolking_inkomensklasse': 1,
         'Verdeling_over_groepen_alleen_autobezit': 1,
-        'Verdeling_over_groepen': 1
+        'Verdeling_over_groepen': 1,
+        'Verdeling_over_groepen_Beroepsbevolking': 1,
+        'Verdeling_over_groepen_Leerlingen': 1,
+        'Verdeling_over_groepen_Inwoners': 1,
     }
 
     def __init__(self, config, Projectbestandsnaam=None):
