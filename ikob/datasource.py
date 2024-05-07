@@ -232,3 +232,48 @@ class DataSource:
         bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mod, ink)
         return Routines.csvintlezen(bestandspad)
     """"""
+
+    """Methods to write/read to concurrentiedirectory/Totalendirectoryconcurrentie"""
+    def maak_bestandspad_concurrentie_totalen(self, id, dagsoort, mod, ink, kind):
+        assert kind == "arbeidsplaatsen" or kind == "inwoners"
+        id = self._add_id_suffix(id, vk='', ink=ink, mod=mod)
+        pad = os.path.join(self.Projectdirectory, 'Resultaten', 'Concurrentie', kind, dagsoort)
+        os.makedirs(pad, exist_ok=True)
+        return os.path.join(pad, id)
+
+    def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mod='', ink='', write_header=False, header=[], xlsx_format=False):
+        bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
+        if xlsx_format:
+            Routines.xlswegschrijven(data, bestandspad, header)
+        else:
+            if not write_header:
+                Routines.csvwegschrijven(data, bestandspad, soort='lijst')
+            else:
+                Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+
+    def concurrentie_totalen_lezen(self, id, dagsoort, kind, mod='', ink=''):
+        bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
+        return Routines.csvlezen(bestandspad)
+    """"""
+
+    """Methods to write/read to bestemmingendirectory/Totalendirectorybestemmingen"""
+    def maak_bestandspad_bestemmingen_totalen(self, id, dagsoort, mod, ink, mot, abg):
+        id = self._add_id_suffix(id, vk='', ink=ink, mod=mod)
+        pad = os.path.join(self.Projectdirectory, 'Resultaten', mot, abg, 'Bestemmingen', dagsoort)
+        os.makedirs(pad, exist_ok=True)
+        return os.path.join(pad, id)
+
+    def bestemmingen_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', write_header=False, header=[], xlsx_format=False):
+        bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink)
+        if xlsx_format:
+            Routines.xlswegschrijven(data, bestandspad, header)
+        else:
+            if not write_header:
+                Routines.csvwegschrijven(data, bestandspad, soort='lijst')
+            else:
+                Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+
+    def bestemmingen_totalen_lezen(self, id, dagsoort, mod='', ink='', mot='', abg=''):
+        bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink, mot, abg)
+        return Routines.csvlezen(bestandspad)
+    """"""
