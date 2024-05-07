@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 
 def verdeling_over_groepen(config):
-    datasource = DataSource(config)
+    datasource = DataSource(config, config['__filename__'])
 
     project_config = config['project']
     verdeling_config = config['verdeling']
