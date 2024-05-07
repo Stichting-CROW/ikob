@@ -1,8 +1,6 @@
 import Routines
 import Berekeningen
 import os
-import sys
-from ikobconfig import getConfigFromArgs
 
 
 def inkomensgroepbepalen(naam):
@@ -121,11 +119,7 @@ def bereken_potenties_nietwerk (Matrix, Bestemmingen, Inwonersverdeling, Inwoner
     return Dezegroeplijst
 
 
-def ontplooingsmogelijkheden_echte_inwoners(project):
-    # Deze routine kijkt naar de command-line en leest
-    # het opgegeven configuratie bestand in een dict.
-    # Indien er een probleem is, sluit het script hier af.
-    config = getConfigFromArgs(project)
+def ontplooingsmogelijkheden_echte_inwoners(config):
     Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
     project_config = config['project']
     paden_config = config['project']['paden']
@@ -446,7 +440,3 @@ def ontplooingsmogelijkheden_echte_inwoners(project):
                     Uitvoerfilenaamproduct = os.path.join(Totalendirectorybestemmingen, f'Ontpl_totaalproduct_{mod}')
                     Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, header)
                     Routines.xlswegschrijven(Generaalmatrixproduct,Uitvoerfilenaamproduct, header)
-
-
-if __name__ == "__main__":
-    ontplooingsmogelijkheden_echte_inwoners(sys.argv[1])

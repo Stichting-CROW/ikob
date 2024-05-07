@@ -1,8 +1,6 @@
 import Routines
 import Berekeningen
 import os
-import sys
-from ikobconfig import getConfigFromArgs
 
 
 def Lijstvolnullen(lengte):
@@ -113,11 +111,7 @@ def bereken_potenties(Matrix, Inwonerstrans, gr, Groepen):
     return Dezegroeplijst
 
 
-def potentie_bedrijven(project):
-    # Deze routine kijkt naar de command-line en leest
-    # het opgegeven configuratie bestand in een dict.
-    # Indien er een probleem is, sluit het script hier af.
-    config = getConfigFromArgs(project)
+def potentie_bedrijven(config):
     Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
     project_config=config['project']
     paden_config = config['project']['paden']
@@ -353,7 +347,3 @@ def potentie_bedrijven(project):
             Uitvoerfilenaamproduct = os.path.join(Totalendirectoryherkomsten, f'Pot_totaalproduct_{mod}')
             Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, header)
             Routines.xlswegschrijven(Generaalmatrixproduct,Uitvoerfilenaamproduct, header)
-
-
-if __name__ == "__main__":
-    potentie_bedrijven(sys.argv[1])

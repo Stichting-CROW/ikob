@@ -1,15 +1,12 @@
 import Routines
 import Constantengenerator
 import os
-import sys
-from ikobconfig import getConfigFromArgs
 
 
-def gewichten_berekenen_enkel_scenarios(project):
+def gewichten_berekenen_enkel_scenarios(config):
     # Deze routine kijkt naar de command-line en leest
     # het opgegeven configuratie bestand in een dict.
     # Indien er een probleem is, sluit het script hier af.
-    config = getConfigFromArgs(project)
     project_config = config['project']
     paden_config = config['project']['paden']
     skims_config = config['skims']
@@ -212,7 +209,3 @@ def gewichten_berekenen_enkel_scenarios(project):
                 for vks in specialOV:
                     Uitvoerfilenaam = os.path.join ( Gewichtendirectory, f'GratisOV_vk{vks}_{ink}' )
                     Routines.csvwegschrijven ( Gewichten, Uitvoerfilenaam )
-
-
-if __name__ == "__main__":
-    gewichten_berekenen_enkel_scenarios(sys.argv[1])

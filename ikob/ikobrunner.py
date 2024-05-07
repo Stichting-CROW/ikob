@@ -4,7 +4,7 @@ from tkinter import filedialog, messagebox
 from config import widgets
 
 # from ConfiguratieDefinitie import *
-from ikobconfig import loadConfig
+from ikobconfig import loadConfig, getConfigFromArgs
 
 from Ervarenreistijdberekenen import ervaren_reistijd_berekenen
 from Verdelingovergroepen import verdeling_over_groepen
@@ -39,11 +39,13 @@ def run_scripts(project_file, skip_steps):
     Tests are skipped if skip_steps is set.
     Yields the current step and corresponding return code.
     """
+    config = getConfigFromArgs(project_file)
+
     for (description, method), skip in zip(stappen, skip_steps):
         if skip:
             continue
 
-        result = method(project_file)
+        result = method(config)
         yield description, result
 
 

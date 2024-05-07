@@ -1,14 +1,8 @@
 import Routines
 import os
-import sys
-from ikobconfig import getConfigFromArgs
 
 
-def verdeling_over_groepen(project):
-    # Deze routine kijkt naar de command-line en leest
-    # het opgegeven configuratie bestand in een dict.
-    # Indien er een probleem is, sluit het script hier af.
-    config = getConfigFromArgs(project)
+def verdeling_over_groepen(config):
     project_config = config['project']
     paden_config = config['project']['paden']
     verdeling_config = config['verdeling']
@@ -225,7 +219,3 @@ def verdeling_over_groepen(project):
         Header.insert(0, 'Zone')
         Routines.xlswegschrijven ( Totaaloverzicht, Totaaloverzichtfilenaam, Header )
         Routines.xlswegschrijven ( Overzichttotaalautobezit, Overzichttotaalautofilenaam, Header )
-
-
-if __name__ == "__main__":
-    verdeling_over_groepen(sys.argv[1])

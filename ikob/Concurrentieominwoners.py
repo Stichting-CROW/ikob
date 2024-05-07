@@ -1,8 +1,6 @@
 import Routines
 import Berekeningen
 import os
-import sys
-from ikobconfig import getConfigFromArgs
 
 
 def Lijstvolnullen(lengte) :
@@ -111,11 +109,7 @@ def bereken_concurrentie(Matrix, Inwoners, Bereik, inkgr, inkgroepen):
     return Dezegroeplijst
 
 
-def concurrentie_om_inwoners(project):
-    # Deze routine kijkt naar de command-line en leest
-    # het opgegeven configuratie bestand in een dict.
-    # Indien er een probleem is, sluit het script hier af.
-    config = getConfigFromArgs(project)
+def concurrentie_om_inwoners(config):
     Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
     project_config = config['project']
     paden_config = config['project']['paden']
@@ -377,7 +371,3 @@ def concurrentie_om_inwoners(project):
                     Uitvoerfilenaamproduct = os.path.join(Concurrentiedirectory, f'Ontpl_concproduct_{mod}')
                     Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, header)
                     Routines.xlswegschrijven(Generaalmatrixproduct,Uitvoerfilenaamproduct, header)
-
-
-if __name__ == "__main__":
-    concurrentie_om_inwoners(sys.argv[1])

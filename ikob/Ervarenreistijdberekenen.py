@@ -1,15 +1,8 @@
 import os
 import Routines
-import sys
-
-from ikobconfig import getConfigFromArgs
 
 
-def ervaren_reistijd_berekenen(project):
-    # Deze routine kijkt naar de command-line en leest
-    # het opgegeven configuratie bestand in een dict.
-    # Indien er een probleem is, sluit het script hier af.
-    config = getConfigFromArgs(project)
+def ervaren_reistijd_berekenen(config):
     Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
 
     # Haal (voor het gemak) onderdelen voor dit script er uit.
@@ -345,7 +338,3 @@ def ervaren_reistijd_berekenen(project):
 
                         Uitvoerfilenaam = os.path.join ( Ervarenreistijddirectory, f'PplusRherkomst_{Hubnaam}_{ink}' )
                         Routines.csvwegschrijven ( GGRskim, Uitvoerfilenaam )
-
-
-if __name__ == "__main__":
-    ervaren_reistijd_berekenen(sys.argv[1])
