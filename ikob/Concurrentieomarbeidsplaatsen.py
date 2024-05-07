@@ -1,7 +1,9 @@
+import logging
 import Routines
 import Berekeningen
 import os
 
+logger = logging.getLogger(__name__)
 
 def concurrentie_om_arbeidsplaatsen(config):
     Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
@@ -21,7 +23,7 @@ def concurrentie_om_arbeidsplaatsen(config):
     regime = project_config['beprijzingsregime']
     motieven = project_config ['motieven']
     percentageelektrisch = verdeling_config ['Percelektrisch']
-    print (percentageelektrisch)
+    logger.debug("percentageelektrisch: %s", percentageelektrisch)
     #Scenario = config['project']['scenario']
     #Naamuitvoer = conc_config['uitvoer_directory_naam']
     #Grverdelingfile = verdeling_config['uitvoernaam']
@@ -96,7 +98,7 @@ def concurrentie_om_arbeidsplaatsen(config):
             Doelgroep = 'Inwoners'
         Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_{Doelgroep}')
         Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
-        print('Verdelingsmatrix 4 is', Verdelingsmatrix[4])
+        logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
         Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
 
         for ds in dagsoort:
@@ -113,11 +115,11 @@ def concurrentie_om_arbeidsplaatsen(config):
             for inkgr in inkgroepen:
 
                 # Eerst de fiets
-                print ( 'We zijn het nu aan het uitrekenen voor de inkomensgroep', inkgr )
+                logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep %s', inkgr)
                 for mod in modaliteiten:
                     Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaatsen))
                     for gr in Groepen:
-                        print ( 'Bezig met Groep ', gr )
+                        logger.debug('Bezig met Groep %s', gr)
                         ink = Routines.inkomensgroepbepalen ( gr )
                         if inkgr == ink or inkgr == 'alle':
                             vk = Routines.vindvoorkeur ( gr, mod )
@@ -129,7 +131,7 @@ def concurrentie_om_arbeidsplaatsen(config):
 
                                 Fietsfilenaam = os.path.join ( Enkelemodaliteitdirectory, f'{mod}_vk{vkklad}' )
                                 Fietsmatrix = Routines.csvlezen ( Fietsfilenaam )
-                                print ( 'Lengte Fietsmatrix is', len ( Fietsmatrix ) )
+                                logger.debug('Lengte Fietsmatrix is %d', len(Fietsmatrix))
                                 Bereikfilenaam = os.path.join(Herkomstendirectory,f'Totaal_{mod}_{inkgr}')
                                 Bereik = Routines.csvintlezen (Bereikfilenaam)
                                 Dezegroeplijst = Berekeningen.bereken_concurrentie ( Fietsmatrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
@@ -142,23 +144,23 @@ def concurrentie_om_arbeidsplaatsen(config):
 
                             elif mod == 'Auto' :
                                 String = Routines.enkelegroep ( mod, gr )
-                                print ( String )
+                                logger.debug("String = %s", String)
                                 if 'WelAuto' in gr:
                                     for srtbr in soortbrandstof:
                                         AutoFilenaam = os.path.join(Enkelemodaliteitdirectory, srtbr,
                                                                     f'{String}_vk{vk}_{ink}')
-                                        print('Filenaam is', AutoFilenaam)
+                                        logger.debug('Filenaam is %s', AutoFilenaam)
                                         Matrix = Routines.csvlezen(AutoFilenaam)
                                         Bereikfilenaam = os.path.join(Herkomstendirectory,f'Totaal_{mod}_{inkgr}')
                                         Bereik = Routines.csvintlezen (Bereikfilenaam)
                                         Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr) / 100
-                                            print('aandeel elektrisch is', K)
+                                            logger.debug('aandeel elektrisch is %s', K)
                                             DezegroeplijstE = [x * K for x in Dezegroeplijst1]
                                         else:
                                             L = 1 - percentageelektrisch.get(inkgr) / 100
-                                            print('aandeel fossiel is', L)
+                                            logger.debug('aandeel fossiel is %s', L)
                                             DezegroeplijstF = [x * L for x in Dezegroeplijst1]
                                     for i in range(len(Matrix)):
                                         Dezegroeplijst[i] = DezegroeplijstE[i] + DezegroeplijstF[i]
@@ -168,7 +170,7 @@ def concurrentie_om_arbeidsplaatsen(config):
                                             Bijhoudlijst[i] += Bijhoudklad
                                 else:
                                     AutoFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
-                                    print('Filenaam is', AutoFilenaam)
+                                    logger.debug('Filenaam is %s', AutoFilenaam)
                                     Matrix = Routines.csvlezen(AutoFilenaam)
                                     Bereikfilenaam = os.path.join(Herkomstendirectory, f'Totaal_{mod}_{inkgr}')
                                     Bereik = Routines.csvintlezen(Bereikfilenaam)
@@ -180,9 +182,9 @@ def concurrentie_om_arbeidsplaatsen(config):
                                             Bijhoudlijst[i] += Bijhoudklad
                             elif mod == 'OV':
                                 String = Routines.enkelegroep(mod, gr)
-                                print(String)
+                                logger.debug("String: %s", String)
                                 OVFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
-                                print('Filenaam is', OVFilenaam)
+                                logger.debug('Filenaam is %s', OVFilenaam)
                                 Matrix = Routines.csvlezen(OVFilenaam)
                                 Bereikfilenaam = os.path.join(Herkomstendirectory, f'Totaal_{mod}_{inkgr}')
                                 Bereik = Routines.csvintlezen(Bereikfilenaam)
@@ -195,13 +197,13 @@ def concurrentie_om_arbeidsplaatsen(config):
 
                             else:
                                 String = Routines.combigroep(mod, gr)
-                                print('de gr is', gr)
-                                print('de string is', String)
+                                logger.debug('de gr is %s', gr)
+                                logger.debug('de string is %s', String)
                                 if String[0] == 'A':
                                     for srtbr in soortbrandstof:
                                         CombiFilenaam = os.path.join(Combinatiedirectory, srtbr,
                                                                      f'{String}_vk{vk}_{ink}')
-                                        print('Filenaam is', CombiFilenaam)
+                                        logger.debug('Filenaam is %s', CombiFilenaam)
                                         Matrix = Routines.csvlezen(CombiFilenaam)
                                         Bereikfilenaam = os.path.join ( Herkomstendirectory, f'Totaal_{mod}_{inkgr}' )
                                         Bereik = Routines.csvintlezen ( Bereikfilenaam )
@@ -220,7 +222,7 @@ def concurrentie_om_arbeidsplaatsen(config):
                                             Bijhoudlijst[i] += Bijhoudklad
                                 else:
                                     CombiFilenaam = os.path.join (Combinatiedirectory, f'{String}_vk{vk}_{ink}')
-                                    print ('Filenaam is', CombiFilenaam)
+                                    logger.debug('Filenaam is %s', CombiFilenaam)
                                     Matrix = Routines.csvlezen ( CombiFilenaam )
                                     Bereikfilenaam = os.path.join(Herkomstendirectory, f'Totaal_{mod}_{inkgr}')
                                     Bereik = Routines.csvintlezen(Bereikfilenaam)

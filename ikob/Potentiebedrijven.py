@@ -1,6 +1,8 @@
+import logging
 import Routines
-import Berekeningen
 import os
+
+logger = logging.getLogger(__name__)
 
 
 def inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking):
@@ -37,7 +39,7 @@ def potentie_bedrijven(config):
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
     motieven = project_config ['motieven']
-    print (motieven)
+    logger.debug("motieven: %s", motieven)
     soortbrandstof = ['fossiel', 'elektrisch']
     percentageelektrisch = verdeling_config ['Percelektrisch']
     #Scenario = project_config['Scenario']
@@ -106,7 +108,7 @@ def potentie_bedrijven(config):
         Beroepsbevolking.append(sum(Beroepsbevolking_inkomensklasse[i]))
     #Volwassenenfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{scenario}')
     #Volwassenen = Routines.csvintlezen (Volwassenenfilenaam)
-    print ('Lengte inwoners is', len(Beroepsbevolking))
+    logger.debug('Lengte inwoners is %d', len(Beroepsbevolking))
 
     Inwoners = inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking)
     Inwonerstransmatrix = Routines.transponeren(Inwoners)
@@ -121,7 +123,7 @@ def potentie_bedrijven(config):
         Groepverdelingfile = os.path.join(SEGSdirectory, scenario,
                                               f'Verdeling_over_groepen_{Doelgroep}_alleen_autobezit')
         Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
-        print('Verdelingsmatrix 4 is', Verdelingsmatrix[4])
+        logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
         Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
 
     for ds in dagsoort:
@@ -137,7 +139,7 @@ def potentie_bedrijven(config):
 
 
             #Eerst de fiets
-            print('We zijn het nu aan het uitrekenen voor de inkomensgroep', inkgr)
+            logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep: %s', inkgr)
             for mod in modaliteiten:
                 Bijhoudlijst = Routines.lijstvolnullen(len(Beroepsbevolking))
                 for gr in Groepen:
@@ -158,20 +160,20 @@ def potentie_bedrijven(config):
                                 Bijhoudlijst[i]+= round(Dezegroeplijst[i])
                         elif mod == 'Auto':
                             String = Routines.enkelegroep(mod, gr)
-                            print(String)
+                            logger.debug("String: %s", String)
                             if 'WelAuto' in gr:
                                 for srtbr in soortbrandstof:
                                     AutoFilenaam = os.path.join(Enkelemodaliteitdirectory, srtbr, f'{String}_vk{vk}_{ink}')
-                                    print('Filenaam is', AutoFilenaam)
+                                    logger.debug('Filenaam is: %s', AutoFilenaam)
                                     Matrix = Routines.csvlezen(AutoFilenaam)
                                     Dezegroeplijst1 = bereken_potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
                                     if srtbr == 'elektrisch':
                                         K = percentageelektrisch.get(inkgr) / 100
-                                        print('aandeel elektrisch is', K)
+                                        logger.debug('aandeel elektrisch is: %s', K)
                                         DezegroeplijstE = [x * K for x in Dezegroeplijst1]
                                     else:
                                         L = 1 - percentageelektrisch.get(inkgr) / 100
-                                        print('aandeel fossiel is', L)
+                                        logger.debug('aandeel fossiel is %s', L)
                                         DezegroeplijstF = [x * L for x in Dezegroeplijst1]
                                 for i in range(len(Matrix)):
                                     Dezegroeplijst[i] = DezegroeplijstE[i] + DezegroeplijstF[i]
@@ -179,16 +181,16 @@ def potentie_bedrijven(config):
                                     Bijhoudlijst[i] += int(Dezegroeplijst[i])
                             else:
                                 AutoFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
-                                print('Filenaam is', AutoFilenaam)
+                                logger.debug('Filenaam is: %s', AutoFilenaam)
                                 Matrix = Routines.csvlezen(AutoFilenaam)
                                 Dezegroeplijst = bereken_potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
                                 for i in range(0, len(Matrix)):
                                     Bijhoudlijst[i] += int(Dezegroeplijst[i])
-                                print('Bijhoudlijst niet fossiel is:', Bijhoudlijst)
+                                logger.debug('Bijhoudlijst niet fossiel is: %s', Bijhoudlijst)
 
                         elif mod == 'OV':
                             String = Routines.enkelegroep (mod,gr)
-                            print (String)
+                            logger.debug("String: %s", String)
                             Filenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
                             Matrix = Routines.csvlezen(Filenaam)
                             Dezegroeplijst = bereken_potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
@@ -196,13 +198,13 @@ def potentie_bedrijven(config):
                                 Bijhoudlijst[i]+= round(Dezegroeplijst[i])
                         else:
                             String = Routines.combigroep(mod, gr)
-                            print('de gr is', gr)
-                            print('de string is', String)
+                            logger.debug('de gr is %s', gr)
+                            logger.debug('de string is %s', String)
                             if String[0] == 'A':
                                 for srtbr in soortbrandstof:
                                     CombiFilenaam = os.path.join(Combinatiedirectory, srtbr,
                                                                  f'{String}_vk{vk}_{ink}')
-                                    print('Filenaam is', CombiFilenaam)
+                                    logger.debug('Filenaam is %s', CombiFilenaam)
                                     Matrix = Routines.csvlezen(CombiFilenaam)
                                     Dezegroeplijst1 = bereken_potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
 

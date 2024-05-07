@@ -31,6 +31,12 @@ Running tests:
 python3 -m pytest
 ```
 
+Running tests with direct logging:
+```sh
+# log_file_level=error,warning,info,debug
+python -m pytest -o log_cli=true -o log_file_level=info
+```
+
 Reformatting source code using `ruff`:
 
 ```sh

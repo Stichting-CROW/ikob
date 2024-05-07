@@ -1,5 +1,8 @@
+import logging
 import Routines
 import os
+
+logger = logging.getLogger(__name__)
 
 
 def kanvoorkeur(soortauto, soortOV, voorkeur) :
@@ -36,7 +39,7 @@ def kanvoorkeur(soortauto, soortOV, voorkeur) :
 def Maxberekenen_en_wegschrijven (Directory,Matrix1, Matrix2,mod1, mod2,vk,ink):
     Maxmatrix = Routines.minmaxmatrix ( Matrix1, Matrix2 )
     Uitvoerfilenaam = os.path.join (Directory, f'{mod1}_{mod2}_vk{vk}_{ink}')
-    print ('Uitvoerfilenaam is', Uitvoerfilenaam)
+    logger.debug("Uitvoerfilenaam is %s", Uitvoerfilenaam)
     Routines.csvwegschrijven ( Maxmatrix, Uitvoerfilenaam )
     return
 
@@ -103,8 +106,8 @@ def gewichten_berekenen_combis(config):
                                     for srtbr in soortbrandstof:
                                         Autofile = os.path.join ( Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}' )
                                         Automatrix = Routines.csvlezen ( Autofile )
-                                        print(Autofile)
-                                        print(Fietsfile)
+                                        logger.debug("Autofile: %s", Autofile)
+                                        logger.debug("Fietsfile: %s", Fietsfile)
                                         Brandstofdirectory = os.path.join (Combinatiedirectory, srtbr)
                                         os.makedirs(Brandstofdirectory, exist_ok=True)
                                         Maxberekenen_en_wegschrijven ( Brandstofdirectory, Fietsmatrix,
@@ -123,8 +126,8 @@ def gewichten_berekenen_combis(config):
                                     for srtbr in soortbrandstof:
                                         Autofile = os.path.join(Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}')
                                         Automatrix = Routines.csvlezen(Autofile)
-                                        print(Autofile)
-                                        print('Belangrijk!', OVfile)
+                                        logger.debug("Autofile: %s", Autofile)
+                                        logger.debug("Belangrijk! OVFile=%s", OVfile)
                                         Brandstofdirectory = os.path.join (Combinatiedirectory, srtbr)
                                         os.makedirs(Brandstofdirectory, exist_ok=True)
                                         Maxberekenen_en_wegschrijven ( Brandstofdirectory, OVmatrix, Automatrix, srtauto, srtOV, vk, ink )
@@ -149,9 +152,9 @@ def gewichten_berekenen_combis(config):
                                         for srtbr in soortbrandstof:
                                             Autofile = os.path.join(Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}')
                                             Automatrix = Routines.csvlezen(Autofile)
-                                            print(Autofile)
-                                            print(Fietsfile)
-                                            print(OVfile)
+                                            logger.debug("Autofile: %s", Autofile)
+                                            logger.debug("Fietsfile: %s", Fietsfile)
+                                            logger.debug("OVfile: %s", OVfile)
                                             Brandstofdirectory = os.path.join(Combinatiedirectory, srtbr)
                                             os.makedirs(Brandstofdirectory, exist_ok=True)
                                             Maxberekenen_en_wegschrijvenvan3(Brandstofdirectory,Automatrix,
