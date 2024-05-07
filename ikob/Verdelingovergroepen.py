@@ -1,45 +1,31 @@
 import logging
-import Routines
-import os
+from datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
 
 def verdeling_over_groepen(config):
+    datasource = DataSource(config)
+
     project_config = config['project']
-    paden_config = config['project']['paden']
     verdeling_config = config['verdeling']
 
     # Ophalen van instellingen
-    SEGSdirectory = paden_config['segs_directory']
     scenario = project_config['verstedelijkingsscenario']
     Kunst = verdeling_config['kunstmab']['gebruiken']
-    Kunstmautobezitfile = verdeling_config['kunstmab']['bestand']
     GratisOVpercentage = verdeling_config['GratisOVpercentage']
     motieven = project_config ['motieven']
-
 
     # Vaste waarden
     inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
 
-    #Inkomensverdelingfilenaam = os.path.join ( SEGSdirectory, 'Inkomensverdeling_per_zone')
-    #Inkomensverdeling = Routines.csvintlezen (Inkomensverdelingfilenaam,aantal_lege_regels=1)
-    CBSAutobezitfilenaam = os.path.join ( SEGSdirectory, 'CBS_autos_per_huishouden')
-    CBSAutobezitegevens = Routines.csvintlezen (CBSAutobezitfilenaam)
-    #Inwoners18plusfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{scenario}')
-    #print (Inwoners18plusfilenaam)
-    #Inwoners18plus = Routines.csvintlezen (Inwoners18plusfilenaam)
-    Stedelijkheidsgraadfilenaam = os.path.join ( SEGSdirectory, 'Stedelijkheidsgraad')
-    Stedelijkheidsgraadgegevens = Routines.csvlezen (Stedelijkheidsgraadfilenaam)
-
-    #Stedelijkheidsgraadgegevens[0] = '1'
-    #Stedelijkheidsgraadgegevens[900] = '1'
+    CBSAutobezitegevens = datasource.segs_lezen('CBS_autos_per_huishouden')
+    Stedelijkheidsgraadgegevens = datasource.segs_lezen('Stedelijkheidsgraad')
 
     Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275]
 
     if Kunst:
-        Kunstmautobezitfile = Kunstmautobezitfile.replace ( '.csv', '' )
-        Kunstmatigautobezit = Routines.csvintlezen ( Kunstmautobezitfile, aantal_lege_regels=0)
+        Kunstmatigautobezit = datasource.verdeling_lezen('kunstmab', 'int')
 
     Sted = []
 
@@ -52,16 +38,11 @@ def verdeling_over_groepen(config):
     else:
         Minimumautobezit = CBSAutobezitegevens
 
-    GeenRijbewijsfilenaam = os.path.join ( SEGSdirectory, 'GeenRijbewijs')
-    GRijbewijs = Routines.csvintlezen (GeenRijbewijsfilenaam,aantal_lege_regels=1)
-    GeenAutofilenaam = os.path.join ( SEGSdirectory, 'GeenAuto')
-    GAuto = Routines.csvintlezen (GeenAutofilenaam,aantal_lege_regels=1)
-    WelAutofilenaam = os.path.join ( SEGSdirectory, 'WelAuto')
-    WAuto = Routines.csvintlezen (WelAutofilenaam,aantal_lege_regels=1)
-    Voorkeurenfilenaam = os.path.join ( SEGSdirectory, 'Voorkeuren')
-    Voorkeuren = Routines.csvintlezen (Voorkeurenfilenaam,aantal_lege_regels=1)
-    VoorkeurenGeenAutofilenaam = os.path.join ( SEGSdirectory, 'VoorkeurenGeenAuto')
-    VoorkeurenGeenAuto = Routines.csvintlezen (VoorkeurenGeenAutofilenaam,aantal_lege_regels=1)
+    GRijbewijs = datasource.segs_lezen('GeenRijbewijs')
+    GAuto = datasource.segs_lezen('GeenAuto')
+    WAuto = datasource.segs_lezen ('WelAuto')
+    Voorkeuren = datasource.segs_lezen('Voorkeuren')
+    VoorkeurenGeenAuto = datasource.segs_lezen('VoorkeurenGeenAuto')
 
     inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
     voorkeuren = ['Auto','Neutraal', 'Fiets', 'OV']
@@ -95,14 +76,13 @@ def verdeling_over_groepen(config):
     for mot in motieven:
         if mot == 'werk':
             Bevolkingsdeel = 'Beroepsbevolking'
-            Inwonersperklassenaam = os.path.join(SEGSdirectory, scenario, f'{Bevolkingsdeel}_inkomensklasse')
+            Inwonersperklasse = datasource.segs_lezen(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
         elif mot == 'winkelnietdagelijksonderwijs':
             Bevolkingsdeel = 'Leerlingen'
-            Inwonersperklassenaam = os.path.join(SEGSdirectory, scenario, f'{Bevolkingsdeel}')
+            Inwonersperklasse = datasource.segs_lezen(f'{Bevolkingsdeel}', scenario=scenario)
         else:
             Bevolkingsdeel = 'Inwoners'
-            Inwonersperklassenaam = os.path.join(SEGSdirectory, scenario, f'{Bevolkingsdeel}_inkomensklasse')
-        Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam, aantal_lege_regels=1)
+            Inwonersperklasse = datasource.segs_lezen(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
         Inwonerstotalen = []
         for i in range (len(Inwonersperklasse)):
             Inwonerstotalen.append(sum(Inwonersperklasse[i]))
@@ -213,12 +193,9 @@ def verdeling_over_groepen(config):
                     else:
                         Overzichttotaalautobezit[i].append(0)
 
-
         logger.debug("Overzichttotaalautobezit: %s", Overzichttotaalautobezit)
-        Totaaloverzichtfilenaam = os.path.join ( SEGSdirectory, scenario, f'Verdeling_over_groepen_{Bevolkingsdeel}' )
-        Overzichttotaalautofilenaam = os.path.join ( SEGSdirectory, scenario, f'Verdeling_over_groepen_{Bevolkingsdeel}_alleen_autobezit' )
-        Routines.csvwegschrijvenmetheader ( Totaaloverzicht, Totaaloverzichtfilenaam, Header )
-        Routines.csvwegschrijvenmetheader ( Overzichttotaalautobezit, Overzichttotaalautofilenaam, Header )
+        datasource.segs_schrijven(Totaaloverzicht, 'Verdeling_over_groepen', scenario=scenario, header=Header)
+        datasource.segs_schrijven(Overzichttotaalautobezit, 'Verdeling_over_groepen_alleen_autobezit', scenario=scenario, header=Header)
         Header.insert(0, 'Zone')
-        Routines.xlswegschrijven ( Totaaloverzicht, Totaaloverzichtfilenaam, Header )
-        Routines.xlswegschrijven ( Overzichttotaalautobezit, Overzichttotaalautofilenaam, Header )
+        datasource.segs_xlsx_schrijven(Totaaloverzicht, 'Verdeling_over_groepen', scenario=scenario, header=Header)
+        datasource.segs_xlsx_schrijven(Overzichttotaalautobezit, 'Verdeling_over_groepen_alleen_autobezit', scenario=scenario, header=Header)
