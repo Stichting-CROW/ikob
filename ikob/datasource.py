@@ -20,6 +20,9 @@ class DataSource:
         'Verdeling_over_groepen_Beroepsbevolking': 1,
         'Verdeling_over_groepen_Leerlingen': 1,
         'Verdeling_over_groepen_Inwoners': 1,
+        'Verdeling_over_groepen_Inwoners_alleen_autobezit': 1,
+        'Verdeling_over_groepen_Leerlingen_alleen_autobezit': 1,
+        'Verdeling_over_groepen_Beroepsbevolking_alleen_autobezit': 1,
     }
 
     def __init__(self, config, Projectbestandsnaam=None):
