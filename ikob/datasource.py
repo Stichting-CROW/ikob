@@ -2,7 +2,7 @@ import Routines
 import os
 
 
-class csv_databron:
+class DataSource:
 
     aantal_lege_regels = {
         'parkeerzoektijden_bestand': 1,
