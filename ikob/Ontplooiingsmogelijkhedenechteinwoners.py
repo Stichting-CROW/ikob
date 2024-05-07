@@ -1,6 +1,7 @@
 import logging
 import Routines
 import os
+from datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
@@ -32,13 +33,12 @@ def bereken_potenties_nietwerk (Matrix, Bestemmingen, Inwonersverdeling, Inwoner
 
 def ontplooingsmogelijkheden_echte_inwoners(config):
     Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
+    datasource = DataSource(config, Projectbestandsnaam)
     project_config = config['project']
     paden_config = config['project']['paden']
-    #verdeling_config = config['verdeling']
     skims_config = config ['skims']
     verdeling_config = config ['verdeling']
     dagsoort = skims_config['dagsoort']
-    #ontpl_config = config['ontplooiing']
 
     # Ophalen van instellingen
     Basisdirectory = paden_config['skims_directory']
@@ -50,9 +50,6 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
     inkgroepen = project_config ['welke_inkomensgroepen']
     percentageelektrisch = verdeling_config ['Percelektrisch']
     logger.debug("percentageelektrisch: %s", percentageelektrisch)
-
-    #Scenario = project_config['scenario']
-    #Grverdelingfile = verdeling_config['uitvoernaam']
 
     if 'alle groepen' in autobezitgroepen:
         Basisgroepen = ['GratisAuto', 'GratisAuto_GratisOV','WelAuto_GratisOV','WelAuto_vkAuto',
@@ -92,50 +89,35 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
     """
     modaliteiten = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV',
                       'Auto_OV_Fiets' ]
-    enkelemodaliteiten = ['Fiets', 'Auto', 'OV']
-    fiets = ['Fiets']
-    OVauto = ['OV', 'Auto']
-    voorkeurenfiets = ['', 'Fiets']
     headstring = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV',
                       'Auto_OV_Fiets']
     headstringExcel=['Zone', 'Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV',
                       'Auto_OV_Fiets']
     soortbrandstof = ['fossiel','elektrisch']
-    Vermenigvuldig = []
     logger.debug("motieven: %s", motieven)
 
-    #Grverdelingfile=Grverdelingfile.replace('.csv','')
-
-    #Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
-    #Inkomensverdeling = Routines.csvintlezen (Inkomensverdelingsfilenaam, aantal_lege_regels=1)
     if 'winkelnietdagelijksonderwijs' in motieven:
-        Beroepsbevolkingperklassenaam = os.path.join(SEGSdirectory, scenario, f'Leerlingen')
-        Beroepsbevolkingperklasse = Routines.csvintlezen(Beroepsbevolkingperklassenaam, aantal_lege_regels=1)
+        Beroepsbevolkingperklasse = datasource.segs_lezen("Leerlingen", scenario=scenario, cijfer_type='float')
         Beroepsbevolkingtotalen = []
-        Arbeidsplaatsenfilenaam = os.path.join(SEGSdirectory, scenario, f'Leerlingenplaatsen')
-        logger.debug("Arbeidsplaatsenfilenaam: %s", Arbeidsplaatsenfilenaam)
-        Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
+        Arbeidsplaats = datasource.segs_lezen("Leerlingenplaatsen", scenario=scenario, cijfer_type='float')
         Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
         logger.debug("Lengte Leerlingenplaatsen is %s", len(Arbeidsplaats))
     else:
-        Beroepsbevolkingperklassenaam = os.path.join (SEGSdirectory, scenario, f'Beroepsbevolking_inkomensklasse')
-        Beroepsbevolkingperklasse = Routines.csvintlezen(Beroepsbevolkingperklassenaam, aantal_lege_regels=1)
+        Beroepsbevolkingperklasse = datasource.segs_lezen("Beroepsbevolking_inkomensklasse", scenario=scenario, cijfer_type='float')
         Beroepsbevolkingtotalen = []
-        Arbeidsplaatsenfilenaam = os.path.join(SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
-        logger.debug("Arbeidsplaatsenfilenaam: %s", Arbeidsplaatsenfilenaam)
-        Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
+        Arbeidsplaats = datasource.segs_lezen("Arbeidsplaatsen_inkomensklasse", scenario=scenario, cijfer_type='float')
         Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
         logger.debug("Lengte arbeidsplaatsen is %s", len(Arbeidsplaats))
+
     for i in range(len(Beroepsbevolkingperklasse)):
         Beroepsbevolkingtotalen.append(sum(Beroepsbevolkingperklasse[i]))
+
     if 'sociaal-recreatief' in motieven:
         if '65+' in regime:
-            Inwonersperklassenaam = os.path.join(SEGSdirectory, scenario, f'L65plus_inkomensklasse')
+            Inwonersperklasse = datasource.segs_lezen("L65plus_inkomensklasse", scenario=scenario, cijfer_type='float')
         else:
-            Inwonersperklassenaam = os.path.join(SEGSdirectory, scenario, f'Inwoners_inkomensklasse')
-        Inwonersperklasse = Routines.csvintlezen(Inwonersperklassenaam, aantal_lege_regels=1)
+            Inwonersperklasse = datasource.segs_lezen("Inwoners_inkomensklasse", scenario=scenario, cijfer_type='float')
         Inwonerstotalen = []
-
 
         for i in range(len(Inwonersperklasse)):
             Inwonerstotalen.append(sum(Inwonersperklasse[i]))
@@ -159,15 +141,12 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
             else:
                 Doelgroep = 'Inwoners'
             if abg == 'alle groepen':
-                Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_{Doelgroep}')
+                Verdelingsmatrix = datasource.segs_lezen(f"Verdeling_over_groepen_{Doelgroep}", cijfer_type='float', scenario=scenario)
             else:
-                Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_{Doelgroep}_alleen_autobezit')
-            Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
-            logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
+                Verdelingsmatrix = datasource.segs_lezen(f"Verdeling_over_groepen_{Doelgroep}", cijfer_type='float', scenario=scenario)
+
             Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
             for ds in dagsoort:
-                Combinatiedirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', 'Combinaties', ds )
-                Enkelemodaliteitdirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', ds )
                 Totalendirectorybestemmingen = os.path.join ( Basisdirectory, Projectbestandsnaam, 'Resultaten', mot, abg,
                                                               'Bestemmingen', ds )
                 os.makedirs ( Totalendirectorybestemmingen, exist_ok=True )
@@ -192,9 +171,8 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                         vkklad = 'Fiets'
                                     else:
                                         vkklad = ''
-                                    Fietsfilenaam = os.path.join (Enkelemodaliteitdirectory, f'{mod}_vk{vkklad}')
-                                    logger.debug('Filenaam is: %s', Fietsfilenaam)
-                                    Fietsmatrix = Routines.csvlezen (Fietsfilenaam)
+
+                                    Fietsmatrix = datasource.gewichten_lezen(f'{mod}_vk',ds,vkklad, regime=regime, mot=mot)
                                     if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                         Dezegroeplijst = bereken_potenties ( Fietsmatrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                              Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
@@ -209,9 +187,8 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                     logger.debug("String: %s", String)
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
-                                            AutoFilenaam = os.path.join(Enkelemodaliteitdirectory, srtbr, f'{String}_vk{vk}_{ink}')
-                                            logger.debug('Filenaam is %s', AutoFilenaam)
-                                            Matrix = Routines.csvlezen(AutoFilenaam)
+                                            Matrix = datasource.gewichten_lezen(f'{String}_vk',ds,vk,ink, regime=regime, mot=mot, srtbr=srtbr)
+
                                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                                 Dezegroeplijst1 = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                                      Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
@@ -232,9 +209,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                         for i in range(0, len(Matrix)):
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                     else:
-                                        AutoFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
-                                        logger.debug('Filenaam is %s', AutoFilenaam)
-                                        Matrix = Routines.csvlezen(AutoFilenaam)
+                                        Matrix = datasource.gewichten_lezen(f'{String}_vk',ds, vk, ink, regime=regime, mot=mot)
                                         if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                             Dezegroeplijst = bereken_potenties(Matrix, Arbeidsplaatsen,
                                                                                Verdelingstransmatrix,
@@ -252,10 +227,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                         logger.debug('Bijhoudlijst niet fossiel is: %s', Bijhoudlijst)
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep(mod, gr)
-                                    logger.debug("String: %s", String)
-                                    OVFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
-                                    logger.debug('Filenaam is %s', OVFilenaam)
-                                    Matrix = Routines.csvlezen(OVFilenaam)
+                                    Matrix = datasource.gewichten_lezen(f'{String}_vk',ds, vk, ink, regime=regime, mot=mot)
                                     if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                         Dezegroeplijst = bereken_potenties(Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                            Inkomenstransverdeling[inkgroepen.index(inkgr)],
@@ -275,10 +247,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                     logger.debug('de string is %s', String)
                                     if String[0] == 'A':
                                         for srtbr in soortbrandstof:
-                                            CombiFilenaam = os.path.join(Combinatiedirectory, srtbr,
-                                                                        f'{String}_vk{vk}_{ink}')
-                                            logger.debug('Filenaam is %s', CombiFilenaam)
-                                            Matrix = Routines.csvlezen(CombiFilenaam)
+                                            Matrix = datasource.combinatie_gewichten_lezen(f'{String}_vk', ds, vk, ink, regime=regime, mot=mot, srtbr=srtbr)
                                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                                 Dezegroeplijst1 = bereken_potenties(Matrix, Arbeidsplaatsen,
                                                                                     Verdelingstransmatrix,
@@ -301,9 +270,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                         for i in range ( 0, len ( Matrix ) ):
                                             Bijhoudlijst[i] += int ( Dezegroeplijst[i] )
                                     else:
-                                        CombiFilenaam = os.path.join (Combinatiedirectory, f'{String}_vk{vk}_{ink}')
-                                        logger.debug('Filenaam is %s', CombiFilenaam)
-                                        Matrix = Routines.csvlezen ( CombiFilenaam )
+                                        Matrix = datasource.combinatie_gewichten_lezen(f'{String}_vk', ds, vk, ink, regime=regime, mot=mot)
 
                                         if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                             Dezegroeplijst = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
@@ -314,18 +281,15 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                                                                gr, Groepen)
                                         for i in range ( 0, len ( Matrix ) ):
                                             Bijhoudlijst[i] += int ( Dezegroeplijst[i] )
-                        Bijhoudfilenaam = os.path.join(Totalendirectorybestemmingen, f'Totaal_{mod}_{inkgr}')
-                        Routines.csvwegschrijven (Bijhoudlijst,Bijhoudfilenaam,soort='lijst')
+                        datasource.totalen_schrijven(Bijhoudlijst, 'Totaal', ds, mod, inkgr, mot=mot, abg=abg)
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten :
-                        Totaalmodfilenaam = os.path.join (Totalendirectorybestemmingen, f'Totaal_{mod}_{inkgr}')
-                        Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
+                        Totaalrij = datasource.totalen_lezen('Totaal', ds, mod, inkgr, mot=mot, abg=abg)
                         Generaaltotaal_potenties.append(Totaalrij)
                     Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                    Uitvoerfilenaam = os.path.join(Totalendirectorybestemmingen, f'Ontpl_totaal_{inkgr}')
-                    Routines.csvwegschrijvenmetheader(Generaaltotaaltrans, Uitvoerfilenaam, headstring)
-                    Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel)
+                    datasource.totalen_schrijven(Generaaltotaaltrans, 'Ontpl_totaal', ds, mod='', ink=inkgr, write_header=True, header=headstring, mot=mot, abg=abg)
+                    datasource.totalen_schrijven(Generaaltotaaltrans, 'Ontpl_totaal', ds, mod='', ink=inkgr, write_header=True, header=headstringExcel, mot=mot, abg=abg, xlsx_format=True)
 
                 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
                 for mod in modaliteiten:
@@ -333,7 +297,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
                         Totaalmodfilenaam = os.path.join (Totalendirectorybestemmingen, f'Totaal_{mod}_{inkgr}')
-                        Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
+                        Totaalrij = datasource.totalen_lezen('Totaal',ds,mod,inkgr,mot=mot,abg=abg)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
                         Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
@@ -347,7 +311,5 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    Uitvoerfilenaam = os.path.join(Totalendirectorybestemmingen, f'Ontpl_totaal_{mod}')
-                    Uitvoerfilenaamproduct = os.path.join(Totalendirectorybestemmingen, f'Ontpl_totaalproduct_{mod}')
-                    Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, header)
-                    Routines.xlswegschrijven(Generaalmatrixproduct,Uitvoerfilenaamproduct, header)
+                    datasource.totalen_schrijven(Generaaltotaaltrans,'Ontpl_totaal', ds, mod, write_header=True, header=header, xlsx_format=True, mot=mot, abg=abg)
+                    datasource.totalen_schrijven(Generaalmatrixproduct,'Ontpl_totaalproduct', ds, mod, write_header=True, header=header, xlsx_format=True, mot=mot, abg=abg)
