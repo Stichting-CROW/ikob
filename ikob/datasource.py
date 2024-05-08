@@ -173,12 +173,12 @@ class DataSource:
         os.makedirs(path, exist_ok=True)
         return path / id
 
-    def totalen_schrijven(self, data, id, dagsoort, mod='', ink='', write_header=False, header=[], xlsx_format=False, mot='', abg=''):
+    def totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False, mot='', abg=''):
         bestandspad = self.maak_bestandspad_totalen(id, dagsoort, mod, ink, mot, abg)
         if xlsx_format:
             return Routines.xlswegschrijven(data, bestandspad, header)
 
-        if write_header:
+        if header:
             return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
 
         return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
@@ -196,12 +196,12 @@ class DataSource:
         os.makedirs(path, exist_ok=True)
         return path / id
 
-    def herkomst_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', write_header=False, header=[], xlsx_format=False):
+    def herkomst_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mod, ink)
         if xlsx_format:
             return Routines.xlswegschrijven(data, bestandspad, header)
 
-        if write_header:
+        if header:
             return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
 
         return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
@@ -219,12 +219,12 @@ class DataSource:
         os.makedirs(path, exist_ok=True)
         return path / id
 
-    def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mod='', ink='', write_header=False, header=[], xlsx_format=False):
+    def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mod='', ink='', header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
         if xlsx_format:
             return Routines.xlswegschrijven(data, bestandspad, header)
 
-        if write_header:
+        if header:
             return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
 
         return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
@@ -241,13 +241,13 @@ class DataSource:
         os.makedirs(path, exist_ok=True)
         return path / id
 
-    def bestemmingen_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', write_header=False, header=[], xlsx_format=False):
+    def bestemmingen_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink)
 
         if xlsx_format:
             return Routines.xlswegschrijven(data, bestandspad, header)
 
-        if write_header:
+        if header:
             return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
 
         return Routines.csvwegschrijven(data, bestandspad, soort='lijst')

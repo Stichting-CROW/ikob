@@ -185,8 +185,8 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                     Generaaltotaal_potenties.append ( Totaalrij )
                     Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
                     # TODO: This loops over mod, but does _not_ use mod as filename modifiers?
-                    datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "arbeidsplaatsen", ink=inkgr, write_header=True, header=headstring)
-                    datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "arbeidsplaatsen", ink=inkgr, xlsx_format=True, write_header=True, header=headstringExcel)
+                    datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "arbeidsplaatsen", ink=inkgr, header=headstring)
+                    datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "arbeidsplaatsen", ink=inkgr, xlsx_format=True, header=headstringExcel)
 
 
             header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
@@ -205,5 +205,5 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                         else:
                             Generaalmatrixproduct[i].append(0)
 
-                datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "arbeidsplaatsen", mod=mod, xlsx_format=True, write_header=True, header=header)
-                datasource.concurrentie_totalen_schrijven(Generaalmatrixproduct, 'Ontpl_concproduct', ds, "arbeidsplaatsen", mod=mod, xlsx_format=True, write_header=True, header=header)
+                datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "arbeidsplaatsen", mod=mod, xlsx_format=True, header=header)
+                datasource.concurrentie_totalen_schrijven(Generaalmatrixproduct, 'Ontpl_concproduct', ds, "arbeidsplaatsen", mod=mod, xlsx_format=True, header=header)

@@ -186,8 +186,8 @@ def potentie_bedrijven(config, datasource):
                 Totaalrij = datasource.herkomst_totalen_lezen('Totaal', ds, mod=mod, ink=inkgr)
                 Generaaltotaal_potenties.append(Totaalrij)
             Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-            datasource.herkomst_totalen_schrijven(Generaaltotaaltrans, 'Pot_totaal', ds, ink=inkgr, write_header=True, header=headstring)
-            datasource.herkomst_totalen_schrijven(Generaaltotaaltrans, 'Pot_totaal', ds, ink=inkgr, xlsx_format=True, write_header=True, header=headstringExcel)
+            datasource.herkomst_totalen_schrijven(Generaaltotaaltrans, 'Pot_totaal', ds, ink=inkgr, header=headstring)
+            datasource.herkomst_totalen_schrijven(Generaaltotaaltrans, 'Pot_totaal', ds, ink=inkgr, xlsx_format=True, header=headstringExcel)
 
         header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
         for mod in modaliteiten:
@@ -205,5 +205,5 @@ def potentie_bedrijven(config, datasource):
                     else:
                         Generaalmatrixproduct[i].append(0)
 
-            datasource.herkomst_totalen_schrijven(Generaaltotaaltrans, 'Pot_totaal', ds, mod=mod, xlsx_format=True, write_header=True, header=header)
-            datasource.herkomst_totalen_schrijven(Generaalmatrixproduct, 'Pot_totaalproduct', ds, mod=mod, xlsx_format=True, write_header=True, header=header)
+            datasource.herkomst_totalen_schrijven(Generaaltotaaltrans, 'Pot_totaal', ds, mod=mod, xlsx_format=True, header=header)
+            datasource.herkomst_totalen_schrijven(Generaalmatrixproduct, 'Pot_totaalproduct', ds, mod=mod, xlsx_format=True, header=header)

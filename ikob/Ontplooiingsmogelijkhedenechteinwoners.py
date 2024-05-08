@@ -272,8 +272,8 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                         Totaalrij = datasource.totalen_lezen('Totaal', ds, mod, inkgr, mot=mot, abg=abg)
                         Generaaltotaal_potenties.append(Totaalrij)
                     Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                    datasource.totalen_schrijven(Generaaltotaaltrans, 'Ontpl_totaal', ds, mod='', ink=inkgr, write_header=True, header=headstring, mot=mot, abg=abg)
-                    datasource.totalen_schrijven(Generaaltotaaltrans, 'Ontpl_totaal', ds, mod='', ink=inkgr, write_header=True, header=headstringExcel, mot=mot, abg=abg, xlsx_format=True)
+                    datasource.totalen_schrijven(Generaaltotaaltrans, 'Ontpl_totaal', ds, mod='', ink=inkgr, header=headstring, mot=mot, abg=abg)
+                    datasource.totalen_schrijven(Generaaltotaaltrans, 'Ontpl_totaal', ds, mod='', ink=inkgr, header=headstringExcel, mot=mot, abg=abg, xlsx_format=True)
 
                 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
                 for mod in modaliteiten:
@@ -294,5 +294,5 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.totalen_schrijven(Generaaltotaaltrans,'Ontpl_totaal', ds, mod, write_header=True, header=header, xlsx_format=True, mot=mot, abg=abg)
-                    datasource.totalen_schrijven(Generaalmatrixproduct,'Ontpl_totaalproduct', ds, mod, write_header=True, header=header, xlsx_format=True, mot=mot, abg=abg)
+                    datasource.totalen_schrijven(Generaaltotaaltrans,'Ontpl_totaal', ds, mod, header=header, xlsx_format=True, mot=mot, abg=abg)
+                    datasource.totalen_schrijven(Generaalmatrixproduct,'Ontpl_totaalproduct', ds, mod, header=header, xlsx_format=True, mot=mot, abg=abg)
