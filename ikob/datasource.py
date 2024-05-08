@@ -48,6 +48,15 @@ class DataSource:
             self.gewichten_dir = 'Gewichten' # Also called enkeldirectory
             self.combinatie_dir = f"{self.gewichten_dir}/Combinaties"
 
+    def _write_csv_or_xlsx(self, data, path, header, xlsx_format):
+        if xlsx_format:
+            return Routines.xlswegschrijven(data, path, header)
+
+        if header:
+            return Routines.csvwegschrijvenmetheader(data, path, header)
+
+        return Routines.csvwegschrijven(data, path, soort='lijst')
+
     def _add_id_suffix(self, id, vk, ink, mod=''):
         if vk != '':
             id += f'{vk}'
@@ -175,13 +184,7 @@ class DataSource:
 
     def totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False, mot='', abg=''):
         bestandspad = self.maak_bestandspad_totalen(id, dagsoort, mod, ink, mot, abg)
-        if xlsx_format:
-            return Routines.xlswegschrijven(data, bestandspad, header)
-
-        if header:
-            return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
-
-        return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
+        return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
 
     def totalen_lezen(self, id, dagsoort, mod='', ink='', mot='', abg=''):
         bestandspad = self.maak_bestandspad_totalen(id, dagsoort, mod, ink, mot, abg)
@@ -198,13 +201,7 @@ class DataSource:
 
     def herkomst_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mod, ink)
-        if xlsx_format:
-            return Routines.xlswegschrijven(data, bestandspad, header)
-
-        if header:
-            return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
-
-        return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
+        return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
 
     def herkomst_totalen_lezen(self, id, dagsoort, mod='', ink=''):
         bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mod, ink)
@@ -221,13 +218,7 @@ class DataSource:
 
     def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mod='', ink='', header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
-        if xlsx_format:
-            return Routines.xlswegschrijven(data, bestandspad, header)
-
-        if header:
-            return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
-
-        return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
+        return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
 
     def concurrentie_totalen_lezen(self, id, dagsoort, kind, mod='', ink=''):
         bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
@@ -243,14 +234,7 @@ class DataSource:
 
     def bestemmingen_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink)
-
-        if xlsx_format:
-            return Routines.xlswegschrijven(data, bestandspad, header)
-
-        if header:
-            return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
-
-        return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
+        return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
 
     def bestemmingen_totalen_lezen(self, id, dagsoort, mod='', ink='', mot='', abg=''):
         bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink, mot, abg)
