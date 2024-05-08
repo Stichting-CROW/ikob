@@ -79,11 +79,6 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
 
     for ds in dagsoort:
         for mot in motieven:
-            Gewichtendirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', ds )
-            #Gewichtendirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
-            os.makedirs(Gewichtendirectory,exist_ok=True)
-            Ervarenreistijddirectory = os.path.join ( Basisdirectory, regime, mot, 'Ervarenreistijd', ds)
-            #Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', Scenario, ds )
             for mod in modaliteitenfiets:
                 for vk in voorkeuren:
                     if vk == 'Auto' or vk == 'Fiets':

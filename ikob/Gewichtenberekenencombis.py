@@ -48,11 +48,9 @@ def Maxberekenen_en_wegschrijvenvan3(datasource, Matrix1, Matrix2, Matrix3, mod1
 
 def gewichten_berekenen_combis(config, datasource):
     project_config = config['project']
-    paden_config = config['project']['paden']
     skims_config = config['skims']
 
     # Ophalen van instellingen
-    Basisdirectory = paden_config['skims_directory']
     motieven = project_config['motieven']
     regime = project_config['beprijzingsregime']
     dagsoort = skims_config['dagsoort']
@@ -69,10 +67,6 @@ def gewichten_berekenen_combis(config, datasource):
 
     for mot in motieven:
         for ds in dagsoort:
-
-            Combinatiedirectory = os.path.join(Basisdirectory, regime, mot, 'Gewichten', 'Combinaties', ds)
-            os.makedirs(Combinatiedirectory, exist_ok=True)
-
             for ink in inkomen:
                 for vk in voorkeuren:
                     for modft in modaliteitenfiets:

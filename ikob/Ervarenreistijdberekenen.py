@@ -1,5 +1,4 @@
 import logging
-import os
 import Routines
 
 logger = logging.getLogger(__name__)
@@ -8,7 +7,6 @@ logger = logging.getLogger(__name__)
 def ervaren_reistijd_berekenen(config, datasource):
     # Haal (voor het gemak) onderdelen voor dit script er uit.
     project_config = config['project']
-    paden_config = config['project']['paden']
     skims_config = config['skims']
     tvom_config = config['TVOM']
     verdeling_config = config['verdeling']
@@ -16,11 +14,6 @@ def ervaren_reistijd_berekenen(config, datasource):
     # Ophalen van instellingen
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
-    Basisdirectory = paden_config['skims_directory']
-    Skimsdirectory = os.path.join (Basisdirectory, 'skims')
-    os.makedirs ( Skimsdirectory, exist_ok=True )
-    logger.debug("Skimsdirectory: %s", Skimsdirectory)
-    logger.debug(f"{Skimsdirectory=}")
     scenario = project_config['verstedelijkingsscenario']
     motieven = project_config['motieven']
     Ketens = project_config['ketens']['gebruiken']
@@ -37,7 +30,6 @@ def ervaren_reistijd_berekenen(config, datasource):
     tijdkostenga = skims_config['tijdkostenga']
     dagsoort = skims_config['dagsoort']
     soortgeenauto = ['GeenAuto','GeenRijbewijs']
-    #benader_kosten = skims_config['OV kosten']['benaderen']['gebruiken']
     OVkmtarief = skims_config['OV kosten']['kmkosten']
     starttarief = skims_config['OV kosten']['starttarief']
     Additionele_kosten = verdeling_config['additionele_kosten']['gebruiken']
