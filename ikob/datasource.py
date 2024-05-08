@@ -57,16 +57,7 @@ class DataSource:
             id += f'_{ink}'
         return id
 
-    """Methods to read two files as specified in config directory."""
-
-    def _csvlezen_type(self, csv_bestand, aantal_lege_regels, type):
-        # TODO: Make csvfloatlezen and csvintlezen accept path.Pathlib
-        if type == "float":
-            return Routines.csvfloatlezen(str(csv_bestand), aantal_lege_regels)
-        if type == "int":
-            return Routines.csvintlezen(str(csv_bestand), aantal_lege_regels)
-
-    def config_lezen(self, id: str, cijfer_type: str = 'float'):
+    def config_lezen(self, id: str, type_caster=float):
         """Expects an id that is present in the config dict. Then
         load the file specified by that dict."""
         csv_path = self.skims_config[id]
@@ -74,14 +65,14 @@ class DataSource:
             csv_path = csv_path["bestand"]
 
         csv_path = pathlib.Path(csv_path).with_suffix('')
-        return self._csvlezen_type(str(csv_path), self.aantal_lege_regels.get(id, 0), cijfer_type)
+        return Routines.csvlezen(str(csv_path), self.aantal_lege_regels.get(id, 0), type_caster)
 
-    def verdeling_lezen(self, id: str, cijfer_type: str = 'float'):
+    def verdeling_lezen(self, id: str, type_caster=float):
         csv_path = self.config['verdeling'][id]
         if isinstance(csv_path, dict):
             csv_path = csv_path["bestand"]
         csv_path = pathlib.Path(csv_path).with_suffix('')
-        return self._csvlezen_type(str(csv_path), self.aantal_lege_regels.get(id, 0), cijfer_type)
+        return Routines.csvlezen(str(csv_path), self.aantal_lege_regels.get(id, 0), type_caster)
     """"""
 
     """Methods to write/read ervarenreistijd"""
@@ -100,19 +91,19 @@ class DataSource:
         bestandspad = self.maak_ervarenreistijd_pad(id, dagsoort, ink, hubnaam, regime, mot)
         Routines.csvwegschrijven(data, str(bestandspad), soort)
 
-    def ervarenreistijd_lezen(self, id, dagsoort, ink='', hubnaam="", cijfer_type='float', regime='', mot=''):
+    def ervarenreistijd_lezen(self, id, dagsoort, ink='', hubnaam="", type_caster=float, regime='', mot=''):
         bestandspad = self.maak_ervarenreistijd_pad(id, dagsoort, ink, hubnaam, regime, mot)
-        return self._csvlezen_type(str(bestandspad), aantal_lege_regels=0, type=cijfer_type)
+        return Routines.csvlezen(str(bestandspad), aantal_lege_regels=0, type_caster=type_caster)
     """"""
 
     """Methods to read SKIMS"""
 
-    def skims_lezen(self, id: str, dagsoort: str, cijfer_type: str = 'float'):
+    def skims_lezen(self, id: str, dagsoort: str, type_caster = float):
         """Expects a filename to read, which should be located in 
         in subfolder 'dagsoort' of the global path 'Jaarinvoerdirectory'
         """
         path = self.skims_dir / dagsoort / id
-        return self._csvlezen_type(path, self.aantal_lege_regels.get(id, 0), cijfer_type)
+        return Routines.csvlezen(str(path), self.aantal_lege_regels.get(id, 0), type_caster=type_caster)
     """"""
 
     """Methods to write/read SEGS """

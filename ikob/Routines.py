@@ -85,7 +85,7 @@ def getallenlijst_maken (aantal_getallen):
     return list(range(1, aantal_getallen + 1))
 
 
-def csvlezen (filenaam, aantal_lege_regels=0):
+def csvlezen(filenaam, aantal_lege_regels=0, type_caster=float):
     matrix = []
     filenaam2=filenaam + '.csv'
     with open ( filenaam2, 'r' ) as csvfile:
@@ -102,66 +102,23 @@ def csvlezen (filenaam, aantal_lege_regels=0):
     if row_count == 1:
         tussenmatrix.append ( matrix[0] )
         for elem in tussenmatrix[0]:
-            uitmatrix.append ( float(elem) )
+            uitmatrix.append(type_caster(elem))
     else:
         for r in range ( 0, row_count - aantal_lege_regels ):
             tussenmatrix.append (matrix[r])
             uitmatrix.append ([])
             for elem in tussenmatrix[r]:
-                uitmatrix[r].append ( float (elem) )
+                uitmatrix[r].append(type_caster(elem))
     return uitmatrix
 
-def csvintlezen (filenaam, aantal_lege_regels=0):
-    matrix = []
-    filenaam2=filenaam + '.csv'
-    with open ( filenaam2, 'r' ) as csvfile:
-        reader = csv.reader ( csvfile )
-        for i in range (aantal_lege_regels):
-            next(reader)
-        for row in reader:
-            matrix.append ( row )
-    with open ( filenaam2, 'r' ) as csvfile:
-        reader = csv.reader ( csvfile )
-        row_count = sum ( 1 for row in reader )
-    uitmatrix = []
-    tussenmatrix = []
-    if row_count == 1:
-        tussenmatrix.append ( matrix[0] )
-        for elem in tussenmatrix[0]:
-            uitmatrix.append ( int(elem) )
-    else:
-        for r in range ( 0, row_count - aantal_lege_regels ):
-            tussenmatrix.append (matrix[r])
-            uitmatrix.append ([])
-            for elem in tussenmatrix[r]:
-                uitmatrix[r].append ( int(elem) )
-    return uitmatrix
 
-def csvfloatlezen (filenaam, aantal_lege_regels=0):
-    matrix = []
-    filenaam2=filenaam + '.csv'
-    with open ( filenaam2, 'r' ) as csvfile:
-        reader = csv.reader ( csvfile )
-        for i in range (aantal_lege_regels):
-            next(reader)
-        for row in reader:
-            matrix.append ( row )
-    with open ( filenaam2, 'r' ) as csvfile:
-        reader = csv.reader ( csvfile )
-        row_count = sum ( 1 for row in reader )
-    uitmatrix = []
-    tussenmatrix = []
-    if row_count == 1:
-        tussenmatrix.append ( matrix[0] )
-        for elem in tussenmatrix[0]:
-            uitmatrix.append ( float(elem) )
-    else:
-        for r in range ( 0, row_count - aantal_lege_regels ):
-            tussenmatrix.append (matrix[r])
-            uitmatrix.append ([])
-            for elem in tussenmatrix[r]:
-                uitmatrix[r].append ( float(elem) )
-    return uitmatrix
+def csvintlezen(filenaam, aantal_lege_regels=0):
+    return csvlezen(filenaam, aantal_lege_regels, type_caster=int)
+
+
+def csvfloatlezen(filenaam, aantal_lege_regels=0):
+    return csvlezen(filenaam, aantal_lege_regels, type_caster=float)
+
 
 def Omnitrans_csv_inlezen (filenaam, aantal_zones=1425, aantal_lege_regels=4):
     lijst = []

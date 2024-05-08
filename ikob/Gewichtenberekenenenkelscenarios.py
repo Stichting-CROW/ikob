@@ -87,7 +87,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
             for mod in modaliteitenfiets:
                 for vk in voorkeuren:
                     if vk == 'Auto' or vk == 'Fiets':
-                        GGRskim = datasource.ervarenreistijd_lezen('Fiets', ds, cijfer_type='int', regime=regime, mot=mot)
+                        GGRskim = datasource.ervarenreistijd_lezen('Fiets', ds, type_caster=int, regime=regime, mot=mot)
 
                         if mot == 'werk' or mot == 'sociaal-recreatief':
                             constanten = Constantengenerator.alomwerk ( mod, vk )
@@ -108,7 +108,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
             for ink in inkomen:
                 for vk in voorkeuren:
                     for srtbr in soortbrandstof:
-                        GGRskim = datasource.ervarenreistijd_lezen(f'Auto_{srtbr}', ds, ink, cijfer_type='int', regime=regime, mot=mot)
+                        GGRskim = datasource.ervarenreistijd_lezen(f'Auto_{srtbr}', ds, ink, type_caster=int, regime=regime, mot=mot)
                         if mot == 'werk' or mot == 'sociaal-recreatief':
                             constanten = Constantengenerator.alomwerk ('Auto', vk )
                         elif mot == 'winkeldagelijkszorg':
@@ -146,8 +146,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
             for modOV in modaliteitenOV:
                 for ink in inkomen:
                     for vk in voorkeuren:
-                        ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{modOV}_{ink}' )
-                        GGRskim = datasource.ervarenreistijd_lezen(f'{modOV}', ds, ink, cijfer_type='int', regime=regime, mot=mot)
+                        GGRskim = datasource.ervarenreistijd_lezen(f'{modOV}', ds, ink, type_caster=int, regime=regime, mot=mot)
 
                         if mot == 'werk' or mot == 'sociaal-recreatief':
                             constanten = Constantengenerator.alomwerk ( modOV, vk )
@@ -163,7 +162,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
                         datasource.gewichten_schrijven(Gewichten, f'{modOV}_vk', ds, vk, ink, regime, mot)
 
             for ink in inkomen:
-                GGRskim = datasource.ervarenreistijd_lezen('GratisAuto', ds, ink, cijfer_type='int', regime=regime, mot=mot)
+                GGRskim = datasource.ervarenreistijd_lezen('GratisAuto', ds, ink, type_caster=int, regime=regime, mot=mot)
                 if mot == 'werk' or mot == 'sociaal-recreatief':
                     constanten = Constantengenerator.alomwerk ( 'Auto', 'Auto' )
                 elif mot == 'winkeldagelijkszorg':
@@ -179,7 +178,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
                 for vks in specialauto:
                     datasource.gewichten_schrijven(Gewichten, 'GratisAuto_vk', ds, vks, ink, regime, mot)
 
-                GGRskim = datasource.ervarenreistijd_lezen('GratisOV', ds, cijfer_type='int', regime=regime, mot=mot)
+                GGRskim = datasource.ervarenreistijd_lezen('GratisOV', ds, type_caster=int, regime=regime, mot=mot)
                 if mot == 'werk' or mot == 'sociaal-recreatief':
                     constanten = Constantengenerator.alomwerk ( 'OV', 'OV' )
                 elif mot == 'winkeldagelijkszorg':
