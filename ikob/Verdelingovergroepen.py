@@ -1,12 +1,9 @@
 import logging
-from datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
 
-def verdeling_over_groepen(config):
-    datasource = DataSource(config, config['__filename__'])
-
+def verdeling_over_groepen(config, datasource):
     project_config = config['project']
     verdeling_config = config['verdeling']
 

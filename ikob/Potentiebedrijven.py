@@ -1,7 +1,6 @@
 import logging
 import Routines
 import os
-from datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +23,7 @@ def bereken_potenties(Matrix, Inwonerstrans, gr, Groepen):
     return Dezegroeplijst
 
 
-def potentie_bedrijven(config):
-    Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
-    datasource = DataSource(config, Projectbestandsnaam)
-
+def potentie_bedrijven(config, datasource):
     project_config=config['project']
     paden_config = config['project']['paden']
     skims_config = config['skims']
@@ -109,14 +105,6 @@ def potentie_bedrijven(config):
     mot = motieven[0]
 
     for ds in dagsoort:
-        Combinatiedirectory = os.path.join ( Basisdirectory, regime, motieven[0] , 'Gewichten', 'Combinaties', ds )
-        Enkelemodaliteitdirectory = os.path.join ( Basisdirectory, regime, motieven[0] , 'Gewichten', ds )
-        Totalendirectoryherkomsten = os.path.join ( Basisdirectory, Projectbestandsnaam, 'Resultaten', 'Herkomsten', ds )
-        # Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
-        # Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
-        # Totalendirectoryherkomsten = os.path.join ( Skimsdirectory, 'Herkomsten', Scenario, 'Restdag', Naamuitvoer)
-        os.makedirs ( Totalendirectoryherkomsten, exist_ok=True )
-
         for inkgr in inkgroepen:
             #Eerst de fiets
             logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep: %s', inkgr)

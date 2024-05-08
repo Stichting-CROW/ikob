@@ -1,7 +1,5 @@
 import logging
 import Routines
-import os
-from datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
@@ -31,18 +29,13 @@ def bereken_potenties_nietwerk (Matrix, Bestemmingen, Inwonersverdeling, Inwoner
     return Dezegroeplijst
 
 
-def ontplooingsmogelijkheden_echte_inwoners(config):
-    Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
-    datasource = DataSource(config, Projectbestandsnaam)
+def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
     project_config = config['project']
-    paden_config = config['project']['paden']
     skims_config = config ['skims']
     verdeling_config = config ['verdeling']
     dagsoort = skims_config['dagsoort']
 
     # Ophalen van instellingen
-    Basisdirectory = paden_config['skims_directory']
-    SEGSdirectory = paden_config['segs_directory']
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
     motieven = project_config ['motieven']
@@ -147,16 +140,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
 
             Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
             for ds in dagsoort:
-                Totalendirectorybestemmingen = os.path.join ( Basisdirectory, Projectbestandsnaam, 'Resultaten', mot, abg,
-                                                              'Bestemmingen', ds )
-                os.makedirs ( Totalendirectorybestemmingen, exist_ok=True )
-                logger.debug("De bestemmingen komen in %s", Totalendirectorybestemmingen)
-                # Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
-                # Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
-                # Totalendirectorybestemmingen = os.path.join ( Skimsdirectory, 'Bestemmingen', Scenario, 'Restdag', Naamuitvoer)
-
                 for inkgr in inkgroepen:
-
 
                     #Eerst de fiets
                     logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep: %s', inkgr)
@@ -296,7 +280,6 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        Totaalmodfilenaam = os.path.join (Totalendirectorybestemmingen, f'Totaal_{mod}_{inkgr}')
                         Totaalrij = datasource.totalen_lezen('Totaal',ds,mod,inkgr,mot=mot,abg=abg)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:

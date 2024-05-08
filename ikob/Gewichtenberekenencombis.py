@@ -1,7 +1,6 @@
 import logging
 import Routines
 import os
-from datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +46,7 @@ def Maxberekenen_en_wegschrijvenvan3(datasource, Matrix1, Matrix2, Matrix3, mod1
     datasource.combinatie_gewichten_schrijven(Maxmatrix,f"{mod1}_{mod2}_{mod3}_vk",ds,vk,ink, srtbr=srtbr, regime=regime, mot=mot)
     return
 
-def gewichten_berekenen_combis(config):
-    datasource = DataSource(config, config['__filename__'])
-
+def gewichten_berekenen_combis(config, datasource):
     project_config = config['project']
     paden_config = config['project']['paden']
     skims_config = config['skims']

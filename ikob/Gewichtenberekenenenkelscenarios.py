@@ -1,14 +1,10 @@
 import logging
-import Routines
 import Constantengenerator
 import os
-from datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
-def gewichten_berekenen_enkel_scenarios(config):
-    datasource = DataSource(config, config['__filename__'])
-
+def gewichten_berekenen_enkel_scenarios(config, datasource):
     project_config = config['project']
     paden_config = config['project']['paden']
     skims_config = config['skims']

@@ -1,23 +1,16 @@
 import logging
 import Routines
 import Berekeningen
-import os
-from datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
-def concurrentie_om_arbeidsplaatsen(config):
-    Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
-    datasource = DataSource(config, Projectbestandsnaam)
-
+def concurrentie_om_arbeidsplaatsen(config, datasource):
     project_config = config['project']
-    paden_config = config['project']['paden']
     skims_config = config['skims']
     verdeling_config = config ['verdeling']
     dagsoort = skims_config['dagsoort']
 
     # Ophalen van instellingen
-    Basisdirectory = paden_config['skims_directory']
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
     motieven = project_config ['motieven']
@@ -84,10 +77,6 @@ def concurrentie_om_arbeidsplaatsen(config):
         logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
 
         for ds in dagsoort:
-            Concurrentiedirectory = os.path.join (Basisdirectory, Projectbestandsnaam, 'Resultaten', 'Concurrentie',
-                                                  'arbeidsplaatsen',  ds)
-            os.makedirs (Concurrentiedirectory, exist_ok=True)
-
             for inkgr in inkgroepen:
 
                 # Eerst de fiets

@@ -1,15 +1,11 @@
 import logging
 import os
 import Routines
-from datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
 
-def ervaren_reistijd_berekenen(config):
-    Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
-    datasource = DataSource(config, Projectbestandsnaam)
-
+def ervaren_reistijd_berekenen(config, datasource):
     # Haal (voor het gemak) onderdelen voor dit script er uit.
     project_config = config['project']
     paden_config = config['project']['paden']
@@ -63,11 +59,6 @@ def ervaren_reistijd_berekenen(config):
     kmheffingfossiel = float (kmheffingfossiel/100)
     kmheffingelektrisch = float (kmheffingelelektrisch/100)
     Parkeertijdlijst = datasource.config_lezen('parkeerzoektijden_bestand')
-    logger.debug(f"{Projectbestandsnaam=}")
-    logger.debug("Projectbestandsnaam: %s", Projectbestandsnaam)
-    Projectdirectory = os.path.join (Basisdirectory, Projectbestandsnaam)
-    logger.debug("Projectdirectory: %s", Projectdirectory)
-    os.makedirs ( Projectdirectory, exist_ok=True)
     soortbrandstof = ['fossiel', 'elektrisch']
     if 'orrectie' in regime:
         motief=motieven[0]

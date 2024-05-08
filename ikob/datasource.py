@@ -70,14 +70,14 @@ class DataSource:
         """Expects an id that is present in the config dict. Then
         load the file specified by that dict."""
         csv_pad = self.skims_config[id]
-        if type(csv_pad) == dict:
+        if isinstance(csv_pad, dict):
             csv_pad = csv_pad["bestand"]
         csv_pad = csv_pad.replace('.csv', '')
         return self._csvlezen_type(csv_pad, self.aantal_lege_regels.get(id, 0), cijfer_type)
 
     def verdeling_lezen(self, id: str, cijfer_type: str = 'float'):
         csv_pad = self.config['verdeling'][id]
-        if type(csv_pad) == dict:
+        if isinstance(csv_pad, dict):
             csv_pad = csv_pad["bestand"]
         csv_pad = csv_pad.replace('.csv', '')
         return self._csvlezen_type(csv_pad, self.aantal_lege_regels.get(id, 0), cijfer_type)
