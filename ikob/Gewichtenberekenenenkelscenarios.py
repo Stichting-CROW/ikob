@@ -1,18 +1,14 @@
 import logging
 import Constantengenerator
-import os
 
 logger = logging.getLogger(__name__)
 
 def gewichten_berekenen_enkel_scenarios(config, datasource):
     project_config = config['project']
-    paden_config = config['project']['paden']
     skims_config = config['skims']
 
     # Ophalen van instellingen
-    Basisdirectory = paden_config['skims_directory']
     dagsoort = skims_config['dagsoort']
-    #Scenario = project_config['scenario']
     motieven = project_config['motieven']
     regime = project_config['beprijzingsregime']
 

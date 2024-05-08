@@ -1,6 +1,5 @@
 import logging
 import Routines
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +24,11 @@ def bereken_potenties(Matrix, Inwonerstrans, gr, Groepen):
 
 def potentie_bedrijven(config, datasource):
     project_config=config['project']
-    paden_config = config['project']['paden']
     skims_config = config['skims']
     verdeling_config = config['verdeling']
     dagsoort = skims_config['dagsoort']
 
     # Ophalen van instellingen
-    Basisdirectory = paden_config['skims_directory']
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
     motieven = project_config ['motieven']
