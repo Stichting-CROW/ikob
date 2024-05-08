@@ -90,15 +90,15 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
     logger.debug("motieven: %s", motieven)
 
     if 'winkelnietdagelijksonderwijs' in motieven:
-        Beroepsbevolkingperklasse = datasource.segs_lezen("Leerlingen", scenario=scenario, cijfer_type='float')
+        Beroepsbevolkingperklasse = datasource.segs_lezen("Leerlingen", scenario=scenario, type_caster=float)
         Beroepsbevolkingtotalen = []
-        Arbeidsplaats = datasource.segs_lezen("Leerlingenplaatsen", scenario=scenario, cijfer_type='float')
+        Arbeidsplaats = datasource.segs_lezen("Leerlingenplaatsen", scenario=scenario, type_caster=float)
         Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
         logger.debug("Lengte Leerlingenplaatsen is %s", len(Arbeidsplaats))
     else:
-        Beroepsbevolkingperklasse = datasource.segs_lezen("Beroepsbevolking_inkomensklasse", scenario=scenario, cijfer_type='float')
+        Beroepsbevolkingperklasse = datasource.segs_lezen("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
         Beroepsbevolkingtotalen = []
-        Arbeidsplaats = datasource.segs_lezen("Arbeidsplaatsen_inkomensklasse", scenario=scenario, cijfer_type='float')
+        Arbeidsplaats = datasource.segs_lezen("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
         Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
         logger.debug("Lengte arbeidsplaatsen is %s", len(Arbeidsplaats))
 
@@ -107,9 +107,9 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
 
     if 'sociaal-recreatief' in motieven:
         if '65+' in regime:
-            Inwonersperklasse = datasource.segs_lezen("L65plus_inkomensklasse", scenario=scenario, cijfer_type='float')
+            Inwonersperklasse = datasource.segs_lezen("L65plus_inkomensklasse", scenario=scenario, type_caster=float)
         else:
-            Inwonersperklasse = datasource.segs_lezen("Inwoners_inkomensklasse", scenario=scenario, cijfer_type='float')
+            Inwonersperklasse = datasource.segs_lezen("Inwoners_inkomensklasse", scenario=scenario, type_caster=float)
         Inwonerstotalen = []
 
         for i in range(len(Inwonersperklasse)):
@@ -134,9 +134,9 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
             else:
                 Doelgroep = 'Inwoners'
             if abg == 'alle groepen':
-                Verdelingsmatrix = datasource.segs_lezen(f"Verdeling_over_groepen_{Doelgroep}", cijfer_type='float', scenario=scenario)
+                Verdelingsmatrix = datasource.segs_lezen(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
             else:
-                Verdelingsmatrix = datasource.segs_lezen(f"Verdeling_over_groepen_{Doelgroep}", cijfer_type='float', scenario=scenario)
+                Verdelingsmatrix = datasource.segs_lezen(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
 
             Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
             for ds in dagsoort:

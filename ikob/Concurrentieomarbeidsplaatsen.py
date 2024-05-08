@@ -47,11 +47,11 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                       'Auto_OV_Fiets']
 
     if 'winkelnietdagelijksonderwijs' in motieven:
-        Inwonersperklasse = datasource.segs_lezen("Leerlingen", scenario=scenario, cijfer_type='float')
-        Arbeidsplaatsen = datasource.segs_lezen("Leerlingenplaatsen", scenario=scenario, cijfer_type='float')
+        Inwonersperklasse = datasource.segs_lezen("Leerlingen", scenario=scenario, type_caster=float)
+        Arbeidsplaatsen = datasource.segs_lezen("Leerlingenplaatsen", scenario=scenario, type_caster=float)
     else:
-        Inwonersperklasse = datasource.segs_lezen("Beroepsbevolking_inkomensklasse", scenario=scenario, cijfer_type='float')
-        Arbeidsplaatsen = datasource.segs_lezen("Arbeidsplaatsen_inkomensklasse", scenario=scenario, cijfer_type='float')
+        Inwonersperklasse = datasource.segs_lezen("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
+        Arbeidsplaatsen = datasource.segs_lezen("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
 
     Inwonerstotalen = []
     for i in range (len(Inwonersperklasse)):

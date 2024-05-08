@@ -111,39 +111,25 @@ class DataSource:
     def _schrijf_csv_met_header(self, data, pad, header):
         Routines.csvwegschrijvenmetheader(data, pad, header)
 
-    def segs_schrijven(self, data, id, header, jaar="", scenario=""):
-        if jaar != "":
-            id += jaar
-        if scenario == "":
-            path = self.segs_dir / id
+    def _segs_dir(self, id, jaar, scenario):
+        id = id + jaar if jaar else id
+        if scenario:
+            return self.segs_dir / scenario / id
         else:
-            path = self.segs_dir / scenario /id
+            return self.segs_dir / id
+
+    def segs_schrijven(self, data, id, header, jaar="", scenario=""):
+        path = self._segs_dir(id, jaar, scenario)
         self._schrijf_csv_met_header(data, path, header)
 
     def segs_xlsx_schrijven(self, data, id, header, jaar="", scenario=""):
-        if jaar != "":
-            id += jaar
-        if scenario == "":
-            path = self.segs_dir / id
-        else:
-            path = self.segs_dir / scenario / id
+        path = self._segs_dir(id, jaar, scenario)
         Routines.xlswegschrijven(data, path, header)
 
-    def segs_lezen(self, id: str, jaar="", cijfer_type: str = 'int', scenario=""):
+    def segs_lezen(self, id: str, jaar="", type_caster=int, scenario=""):
         aantal_lege_regels = self.aantal_lege_regels.get(id, 0)
-        if jaar != "":
-            id += jaar
-        if scenario == "":
-            path = self.segs_dir / id
-        else:
-            path = self.segs_dir / scenario / id
-
-        if cijfer_type == 'int':
-            return Routines.csvintlezen(path, aantal_lege_regels=aantal_lege_regels)
-        elif cijfer_type == 'float':
-            return Routines.csvfloatlezen(path, aantal_lege_regels=aantal_lege_regels)
-        else:
-            raise Exception("Onjuist cijfer-type gespecificeerd!")
+        path = self._segs_dir(id, jaar, scenario)
+        return Routines.csvlezen(path, aantal_lege_regels=aantal_lege_regels, type_caster=type_caster)
     """"""
 
     """Methods to write/read to main gewichtendirectory """
@@ -190,12 +176,12 @@ class DataSource:
     def totalen_schrijven(self, data, id, dagsoort, mod='', ink='', write_header=False, header=[], xlsx_format=False, mot='', abg=''):
         bestandspad = self.maak_bestandspad_totalen(id, dagsoort, mod, ink, mot, abg)
         if xlsx_format:
-            Routines.xlswegschrijven(data, bestandspad, header)
-        else:
-            if not write_header:
-                Routines.csvwegschrijven(data, bestandspad, soort='lijst')
-            else:
-                Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+            return Routines.xlswegschrijven(data, bestandspad, header)
+
+        if write_header:
+            return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+
+        return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
 
     def totalen_lezen(self, id, dagsoort, mod='', ink='', mot='', abg=''):
         bestandspad = self.maak_bestandspad_totalen(id, dagsoort, mod, ink, mot, abg)
@@ -213,12 +199,12 @@ class DataSource:
     def herkomst_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', write_header=False, header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mod, ink)
         if xlsx_format:
-            Routines.xlswegschrijven(data, bestandspad, header)
-        else:
-            if not write_header:
-                Routines.csvwegschrijven(data, bestandspad, soort='lijst')
-            else:
-                Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+            return Routines.xlswegschrijven(data, bestandspad, header)
+
+        if write_header:
+            return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+
+        return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
 
     def herkomst_totalen_lezen(self, id, dagsoort, mod='', ink=''):
         bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mod, ink)
@@ -236,12 +222,12 @@ class DataSource:
     def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mod='', ink='', write_header=False, header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
         if xlsx_format:
-            Routines.xlswegschrijven(data, bestandspad, header)
-        else:
-            if not write_header:
-                Routines.csvwegschrijven(data, bestandspad, soort='lijst')
-            else:
-                Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+            return Routines.xlswegschrijven(data, bestandspad, header)
+
+        if write_header:
+            return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+
+        return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
 
     def concurrentie_totalen_lezen(self, id, dagsoort, kind, mod='', ink=''):
         bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
@@ -257,13 +243,14 @@ class DataSource:
 
     def bestemmingen_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', write_header=False, header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink)
+
         if xlsx_format:
-            Routines.xlswegschrijven(data, bestandspad, header)
-        else:
-            if not write_header:
-                Routines.csvwegschrijven(data, bestandspad, soort='lijst')
-            else:
-                Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+            return Routines.xlswegschrijven(data, bestandspad, header)
+
+        if write_header:
+            return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+
+        return Routines.csvwegschrijven(data, bestandspad, soort='lijst')
 
     def bestemmingen_totalen_lezen(self, id, dagsoort, mod='', ink='', mot='', abg=''):
         bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink, mot, abg)
