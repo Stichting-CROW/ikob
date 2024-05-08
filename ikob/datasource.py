@@ -65,14 +65,14 @@ class DataSource:
             csv_path = csv_path["bestand"]
 
         csv_path = pathlib.Path(csv_path).with_suffix('')
-        return Routines.csvlezen(str(csv_path), self.aantal_lege_regels.get(id, 0), type_caster)
+        return Routines.csvlezen(csv_path, self.aantal_lege_regels.get(id, 0), type_caster)
 
     def verdeling_lezen(self, id: str, type_caster=float):
         csv_path = self.config['verdeling'][id]
         if isinstance(csv_path, dict):
             csv_path = csv_path["bestand"]
         csv_path = pathlib.Path(csv_path).with_suffix('')
-        return Routines.csvlezen(str(csv_path), self.aantal_lege_regels.get(id, 0), type_caster)
+        return Routines.csvlezen(csv_path, self.aantal_lege_regels.get(id, 0), type_caster)
     """"""
 
     """Methods to write/read ervarenreistijd"""
@@ -89,11 +89,11 @@ class DataSource:
 
     def ervarenreistijd_schrijven(self, data, id: str, dagsoort: str, ink="", hubnaam="", soort='matrix', regime='', mot=''):
         bestandspad = self.maak_ervarenreistijd_pad(id, dagsoort, ink, hubnaam, regime, mot)
-        Routines.csvwegschrijven(data, str(bestandspad), soort)
+        Routines.csvwegschrijven(data, bestandspad, soort)
 
     def ervarenreistijd_lezen(self, id, dagsoort, ink='', hubnaam="", type_caster=float, regime='', mot=''):
         bestandspad = self.maak_ervarenreistijd_pad(id, dagsoort, ink, hubnaam, regime, mot)
-        return Routines.csvlezen(str(bestandspad), aantal_lege_regels=0, type_caster=type_caster)
+        return Routines.csvlezen(bestandspad, aantal_lege_regels=0, type_caster=type_caster)
     """"""
 
     """Methods to read SKIMS"""
@@ -103,7 +103,7 @@ class DataSource:
         in subfolder 'dagsoort' of the global path 'Jaarinvoerdirectory'
         """
         path = self.skims_dir / dagsoort / id
-        return Routines.csvlezen(str(path), self.aantal_lege_regels.get(id, 0), type_caster=type_caster)
+        return Routines.csvlezen(path, self.aantal_lege_regels.get(id, 0), type_caster=type_caster)
     """"""
 
     """Methods to write/read SEGS """
@@ -118,7 +118,7 @@ class DataSource:
             path = self.segs_dir / id
         else:
             path = self.segs_dir / scenario /id
-        self._schrijf_csv_met_header(data, str(path), header)
+        self._schrijf_csv_met_header(data, path, header)
 
     def segs_xlsx_schrijven(self, data, id, header, jaar="", scenario=""):
         if jaar != "":
@@ -127,7 +127,7 @@ class DataSource:
             path = self.segs_dir / id
         else:
             path = self.segs_dir / scenario / id
-        Routines.xlswegschrijven(data, str(path), header)
+        Routines.xlswegschrijven(data, path, header)
 
     def segs_lezen(self, id: str, jaar="", cijfer_type: str = 'int', scenario=""):
         aantal_lege_regels = self.aantal_lege_regels.get(id, 0)
@@ -139,9 +139,9 @@ class DataSource:
             path = self.segs_dir / scenario / id
 
         if cijfer_type == 'int':
-            return Routines.csvintlezen(str(path), aantal_lege_regels=aantal_lege_regels)
+            return Routines.csvintlezen(path, aantal_lege_regels=aantal_lege_regels)
         elif cijfer_type == 'float':
-            return Routines.csvfloatlezen(str(path), aantal_lege_regels=aantal_lege_regels)
+            return Routines.csvfloatlezen(path, aantal_lege_regels=aantal_lege_regels)
         else:
             raise Exception("Onjuist cijfer-type gespecificeerd!")
     """"""
@@ -156,11 +156,11 @@ class DataSource:
 
     def gewichten_schrijven(self, gewichten, id, dagsoort, vk='', ink='',regime='', mot='', srtbr=''):
         bestandspad = self.maak_bestandspad_gewichten(id, dagsoort, vk, ink, regime, mot, srtbr)
-        Routines.csvwegschrijven(gewichten, str(bestandspad))
+        Routines.csvwegschrijven(gewichten, bestandspad)
 
     def gewichten_lezen(self, id, dagsoort, vk='', ink='',regime='', mot='', srtbr=''):
         bestandspad = self.maak_bestandspad_gewichten(id, dagsoort, vk, ink, regime, mot, srtbr)
-        return Routines.csvlezen(str(bestandspad))
+        return Routines.csvlezen(bestandspad)
     """"""
 
     """Methods to write/read weights to combinatiedirectory"""
@@ -173,11 +173,11 @@ class DataSource:
 
     def combinatie_gewichten_schrijven(self, gewichten, id, dagsoort, vk='', ink='', srtbr='', regime='', mot=''):
         bestandspad = self.maak_bestandspad_combinatiegewichten(id, dagsoort, vk, ink, srtbr, regime=regime, mot=mot)
-        Routines.csvwegschrijven(gewichten, str(bestandspad))
+        Routines.csvwegschrijven(gewichten, bestandspad)
 
     def combinatie_gewichten_lezen(self, id, dagsoort, vk='', ink='', srtbr='', regime='', mot=''):
         bestandspad = self.maak_bestandspad_combinatiegewichten(id, dagsoort, vk, ink, srtbr, regime=regime, mot=mot)
-        return Routines.csvlezen(str(bestandspad))
+        return Routines.csvlezen(bestandspad)
     """"""
 
     """Methods to write/read to totalendirectory"""
@@ -190,16 +190,16 @@ class DataSource:
     def totalen_schrijven(self, data, id, dagsoort, mod='', ink='', write_header=False, header=[], xlsx_format=False, mot='', abg=''):
         bestandspad = self.maak_bestandspad_totalen(id, dagsoort, mod, ink, mot, abg)
         if xlsx_format:
-            Routines.xlswegschrijven(data, str(bestandspad), header)
+            Routines.xlswegschrijven(data, bestandspad, header)
         else:
             if not write_header:
-                Routines.csvwegschrijven(data, str(bestandspad), soort='lijst')
+                Routines.csvwegschrijven(data, bestandspad, soort='lijst')
             else:
-                Routines.csvwegschrijvenmetheader(data, str(bestandspad), header)
+                Routines.csvwegschrijvenmetheader(data, bestandspad, header)
 
     def totalen_lezen(self, id, dagsoort, mod='', ink='', mot='', abg=''):
         bestandspad = self.maak_bestandspad_totalen(id, dagsoort, mod, ink, mot, abg)
-        return Routines.csvintlezen(str(bestandspad))
+        return Routines.csvintlezen(bestandspad)
     """"""
 
 
@@ -213,16 +213,16 @@ class DataSource:
     def herkomst_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', write_header=False, header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mod, ink)
         if xlsx_format:
-            Routines.xlswegschrijven(data, str(bestandspad), header)
+            Routines.xlswegschrijven(data, bestandspad, header)
         else:
             if not write_header:
-                Routines.csvwegschrijven(data, str(bestandspad), soort='lijst')
+                Routines.csvwegschrijven(data, bestandspad, soort='lijst')
             else:
-                Routines.csvwegschrijvenmetheader(data, str(bestandspad), header)
+                Routines.csvwegschrijvenmetheader(data, bestandspad, header)
 
     def herkomst_totalen_lezen(self, id, dagsoort, mod='', ink=''):
         bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mod, ink)
-        return Routines.csvintlezen(str(bestandspad))
+        return Routines.csvintlezen(bestandspad)
     """"""
 
     """Methods to write/read to concurrentiedirectory/Totalendirectoryconcurrentie"""
@@ -236,16 +236,16 @@ class DataSource:
     def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mod='', ink='', write_header=False, header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
         if xlsx_format:
-            Routines.xlswegschrijven(data, str(bestandspad), header)
+            Routines.xlswegschrijven(data, bestandspad, header)
         else:
             if not write_header:
-                Routines.csvwegschrijven(data, str(bestandspad), soort='lijst')
+                Routines.csvwegschrijven(data, bestandspad, soort='lijst')
             else:
-                Routines.csvwegschrijvenmetheader(data, str(bestandspad), header)
+                Routines.csvwegschrijvenmetheader(data, bestandspad, header)
 
     def concurrentie_totalen_lezen(self, id, dagsoort, kind, mod='', ink=''):
         bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
-        return Routines.csvlezen(str(bestandspad))
+        return Routines.csvlezen(bestandspad)
     """"""
 
     """Methods to write/read to bestemmingendirectory/Totalendirectorybestemmingen"""
@@ -258,14 +258,14 @@ class DataSource:
     def bestemmingen_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', write_header=False, header=[], xlsx_format=False):
         bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink)
         if xlsx_format:
-            Routines.xlswegschrijven(data, str(bestandspad), header)
+            Routines.xlswegschrijven(data, bestandspad, header)
         else:
             if not write_header:
-                Routines.csvwegschrijven(data, str(bestandspad), soort='lijst')
+                Routines.csvwegschrijven(data, bestandspad, soort='lijst')
             else:
-                Routines.csvwegschrijvenmetheader(data, str(bestandspad), header)
+                Routines.csvwegschrijvenmetheader(data, bestandspad, header)
 
     def bestemmingen_totalen_lezen(self, id, dagsoort, mod='', ink='', mot='', abg=''):
         bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink, mot, abg)
-        return Routines.csvlezen(str(bestandspad))
+        return Routines.csvlezen(bestandspad)
     """"""

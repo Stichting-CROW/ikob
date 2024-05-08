@@ -1,6 +1,7 @@
 import csv
 import openpyxl
 import xlsxwriter
+import pathlib
 
 
 def matrixvuller ( filenaam,  kolommen, beginrij = 2, beginkolom = 2,   sheetnaam = 'Sheet1') :
@@ -49,7 +50,10 @@ def transponeren (matrix):
 
 
 def xlswegschrijven (matrix, filenaam, header):
-    workbook = xlsxwriter.Workbook ( filenaam + '.xlsx' )
+    if not isinstance(filenaam, pathlib.Path):
+        filenaam = pathlib.Path(filenaam)
+
+    workbook = xlsxwriter.Workbook(filenaam.with_suffix('.xlsx'))
     worksheet = workbook.add_worksheet ( )
     worksheet.write_row (0,0,header)
     for r in range ( 0, len(matrix) ):
@@ -59,8 +63,11 @@ def xlswegschrijven (matrix, filenaam, header):
 
 
 def xlswegschrijven_totalen (matrix, header, getallenlijst, filenaam, aantal_zones=1425):
+    if not isinstance(filenaam, pathlib.Path):
+        filenaam = pathlib.Path(filenaam)
+
     transmatrix = transponeren(matrix)
-    workbook = xlsxwriter.Workbook ( filenaam + '.xlsx' )
+    workbook = xlsxwriter.Workbook(filenaam.with_suffix('.xlsx'))
     worksheet = workbook.add_worksheet ( )
     worksheet.write_row (0,0,header)
     worksheet.write_column (1,0,getallenlijst)
@@ -86,15 +93,19 @@ def getallenlijst_maken (aantal_getallen):
 
 
 def csvlezen(filenaam, aantal_lege_regels=0, type_caster=float):
+    if not isinstance(filenaam, pathlib.Path):
+        filenaam = pathlib.Path(filenaam)
+    filenaam = filenaam.with_suffix('.csv')
+
     matrix = []
-    filenaam2=filenaam + '.csv'
-    with open ( filenaam2, 'r' ) as csvfile:
+
+    with open ( filenaam, 'r' ) as csvfile:
         reader = csv.reader ( csvfile )
         for i in range (aantal_lege_regels):
             next(reader)
         for row in reader:
             matrix.append ( row )
-    with open ( filenaam2, 'r' ) as csvfile:
+    with open ( filenaam, 'r' ) as csvfile:
         reader = csv.reader ( csvfile )
         row_count = sum ( 1 for row in reader )
     uitmatrix = []
@@ -140,17 +151,21 @@ def Omnitrans_csv_inlezen (filenaam, aantal_zones=1425, aantal_lege_regels=4):
     return skimmatrix
 
 def csvwegschrijven (matrix, filenaam, soort = "matrix"):
-    f = open ( filenaam + '.csv', 'w', newline='' )
-    with f:
+    if not isinstance(filenaam, pathlib.Path):
+        filenaam = pathlib.Path(filenaam)
+
+    with open(filenaam.with_suffix('.csv'), 'w', newline='') as f:
         writer = csv.writer ( f )
         if soort == "matrix":
             writer.writerows ( matrix )
         else:
             writer.writerow ( matrix )
 
-def csvwegschrijvenmetheader (matrix, filenaam, header, soort = "matrix" ):
-    f = open ( filenaam + '.csv', 'w', newline='' )
-    with f:
+def csvwegschrijvenmetheader (matrix, filenaam, header=None, soort = "matrix" ):
+    if not isinstance(filenaam, pathlib.Path):
+        filenaam = pathlib.Path(filenaam)
+
+    with open(filenaam.with_suffix('.csv'), 'w', newline='') as f:
         writer = csv.writer ( f )
         writer.writerow(header)
         if soort == "matrix":
