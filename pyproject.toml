@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["ikob/"]
+where = ["ikob"]
 
 [project.optional-dependencies]
 dev = [
