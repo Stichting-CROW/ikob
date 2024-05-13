@@ -89,9 +89,24 @@ print (motieven)
 
 #Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
 #Inkomensverdeling = Routines.csvintlezen (Inkomensverdelingsfilenaam, aantal_lege_regels=1)
-Beroepsbevolkingperklassenaam = os.path.join (SEGSdirectory, scenario, f'Beroepsbevolking_inkomensklasse')
-Beroepsbevolkingperklasse = Routines.csvintlezen(Beroepsbevolkingperklassenaam, aantal_lege_regels=1)
-Beroepsbevolkingtotalen = []
+if 'winkelnietdagelijksonderwijs' in motieven:
+    Beroepsbevolkingperklassenaam = os.path.join(SEGSdirectory, scenario, f'Leerlingen')
+    Beroepsbevolkingperklasse = Routines.csvintlezen(Beroepsbevolkingperklassenaam, aantal_lege_regels=1)
+    Beroepsbevolkingtotalen = []
+    Arbeidsplaatsenfilenaam = os.path.join(SEGSdirectory, scenario, f'Leerlingenplaatsen')
+    print(Arbeidsplaatsenfilenaam)
+    Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
+    Arbeidsplaatsen = Berekeningen.Transponeren(Arbeidsplaats)
+    print('Lengte Leerlingenplaatsen is', len(Arbeidsplaats))
+else:
+    Beroepsbevolkingperklassenaam = os.path.join (SEGSdirectory, scenario, f'Beroepsbevolking_inkomensklasse')
+    Beroepsbevolkingperklasse = Routines.csvintlezen(Beroepsbevolkingperklassenaam, aantal_lege_regels=1)
+    Beroepsbevolkingtotalen = []
+    Arbeidsplaatsenfilenaam = os.path.join(SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
+    print(Arbeidsplaatsenfilenaam)
+    Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
+    Arbeidsplaatsen = Berekeningen.Transponeren(Arbeidsplaats)
+    print('Lengte arbeidsplaatsen is', len(Arbeidsplaats))
 for i in range(len(Beroepsbevolkingperklasse)):
     Beroepsbevolkingtotalen.append(sum(Beroepsbevolkingperklasse[i]))
 if 'sociaal-recreatief' in motieven:
@@ -116,11 +131,7 @@ for i in range (len(Beroepsbevolkingperklasse)):
             Inkomensverdeling[i].append (0)
 Inkomenstransverdeling = Berekeningen.Transponeren (Inkomensverdeling)
 
-Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
-print (Arbeidsplaatsenfilenaam)
-Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
-Arbeidsplaatsen = Berekeningen.Transponeren(Arbeidsplaats)
-print ('Lengte arbeidsplaatsen is', len(Arbeidsplaats))
+
 
 def Lijstvolnullen(lengte=len(Arbeidsplaats)) :
     Lijst = [] 
@@ -239,15 +250,22 @@ def bereken_potenties_nietwerk (Matrix, Bestemmingen, Inwonersverdeling, Inwoner
     return Dezegroeplijst
 
 for abg in autobezitgroepen:
-    if abg == 'alle groepen':
-        Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen')
-    else :
-        Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_alleen_autobezit')
-    Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
-    print ('Verdelingsmatrix 4 is', Verdelingsmatrix[4])
-    Verdelingstransmatrix = Berekeningen.Transponeren(Verdelingsmatrix)
+
 
     for mot in motieven:
+        if mot == 'werk':
+            Doelgroep = 'Beroepsbevolking'
+        elif mot == 'winkelnietdagelijksonderwijs':
+            Doelgroep = 'Leerlingen'
+        else:
+            Doelgroep = 'Inwoners'
+        if abg == 'alle groepen':
+            Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_{Doelgroep}')
+        else:
+            Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_{Doelgroep}_alleen_autobezit')
+        Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
+        print('Verdelingsmatrix 4 is', Verdelingsmatrix[4])
+        Verdelingstransmatrix = Berekeningen.Transponeren(Verdelingsmatrix)
         for ds in dagsoort:
             Combinatiedirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', 'Combinaties', ds )
             Enkelemodaliteitdirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', ds )
@@ -278,7 +296,7 @@ for abg in autobezitgroepen:
                                 Fietsfilenaam = os.path.join (Enkelemodaliteitdirectory, f'{mod}_vk{vkklad}')
                                 print ('Filenaam is',Fietsfilenaam)
                                 Fietsmatrix = Routines.csvlezen (Fietsfilenaam)
-                                if mot == 'werk':
+                                if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                     Dezegroeplijst = bereken_potenties ( Fietsmatrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                          Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr )
                                 else:
@@ -295,7 +313,7 @@ for abg in autobezitgroepen:
                                         AutoFilenaam = os.path.join(Enkelemodaliteitdirectory, srtbr, f'{String}_vk{vk}_{ink}')
                                         print ('Filenaam is', AutoFilenaam)
                                         Matrix = Routines.csvlezen(AutoFilenaam)
-                                        if mot == 'werk':
+                                        if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                             Dezegroeplijst1 = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                                  Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr )
                                         else:
@@ -318,7 +336,7 @@ for abg in autobezitgroepen:
                                     AutoFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
                                     print('Filenaam is', AutoFilenaam)
                                     Matrix = Routines.csvlezen(AutoFilenaam)
-                                    if mot == 'werk':
+                                    if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                         Dezegroeplijst = bereken_potenties(Matrix, Arbeidsplaatsen,
                                                                            Verdelingstransmatrix,
                                                                            Inkomenstransverdeling[
@@ -339,7 +357,7 @@ for abg in autobezitgroepen:
                                 OVFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
                                 print('Filenaam is', OVFilenaam)
                                 Matrix = Routines.csvlezen(OVFilenaam)
-                                if mot == 'werk':
+                                if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                     Dezegroeplijst = bereken_potenties(Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                        Inkomenstransverdeling[inkgroepen.index(inkgr)],
                                                                        inkgr, gr)
@@ -362,7 +380,7 @@ for abg in autobezitgroepen:
                                                                     f'{String}_vk{vk}_{ink}')
                                         print ('Filenaam is', CombiFilenaam)
                                         Matrix = Routines.csvlezen(CombiFilenaam)
-                                        if mot == 'werk':
+                                        if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                             Dezegroeplijst1 = bereken_potenties(Matrix, Arbeidsplaatsen,
                                                                                 Verdelingstransmatrix,
                                                                                 Inkomenstransverdeling[
@@ -388,7 +406,7 @@ for abg in autobezitgroepen:
                                     print ('Filenaam is', CombiFilenaam)
                                     Matrix = Routines.csvlezen ( CombiFilenaam )
 
-                                    if mot == 'werk':
+                                    if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                         Dezegroeplijst = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                              Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr )
                                     else:

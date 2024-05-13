@@ -101,14 +101,14 @@ def StandaardConfiguratieDefinitie():
                         'default': False
                 },
                 'naam hub': {
-                    'label': 'Wat is de naam van de hub?',
+                    'label': 'Wat is de naam van de verzameling hubs?',
                     'type': 'text',
                     'default': ''
                 }
             }
         },
         'skims': {
-            'label': 'Ervaren Reistijd Berekenen',
+            'label': 'Gegeneraliseerde Reistijd Berekenen',
             'dagsoort': {
                 'label': 'Dagsoorten',
                 'type': 'checklist',
@@ -151,6 +151,20 @@ def StandaardConfiguratieDefinitie():
 #                }
 
             },
+            'pricecap': {
+                'label': 'Is er een maximum OV-prijs (price cap)?',
+                'gebruiken': {
+                    'label': 'pricecap',
+                    'type': 'checkbox',
+                    'default': False
+                },
+                'getal': {
+                    'label': 'Wat is de pricecap in Euros',
+                    'type': 'number',
+                    'default': 9999.0
+                },
+            },
+
             'Kosten auto fossiele brandstof': {
                 'variabele kosten': {
                     'label': 'variabele kosten',
@@ -243,7 +257,7 @@ def StandaardConfiguratieDefinitie():
             'label': 'Waarde van tijd',
 
             'werk': {
-                'label': 'Waarde van 1€ kosten in ervaren reistijd per inkomensgroep, motief werk',
+                'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief werk',
                 'hoog': {
                     'label': 'Hoog',
                     'type': 'number',
@@ -270,7 +284,7 @@ def StandaardConfiguratieDefinitie():
                 }
             },
             'overig': {
-                'label': 'Waarde van 1€ kosten in ervaren reistijd per inkomensgroep, motief overig',
+                'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief overig',
                 'hoog': {
                     'label': 'Hoog',
                     'type': 'number',
