@@ -79,8 +79,8 @@ def test_end_to_end(case):
 
     # End-to-end test should not skip any steps: all scripts should pass.
     skip_tests = [False for _ in stappen]
-    for step, return_code in run_scripts(project, skip_tests):
-        assert return_code == 0, f"Step {step} should pass."
+    for step, result in run_scripts(project, skip_tests):
+        assert result is None, f"Step {step} should pass."
 
     reference_dir = project_dir.joinpath("reference").joinpath("Resultaten")
     assert compare_directories(result_dir, reference_dir)

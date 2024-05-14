@@ -1,31 +1,6 @@
 import Routines
 import os
-from ikobconfig import getConfigFromArgs
 
-# Deze routine kijkt naar de command-line en leest
-# het opgegeven configuratie bestand in een dict.
-# Indien er een probleem is, sluit het script hier af.
-config = getConfigFromArgs()
-Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
-project_config = config['project']
-paden_config = config['project']['paden']
-skims_config = config['skims']
-
-
-# Ophalen van instellingen
-Basisdirectory = paden_config['skims_directory']
-motieven = project_config['motieven']
-regime = project_config['beprijzingsregime']
-dagsoort = skims_config['dagsoort']
-#Scenario = config['project']['scenario']
-
-# Vaste waarden
-inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
-voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
-modaliteitenfiets = ['Fiets']
-soortauto = ['Auto', 'GeenAuto', 'GeenRijbewijs', 'GratisAuto']
-soortOV = ['OV', 'GratisOV']
-soortbrandstof = ['fossiel','elektrisch']
 
 def minmaxmatrix(matrix1, matrix2, minmax="max"):
     eindmatrix = []
@@ -94,75 +69,42 @@ def Maxberekenen_en_wegschrijvenvan3 (Directory, Matrix1, Matrix2, Matrix3, mod1
     Routines.csvwegschrijven ( Maxmatrix, Uitvoerfilenaam )
     return
 
-for mot in motieven:
-    for ds in dagsoort:
+def gewichten_berekenen_combis(config):
+    project_config = config['project']
+    paden_config = config['project']['paden']
+    skims_config = config['skims']
 
-        Combinatiedirectory = os.path.join(Basisdirectory, regime, mot, 'Gewichten', 'Combinaties', ds)
-        Enkeldirectory = os.path.join(Basisdirectory, regime, mot, 'Gewichten', ds)
-        #Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, ds )
-        #Enkeldirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
-        os.makedirs(Combinatiedirectory, exist_ok=True)
 
-        for ink in inkomen:
-            for vk in voorkeuren:
-                for modft in modaliteitenfiets:
-                    for srtOV in soortOV:
-                        if kanvoorkeur ('Auto', srtOV, vk):
-                            if vk == 'Fiets':
-                                vkklad = 'Fiets'
-                            else:
-                                vkklad = ''
-                            Fietsfile = os.path.join (Enkeldirectory, f'{modft}_vk{vkklad}')
-                            Fietsmatrix = Routines.csvlezen(Fietsfile)
-                            OVfile = os.path.join (Enkeldirectory, f'{srtOV}_vk{vk}_{ink}')
-                            OVmatrix = Routines.csvlezen(OVfile)
-                            Maxberekenen_en_wegschrijven(Combinatiedirectory, Fietsmatrix,OVmatrix, srtOV, modft, vk, ink)
-                    for srtauto in soortauto:
-                        if kanvoorkeur (srtauto, 'OV', vk):
-                            if vk == 'Fiets':
-                                vkklad = 'Fiets'
-                            else:
-                                vkklad = ''
-                            Fietsfile = os.path.join ( Enkeldirectory, f'{modft}_vk{vkklad}' )
-                            Fietsmatrix = Routines.csvlezen ( Fietsfile )
-                            if srtauto == 'Auto':
-                                for srtbr in soortbrandstof:
-                                    Autofile = os.path.join ( Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}' )
-                                    Automatrix = Routines.csvlezen ( Autofile )
-                                    print(Autofile)
-                                    print(Fietsfile)
-                                    Brandstofdirectory = os.path.join (Combinatiedirectory, srtbr)
-                                    os.makedirs(Brandstofdirectory, exist_ok=True)
-                                    Maxberekenen_en_wegschrijven ( Brandstofdirectory, Fietsmatrix,
-                                                                   Automatrix, srtauto, modft, vk, ink )
-                            else:
-                                Autofile = os.path.join(Enkeldirectory, f'{srtauto}_vk{vk}_{ink}')
-                                Automatrix = Routines.csvlezen(Autofile)
-                                Maxberekenen_en_wegschrijven(Combinatiedirectory, Fietsmatrix, Automatrix, srtauto, modft, vk, ink)
+    # Ophalen van instellingen
+    Basisdirectory = paden_config['skims_directory']
+    motieven = project_config['motieven']
+    regime = project_config['beprijzingsregime']
+    dagsoort = skims_config['dagsoort']
+    #Scenario = config['project']['scenario']
 
-                for srtOV in soortOV:
-                    for srtauto in soortauto:
-                        if kanvoorkeur (srtauto, srtOV, vk):
-                            OVfile = os.path.join ( Enkeldirectory, f'{srtOV}_vk{vk}_{ink}' )
-                            OVmatrix = Routines.csvlezen ( OVfile )
-                            if srtauto == 'Auto':
-                                for srtbr in soortbrandstof:
-                                    Autofile = os.path.join(Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}')
-                                    Automatrix = Routines.csvlezen(Autofile)
-                                    print(Autofile)
-                                    print('Belangrijk!', OVfile)
-                                    Brandstofdirectory = os.path.join (Combinatiedirectory, srtbr)
-                                    os.makedirs(Brandstofdirectory, exist_ok=True)
-                                    Maxberekenen_en_wegschrijven ( Brandstofdirectory, OVmatrix, Automatrix, srtauto, srtOV, vk, ink )
-                            else:
-                                Autofile = os.path.join(Enkeldirectory, f'{srtauto}_vk{vk}_{ink}')
-                                Automatrix = Routines.csvlezen(Autofile)
-                                Maxberekenen_en_wegschrijven(Combinatiedirectory, OVmatrix, Automatrix,
-                                                             srtauto, srtOV, vk, ink)
-                for modft in modaliteitenfiets:
-                    for srtOV in soortOV:
-                        for srtauto in soortauto:
-                            if kanvoorkeur (srtauto, srtOV, vk):
+    # Vaste waarden
+    inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
+    voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
+    modaliteitenfiets = ['Fiets']
+    soortauto = ['Auto', 'GeenAuto', 'GeenRijbewijs', 'GratisAuto']
+    soortOV = ['OV', 'GratisOV']
+    soortbrandstof = ['fossiel','elektrisch']
+
+
+    for mot in motieven:
+        for ds in dagsoort:
+
+            Combinatiedirectory = os.path.join(Basisdirectory, regime, mot, 'Gewichten', 'Combinaties', ds)
+            Enkeldirectory = os.path.join(Basisdirectory, regime, mot, 'Gewichten', ds)
+            #Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, ds )
+            #Enkeldirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
+            os.makedirs(Combinatiedirectory, exist_ok=True)
+
+            for ink in inkomen:
+                for vk in voorkeuren:
+                    for modft in modaliteitenfiets:
+                        for srtOV in soortOV:
+                            if kanvoorkeur ('Auto', srtOV, vk):
                                 if vk == 'Fiets':
                                     vkklad = 'Fiets'
                                 else:
@@ -171,23 +113,76 @@ for mot in motieven:
                                 Fietsmatrix = Routines.csvlezen(Fietsfile)
                                 OVfile = os.path.join (Enkeldirectory, f'{srtOV}_vk{vk}_{ink}')
                                 OVmatrix = Routines.csvlezen(OVfile)
+                                Maxberekenen_en_wegschrijven(Combinatiedirectory, Fietsmatrix,OVmatrix, srtOV, modft, vk, ink)
+                        for srtauto in soortauto:
+                            if kanvoorkeur (srtauto, 'OV', vk):
+                                if vk == 'Fiets':
+                                    vkklad = 'Fiets'
+                                else:
+                                    vkklad = ''
+                                Fietsfile = os.path.join ( Enkeldirectory, f'{modft}_vk{vkklad}' )
+                                Fietsmatrix = Routines.csvlezen ( Fietsfile )
+                                if srtauto == 'Auto':
+                                    for srtbr in soortbrandstof:
+                                        Autofile = os.path.join ( Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}' )
+                                        Automatrix = Routines.csvlezen ( Autofile )
+                                        print(Autofile)
+                                        print(Fietsfile)
+                                        Brandstofdirectory = os.path.join (Combinatiedirectory, srtbr)
+                                        os.makedirs(Brandstofdirectory, exist_ok=True)
+                                        Maxberekenen_en_wegschrijven ( Brandstofdirectory, Fietsmatrix,
+                                                                       Automatrix, srtauto, modft, vk, ink )
+                                else:
+                                    Autofile = os.path.join(Enkeldirectory, f'{srtauto}_vk{vk}_{ink}')
+                                    Automatrix = Routines.csvlezen(Autofile)
+                                    Maxberekenen_en_wegschrijven(Combinatiedirectory, Fietsmatrix, Automatrix, srtauto, modft, vk, ink)
+
+                    for srtOV in soortOV:
+                        for srtauto in soortauto:
+                            if kanvoorkeur (srtauto, srtOV, vk):
+                                OVfile = os.path.join ( Enkeldirectory, f'{srtOV}_vk{vk}_{ink}' )
+                                OVmatrix = Routines.csvlezen ( OVfile )
                                 if srtauto == 'Auto':
                                     for srtbr in soortbrandstof:
                                         Autofile = os.path.join(Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}')
                                         Automatrix = Routines.csvlezen(Autofile)
                                         print(Autofile)
-                                        print(Fietsfile)
-                                        print(OVfile)
-                                        Brandstofdirectory = os.path.join(Combinatiedirectory, srtbr)
+                                        print('Belangrijk!', OVfile)
+                                        Brandstofdirectory = os.path.join (Combinatiedirectory, srtbr)
                                         os.makedirs(Brandstofdirectory, exist_ok=True)
-                                        Maxberekenen_en_wegschrijvenvan3(Brandstofdirectory,Automatrix,
+                                        Maxberekenen_en_wegschrijven ( Brandstofdirectory, OVmatrix, Automatrix, srtauto, srtOV, vk, ink )
+                                else:
+                                    Autofile = os.path.join(Enkeldirectory, f'{srtauto}_vk{vk}_{ink}')
+                                    Automatrix = Routines.csvlezen(Autofile)
+                                    Maxberekenen_en_wegschrijven(Combinatiedirectory, OVmatrix, Automatrix,
+                                                                 srtauto, srtOV, vk, ink)
+                    for modft in modaliteitenfiets:
+                        for srtOV in soortOV:
+                            for srtauto in soortauto:
+                                if kanvoorkeur (srtauto, srtOV, vk):
+                                    if vk == 'Fiets':
+                                        vkklad = 'Fiets'
+                                    else:
+                                        vkklad = ''
+                                    Fietsfile = os.path.join (Enkeldirectory, f'{modft}_vk{vkklad}')
+                                    Fietsmatrix = Routines.csvlezen(Fietsfile)
+                                    OVfile = os.path.join (Enkeldirectory, f'{srtOV}_vk{vk}_{ink}')
+                                    OVmatrix = Routines.csvlezen(OVfile)
+                                    if srtauto == 'Auto':
+                                        for srtbr in soortbrandstof:
+                                            Autofile = os.path.join(Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}')
+                                            Automatrix = Routines.csvlezen(Autofile)
+                                            print(Autofile)
+                                            print(Fietsfile)
+                                            print(OVfile)
+                                            Brandstofdirectory = os.path.join(Combinatiedirectory, srtbr)
+                                            os.makedirs(Brandstofdirectory, exist_ok=True)
+                                            Maxberekenen_en_wegschrijvenvan3(Brandstofdirectory,Automatrix,
+                                                                             Fietsmatrix, OVmatrix, srtauto, srtOV,
+                                                                             modft, vk, ink)
+                                    else:
+                                        Autofile = os.path.join(Enkeldirectory,f'{srtauto}_vk{vk}_{ink}')
+                                        Automatrix = Routines.csvlezen(Autofile)
+                                        Maxberekenen_en_wegschrijvenvan3(Combinatiedirectory,Automatrix,
                                                                          Fietsmatrix, OVmatrix, srtauto, srtOV,
                                                                          modft, vk, ink)
-                                else:
-                                    Autofile = os.path.join(Enkeldirectory,f'{srtauto}_vk{vk}_{ink}')
-                                    Automatrix = Routines.csvlezen(Autofile)
-                                    Maxberekenen_en_wegschrijvenvan3(Combinatiedirectory,Automatrix,
-                                                                     Fietsmatrix, OVmatrix, srtauto, srtOV,
-                                                                     modft, vk, ink)
-
-

@@ -26,13 +26,16 @@ def _projectFilename(projectname, make_safe=True):
     return filename + ".json"
 
 
-def getConfigFromArgs():
+def getConfigFromArgs(project=None):
     """
     Leest een configuratiebestand die is opgegeven in de 'command line'.
     Resultaat: Een geldige, ingeladen configuratie.
     Fouten: IOError - Als het opegeven bestand niet bestaat of niet geopend kon worden.
             ValueError - Als het opgegeven bestand geen geldige configuratie bevat.
     """
+    if project:
+        return loadConfig(project)
+
     parser = argparse.ArgumentParser()
     parser.add_argument("project", type=str, help="Het .json project bestand.")
     args = parser.parse_args()
