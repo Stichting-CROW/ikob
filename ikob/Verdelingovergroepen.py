@@ -16,8 +16,8 @@ def verdeling_over_groepen(config, datasource):
     # Vaste waarden
     inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
 
-    CBSAutobezitegevens = datasource.segs_lezen('CBS_autos_per_huishouden')
-    Stedelijkheidsgraadgegevens = datasource.segs_lezen('Stedelijkheidsgraad')
+    CBSAutobezitegevens = datasource.read_segs('CBS_autos_per_huishouden')
+    Stedelijkheidsgraadgegevens = datasource.read_segs('Stedelijkheidsgraad')
 
     Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275]
 
@@ -35,11 +35,11 @@ def verdeling_over_groepen(config, datasource):
     else:
         Minimumautobezit = CBSAutobezitegevens
 
-    GRijbewijs = datasource.segs_lezen('GeenRijbewijs')
-    GAuto = datasource.segs_lezen('GeenAuto')
-    WAuto = datasource.segs_lezen ('WelAuto')
-    Voorkeuren = datasource.segs_lezen('Voorkeuren')
-    VoorkeurenGeenAuto = datasource.segs_lezen('VoorkeurenGeenAuto')
+    GRijbewijs = datasource.read_segs('GeenRijbewijs')
+    GAuto = datasource.read_segs('GeenAuto')
+    WAuto = datasource.read_segs ('WelAuto')
+    Voorkeuren = datasource.read_segs('Voorkeuren')
+    VoorkeurenGeenAuto = datasource.read_segs('VoorkeurenGeenAuto')
 
     inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
     voorkeuren = ['Auto','Neutraal', 'Fiets', 'OV']
@@ -73,13 +73,13 @@ def verdeling_over_groepen(config, datasource):
     for mot in motieven:
         if mot == 'werk':
             Bevolkingsdeel = 'Beroepsbevolking'
-            Inwonersperklasse = datasource.segs_lezen(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
+            Inwonersperklasse = datasource.read_segs(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
         elif mot == 'winkelnietdagelijksonderwijs':
             Bevolkingsdeel = 'Leerlingen'
-            Inwonersperklasse = datasource.segs_lezen(f'{Bevolkingsdeel}', scenario=scenario)
+            Inwonersperklasse = datasource.read_segs(f'{Bevolkingsdeel}', scenario=scenario)
         else:
             Bevolkingsdeel = 'Inwoners'
-            Inwonersperklasse = datasource.segs_lezen(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
+            Inwonersperklasse = datasource.read_segs(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
         Inwonerstotalen = []
         for i in range (len(Inwonersperklasse)):
             Inwonerstotalen.append(sum(Inwonersperklasse[i]))
@@ -191,8 +191,8 @@ def verdeling_over_groepen(config, datasource):
                         Overzichttotaalautobezit[i].append(0)
 
         logger.debug("Overzichttotaalautobezit: %s", Overzichttotaalautobezit)
-        datasource.segs_schrijven(Totaaloverzicht, 'Verdeling_over_groepen', scenario=scenario, header=Header)
-        datasource.segs_schrijven(Overzichttotaalautobezit, 'Verdeling_over_groepen_alleen_autobezit', scenario=scenario, header=Header)
+        datasource.write_segs_csv(Totaaloverzicht, 'Verdeling_over_groepen', scenario=scenario, header=Header)
+        datasource.write_segs_csv(Overzichttotaalautobezit, 'Verdeling_over_groepen_alleen_autobezit', scenario=scenario, header=Header)
         Header.insert(0, 'Zone')
-        datasource.segs_xlsx_schrijven(Totaaloverzicht, 'Verdeling_over_groepen', scenario=scenario, header=Header)
-        datasource.segs_xlsx_schrijven(Overzichttotaalautobezit, 'Verdeling_over_groepen_alleen_autobezit', scenario=scenario, header=Header)
+        datasource.write_segs_xlsx(Totaaloverzicht, 'Verdeling_over_groepen', scenario=scenario, header=Header)
+        datasource.write_segs_xlsx(Overzichttotaalautobezit, 'Verdeling_over_groepen_alleen_autobezit', scenario=scenario, header=Header)

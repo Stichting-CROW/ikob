@@ -55,9 +55,9 @@ def ervaren_reistijd_berekenen(config, datasource):
     if 'orrectie' in regime:
         motief=motieven[0]
         if '65+' in regime:
-            Correctiefactoren = datasource.segs_lezen(f"Correctiefactoren_{motief}_65plus", scenario=scenario)
+            Correctiefactoren = datasource.read_segs(f"Correctiefactoren_{motief}_65plus", scenario=scenario)
         else:
-            Correctiefactoren = datasource.segs_lezen(f"Correctiefactoren_{motief}", scenario=scenario)
+            Correctiefactoren = datasource.read_segs(f"Correctiefactoren_{motief}", scenario=scenario)
     else:
         Correctiefactoren = []
         for i in range(len(Parkeertijdlijst)):

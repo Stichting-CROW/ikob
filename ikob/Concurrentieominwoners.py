@@ -49,11 +49,11 @@ def concurrentie_om_inwoners(config, datasource):
                       'Auto_OV_Fiets']
 
     if 'winkelnietdagelijksonderwijs' in motieven:
-        Inwonersperklasse = datasource.segs_lezen("Leerlingen", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = datasource.segs_lezen("Leerlingenplaatsen", scenario=scenario, type_caster=float)
+        Inwonersperklasse = datasource.read_segs("Leerlingen", scenario=scenario, type_caster=float)
+        Arbeidsplaatsen = datasource.read_segs("Leerlingenplaatsen", scenario=scenario, type_caster=float)
     else:
-        Inwonersperklasse = datasource.segs_lezen("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = datasource.segs_lezen("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
+        Inwonersperklasse = datasource.read_segs("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
+        Arbeidsplaatsen = datasource.read_segs("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
 
     Inwonerstotalen = []
     for i in range (len(Inwonersperklasse)):
@@ -77,7 +77,7 @@ def concurrentie_om_inwoners(config, datasource):
             else:
                 Doelgroep = 'Inwoners'
 
-            Verdelingsmatrix = datasource.segs_lezen(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
+            Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
             logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
 
             for ds in dagsoort:

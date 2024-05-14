@@ -77,33 +77,25 @@ class DataSource:
     """"""
 
     """Methods to write/read SEGS """
-
-    def _schrijf_csv_met_header(self, data, pad, header):
-        Routines.csvwegschrijvenmetheader(data, pad, header)
-
     def _segs_dir(self, id, jaar, scenario):
-        id = id + jaar if jaar else id
-        if scenario:
-            return self.segs_dir / scenario / id
-        else:
-            return self.segs_dir / id
+        return self.segs_dir / scenario / (id + jaar)
 
-    def segs_schrijven(self, data, id, header, jaar="", scenario=""):
+    def write_segs_csv(self, data, id, header, jaar="", scenario=""):
         path = self._segs_dir(id, jaar, scenario)
-        self._schrijf_csv_met_header(data, path, header)
+        return Routines.csvwegschrijvenmetheader(data, path, header)
 
-    def segs_xlsx_schrijven(self, data, id, header, jaar="", scenario=""):
+    def write_segs_xlsx(self, data, id, header, jaar="", scenario=""):
         path = self._segs_dir(id, jaar, scenario)
-        Routines.xlswegschrijven(data, path, header)
+        return Routines.xlswegschrijven(data, path, header)
 
-    def segs_lezen(self, id: str, jaar="", type_caster=int, scenario=""):
+    def read_segs(self, id: str, jaar="", type_caster=int, scenario=""):
         aantal_lege_regels = self.aantal_lege_regels.get(id, 0)
         path = self._segs_dir(id, jaar, scenario)
         return Routines.csvlezen(path, aantal_lege_regels=aantal_lege_regels, type_caster=type_caster)
 
     def read_csv(self, datatype, id, dagsoort, base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr='', type_caster=float):
         bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
-        return Routines.csvlezen(bestandspad, aantal_lege_regels=0, type_caster=type_caster)
+        return Routines.csvlezen(bestandspad, type_caster=type_caster)
 
     def write_csv(self, data, datatype, id, dagsoort, header=None, soort='', base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
         bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)

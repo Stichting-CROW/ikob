@@ -67,15 +67,15 @@ def potentie_bedrijven(config, datasource):
 
     #Grverdelingfile=Grverdelingfile.replace('.csv','')
     if 'werk' in motieven:
-        Verdelingsmatrix = datasource.segs_lezen("Verdeling_over_groepen_Beroepsbevolking", scenario=scenario, type_caster=float)
+        Verdelingsmatrix = datasource.read_segs("Verdeling_over_groepen_Beroepsbevolking", scenario=scenario, type_caster=float)
     elif 'winkelnietdagelijksonderwijs' in motieven:
-        Verdelingsmatrix = datasource.segs_lezen("Verdeling_over_groepen_Leerlingen", scenario=scenario, type_caster=float)
+        Verdelingsmatrix = datasource.read_segs("Verdeling_over_groepen_Leerlingen", scenario=scenario, type_caster=float)
     if 'winkelnietdagelijksonderwijs' in motieven:
-        Beroepsbevolking_inkomensklasse =  datasource.segs_lezen("Leerlingen", scenario=scenario, type_caster=int)
-        Arbeidsplaatsenperklasse = datasource.segs_lezen("Leerlingenplaatsen", scenario=scenario, type_caster=float)
+        Beroepsbevolking_inkomensklasse =  datasource.read_segs("Leerlingen", scenario=scenario, type_caster=int)
+        Arbeidsplaatsenperklasse = datasource.read_segs("Leerlingenplaatsen", scenario=scenario, type_caster=float)
     else:
-        Beroepsbevolking_inkomensklasse =  datasource.segs_lezen("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=int)
-        Arbeidsplaatsenperklasse = datasource.segs_lezen("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
+        Beroepsbevolking_inkomensklasse =  datasource.read_segs("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=int)
+        Arbeidsplaatsenperklasse = datasource.read_segs("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
 
     Beroepsbevolking = []
 
@@ -96,7 +96,7 @@ def potentie_bedrijven(config, datasource):
         else:
             Doelgroep = 'Inwoners'
 
-        Verdelingsmatrix = datasource.segs_lezen(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", scenario=scenario, type_caster=float)
+        Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", scenario=scenario, type_caster=float)
         logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
 
         for ds in dagsoort:
