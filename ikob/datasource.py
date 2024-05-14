@@ -54,6 +54,11 @@ class DataSource:
             id += f'_{ink}'
         return id
 
+    def _make_file_path(self, motief, topic, dagsoort, regime='', subtopic='', brandstof='', base=''):
+        path = self.project_dir / base / regime / motief / topic / subtopic / dagsoort / brandstof
+        os.makedirs(path, exist_ok=True)
+        return path
+
     def config_lezen(self, id: str, type_caster=float):
         """Expects an id that is present in the config dict. Then
         load the file specified by that dict."""
@@ -70,7 +75,6 @@ class DataSource:
             csv_path = csv_path["bestand"]
         csv_path = pathlib.Path(csv_path).with_suffix('')
         return Routines.csvlezen(csv_path, self.aantal_lege_regels.get(id, 0), type_caster)
-    """"""
 
     """Methods to write/read ervarenreistijd"""
 
@@ -80,8 +84,7 @@ class DataSource:
         if ink != '':
             id += f'_{ink}'
 
-        path = self.project_dir / regime / mot / 'Ervarenreistijd' / dagsoort
-        os.makedirs(path, exist_ok=True)
+        path = self._make_file_path(mot, 'Ervarenreistijd', dagsoort, regime=regime)
         return path / id
 
     def ervarenreistijd_schrijven(self, data, id: str, dagsoort: str, ink="", hubnaam="", soort='matrix', regime='', mot=''):
@@ -133,8 +136,7 @@ class DataSource:
 
     def maak_bestandspad_gewichten(self, id, dagsoort, vk, ink, regime='', mot='', srtbr=''):
         id = self._add_id_suffix(id, vk, ink)
-        path = self.project_dir / regime / mot / 'Gewichten' / dagsoort / srtbr
-        os.makedirs(path, exist_ok=True)
+        path = self._make_file_path(mot, 'Gewichten', dagsoort, regime=regime, brandstof=srtbr)
         return path / id
 
     def gewichten_schrijven(self, gewichten, id, dagsoort, vk='', ink='',regime='', mot='', srtbr=''):
@@ -150,8 +152,7 @@ class DataSource:
 
     def maak_bestandspad_combinatiegewichten(self, id, dagsoort, vk, ink, srtbr='', regime='', mot=''):
         id = self._add_id_suffix(id, vk, ink)
-        path = self.project_dir / regime / mot / 'Gewichten' / 'Combinaties' / dagsoort / srtbr
-        os.makedirs(path, exist_ok=True)
+        path = self._make_file_path(mot, 'Gewichten', dagsoort, regime=regime, subtopic='Combinaties', brandstof=srtbr)
         return path / id
 
     def combinatie_gewichten_schrijven(self, gewichten, id, dagsoort, vk='', ink='', srtbr='', regime='', mot=''):
@@ -166,8 +167,7 @@ class DataSource:
     """Methods to write/read to totalendirectory"""
     def maak_bestandspad_totalen(self, id, dagsoort, mod, ink, mot, abg):
         id = self._add_id_suffix(id, vk='', ink=ink, mod=mod)
-        path = self.project_dir / 'Resultaten' / mot / abg / 'Bestemmingen' / dagsoort
-        os.makedirs(path, exist_ok=True)
+        path = self._make_file_path(mot, abg, dagsoort, subtopic='Bestemmingen', base='Resultaten')
         return path / id
 
     def totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False, mot='', abg=''):
@@ -183,8 +183,7 @@ class DataSource:
     """Methods to write/read to herkomstendirectory/Totalendirectoryherkomsten"""
     def maak_bestandspad_herkomst_totalen(self, id, dagsoort, mot, mod, ink):
         id = self._add_id_suffix(id, vk='', ink=ink, mod=mod)
-        path = self.project_dir / 'Resultaten' / mot / 'Herkomsten' / dagsoort
-        os.makedirs(path, exist_ok=True)
+        path = self._make_file_path(mot, 'Herkomsten', dagsoort, base='Resultaten')
         return path / id
 
     def herkomst_totalen_schrijven(self, data, id, dagsoort, mot, mod='', ink='', header=[], xlsx_format=False):
@@ -200,8 +199,7 @@ class DataSource:
     def maak_bestandspad_concurrentie_totalen(self, id, dagsoort, mot, mod, ink, kind):
         assert kind == "arbeidsplaatsen" or kind == "inwoners"
         id = self._add_id_suffix(id, vk='', ink=ink, mod=mod)
-        path = self.project_dir / 'Resultaten' / mot / 'Concurrentie' / kind / dagsoort
-        os.makedirs(path, exist_ok=True)
+        path = self._make_file_path(mot, 'Concurrentie', dagsoort, base='Resultaten', subtopic=kind)
         return path / id
 
     def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mot, mod='', ink='', header=[], xlsx_format=False):
@@ -216,8 +214,7 @@ class DataSource:
     """Methods to write/read to bestemmingendirectory/Totalendirectorybestemmingen"""
     def maak_bestandspad_bestemmingen_totalen(self, id, dagsoort, mod, ink, mot, abg):
         id = self._add_id_suffix(id, vk='', ink=ink, mod=mod)
-        path = self.project_dir / 'Resultaten' / mot / abg / 'Bestemmingen' / dagsoort
-        os.makedirs(path, exist_ok=True)
+        path = self._make_file_path(mot, abg, dagsoort, base='Resultaten', subtopic='Bestemmingen')
         return path / id
 
     def bestemmingen_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False):
