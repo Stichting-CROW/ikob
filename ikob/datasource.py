@@ -36,19 +36,15 @@ class DataSource:
         # TODO: This should be based on 'beprijzingsregime'
         self.basis_dir = self.skims_dir.parent
 
-    def _add_id_suffix(self, id, vk, ink, mod='', hubnaam=''):
-        if vk != '':
-            id += f'{vk}'
-        if mod != '':
-            id += f'_{mod}'
-        if hubnaam:
-            id += f'_{hubnaam}'
-        if ink != '':
-            id += f'_{ink}'
+    def _add_id_suffix(self, id, vk, mod, hubnaam, ink):
+        id += vk
+        for suffix in [mod, hubnaam, ink]:
+            if suffix:
+                id += f"_{suffix}"
         return id
 
     def _make_file_path(self, id, motief, topic, dagsoort, regime='', subtopic='', brandstof='', base='', vk='', ink='', hubnaam='', mod=''):
-        id_with_suffix = self._add_id_suffix(id, vk, ink, mod=mod, hubnaam=hubnaam)
+        id_with_suffix = self._add_id_suffix(id, vk, mod, hubnaam, ink)
         path = self.project_dir / base / regime / motief / topic / subtopic / dagsoort / brandstof
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
