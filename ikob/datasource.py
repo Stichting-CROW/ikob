@@ -193,18 +193,18 @@ class DataSource:
 
 
     """Methods to write/read to herkomstendirectory/Totalendirectoryherkomsten"""
-    def maak_bestandspad_herkomst_totalen(self, id, dagsoort, mod, ink):
+    def maak_bestandspad_herkomst_totalen(self, id, dagsoort, mot, mod, ink):
         id = self._add_id_suffix(id, vk='', ink=ink, mod=mod)
-        path = self.project_dir / 'Resultaten' / 'Herkomsten' / dagsoort
+        path = self.project_dir / 'Resultaten' / mot / 'Herkomsten' / dagsoort
         os.makedirs(path, exist_ok=True)
         return path / id
 
-    def herkomst_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False):
-        bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mod, ink)
+    def herkomst_totalen_schrijven(self, data, id, dagsoort, mot, mod='', ink='', header=[], xlsx_format=False):
+        bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mot, mod, ink)
         return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
 
-    def herkomst_totalen_lezen(self, id, dagsoort, mod='', ink=''):
-        bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mod, ink)
+    def herkomst_totalen_lezen(self, id, dagsoort, mot, mod='', ink=''):
+        bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mot, mod, ink)
         return Routines.csvintlezen(bestandspad)
     """"""
 

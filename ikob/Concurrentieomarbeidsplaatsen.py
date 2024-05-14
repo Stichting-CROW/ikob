@@ -95,7 +95,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                     vkklad = ''
 
                                 Fietsmatrix = datasource.gewichten_lezen(f'{mod}_vk', ds, vkklad, regime=regime, mot=mot)
-                                Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mod=mod, ink=inkgr)
+                                Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mot, mod=mod, ink=inkgr)
                                 Dezegroeplijst = Berekeningen.bereken_concurrentie ( Fietsmatrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
 
                                 for i in range ( 0, len ( Fietsmatrix ) ):
@@ -110,7 +110,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                 if 'WelAuto' in gr:
                                     for srtbr in soortbrandstof:
                                         Matrix = datasource.gewichten_lezen(f"{String}_vk", ds, vk, ink, regime=regime, mot=mot, srtbr=srtbr)
-                                        Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mod=mod, ink=inkgr)
+                                        Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mot, mod=mod, ink=inkgr)
                                         Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr) / 100
@@ -128,7 +128,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                             Bijhoudlijst[i] += Bijhoudklad
                                 else:
                                     Matrix = datasource.gewichten_lezen(f"{String}_vk", ds, vk, ink, regime=regime, mot=mot)
-                                    Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mod=mod, ink=inkgr)
+                                    Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mot, mod=mod, ink=inkgr)
                                     Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                     for i in range(len(Matrix)):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
@@ -138,7 +138,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                             elif mod == 'OV':
                                 String = Routines.enkelegroep(mod, gr)
                                 Matrix = datasource.gewichten_lezen(f"{String}_vk", ds, vk, ink, regime=regime, mot=mot)
-                                Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mod=mod, ink=inkgr)
+                                Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mot, mod=mod, ink=inkgr)
                                 Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                 for i in range(len(Matrix)):
                                     if Inkomensverdeling[i][inkgroepen.index(inkgr)] > 0:
@@ -153,7 +153,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                 if String[0] == 'A':
                                     for srtbr in soortbrandstof:
                                         Matrix = datasource.combinatie_gewichten_lezen(f'{String}_vk', ds, vk, ink, regime=regime, mot=mot, srtbr=srtbr)
-                                        Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mod=mod, ink=inkgr)
+                                        Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mot, mod=mod, ink=inkgr)
                                         Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr)/100
@@ -169,7 +169,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                             Bijhoudlijst[i] += Bijhoudklad
                                 else:
                                     Matrix = datasource.combinatie_gewichten_lezen(f'{String}_vk', ds, vk, ink, regime=regime, mot=mot)
-                                    Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mod=mod, ink=inkgr)
+                                    Bereik = datasource.herkomst_totalen_lezen("Totaal", ds, mot, mod=mod, ink=inkgr)
                                     Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                     for i in range (len(Matrix)):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
