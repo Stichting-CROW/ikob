@@ -80,16 +80,12 @@ class DataSource:
         return Routines.csvlezen(csv_path, self.aantal_lege_regels.get(id, 0), type_caster)
 
     """Methods to write/read ervarenreistijd"""
-
-    def maak_ervarenreistijd_pad(self, id, dagsoort, ink, hubnaam, regime, mot):
-        return self._make_file_path(id, mot, 'Ervarenreistijd', dagsoort, regime=regime, ink=ink, hubnaam=hubnaam)
-
     def ervarenreistijd_schrijven(self, data, id: str, dagsoort: str, ink="", hubnaam="", soort='matrix', regime='', mot=''):
-        bestandspad = self.maak_ervarenreistijd_pad(id, dagsoort, ink, hubnaam, regime, mot)
+        bestandspad = self._make_file_path(id, mot, 'Ervarenreistijd', dagsoort, regime=regime, ink=ink, hubnaam=hubnaam)
         Routines.csvwegschrijven(data, bestandspad, soort)
 
     def ervarenreistijd_lezen(self, id, dagsoort, ink='', hubnaam="", type_caster=float, regime='', mot=''):
-        bestandspad = self.maak_ervarenreistijd_pad(id, dagsoort, ink, hubnaam, regime, mot)
+        bestandspad = self._make_file_path(id, mot, 'Ervarenreistijd', dagsoort, regime=regime, ink=ink, hubnaam=hubnaam)
         return Routines.csvlezen(bestandspad, aantal_lege_regels=0, type_caster=type_caster)
     """"""
 
@@ -130,83 +126,61 @@ class DataSource:
     """"""
 
     """Methods to write/read to main gewichtendirectory """
-
-    def maak_bestandspad_gewichten(self, id, dagsoort, vk, ink, regime='', mot='', srtbr=''):
-        return self._make_file_path(id, mot, 'Gewichten', dagsoort, regime=regime, brandstof=srtbr, vk=vk, ink=ink)
-
     def gewichten_schrijven(self, gewichten, id, dagsoort, vk='', ink='',regime='', mot='', srtbr=''):
-        bestandspad = self.maak_bestandspad_gewichten(id, dagsoort, vk, ink, regime, mot, srtbr)
+        bestandspad = self._make_file_path(id, mot, 'Gewichten', dagsoort, regime=regime, brandstof=srtbr, vk=vk, ink=ink)
         Routines.csvwegschrijven(gewichten, bestandspad)
 
     def gewichten_lezen(self, id, dagsoort, vk='', ink='',regime='', mot='', srtbr=''):
-        bestandspad = self.maak_bestandspad_gewichten(id, dagsoort, vk, ink, regime, mot, srtbr)
+        bestandspad = self._make_file_path(id, mot, 'Gewichten', dagsoort, regime=regime, brandstof=srtbr, vk=vk, ink=ink)
         return Routines.csvlezen(bestandspad)
     """"""
 
     """Methods to write/read weights to combinatiedirectory"""
-
-    def maak_bestandspad_combinatiegewichten(self, id, dagsoort, vk, ink, srtbr='', regime='', mot=''):
-        return self._make_file_path(id, mot, 'Gewichten', dagsoort, regime=regime, subtopic='Combinaties', brandstof=srtbr, vk=vk, ink=ink)
-
     def combinatie_gewichten_schrijven(self, gewichten, id, dagsoort, vk='', ink='', srtbr='', regime='', mot=''):
-        bestandspad = self.maak_bestandspad_combinatiegewichten(id, dagsoort, vk, ink, srtbr, regime=regime, mot=mot)
+        bestandspad = self._make_file_path(id, mot, 'Gewichten', dagsoort, regime=regime, subtopic='Combinaties', brandstof=srtbr, vk=vk, ink=ink)
         Routines.csvwegschrijven(gewichten, bestandspad)
 
     def combinatie_gewichten_lezen(self, id, dagsoort, vk='', ink='', srtbr='', regime='', mot=''):
-        bestandspad = self.maak_bestandspad_combinatiegewichten(id, dagsoort, vk, ink, srtbr, regime=regime, mot=mot)
+        bestandspad = self._make_file_path(id, mot, 'Gewichten', dagsoort, regime=regime, subtopic='Combinaties', brandstof=srtbr, vk=vk, ink=ink)
         return Routines.csvlezen(bestandspad)
     """"""
 
     """Methods to write/read to totalendirectory"""
-    def maak_bestandspad_totalen(self, id, dagsoort, mod, ink, mot, abg):
-        return self._make_file_path(id, mot, abg, dagsoort, subtopic='Bestemmingen', base='Resultaten', ink=ink, mod=mod)
-
     def totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False, mot='', abg=''):
-        bestandspad = self.maak_bestandspad_totalen(id, dagsoort, mod, ink, mot, abg)
+        bestandspad = self._make_file_path(id, mot, abg, dagsoort, subtopic='Bestemmingen', base='Resultaten', ink=ink, mod=mod)
         return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
 
     def totalen_lezen(self, id, dagsoort, mod='', ink='', mot='', abg=''):
-        bestandspad = self.maak_bestandspad_totalen(id, dagsoort, mod, ink, mot, abg)
+        bestandspad = self._make_file_path(id, mot, abg, dagsoort, subtopic='Bestemmingen', base='Resultaten', ink=ink, mod=mod)
         return Routines.csvintlezen(bestandspad)
     """"""
 
-
     """Methods to write/read to herkomstendirectory/Totalendirectoryherkomsten"""
-    def maak_bestandspad_herkomst_totalen(self, id, dagsoort, mot, mod, ink):
-        return self._make_file_path(id, mot, 'Herkomsten', dagsoort, base='Resultaten', ink=ink, mod=mod)
-
     def herkomst_totalen_schrijven(self, data, id, dagsoort, mot, mod='', ink='', header=[], xlsx_format=False):
-        bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mot, mod, ink)
+        bestandspad = self._make_file_path(id, mot, 'Herkomsten', dagsoort, base='Resultaten', ink=ink, mod=mod)
         return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
 
     def herkomst_totalen_lezen(self, id, dagsoort, mot, mod='', ink=''):
-        bestandspad = self.maak_bestandspad_herkomst_totalen(id, dagsoort, mot, mod, ink)
+        bestandspad = self._make_file_path(id, mot, 'Herkomsten', dagsoort, base='Resultaten', ink=ink, mod=mod)
         return Routines.csvintlezen(bestandspad)
     """"""
 
     """Methods to write/read to concurrentiedirectory/Totalendirectoryconcurrentie"""
-    def maak_bestandspad_concurrentie_totalen(self, id, dagsoort, mot, mod, ink, kind):
-        assert kind == "arbeidsplaatsen" or kind == "inwoners"
-        return self._make_file_path(id, mot, 'Concurrentie', dagsoort, base='Resultaten', subtopic=kind, ink=ink, mod=mod)
-
     def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mot, mod='', ink='', header=[], xlsx_format=False):
-        bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mot, mod, ink, kind)
+        bestandspad = self._make_file_path(id, mot, 'Concurrentie', dagsoort, base='Resultaten', subtopic=kind, ink=ink, mod=mod)
         return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
 
     def concurrentie_totalen_lezen(self, id, dagsoort, kind, mot, mod='', ink=''):
-        bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mot, mod, ink, kind)
+        bestandspad = self._make_file_path(id, mot, 'Concurrentie', dagsoort, base='Resultaten', subtopic=kind, ink=ink, mod=mod)
         return Routines.csvlezen(bestandspad)
     """"""
 
     """Methods to write/read to bestemmingendirectory/Totalendirectorybestemmingen"""
-    def maak_bestandspad_bestemmingen_totalen(self, id, dagsoort, mod, ink, mot, abg):
-        return self._make_file_path(id, mot, abg, dagsoort, base='Resultaten', subtopic='Bestemmingen', ink=ink, mod=mod)
-
     def bestemmingen_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False):
-        bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink)
+        bestandspad = self._make_file_path(id, mot, abg, dagsoort, base='Resultaten', subtopic='Bestemmingen', ink=ink, mod=mod)
         return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
 
     def bestemmingen_totalen_lezen(self, id, dagsoort, mod='', ink='', mot='', abg=''):
-        bestandspad = self.maak_bestandspad_bestemmingen_totalen(id, dagsoort, mod, ink, mot, abg)
+        bestandspad = self._make_file_path(id, mot, abg, dagsoort, base='Resultaten', subtopic='Bestemmingen', ink=ink, mod=mod)
         return Routines.csvlezen(bestandspad)
     """"""
