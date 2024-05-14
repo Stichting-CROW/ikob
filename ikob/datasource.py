@@ -209,19 +209,19 @@ class DataSource:
     """"""
 
     """Methods to write/read to concurrentiedirectory/Totalendirectoryconcurrentie"""
-    def maak_bestandspad_concurrentie_totalen(self, id, dagsoort, mod, ink, kind):
+    def maak_bestandspad_concurrentie_totalen(self, id, dagsoort, mot, mod, ink, kind):
         assert kind == "arbeidsplaatsen" or kind == "inwoners"
         id = self._add_id_suffix(id, vk='', ink=ink, mod=mod)
-        path = self.project_dir / 'Resultaten' / 'Concurrentie' / kind / dagsoort
+        path = self.project_dir / 'Resultaten' / mot / 'Concurrentie' / kind / dagsoort
         os.makedirs(path, exist_ok=True)
         return path / id
 
-    def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mod='', ink='', header=[], xlsx_format=False):
-        bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
+    def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mot, mod='', ink='', header=[], xlsx_format=False):
+        bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mot, mod, ink, kind)
         return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
 
-    def concurrentie_totalen_lezen(self, id, dagsoort, kind, mod='', ink=''):
-        bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mod, ink, kind)
+    def concurrentie_totalen_lezen(self, id, dagsoort, kind, mot, mod='', ink=''):
+        bestandspad = self.maak_bestandspad_concurrentie_totalen(id, dagsoort, mot, mod, ink, kind)
         return Routines.csvlezen(bestandspad)
     """"""
 

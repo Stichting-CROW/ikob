@@ -180,23 +180,23 @@ def concurrentie_om_inwoners(config, datasource):
                                                               Inkomensverdeling[i][inkgroepen.index(inkgr)]
                                                 Bijhoudlijst[i] += Bijhoudklad
 
-                        datasource.concurrentie_totalen_schrijven(Bijhoudlijst, 'Totaal', ds, "inwoners", ink=inkgr, mod=mod)
+                        datasource.concurrentie_totalen_schrijven(Bijhoudlijst, 'Totaal', ds, "inwoners", mot, ink=inkgr, mod=mod)
 
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten:
-                        Totaalrij = datasource.concurrentie_totalen_lezen("Totaal", ds, "inwoners", mod=mod, ink=inkgr)
+                        Totaalrij = datasource.concurrentie_totalen_lezen("Totaal", ds, "inwoners", mot, mod=mod, ink=inkgr)
                         Generaaltotaal_potenties.append ( Totaalrij )
                         Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
-                        datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "inwoners", ink=inkgr, header=headstring)
-                        datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "inwoners", ink=inkgr, xlsx_format=True, header=headstringExcel)
+                        datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "inwoners", mot, ink=inkgr, header=headstring)
+                        datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "inwoners", mot, ink=inkgr, xlsx_format=True, header=headstringExcel)
 
                 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        Totaalrij = datasource.concurrentie_totalen_lezen("Totaal", ds, "inwoners", mod=mod, ink=inkgr)
+                        Totaalrij = datasource.concurrentie_totalen_lezen("Totaal", ds, "inwoners", mot, mod=mod, ink=inkgr)
                         Generaalmatrix.append(Totaalrij)
                         Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                     for i in range (len(Inwonersperklasse)):
@@ -207,5 +207,5 @@ def concurrentie_om_inwoners(config, datasource):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "inwoners", mod=mod, xlsx_format=True, header=header)
-                    datasource.concurrentie_totalen_schrijven(Generaalmatrixproduct, 'Ontpl_concproduct', ds, "inwoners", mod=mod, xlsx_format=True, header=header)
+                    datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "inwoners", mot, mod=mod, xlsx_format=True, header=header)
+                    datasource.concurrentie_totalen_schrijven(Generaalmatrixproduct, 'Ontpl_concproduct', ds, "inwoners", mot, mod=mod, xlsx_format=True, header=header)
