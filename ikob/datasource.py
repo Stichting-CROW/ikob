@@ -36,15 +36,6 @@ class DataSource:
         # TODO: This should be based on 'beprijzingsregime'
         self.basis_dir = self.skims_dir.parent
 
-    def _write_csv_or_xlsx(self, data, path, header, xlsx_format):
-        if xlsx_format:
-            return Routines.xlswegschrijven(data, path, header)
-
-        if header:
-            return Routines.csvwegschrijvenmetheader(data, path, header)
-
-        return Routines.csvwegschrijven(data, path, soort='lijst')
-
     def _add_id_suffix(self, id, vk, ink, mod='', hubnaam=''):
         if vk != '':
             id += f'{vk}'
@@ -113,51 +104,17 @@ class DataSource:
         aantal_lege_regels = self.aantal_lege_regels.get(id, 0)
         path = self._segs_dir(id, jaar, scenario)
         return Routines.csvlezen(path, aantal_lege_regels=aantal_lege_regels, type_caster=type_caster)
-    """"""
 
     def read_csv(self, datatype, id, dagsoort, base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr='', type_caster=float):
         bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
         return Routines.csvlezen(bestandspad, aantal_lege_regels=0, type_caster=type_caster)
 
-    """Methods to write/read ervarenreistijd"""
-    def ervarenreistijd_schrijven(self, data, id: str, dagsoort: str, ink="", hubnaam="", soort='matrix', regime='', mot=''):
-        bestandspad = self._make_file_path(id, mot, 'Ervarenreistijd', dagsoort, regime=regime, ink=ink, hubnaam=hubnaam)
-        Routines.csvwegschrijven(data, bestandspad, soort)
-    """"""
+    def write_csv(self, data, datatype, id, dagsoort, header=None, soort='', base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
+        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+        if header:
+            return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
+        return Routines.csvwegschrijven(data, bestandspad, soort)
 
-    """Methods to write/read to main gewichtendirectory """
-    def gewichten_schrijven(self, gewichten, id, dagsoort, vk='', ink='',regime='', mot='', srtbr=''):
-        bestandspad = self._make_file_path(id, mot, 'Gewichten', dagsoort, regime=regime, brandstof=srtbr, vk=vk, ink=ink)
-        Routines.csvwegschrijven(gewichten, bestandspad)
-    """"""
-
-    """Methods to write/read weights to combinatiedirectory"""
-    def combinatie_gewichten_schrijven(self, gewichten, id, dagsoort, vk='', ink='', srtbr='', regime='', mot=''):
-        bestandspad = self._make_file_path(id, mot, 'Gewichten', dagsoort, regime=regime, subtopic='Combinaties', brandstof=srtbr, vk=vk, ink=ink)
-        Routines.csvwegschrijven(gewichten, bestandspad)
-    """"""
-
-    """Methods to write/read to totalendirectory"""
-    def totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False, mot='', abg=''):
-        bestandspad = self._make_file_path(id, mot, abg, dagsoort, subtopic='Bestemmingen', base='Resultaten', ink=ink, mod=mod)
-        return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
-    """"""
-
-    """Methods to write/read to herkomstendirectory/Totalendirectoryherkomsten"""
-    def herkomst_totalen_schrijven(self, data, id, dagsoort, mot, mod='', ink='', header=[], xlsx_format=False):
-        bestandspad = self._make_file_path(id, mot, 'Herkomsten', dagsoort, base='Resultaten', ink=ink, mod=mod)
-        return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
-
-    """"""
-
-    """Methods to write/read to concurrentiedirectory/Totalendirectoryconcurrentie"""
-    def concurrentie_totalen_schrijven(self, data, id, dagsoort, kind, mot, mod='', ink='', header=[], xlsx_format=False):
-        bestandspad = self._make_file_path(id, mot, 'Concurrentie', dagsoort, base='Resultaten', subtopic=kind, ink=ink, mod=mod)
-        return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
-    """"""
-
-    """Methods to write/read to bestemmingendirectory/Totalendirectorybestemmingen"""
-    def bestemmingen_totalen_schrijven(self, data, id, dagsoort, mod='', ink='', header=[], xlsx_format=False):
-        bestandspad = self._make_file_path(id, mot, abg, dagsoort, base='Resultaten', subtopic='Bestemmingen', ink=ink, mod=mod)
-        return self._write_csv_or_xlsx(data, bestandspad, header, xlsx_format)
-    """"""
+    def write_xlsx(self, data, datatype, id, dagsoort, header=None, soort='', base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
+        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+        return Routines.xlswegschrijven(data, bestandspad, header)

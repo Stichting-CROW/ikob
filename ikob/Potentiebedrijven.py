@@ -176,15 +176,15 @@ def potentie_bedrijven(config, datasource):
                                     Dezegroeplijst = bereken_potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
                                     for i in range ( 0, len ( Matrix ) ):
                                         Bijhoudlijst[i] += round ( Dezegroeplijst[i])
-                    datasource.herkomst_totalen_schrijven(Bijhoudlijst, 'Totaal', ds, mot, mod=mod, ink=inkgr)
+                    datasource.write_csv(Bijhoudlijst, 'Herkomsten', 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, base='Resultaten')
                 # En tot slot alles bij elkaar harken:
                 Generaaltotaal_potenties = []
                 for mod in modaliteiten :
                     Totaalrij = datasource.read_csv('Herkomsten', 'Totaal', ds, mot=mot ,mod=mod, ink=inkgr, base='Resultaten',type_caster=int)
                     Generaaltotaal_potenties.append(Totaalrij)
                 Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                datasource.herkomst_totalen_schrijven(Generaaltotaaltrans, 'Pot_totaal', ds, mot, ink=inkgr, header=headstring)
-                datasource.herkomst_totalen_schrijven(Generaaltotaaltrans, 'Pot_totaal', ds, mot, ink=inkgr, xlsx_format=True, header=headstringExcel)
+                datasource.write_csv(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstring, base='Resultaten')
+                datasource.write_xlsx(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstringExcel, base='Resultaten')
 
             header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
             for mod in modaliteiten:
@@ -202,5 +202,5 @@ def potentie_bedrijven(config, datasource):
                         else:
                             Generaalmatrixproduct[i].append(0)
 
-                datasource.herkomst_totalen_schrijven(Generaaltotaaltrans, 'Pot_totaal', ds, mot, mod=mod, xlsx_format=True, header=header)
-                datasource.herkomst_totalen_schrijven(Generaalmatrixproduct, 'Pot_totaalproduct', ds, mot, mod=mod, xlsx_format=True, header=header)
+                datasource.write_xlsx(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, mod=mod, header=header, base='Resultaten')
+                datasource.write_xlsx(Generaalmatrixproduct, 'Herkomsten', 'Pot_totaalproduct', ds, mot=mot, mod=mod, header=header, base='Resultaten')

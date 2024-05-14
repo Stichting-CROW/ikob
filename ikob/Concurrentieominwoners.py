@@ -180,7 +180,7 @@ def concurrentie_om_inwoners(config, datasource):
                                                               Inkomensverdeling[i][inkgroepen.index(inkgr)]
                                                 Bijhoudlijst[i] += Bijhoudklad
 
-                        datasource.concurrentie_totalen_schrijven(Bijhoudlijst, 'Totaal', ds, "inwoners", mot, ink=inkgr, mod=mod)
+                        datasource.write_csv(Bijhoudlijst, 'Concurrentie', 'Totaal', ds, subtopic="inwoners", mot=mot, ink=inkgr, mod=mod, base='Resultaten')
 
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
@@ -188,8 +188,8 @@ def concurrentie_om_inwoners(config, datasource):
                         Totaalrij = datasource.read_csv("Concurrentie", "Totaal", ds, subtopic="inwoners", mot=mot, mod=mod, ink=inkgr, base='Resultaten')
                         Generaaltotaal_potenties.append ( Totaalrij )
                         Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
-                        datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "inwoners", mot, ink=inkgr, header=headstring)
-                        datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "inwoners", mot, ink=inkgr, xlsx_format=True, header=headstringExcel)
+                        datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, ink=inkgr, header=headstring, base='Resultaten')
+                        datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, ink=inkgr, header=headstringExcel, base='Resultaten')
 
                 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
                 for mod in modaliteiten:
@@ -207,5 +207,5 @@ def concurrentie_om_inwoners(config, datasource):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "inwoners", mot, mod=mod, xlsx_format=True, header=header)
-                    datasource.concurrentie_totalen_schrijven(Generaalmatrixproduct, 'Ontpl_concproduct', ds, "inwoners", mot, mod=mod, xlsx_format=True, header=header)
+                    datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, mod=mod, header=header, base='Resultaten')
+                    datasource.write_xlsx(Generaalmatrixproduct, 'Concurrentie', 'Ontpl_concproduct', ds, subtopic="inwoners", mot=mot, mod=mod, header=header, base='Resultaten')

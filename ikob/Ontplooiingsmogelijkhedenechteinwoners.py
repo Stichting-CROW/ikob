@@ -265,15 +265,15 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                                                                gr, Groepen)
                                         for i in range ( 0, len ( Matrix ) ):
                                             Bijhoudlijst[i] += int ( Dezegroeplijst[i] )
-                        datasource.totalen_schrijven(Bijhoudlijst, 'Totaal', ds, mod, inkgr, mot=mot, abg=abg)
+                        datasource.write_csv(Bijhoudlijst, abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, base='Resultaten', subtopic='Bestemmingen')
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten :
                         Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, base='Resultaten', subtopic='Bestemmingen', type_caster=int)
                         Generaaltotaal_potenties.append(Totaalrij)
                     Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                    datasource.totalen_schrijven(Generaaltotaaltrans, 'Ontpl_totaal', ds, mod='', ink=inkgr, header=headstring, mot=mot, abg=abg)
-                    datasource.totalen_schrijven(Generaaltotaaltrans, 'Ontpl_totaal', ds, mod='', ink=inkgr, header=headstringExcel, mot=mot, abg=abg, xlsx_format=True)
+                    datasource.write_csv(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstring, mot=mot, subtopic='Bestemmingen', base='Resultaten')
+                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstringExcel, mot=mot, subtopic='Bestemmingen', base='Resultaten')
 
                 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
                 for mod in modaliteiten:
@@ -294,5 +294,5 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.totalen_schrijven(Generaaltotaaltrans,'Ontpl_totaal', ds, mod, header=header, xlsx_format=True, mot=mot, abg=abg)
-                    datasource.totalen_schrijven(Generaalmatrixproduct,'Ontpl_totaalproduct', ds, mod, header=header, xlsx_format=True, mot=mot, abg=abg)
+                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, mod=mod, header=header, mot=mot, subtopic='Bestemmingen', base='Resultaten')
+                    datasource.write_xlsx(Generaalmatrixproduct, abg, 'Ontpl_totaalproduct', ds, mod=mod, header=header, mot=mot, subtopic='Bestemmingen', base='Resultaten')

@@ -177,7 +177,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                                           Inkomensverdeling[i][inkgroepen.index(inkgr)]
                                             Bijhoudlijst[i] += Bijhoudklad
 
-                    datasource.concurrentie_totalen_schrijven(Bijhoudlijst, 'Totaal', ds, "arbeidsplaatsen", mot, mod=mod, ink=inkgr)
+                    datasource.write_csv(Bijhoudlijst, 'Concurrentie', 'Totaal', ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, ink=inkgr, base='Resultaten')
                 # En tot slot alles bij elkaar harken:
                 Generaaltotaal_potenties = []
                 for mod in modaliteiten:
@@ -185,8 +185,8 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                     Generaaltotaal_potenties.append ( Totaalrij )
                     Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
                     # TODO: This loops over mod, but does _not_ use mod as filename modifiers?
-                    datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "arbeidsplaatsen", mot, ink=inkgr, header=headstring)
-                    datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "arbeidsplaatsen", mot, ink=inkgr, xlsx_format=True, header=headstringExcel)
+                    datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, ink=inkgr, header=headstring, base='Resultaten')
+                    datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, ink=inkgr, header=headstringExcel, base='Resultaten')
 
 
             header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
@@ -205,5 +205,5 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                         else:
                             Generaalmatrixproduct[i].append(0)
 
-                datasource.concurrentie_totalen_schrijven(Generaaltotaaltrans, 'Ontpl_conc', ds, "arbeidsplaatsen", mot, mod=mod, xlsx_format=True, header=header)
-                datasource.concurrentie_totalen_schrijven(Generaalmatrixproduct, 'Ontpl_concproduct', ds, "arbeidsplaatsen", mot, mod=mod, xlsx_format=True, header=header)
+                datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, header=header, base='Resultaten')
+                datasource.write_xlsx(Generaalmatrixproduct, 'Concurrentie', 'Ontpl_concproduct', ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, header=header, base='Resultaten')
