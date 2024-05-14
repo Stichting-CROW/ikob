@@ -73,8 +73,8 @@ def test_end_to_end(case):
     project_dir = test_dir.joinpath(case).resolve()
     project = project_dir.joinpath(f"{case}.json")
 
-    compare_paths = [f"{case}/Resultaten", "Basis"]
-    compare_dirs = [project_dir / path for path in compare_paths]
+    suffixes = ["Resultaten", "Basis"]
+    compare_dirs = [project_dir / case / s for s in suffixes]
 
     # Delete old results if still present
     for result_dir in compare_dirs:
