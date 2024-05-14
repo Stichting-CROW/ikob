@@ -71,7 +71,7 @@ class DataSource:
 
     def write_segs_csv(self, data, id, header, jaar="", scenario=""):
         path = self._segs_dir(id, jaar, scenario)
-        return Routines.csvwegschrijvenmetheader(data, path, header)
+        return Routines.csvwegschrijven(data, path, header=header)
 
     def write_segs_xlsx(self, data, id, header, jaar="", scenario=""):
         path = self._segs_dir(id, jaar, scenario)
@@ -88,9 +88,7 @@ class DataSource:
 
     def write_csv(self, data, datatype, id, dagsoort, header=None, soort='', base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
         bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
-        if header:
-            return Routines.csvwegschrijvenmetheader(data, bestandspad, header)
-        return Routines.csvwegschrijven(data, bestandspad, soort)
+        return Routines.csvwegschrijven(data, bestandspad, header=header, soort=soort)
 
     def write_xlsx(self, data, datatype, id, dagsoort, header=None, soort='', base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
         bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)

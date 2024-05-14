@@ -150,28 +150,21 @@ def Omnitrans_csv_inlezen (filenaam, aantal_zones=1425, aantal_lege_regels=4):
             skimmatrix[i].append(float(lijst[r][2]))
     return skimmatrix
 
-def csvwegschrijven (matrix, filenaam, soort = "matrix"):
+
+def csvwegschrijven(matrix, filenaam, header=None, soort="matrix"):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
     with open(filenaam.with_suffix('.csv'), 'w', newline='') as f:
-        writer = csv.writer ( f )
-        if soort == "matrix":
-            writer.writerows ( matrix )
-        else:
-            writer.writerow ( matrix )
+        writer = csv.writer(f)
 
-def csvwegschrijvenmetheader (matrix, filenaam, header=None, soort = "matrix" ):
-    if not isinstance(filenaam, pathlib.Path):
-        filenaam = pathlib.Path(filenaam)
+        if header:
+            writer.writerow(header)
 
-    with open(filenaam.with_suffix('.csv'), 'w', newline='') as f:
-        writer = csv.writer ( f )
-        writer.writerow(header)
         if soort == "matrix":
-            writer.writerows ( matrix )
+            writer.writerows(matrix)
         else:
-            writer.writerow ( matrix )
+            writer.writerow(matrix)
 
 
 def laad_constanten_reistijdvervalscurve (Gewichtendirectory,  vvwijze, groep, motief ):

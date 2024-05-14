@@ -183,7 +183,7 @@ def potentie_bedrijven(config, datasource):
                     Totaalrij = datasource.read_csv('Herkomsten', 'Totaal', ds, mot=mot ,mod=mod, ink=inkgr, base='Resultaten',type_caster=int)
                     Generaaltotaal_potenties.append(Totaalrij)
                 Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                datasource.write_csv(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstring, base='Resultaten')
+                datasource.write_csv(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstring, base='Resultaten', soort="matrix")
                 datasource.write_xlsx(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstringExcel, base='Resultaten')
 
             header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']

@@ -185,7 +185,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                     Generaaltotaal_potenties.append ( Totaalrij )
                     Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
                     # TODO: This loops over mod, but does _not_ use mod as filename modifiers?
-                    datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, ink=inkgr, header=headstring, base='Resultaten')
+                    datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, ink=inkgr, header=headstring, base='Resultaten', soort="matrix")
                     datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, ink=inkgr, header=headstringExcel, base='Resultaten')
 
 
