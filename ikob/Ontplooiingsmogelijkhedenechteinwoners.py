@@ -156,7 +156,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                     else:
                                         vkklad = ''
 
-                                    Fietsmatrix = datasource.gewichten_lezen(f'{mod}_vk',ds,vkklad, regime=regime, mot=mot)
+                                    Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkklad, regime=regime, mot=mot)
                                     if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                         Dezegroeplijst = bereken_potenties ( Fietsmatrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                              Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
@@ -171,7 +171,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                     logger.debug("String: %s", String)
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
-                                            Matrix = datasource.gewichten_lezen(f'{String}_vk',ds,vk,ink, regime=regime, mot=mot, srtbr=srtbr)
+                                            Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
 
                                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                                 Dezegroeplijst1 = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
@@ -193,7 +193,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                         for i in range(0, len(Matrix)):
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                     else:
-                                        Matrix = datasource.gewichten_lezen(f'{String}_vk',ds, vk, ink, regime=regime, mot=mot)
+                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                         if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                             Dezegroeplijst = bereken_potenties(Matrix, Arbeidsplaatsen,
                                                                                Verdelingstransmatrix,
@@ -211,7 +211,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                         logger.debug('Bijhoudlijst niet fossiel is: %s', Bijhoudlijst)
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep(mod, gr)
-                                    Matrix = datasource.gewichten_lezen(f'{String}_vk',ds, vk, ink, regime=regime, mot=mot)
+                                    Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                     if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                         Dezegroeplijst = bereken_potenties(Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                            Inkomenstransverdeling[inkgroepen.index(inkgr)],
@@ -231,7 +231,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                     logger.debug('de string is %s', String)
                                     if String[0] == 'A':
                                         for srtbr in soortbrandstof:
-                                            Matrix = datasource.combinatie_gewichten_lezen(f'{String}_vk', ds, vk, ink, regime=regime, mot=mot, srtbr=srtbr)
+                                            Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                                 Dezegroeplijst1 = bereken_potenties(Matrix, Arbeidsplaatsen,
                                                                                     Verdelingstransmatrix,
@@ -254,7 +254,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                         for i in range ( 0, len ( Matrix ) ):
                                             Bijhoudlijst[i] += int ( Dezegroeplijst[i] )
                                     else:
-                                        Matrix = datasource.combinatie_gewichten_lezen(f'{String}_vk', ds, vk, ink, regime=regime, mot=mot)
+                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
 
                                         if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                             Dezegroeplijst = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
@@ -269,7 +269,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten :
-                        Totaalrij = datasource.totalen_lezen('Totaal', ds, mod, inkgr, mot=mot, abg=abg)
+                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, base='Resultaten', subtopic='Bestemmingen', type_caster=int)
                         Generaaltotaal_potenties.append(Totaalrij)
                     Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
                     datasource.totalen_schrijven(Generaaltotaaltrans, 'Ontpl_totaal', ds, mod='', ink=inkgr, header=headstring, mot=mot, abg=abg)
@@ -280,7 +280,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        Totaalrij = datasource.totalen_lezen('Totaal',ds,mod,inkgr,mot=mot,abg=abg)
+                        Totaalrij = datasource.read_csv(abg, 'Totaal',ds, mod=mod, ink=inkgr, mot=mot, base='Resultaten', subtopic='Bestemmingen', type_caster=int)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
                         Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)

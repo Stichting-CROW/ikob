@@ -75,8 +75,8 @@ def gewichten_berekenen_combis(config, datasource):
                                     vkklad = 'Fiets'
                                 else:
                                     vkklad = ''
-                                Fietsmatrix = datasource.gewichten_lezen(f'{modft}_vk',ds,vkklad, regime=regime, mot=mot)
-                                OVmatrix = datasource.gewichten_lezen(f'{srtOV}_vk',ds,vk,ink, regime=regime, mot=mot)
+                                Fietsmatrix = datasource.read_csv('Gewichten', f'{modft}_vk',ds,vk=vkklad, regime=regime, mot=mot)
+                                OVmatrix = datasource.read_csv('Gewichten', f'{srtOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                 Maxberekenen_en_wegschrijven(datasource, Fietsmatrix, OVmatrix, srtOV, modft, vk, ink, ds, regime=regime, mot=mot)
                         for srtauto in soortauto:
                             if kanvoorkeur (srtauto, 'OV', vk):
@@ -84,25 +84,25 @@ def gewichten_berekenen_combis(config, datasource):
                                     vkklad = 'Fiets'
                                 else:
                                     vkklad = ''
-                                Fietsmatrix = datasource.gewichten_lezen(f'{modft}_vk',ds,vkklad, regime=regime, mot=mot)
+                                Fietsmatrix = datasource.read_csv('Gewichten', f'{modft}_vk',ds, vk=vkklad, regime=regime, mot=mot)
                                 if srtauto == 'Auto':
                                     for srtbr in soortbrandstof:
-                                        Automatrix = datasource.gewichten_lezen(f'{srtauto}_vk',ds,vk,ink, srtbr=srtbr, mot=mot, regime=regime)
+                                        Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink, srtbr=srtbr, mot=mot, regime=regime)
                                         Maxberekenen_en_wegschrijven(datasource, Fietsmatrix, Automatrix, srtauto, modft, vk, ink, ds, regime=regime, mot=mot, srtbr=srtbr)
                                 else:
-                                    Automatrix = datasource.gewichten_lezen(f'{srtauto}_vk',ds,vk,ink, mot=mot, regime=regime)
+                                    Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink, mot=mot, regime=regime)
                                     Maxberekenen_en_wegschrijven(datasource, Fietsmatrix, Automatrix, srtauto, modft, vk, ink, ds, regime=regime, mot=mot)
 
                     for srtOV in soortOV:
                         for srtauto in soortauto:
                             if kanvoorkeur (srtauto, srtOV, vk):
-                                OVmatrix = datasource.gewichten_lezen(f'{srtOV}_vk',ds,vk,ink,regime=regime, mot=mot)
+                                OVmatrix = datasource.read_csv('Gewichten', f'{srtOV}_vk',ds,vk=vk,ink=ink,regime=regime, mot=mot)
                                 if srtauto == 'Auto':
                                     for srtbr in soortbrandstof:
-                                        Automatrix = datasource.gewichten_lezen(f'{srtauto}_vk',ds,vk,ink,srtbr=srtbr, regime=regime, mot=mot)
+                                        Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink,srtbr=srtbr, regime=regime, mot=mot)
                                         Maxberekenen_en_wegschrijven(datasource, OVmatrix, Automatrix, srtauto, srtOV, vk, ink, ds, regime=regime, mot=mot, srtbr=srtbr)
                                 else:
-                                    Automatrix = datasource.gewichten_lezen(f'{srtauto}_vk',ds,vk,ink, regime=regime, mot=mot)
+                                    Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink, regime=regime, mot=mot)
                                     Maxberekenen_en_wegschrijven(datasource, OVmatrix, Automatrix, srtauto, srtOV, vk, ink, ds, regime=regime, mot=mot)
                     for modft in modaliteitenfiets:
                         for srtOV in soortOV:
@@ -112,12 +112,12 @@ def gewichten_berekenen_combis(config, datasource):
                                         vkklad = 'Fiets'
                                     else:
                                         vkklad = ''
-                                    Fietsmatrix = datasource.gewichten_lezen(f'{modft}_vk',ds,vkklad, regime=regime, mot=mot)
-                                    OVmatrix= datasource.gewichten_lezen(f'{srtOV}_vk',ds,vk,ink, regime=regime, mot=mot)
+                                    Fietsmatrix = datasource.read_csv('Gewichten', f'{modft}_vk',ds,vk=vkklad, regime=regime, mot=mot)
+                                    OVmatrix= datasource.read_csv('Gewichten', f'{srtOV}_vk',ds,vk=vk,ink=ink, regime=regime, mot=mot)
                                     if srtauto == 'Auto':
                                         for srtbr in soortbrandstof:
-                                            Automatrix = datasource.gewichten_lezen(f'{srtauto}_vk',ds,vk,ink,srtbr=srtbr, regime=regime, mot=mot)
+                                            Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink,srtbr=srtbr, regime=regime, mot=mot)
                                             Maxberekenen_en_wegschrijvenvan3(datasource, Automatrix, Fietsmatrix, OVmatrix, srtauto, srtOV, modft, vk, ink, ds, regime=regime, mot=mot, srtbr=srtbr)
                                     else:
-                                        Automatrix = datasource.gewichten_lezen(f'{srtauto}_vk',ds,vk,ink, regime=regime, mot=mot)
+                                        Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink, regime=regime, mot=mot)
                                         Maxberekenen_en_wegschrijvenvan3(datasource, Automatrix, Fietsmatrix, OVmatrix, srtauto, srtOV, modft, vk, ink, ds, mot=mot, regime=regime)
