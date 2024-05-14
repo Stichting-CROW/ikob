@@ -49,7 +49,7 @@ class DataSource:
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
 
-    def config_lezen(self, id: str, type_caster=float):
+    def read_config(self, id: str, type_caster=float):
         """Expects an id that is present in the config dict. Then
         load the file specified by that dict."""
         csv_path = self.config['skims'][id]
@@ -59,7 +59,7 @@ class DataSource:
         csv_path = pathlib.Path(csv_path).with_suffix('')
         return Routines.csvlezen(csv_path, self.aantal_lege_regels.get(id, 0), type_caster)
 
-    def verdeling_lezen(self, id: str, type_caster=float):
+    def read_verdeling(self, id: str, type_caster=float):
         csv_path = self.config['verdeling'][id]
         if isinstance(csv_path, dict):
             csv_path = csv_path["bestand"]
@@ -68,7 +68,7 @@ class DataSource:
 
     """Methods to read SKIMS"""
 
-    def skims_lezen(self, id: str, dagsoort: str, type_caster = float):
+    def read_skims(self, id: str, dagsoort: str, type_caster = float):
         """Expects a filename to read, which should be located in 
         in subfolder 'dagsoort' of the global path 'Jaarinvoerdirectory'
         """

@@ -39,7 +39,7 @@ def ervaren_reistijd_berekenen(config, datasource):
     Pricecapgetal = skims_config['pricecap']['getal']
 
     if Additionele_kosten:
-        Additionele_kostenmatrix = datasource.config_lezen('additionele_kosten')
+        Additionele_kostenmatrix = datasource.read_config('additionele_kosten')
 
     # Vaste waarden
     inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
@@ -50,7 +50,7 @@ def ervaren_reistijd_berekenen(config, datasource):
     varelektrisch = float(varelektrisch/100)
     kmheffingfossiel = float (kmheffingfossiel/100)
     kmheffingelektrisch = float (kmheffingelelektrisch/100)
-    Parkeertijdlijst = datasource.config_lezen('parkeerzoektijden_bestand')
+    Parkeertijdlijst = datasource.read_config('parkeerzoektijden_bestand')
     soortbrandstof = ['fossiel', 'elektrisch']
     if 'orrectie' in regime:
         motief=motieven[0]
@@ -77,11 +77,11 @@ def ervaren_reistijd_berekenen(config, datasource):
         TVOM = TVOMwerk if mot == 'werk' else TVOMoverig
         logger.debug("TVOM: %s", TVOM)
         for ds in dagsoort:
-            Autotijdmatrix = datasource.skims_lezen('Auto_Tijd', ds)
-            Autoafstandmatrix = datasource.skims_lezen('Auto_Afstand', ds)
-            Fietstijdmatrix = datasource.skims_lezen('Fiets_Tijd', ds)
-            OVtijdmatrix = datasource.skims_lezen('OV_Tijd', ds)
-            OVafstandmatrix = datasource.skims_lezen('OV_Afstand', ds)
+            Autotijdmatrix = datasource.read_skims('Auto_Tijd', ds)
+            Autoafstandmatrix = datasource.read_skims('Auto_Afstand', ds)
+            Fietstijdmatrix = datasource.read_skims('Fiets_Tijd', ds)
+            OVtijdmatrix = datasource.read_skims('OV_Tijd', ds)
+            OVafstandmatrix = datasource.read_skims('OV_Afstand', ds)
             if Parkeerkosten:
                 raise NotImplementedError("Needs to be replaced with datasource reading...")
                 Parkeerkostenfile = Parkeerkostenfile.replace ( '.csv', '' )
@@ -91,14 +91,14 @@ def ervaren_reistijd_berekenen(config, datasource):
             logger.debug("Parkeerkostenlijst = %s", Parkeerkostenlijst)
 
             if Ketens :
-                Pplusfietstijdmatrix = datasource.skims_lezen(f'Pplusfiets_{Hubnaam}_Tijd', ds)
-                Pplusfietsafstandmatrix = datasource.skims_lezen(f'Pplusfiets_{Hubnaam}_Afstand_Auto', ds)
-                PplusRbestemmingstijdmatrix = datasource.skims_lezen(f'PplusR_{Hubnaam}_bestemmings_Tijd', ds)
-                PplusRherkomsttijdmatrix = datasource.skims_lezen(f'PplusR_{Hubnaam}_herkomst_Tijd', ds)
-                PplusRbestemmingsOVafstandmatrix = datasource.skims_lezen(f'PplusR_{Hubnaam}_bestemmings_Afstand_OV', ds)
-                PplusRbestemmingsautoafstandmatrix = datasource.skims_lezen(f'PplusR_{Hubnaam}_bestemmings_Afstand_Auto', ds)
-                PplusRherkomstOVafstandmatrix = datasource.skims_lezen(f'PplusR_{Hubnaam}_herkomst_Afstand_OV', ds)
-                PplusRherkomstautoafstandmatrix = datasource.skims_lezen(f'PplusR_{Hubnaam}_herkomst_Afstand_Auto', ds)
+                Pplusfietstijdmatrix = datasource.read_skims(f'Pplusfiets_{Hubnaam}_Tijd', ds)
+                Pplusfietsafstandmatrix = datasource.read_skims(f'Pplusfiets_{Hubnaam}_Afstand_Auto', ds)
+                PplusRbestemmingstijdmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_bestemmings_Tijd', ds)
+                PplusRherkomsttijdmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Tijd', ds)
+                PplusRbestemmingsOVafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_bestemmings_Afstand_OV', ds)
+                PplusRbestemmingsautoafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_bestemmings_Afstand_Auto', ds)
+                PplusRherkomstOVafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Afstand_OV', ds)
+                PplusRherkomstautoafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Afstand_Auto', ds)
 
             logger.debug("Parkeertijden bevat %d zones.", len(Parkeertijdlijst))
             aantal_zones_tijd = len(Autotijdmatrix)
@@ -112,7 +112,7 @@ def ervaren_reistijd_berekenen(config, datasource):
 
             #kostenmatrix
             if OV_Kostenbestand:
-                KostenmatrixOV = datasource.skims_lezen("OV_Kosten", ds)
+                KostenmatrixOV = datasource.read_skims("OV_Kosten", ds)
             else:
                 logger.debug("Bezig kosten berekenen.")
                 afmeting = len (OVafstandmatrix)

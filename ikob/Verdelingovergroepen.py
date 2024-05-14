@@ -22,7 +22,7 @@ def verdeling_over_groepen(config, datasource):
     Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275]
 
     if Kunst:
-        Kunstmatigautobezit = datasource.verdeling_lezen('kunstmab', 'int')
+        Kunstmatigautobezit = datasource.read_verdeling('kunstmab', 'int')
 
     Sted = []
 
