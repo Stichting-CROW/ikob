@@ -57,11 +57,11 @@ def StandaardConfiguratieDefinitie():
                     'type': 'directory',
                     'default': 'SEGS'
                 },
-                # 'uitvoer_directory': {
-                # 'label': 'Uitvoer directory',
-                # 'type': 'directory',
-                # 'default': 'uitvoer'
-                # },
+                'output_directory': {
+                    'label': 'Output directory',
+                    'type': 'directory',
+                    'default': 'output'
+                }
             },
             'motieven': {
                 'label': 'Motieven',

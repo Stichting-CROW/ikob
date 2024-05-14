@@ -26,27 +26,15 @@ class DataSource:
         'Verdeling_over_groepen_Beroepsbevolking_alleen_autobezit': 1,
     }
 
-    def __init__(self, config, projectbestandsnaam=None):
+    def __init__(self, config, project_name):
         self.config = config
-        self.skims_config = config['skims']
-
-        paden_config = config['project']['paden']
-
-        # SEGS
-        self.segs_dir = pathlib.Path(paden_config['segs_directory'])
-
-        # SKIMS
-        self.basis_dir = pathlib.Path(paden_config['skims_directory'])
-        self.skims_dir = self.basis_dir / 'skims'
-        os.makedirs(self.skims_dir, exist_ok=True)
-
-        # Files in project output folder:
-        if projectbestandsnaam:
-            self.project_dir = self.basis_dir / projectbestandsnaam
-            os.makedirs(self.project_dir, exist_ok=True)
-            self.ervarenreistijd_dir = 'Ervarenreistijd' # NOTES Jaardirectory == Ervarenreistijddirectory
-            self.gewichten_dir = 'Gewichten' # Also called enkeldirectory
-            self.combinatie_dir = f"{self.gewichten_dir}/Combinaties"
+        paden = self.config['project']['paden']
+        self.segs_dir = pathlib.Path(paden['segs_directory'])
+        self.skims_dir = pathlib.Path(paden['skims_directory'])
+        self.output_dir = pathlib.Path(paden['output_directory'])
+        self.project_dir = self.output_dir / project_name
+        # TODO: This should be based on 'beprijzingsregime'
+        self.basis_dir = self.skims_dir.parent
 
     def _write_csv_or_xlsx(self, data, path, header, xlsx_format):
         if xlsx_format:
@@ -69,7 +57,7 @@ class DataSource:
     def config_lezen(self, id: str, type_caster=float):
         """Expects an id that is present in the config dict. Then
         load the file specified by that dict."""
-        csv_path = self.skims_config[id]
+        csv_path = self.config['skims'][id]
         if isinstance(csv_path, dict):
             csv_path = csv_path["bestand"]
 
@@ -92,7 +80,7 @@ class DataSource:
         if ink != '':
             id += f'_{ink}'
 
-        path = self.project_dir / regime / mot / self.ervarenreistijd_dir / dagsoort
+        path = self.project_dir / regime / mot / 'Ervarenreistijd' / dagsoort
         os.makedirs(path, exist_ok=True)
         return path / id
 
@@ -145,7 +133,7 @@ class DataSource:
 
     def maak_bestandspad_gewichten(self, id, dagsoort, vk, ink, regime='', mot='', srtbr=''):
         id = self._add_id_suffix(id, vk, ink)
-        path = self.project_dir / regime / mot / self.gewichten_dir / dagsoort / srtbr
+        path = self.project_dir / regime / mot / 'Gewichten' / dagsoort / srtbr
         os.makedirs(path, exist_ok=True)
         return path / id
 
@@ -162,7 +150,7 @@ class DataSource:
 
     def maak_bestandspad_combinatiegewichten(self, id, dagsoort, vk, ink, srtbr='', regime='', mot=''):
         id = self._add_id_suffix(id, vk, ink)
-        path = self.project_dir / regime / mot / self.combinatie_dir / dagsoort / srtbr
+        path = self.project_dir / regime / mot / 'Gewichten' / 'Combinaties' / dagsoort / srtbr
         os.makedirs(path, exist_ok=True)
         return path / id
 
