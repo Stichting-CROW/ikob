@@ -49,24 +49,15 @@ class DataSource:
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
 
-    def read_config(self, id: str, type_caster=float):
+    def read_config(self, key: str, id: str, type_caster=float):
         """Expects an id that is present in the config dict. Then
         load the file specified by that dict."""
-        csv_path = self.config['skims'][id]
+        csv_path = self.config[key][id]
         if isinstance(csv_path, dict):
             csv_path = csv_path["bestand"]
 
         csv_path = pathlib.Path(csv_path).with_suffix('')
         return Routines.csvlezen(csv_path, self.aantal_lege_regels.get(id, 0), type_caster)
-
-    def read_verdeling(self, id: str, type_caster=float):
-        csv_path = self.config['verdeling'][id]
-        if isinstance(csv_path, dict):
-            csv_path = csv_path["bestand"]
-        csv_path = pathlib.Path(csv_path).with_suffix('')
-        return Routines.csvlezen(csv_path, self.aantal_lege_regels.get(id, 0), type_caster)
-
-    """Methods to read SKIMS"""
 
     def read_skims(self, id: str, dagsoort: str, type_caster = float):
         """Expects a filename to read, which should be located in 
@@ -74,9 +65,7 @@ class DataSource:
         """
         path = self.skims_dir / dagsoort / id
         return Routines.csvlezen(path, self.aantal_lege_regels.get(id, 0), type_caster=type_caster)
-    """"""
 
-    """Methods to write/read SEGS """
     def _segs_dir(self, id, jaar, scenario):
         return self.segs_dir / scenario / (id + jaar)
 

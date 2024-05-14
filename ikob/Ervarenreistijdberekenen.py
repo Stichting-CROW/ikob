@@ -39,7 +39,7 @@ def ervaren_reistijd_berekenen(config, datasource):
     Pricecapgetal = skims_config['pricecap']['getal']
 
     if Additionele_kosten:
-        Additionele_kostenmatrix = datasource.read_config('additionele_kosten')
+        Additionele_kostenmatrix = datasource.read_config('skims', 'additionele_kosten')
 
     # Vaste waarden
     inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
@@ -50,7 +50,7 @@ def ervaren_reistijd_berekenen(config, datasource):
     varelektrisch = float(varelektrisch/100)
     kmheffingfossiel = float (kmheffingfossiel/100)
     kmheffingelektrisch = float (kmheffingelelektrisch/100)
-    Parkeertijdlijst = datasource.read_config('parkeerzoektijden_bestand')
+    Parkeertijdlijst = datasource.read_config('skims', 'parkeerzoektijden_bestand')
     soortbrandstof = ['fossiel', 'elektrisch']
     if 'orrectie' in regime:
         motief=motieven[0]
