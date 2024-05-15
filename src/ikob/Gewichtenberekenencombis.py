@@ -36,11 +36,11 @@ def kanvoorkeur(soortauto, soortOV, voorkeur) :
         return True
 
 def Maxberekenen_en_wegschrijven(datasource, Matrix1, Matrix2, mod1, mod2, vk, ink, ds, regime, mot, srtbr=''):
-    Maxmatrix = Routines.minmaxmatrix ( Matrix1, Matrix2 )
+    Maxmatrix = Routines.maxmatrix ( Matrix1, Matrix2 )
     return datasource.write_csv(Maxmatrix,'Gewichten', f"{mod1}_{mod2}_vk",ds,subtopic='Combinaties', vk=vk,ink=ink, srtbr=srtbr, regime=regime, mot=mot)
 
 def Maxberekenen_en_wegschrijvenvan3(datasource, Matrix1, Matrix2, Matrix3, mod1, mod2, mod3, vk, ink, ds, regime, mot, srtbr=''):
-    Maxmatrix = Routines.minmaxmatrix3 ( Matrix1, Matrix2, Matrix3 )
+    Maxmatrix = Routines.maxmatrix3 ( Matrix1, Matrix2, Matrix3 )
     return datasource.write_csv(Maxmatrix,'Gewichten', f"{mod1}_{mod2}_{mod3}_vk",ds,subtopic='Combinaties', vk=vk,ink=ink, srtbr=srtbr, regime=regime, mot=mot)
 
 def gewichten_berekenen_combis(config, datasource):

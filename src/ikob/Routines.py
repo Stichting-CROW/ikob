@@ -91,27 +91,21 @@ def csvwegschrijven(matrix, filenaam, header=[]):
                comments='')
 
 
-def minmaxmatrix(Matrix1, Matrix2, minmax="max"):
+def maxmatrix(Matrix1, Matrix2):
     Eindmatrix = []
     for i in range(0, len(Matrix1)):
         Eindmatrix.append([])
         for j in range(0, len(Matrix1)):
-            if minmax == "max":
-                Eindmatrix[i].append(max(Matrix1[i][j], Matrix2[i][j]))
-            else:
-                Eindmatrix[i].append(min(Matrix1[i][j], Matrix2[i][j]))
+            Eindmatrix[i].append(max(Matrix1[i][j], Matrix2[i][j]))
     return Eindmatrix
 
 
-def minmaxmatrix3(matrix1, matrix2, matrix3, minmax="max"):
+def maxmatrix3(matrix1, matrix2, matrix3):
     eindmatrix = []
     for i in range(0, len(matrix1)):
         eindmatrix.append([])
         for j in range(0, len(matrix1)):
-            if minmax == "max":
-                eindmatrix[i].append(max(matrix1[i][j], matrix2[i][j], matrix3[i][j]))
-            else:
-                eindmatrix[i].append(min(matrix1[i][j], matrix2[i][j], matrix3[i][j]))
+            eindmatrix[i].append(max(matrix1[i][j], matrix2[i][j], matrix3[i][j]))
     return eindmatrix
 
 
