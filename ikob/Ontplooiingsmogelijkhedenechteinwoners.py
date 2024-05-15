@@ -265,22 +265,22 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                                                                gr, Groepen)
                                         for i in range ( 0, len ( Matrix ) ):
                                             Bijhoudlijst[i] += int ( Dezegroeplijst[i] )
-                        datasource.write_csv(Bijhoudlijst, abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, base='Resultaten', subtopic='Bestemmingen')
+                        datasource.write_csv(Bijhoudlijst, abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='Bestemmingen')
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten :
-                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, base='Resultaten', subtopic='Bestemmingen', type_caster=int)
+                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='Bestemmingen', type_caster=int)
                         Generaaltotaal_potenties.append(Totaalrij)
                     Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                    datasource.write_csv(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstring, mot=mot, subtopic='Bestemmingen', base='Resultaten')
-                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstringExcel, mot=mot, subtopic='Bestemmingen', base='Resultaten')
+                    datasource.write_csv(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstring, mot=mot, subtopic='Bestemmingen')
+                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstringExcel, mot=mot, subtopic='Bestemmingen')
 
                 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        Totaalrij = datasource.read_csv(abg, 'Totaal',ds, mod=mod, ink=inkgr, mot=mot, base='Resultaten', subtopic='Bestemmingen', type_caster=int)
+                        Totaalrij = datasource.read_csv(abg, 'Totaal',ds, mod=mod, ink=inkgr, mot=mot, subtopic='Bestemmingen', type_caster=int)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
                         Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
@@ -294,5 +294,5 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, mod=mod, header=header, mot=mot, subtopic='Bestemmingen', base='Resultaten')
-                    datasource.write_xlsx(Generaalmatrixproduct, abg, 'Ontpl_totaalproduct', ds, mod=mod, header=header, mot=mot, subtopic='Bestemmingen', base='Resultaten')
+                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, mod=mod, header=header, mot=mot, subtopic='Bestemmingen')
+                    datasource.write_xlsx(Generaalmatrixproduct, abg, 'Ontpl_totaalproduct', ds, mod=mod, header=header, mot=mot, subtopic='Bestemmingen')

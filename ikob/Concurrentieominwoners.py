@@ -98,7 +98,7 @@ def concurrentie_om_inwoners(config, datasource):
                                         vkklad = ''
 
                                     Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkklad, regime=regime, mot=mot)
-                                    Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen", base="Resultaten")
+                                    Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen")
                                     Dezegroeplijst = Berekeningen.bereken_concurrentie ( Fietsmatrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
 
                                     for i in range ( 0, len ( Fietsmatrix ) ):
@@ -113,7 +113,7 @@ def concurrentie_om_inwoners(config, datasource):
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
                                             Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
-                                            Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen", base="Resultaten")
+                                            Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen")
                                             Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
                                             if srtbr == 'elektrisch':
                                                 K = percentageelektrisch.get(inkgr) / 100
@@ -131,7 +131,7 @@ def concurrentie_om_inwoners(config, datasource):
                                                 Bijhoudlijst[i] += Bijhoudklad
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen", base="Resultaten")
+                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen")
                                         Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
                                         for i in range(len(Matrix)):
                                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
@@ -141,7 +141,7 @@ def concurrentie_om_inwoners(config, datasource):
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep(mod, gr)
                                     Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                    Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen", base="Resultaten")
+                                    Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen")
                                     Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
                                     for i in range(len(Matrix)):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)] > 0:
@@ -156,7 +156,7 @@ def concurrentie_om_inwoners(config, datasource):
                                     if String[0] == 'A':
                                         for srtbr in soortbrandstof:
                                             Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
-                                            Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen", base="Resultaten")
+                                            Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen")
                                             Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
                                             if srtbr == 'elektrisch':
                                                 K = percentageelektrisch.get(inkgr)/100
@@ -172,7 +172,7 @@ def concurrentie_om_inwoners(config, datasource):
                                                 Bijhoudlijst[i] += Bijhoudklad
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
-                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen", base="Resultaten")
+                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen")
                                         Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Inwonersperklasse, Bereik, inkgr, inkgroepen)
                                         for i in range (len(Matrix)):
                                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
@@ -180,23 +180,23 @@ def concurrentie_om_inwoners(config, datasource):
                                                               Inkomensverdeling[i][inkgroepen.index(inkgr)]
                                                 Bijhoudlijst[i] += Bijhoudklad
 
-                        datasource.write_csv(Bijhoudlijst, 'Concurrentie', 'Totaal', ds, subtopic="inwoners", mot=mot, ink=inkgr, mod=mod, base='Resultaten')
+                        datasource.write_csv(Bijhoudlijst, 'Concurrentie', 'Totaal', ds, subtopic="inwoners", mot=mot, ink=inkgr, mod=mod)
 
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten:
-                        Totaalrij = datasource.read_csv("Concurrentie", "Totaal", ds, subtopic="inwoners", mot=mot, mod=mod, ink=inkgr, base='Resultaten')
+                        Totaalrij = datasource.read_csv("Concurrentie", "Totaal", ds, subtopic="inwoners", mot=mot, mod=mod, ink=inkgr)
                         Generaaltotaal_potenties.append ( Totaalrij )
                         Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
-                        datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, ink=inkgr, header=headstring, base='Resultaten')
-                        datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, ink=inkgr, header=headstringExcel, base='Resultaten')
+                        datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, ink=inkgr, header=headstring)
+                        datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, ink=inkgr, header=headstringExcel)
 
                 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        Totaalrij = datasource.read_csv("Concurrentie", "Totaal", ds, subtopic="inwoners", mot=mot, mod=mod, ink=inkgr, base='Resultaten')
+                        Totaalrij = datasource.read_csv("Concurrentie", "Totaal", ds, subtopic="inwoners", mot=mot, mod=mod, ink=inkgr)
                         Generaalmatrix.append(Totaalrij)
                         Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                     for i in range (len(Inwonersperklasse)):
@@ -207,5 +207,5 @@ def concurrentie_om_inwoners(config, datasource):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, mod=mod, header=header, base='Resultaten')
-                    datasource.write_xlsx(Generaalmatrixproduct, 'Concurrentie', 'Ontpl_concproduct', ds, subtopic="inwoners", mot=mot, mod=mod, header=header, base='Resultaten')
+                    datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, mod=mod, header=header)
+                    datasource.write_xlsx(Generaalmatrixproduct, 'Concurrentie', 'Ontpl_concproduct', ds, subtopic="inwoners", mot=mot, mod=mod, header=header)

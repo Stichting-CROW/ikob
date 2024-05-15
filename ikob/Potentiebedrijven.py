@@ -176,22 +176,22 @@ def potentie_bedrijven(config, datasource):
                                     Dezegroeplijst = bereken_potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
                                     for i in range ( 0, len ( Matrix ) ):
                                         Bijhoudlijst[i] += round ( Dezegroeplijst[i])
-                    datasource.write_csv(Bijhoudlijst, 'Herkomsten', 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, base='Resultaten')
+                    datasource.write_csv(Bijhoudlijst, 'Herkomsten', 'Totaal', ds, mot=mot, mod=mod, ink=inkgr)
                 # En tot slot alles bij elkaar harken:
                 Generaaltotaal_potenties = []
                 for mod in modaliteiten :
-                    Totaalrij = datasource.read_csv('Herkomsten', 'Totaal', ds, mot=mot ,mod=mod, ink=inkgr, base='Resultaten',type_caster=int)
+                    Totaalrij = datasource.read_csv('Herkomsten', 'Totaal', ds, mot=mot ,mod=mod, ink=inkgr, type_caster=int)
                     Generaaltotaal_potenties.append(Totaalrij)
                 Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                datasource.write_csv(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstring, base='Resultaten')
-                datasource.write_xlsx(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstringExcel, base='Resultaten')
+                datasource.write_csv(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstring)
+                datasource.write_xlsx(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstringExcel)
 
             header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
             for mod in modaliteiten:
                 Generaalmatrixproduct = []
                 Generaalmatrix = []
                 for inkgr in inkgroepen:
-                    Totaalrij = datasource.read_csv('Herkomsten', 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, base='Resultaten', type_caster=int)
+                    Totaalrij = datasource.read_csv('Herkomsten', 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, type_caster=int)
                     Generaalmatrix.append(Totaalrij)
                 Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                 for i in range (len(Arbeidsplaatsenperklasse)):
@@ -202,5 +202,5 @@ def potentie_bedrijven(config, datasource):
                         else:
                             Generaalmatrixproduct[i].append(0)
 
-                datasource.write_xlsx(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, mod=mod, header=header, base='Resultaten')
-                datasource.write_xlsx(Generaalmatrixproduct, 'Herkomsten', 'Pot_totaalproduct', ds, mot=mot, mod=mod, header=header, base='Resultaten')
+                datasource.write_xlsx(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, mod=mod, header=header)
+                datasource.write_xlsx(Generaalmatrixproduct, 'Herkomsten', 'Pot_totaalproduct', ds, mot=mot, mod=mod, header=header)

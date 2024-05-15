@@ -43,7 +43,7 @@ class DataSource:
                 id += f"_{suffix}"
         return id
 
-    def _make_file_path(self, id, motief, topic, dagsoort, regime='', subtopic='', brandstof='', base='', vk='', ink='', hubnaam='', mod=''):
+    def _make_file_path(self, id, motief, topic, dagsoort, base, regime='', subtopic='', brandstof='', vk='', ink='', hubnaam='', mod=''):
         id_with_suffix = self._add_id_suffix(id, vk, mod, hubnaam, ink)
         path = self.project_dir / base / regime / motief / topic / subtopic / dagsoort / brandstof
         os.makedirs(path, exist_ok=True)
@@ -82,14 +82,28 @@ class DataSource:
         path = self._segs_dir(id, jaar, scenario)
         return Routines.csvlezen(path, aantal_lege_regels=aantal_lege_regels, type_caster=type_caster)
 
-    def read_csv(self, datatype, id, dagsoort, base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr='', type_caster=float):
-        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+    def _get_base_dir(self, datatype, id):
+        if datatype == "Concurrentie":
+            return "Resultaten"
+        if datatype == "Herkomsten":
+            return "Resultaten"
+        if "totaal" in id.lower():
+            # Totaal, Ontpl_totaal, Ontpl_totaalproduct
+            return "Resultaten"
+
+        return ""
+
+    def read_csv(self, datatype, id, dagsoort, regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr='', type_caster=float):
+        base = self._get_base_dir(datatype, id)
+        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
         return Routines.csvlezen(bestandspad, type_caster=type_caster)
 
-    def write_csv(self, data, datatype, id, dagsoort, header=None, base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
-        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+    def write_csv(self, data, datatype, id, dagsoort, header=None, regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
+        base = self._get_base_dir(datatype, id)
+        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
         return Routines.csvwegschrijven(data, bestandspad, header=header)
 
-    def write_xlsx(self, data, datatype, id, dagsoort, header=None, base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
-        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+    def write_xlsx(self, data, datatype, id, dagsoort, header=None, regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
+        base = self._get_base_dir(datatype, id)
+        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
         return Routines.xlswegschrijven(data, bestandspad, header)
