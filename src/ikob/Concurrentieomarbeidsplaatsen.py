@@ -96,7 +96,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
 
                                 Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkklad, regime=regime, mot=mot)
                                 Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                Dezegroeplijst = Berekeningen.bereken_concurrentie ( Fietsmatrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                Dezegroeplijst = Berekeningen.concurrentie ( Fietsmatrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
 
                                 for i in range ( 0, len ( Fietsmatrix ) ):
                                     if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
@@ -111,7 +111,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                     for srtbr in soortbrandstof:
                                         Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                                         Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                        Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                        Dezegroeplijst1 = Berekeningen.concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr) / 100
                                             logger.debug('aandeel elektrisch is %s', K)
@@ -129,7 +129,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                 else:
                                     Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                     Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                    Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                    Dezegroeplijst = Berekeningen.concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                     for i in range(len(Matrix)):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                             Bijhoudklad = Dezegroeplijst[i] * Verdelingsmatrix[i][Groepen.index(gr)]/\
@@ -139,7 +139,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                 String = Routines.enkelegroep(mod, gr)
                                 Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                 Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                Dezegroeplijst = Berekeningen.concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                 for i in range(len(Matrix)):
                                     if Inkomensverdeling[i][inkgroepen.index(inkgr)] > 0:
                                         Bijhoudklad = Dezegroeplijst[i] * Verdelingsmatrix[i][Groepen.index(gr)] / \
@@ -154,7 +154,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                     for srtbr in soortbrandstof:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                                         Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                        Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                        Dezegroeplijst1 = Berekeningen.concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr)/100
                                             DezegroeplijstE = [x * K for x in Dezegroeplijst1]
@@ -170,7 +170,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                 else:
                                     Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
                                     Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                    Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                    Dezegroeplijst = Berekeningen.concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                     for i in range (len(Matrix)):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                             Bijhoudklad = Dezegroeplijst[i] * Verdelingsmatrix[i][Groepen.index(gr)]/\
