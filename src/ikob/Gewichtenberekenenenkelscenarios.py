@@ -41,41 +41,6 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
     modaliteitenfiets = ['Fiets']
     soortbrandstof = ['fossiel','elektrisch']
 
-    def constantenwerk (mod, voorkeur):
-        alpha = 0.125
-        omega = 45
-        weging = 1
-        if mod == 'Fiets':
-            alpha = 0.225
-            omega = 25
-        elif mod == 'EFiets':
-            alpha = 0.175
-            omega = 35
-        if voorkeur == 'Auto':
-            if mod == 'Auto' :
-                omega = 50
-            elif mod == 'OV':
-                omega = 30
-                weging = 0.95
-        elif voorkeur == 'OV':
-            if mod == 'Auto':
-                weging = 0.96
-                alpha = 0.125
-                omega = 45
-            elif mod == 'OV' :
-                alpha = 0.12
-                omega = 60
-        elif voorkeur == 'Fiets':
-            if mod == 'Auto':
-                weging = 0.75
-            elif mod == 'Fiets':
-                alpha = 0.175
-                omega = 35
-            elif mod == 'EFiets':
-                alpha = 0.125
-                omega = 55
-        return alpha, omega, weging
-
 
     # Avondspits en Ochtendspits eruit verwijderd
 
