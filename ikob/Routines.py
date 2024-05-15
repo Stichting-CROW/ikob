@@ -1,6 +1,6 @@
-import csv
 import xlsxwriter
 import pathlib
+import numpy as np
 
 
 def lijstvolnullen(lengte):
@@ -45,32 +45,12 @@ def getallenlijst_maken(aantal_getallen):
 def csvlezen(filenaam, aantal_lege_regels=0, type_caster=float):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
-    filenaam = filenaam.with_suffix('.csv')
 
-    matrix = []
-
-    with open(filenaam, 'r') as csvfile:
-        reader = csv.reader(csvfile)
-        for i in range(aantal_lege_regels):
-            next(reader)
-        for row in reader:
-            matrix.append(row)
-    with open(filenaam, 'r') as csvfile:
-        reader = csv.reader(csvfile)
-        row_count = sum(1 for row in reader)
-    uitmatrix = []
-    tussenmatrix = []
-    if row_count == 1:
-        tussenmatrix.append(matrix[0])
-        for elem in tussenmatrix[0]:
-            uitmatrix.append(type_caster(elem))
-    else:
-        for r in range(0, row_count - aantal_lege_regels):
-            tussenmatrix.append(matrix[r])
-            uitmatrix.append([])
-            for elem in tussenmatrix[r]:
-                uitmatrix[r].append(type_caster(elem))
-    return uitmatrix
+    matrix = np.loadtxt(filenaam.with_suffix(".csv"),
+                        dtype=type_caster,
+                        skiprows=aantal_lege_regels,
+                        delimiter=',')
+    return matrix.tolist()
 
 
 def csvintlezen(filenaam, aantal_lege_regels=0):
@@ -81,22 +61,27 @@ def csvfloatlezen(filenaam, aantal_lege_regels=0):
     return csvlezen(filenaam, aantal_lege_regels, type_caster=float)
 
 
-def csvwegschrijven(matrix, filenaam, header=None):
+def csvwegschrijven(matrix, filenaam, header=[]):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
-    is_matrix_like = any(isinstance(row, list) for row in matrix)
+    matrix = np.array(matrix)
+    if matrix.ndim == 1:
+        # One dimensional data is expected as one row, while
+        # np.savetxt writes this by default as one column.
+        matrix = matrix.reshape(1, matrix.shape[0])
 
-    with open(filenaam.with_suffix('.csv'), 'w', newline='') as f:
-        writer = csv.writer(f)
+    # Explicitly format integers as integers.
+    fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.16f"
+    delim = ","
+    header = delim.join(header)
 
-        if header:
-            writer.writerow(header)
-
-        if is_matrix_like:
-            writer.writerows(matrix)
-        else:
-            writer.writerow(matrix)
+    np.savetxt(filenaam.with_suffix(".csv"),
+               matrix,
+               fmt=fmt,
+               delimiter=delim,
+               header=header,
+               comments='')
 
 
 def minmaxmatrix(Matrix1, Matrix2, minmax="max"):
