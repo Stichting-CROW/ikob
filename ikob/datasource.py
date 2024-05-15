@@ -4,28 +4,6 @@ import pathlib
 
 
 class DataSource:
-
-    aantal_lege_regels = {
-        'parkeerzoektijden_bestand': 1,
-        'Inwoners_per_klasse': 1,
-        'GeenRijbewijs': 1,
-        'GeenAuto': 1,
-        'WelAuto': 1,
-        'Voorkeuren': 1,
-        'VoorkeurenGeenAuto': 1,
-        'verdelingovergroepen': 1,
-        'Arbeidsplaatsen_inkomensklasse': 1,
-        'Beroepsbevolking_inkomensklasse': 1,
-        'Verdeling_over_groepen_alleen_autobezit': 1,
-        'Verdeling_over_groepen': 1,
-        'Verdeling_over_groepen_Beroepsbevolking': 1,
-        'Verdeling_over_groepen_Leerlingen': 1,
-        'Verdeling_over_groepen_Inwoners': 1,
-        'Verdeling_over_groepen_Inwoners_alleen_autobezit': 1,
-        'Verdeling_over_groepen_Leerlingen_alleen_autobezit': 1,
-        'Verdeling_over_groepen_Beroepsbevolking_alleen_autobezit': 1,
-    }
-
     def __init__(self, config, project_name):
         self.config = config
         paden = self.config['project']['paden']
@@ -57,14 +35,14 @@ class DataSource:
             csv_path = csv_path["bestand"]
 
         csv_path = pathlib.Path(csv_path).with_suffix('')
-        return Routines.csvlezen(csv_path, self.aantal_lege_regels.get(id, 0), type_caster)
+        return Routines.csvlezen(csv_path, type_caster)
 
     def read_skims(self, id: str, dagsoort: str, type_caster = float):
         """Expects a filename to read, which should be located in 
         in subfolder 'dagsoort' of the global path 'Jaarinvoerdirectory'
         """
         path = self.skims_dir / dagsoort / id
-        return Routines.csvlezen(path, self.aantal_lege_regels.get(id, 0), type_caster=type_caster)
+        return Routines.csvlezen(path, type_caster=type_caster)
 
     def _segs_dir(self, id, jaar, scenario):
         return self.segs_dir / scenario / (id + jaar)
@@ -78,9 +56,8 @@ class DataSource:
         return Routines.xlswegschrijven(data, path, header)
 
     def read_segs(self, id: str, jaar="", type_caster=int, scenario=""):
-        aantal_lege_regels = self.aantal_lege_regels.get(id, 0)
         path = self._segs_dir(id, jaar, scenario)
-        return Routines.csvlezen(path, aantal_lege_regels=aantal_lege_regels, type_caster=type_caster)
+        return Routines.csvlezen(path, type_caster=type_caster)
 
     def _get_base_dir(self, datatype, id):
         if datatype == "Concurrentie":

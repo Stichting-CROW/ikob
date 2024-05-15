@@ -42,23 +42,30 @@ def getallenlijst_maken(aantal_getallen):
     return list(range(1, aantal_getallen + 1))
 
 
-def csvlezen(filenaam, aantal_lege_regels=0, type_caster=float):
+def csvlezen(filenaam, type_caster=float):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
-    matrix = np.loadtxt(filenaam.with_suffix(".csv"),
-                        dtype=type_caster,
-                        skiprows=aantal_lege_regels,
-                        delimiter=',')
+    # First, attempt to read without header.
+    # If this fails, read with skipping the header.
+    try:
+        matrix = np.loadtxt(filenaam.with_suffix(".csv"),
+                            dtype=type_caster,
+                            delimiter=',')
+    except ValueError:
+        matrix = np.loadtxt(filenaam.with_suffix(".csv"),
+                            dtype=type_caster,
+                            skiprows=1,
+                            delimiter=',')
     return matrix.tolist()
 
 
-def csvintlezen(filenaam, aantal_lege_regels=0):
-    return csvlezen(filenaam, aantal_lege_regels, type_caster=int)
+def csvintlezen(filenaam):
+    return csvlezen(filenaam, type_caster=int)
 
 
-def csvfloatlezen(filenaam, aantal_lege_regels=0):
-    return csvlezen(filenaam, aantal_lege_regels, type_caster=float)
+def csvfloatlezen(filenaam):
+    return csvlezen(filenaam, type_caster=float)
 
 
 def csvwegschrijven(matrix, filenaam, header=[]):
