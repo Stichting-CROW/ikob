@@ -151,9 +151,11 @@ def Omnitrans_csv_inlezen (filenaam, aantal_zones=1425, aantal_lege_regels=4):
     return skimmatrix
 
 
-def csvwegschrijven(matrix, filenaam, header=None, soort="matrix"):
+def csvwegschrijven(matrix, filenaam, header=None):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
+
+    is_matrix_like = any(isinstance(row, list) for row in matrix)
 
     with open(filenaam.with_suffix('.csv'), 'w', newline='') as f:
         writer = csv.writer(f)
@@ -161,7 +163,7 @@ def csvwegschrijven(matrix, filenaam, header=None, soort="matrix"):
         if header:
             writer.writerow(header)
 
-        if soort == "matrix":
+        if is_matrix_like:
             writer.writerows(matrix)
         else:
             writer.writerow(matrix)

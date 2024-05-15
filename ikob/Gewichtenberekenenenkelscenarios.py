@@ -92,9 +92,9 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
                         logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
                         if vk == 'Auto':
-                            datasource.write_csv(Gewichten, 'Gewichten', f'{mod}_vk', ds, regime=regime, mot=mot, soort="matrix")
+                            datasource.write_csv(Gewichten, 'Gewichten', f'{mod}_vk', ds, regime=regime, mot=mot)
                         else :
-                            datasource.write_csv(Gewichten, 'Gewichten', f'{mod}_vk', ds, vk=vk, regime=regime, mot=mot, soort="matrix")
+                            datasource.write_csv(Gewichten, 'Gewichten', f'{mod}_vk', ds, vk=vk, regime=regime, mot=mot)
             # Nu Auto
             for ink in inkomen:
                 for vk in voorkeuren:
@@ -111,7 +111,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
                         weging = constanten[2]
                         logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
-                        datasource.write_csv(Gewichten, 'Gewichten', 'Auto_vk', ds, vk=vk, ink=ink, srtbr=srtbr, regime=regime, mot=mot, soort="matrix")
+                        datasource.write_csv(Gewichten, 'Gewichten', 'Auto_vk', ds, vk=vk, ink=ink, srtbr=srtbr, regime=regime, mot=mot)
 
             soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
             voorkeurengeenauto = ['Neutraal', 'OV', 'Fiets']
@@ -130,7 +130,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
                         weging = constanten[2]
                         logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
-                        datasource.write_csv(Gewichten, 'Gewichten', f'{sga}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, soort="matrix")
+                        datasource.write_csv(Gewichten, 'Gewichten', f'{sga}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
 
             # Nu OV
             modaliteitenOV = ['OV']
@@ -150,7 +150,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
                         weging = constanten[2]
                         logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
-                        datasource.write_csv(Gewichten, 'Gewichten', f'{modOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, soort="matrix")
+                        datasource.write_csv(Gewichten, 'Gewichten', f'{modOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
 
             for ink in inkomen:
                 GGRskim = datasource.read_csv('Ervarenreistijd', 'GratisAuto', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
@@ -167,7 +167,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
                 Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
                 specialauto = ['Neutraal', 'Auto']
                 for vks in specialauto:
-                    datasource.write_csv(Gewichten, 'Gewichten', 'GratisAuto_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot, soort="matrix")
+                    datasource.write_csv(Gewichten, 'Gewichten', 'GratisAuto_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot)
 
                 GGRskim = datasource.read_csv('Ervarenreistijd', 'GratisOV', ds, type_caster=int, regime=regime, mot=mot)
                 if mot == 'werk' or mot == 'sociaal-recreatief':
@@ -183,4 +183,4 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
                 Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
                 specialOV = ['Neutraal', 'OV']
                 for vks in specialOV:
-                    datasource.write_csv(Gewichten, 'Gewichten', 'GratisOV_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot, soort="matrix")
+                    datasource.write_csv(Gewichten, 'Gewichten', 'GratisOV_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot)

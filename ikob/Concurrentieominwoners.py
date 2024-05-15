@@ -188,7 +188,7 @@ def concurrentie_om_inwoners(config, datasource):
                         Totaalrij = datasource.read_csv("Concurrentie", "Totaal", ds, subtopic="inwoners", mot=mot, mod=mod, ink=inkgr, base='Resultaten')
                         Generaaltotaal_potenties.append ( Totaalrij )
                         Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
-                        datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, ink=inkgr, header=headstring, base='Resultaten', soort="matrix")
+                        datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, ink=inkgr, header=headstring, base='Resultaten')
                         datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="inwoners", mot=mot, ink=inkgr, header=headstringExcel, base='Resultaten')
 
                 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']

@@ -86,10 +86,10 @@ class DataSource:
         bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
         return Routines.csvlezen(bestandspad, type_caster=type_caster)
 
-    def write_csv(self, data, datatype, id, dagsoort, header=None, soort='', base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
+    def write_csv(self, data, datatype, id, dagsoort, header=None, base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
         bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
-        return Routines.csvwegschrijven(data, bestandspad, header=header, soort=soort)
+        return Routines.csvwegschrijven(data, bestandspad, header=header)
 
-    def write_xlsx(self, data, datatype, id, dagsoort, header=None, soort='', base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
+    def write_xlsx(self, data, datatype, id, dagsoort, header=None, base='', regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
         bestandspad = self._make_file_path(id, mot, datatype, dagsoort, mod=mod, base=base, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
         return Routines.xlswegschrijven(data, bestandspad, header)

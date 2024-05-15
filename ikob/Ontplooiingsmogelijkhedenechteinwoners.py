@@ -272,7 +272,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                         Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, base='Resultaten', subtopic='Bestemmingen', type_caster=int)
                         Generaaltotaal_potenties.append(Totaalrij)
                     Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                    datasource.write_csv(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstring, mot=mot, subtopic='Bestemmingen', base='Resultaten', soort="matrix")
+                    datasource.write_csv(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstring, mot=mot, subtopic='Bestemmingen', base='Resultaten')
                     datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstringExcel, mot=mot, subtopic='Bestemmingen', base='Resultaten')
 
                 header = ['Zone', 'laag', 'middellaag','middelhoog', 'hoog']
