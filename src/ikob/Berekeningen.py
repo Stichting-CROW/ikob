@@ -13,3 +13,13 @@ def bereken_concurrentie(Matrix, Beroepsbevolking, Bereik, inkgr, inkgroepen):
                 Gewogenmatrix.append(0)
         Dezegroeplijst.append(sum(Gewogenmatrix))
     return Dezegroeplijst
+
+
+def bereken_potenties(Matrix, Inwonerstrans, gr, Groepen):
+    Dezegroeplijst = []
+    for i in range(len(Matrix)):
+        Gewogenmatrix = []
+        for Getal1, Getal2 in zip(Matrix[i], Inwonerstrans[Groepen.index(gr)]):
+            Gewogenmatrix.append(Getal1 * Getal2)
+        Dezegroeplijst.append(sum(Gewogenmatrix))
+    return Dezegroeplijst
