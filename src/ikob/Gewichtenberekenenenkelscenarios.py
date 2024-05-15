@@ -1,7 +1,30 @@
 import logging
+import math
 import ikob.Constantengenerator as Constantengenerator
+import numpy as np
 
 logger = logging.getLogger(__name__)
+
+
+def gewichtenberekenen(skim, alpha, omega, weging):
+    logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
+    Gewichtenmatrix = np.zeros((len(skim), len(skim)))
+
+    for r in range(0, len(skim)):
+        for k in range(0, len(skim)):
+            ervaren_reistijd = skim[r][k]
+
+            if ervaren_reistijd < 180:
+                reistijdwaarde = (1 / (1 + math.exp((-omega + ervaren_reistijd)*alpha)))*weging
+            else:
+                reistijdwaarde = 0
+
+            if reistijdwaarde < 0.001:
+                reistijdwaarde = 0
+
+            Gewichtenmatrix[r][k] = round(reistijdwaarde, 4)
+    return Gewichtenmatrix.tolist()
+
 
 def gewichten_berekenen_enkel_scenarios(config, datasource):
     project_config = config['project']
@@ -53,23 +76,6 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
                 omega = 55
         return alpha, omega, weging
 
-    def gewichtenberekenen (skim, alpha, omega, weging):
-        import math
-        logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
-        Gewichtenmatrix = []
-
-        for r in range(0, len(skim)):
-            Gewichtenmatrix.append([])
-            for k in range(0, len(skim)):
-                ervaren_reistijd = skim[r][k]
-                if ervaren_reistijd < 180:
-                    reistijdwaarde = (1 / (1 + math.exp((-omega + ervaren_reistijd)*alpha)))*weging
-                else:
-                    reistijdwaarde = 0
-                if reistijdwaarde < 0.001 :
-                    reistijdwaarde = 0
-                Gewichtenmatrix[r].append( round(reistijdwaarde,4) )
-        return Gewichtenmatrix
 
     # Avondspits en Ochtendspits eruit verwijderd
 
