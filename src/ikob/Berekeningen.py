@@ -1,7 +1,7 @@
 import ikob.Routines as Routines
 
 
-def bereken_concurrentie(Matrix, Beroepsbevolking, Bereik, inkgr, inkgroepen):
+def concurrentie(Matrix, Beroepsbevolking, Bereik, inkgr, inkgroepen):
     Dezegroeplijst = []
     Beroepsbevolkingtrans = Routines.transponeren(Beroepsbevolking)
     for i in range(len(Matrix)):
@@ -15,7 +15,7 @@ def bereken_concurrentie(Matrix, Beroepsbevolking, Bereik, inkgr, inkgroepen):
     return Dezegroeplijst
 
 
-def bereken_potenties(Matrix, Inwonerstrans, gr, Groepen):
+def potenties(Matrix, Inwonerstrans, gr, Groepen):
     Dezegroeplijst = []
     for i in range(len(Matrix)):
         Gewogenmatrix = []
