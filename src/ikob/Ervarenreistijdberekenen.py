@@ -6,6 +6,17 @@ from ikob.datasource import DataSource
 logger = logging.getLogger(__name__)
 
 
+def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
+    if afstand < 0:
+        return 0
+
+    if Pricecap:
+        if afstand * OVkmtarief + starttarief > Pricecapgetal:
+            return Pricecapgetal
+
+    return afstand * OVkmtarief + starttarief
+
+
 def ervaren_reistijd_berekenen(config, datasource: DataSource):
     # Haal (voor het gemak) onderdelen voor dit script er uit.
     project_config = config['project']
@@ -66,16 +77,6 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
         Correctiefactoren = []
         for i in range(len(Parkeertijdlijst)):
             Correctiefactoren.append([1,1,1,1])
-    def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
-        flaf = float(afstand)
-        if flaf < 0:
-            return 0
-        else :
-            if Pricecap:
-                 if flaf * OVkmtarief + starttarief > Pricecapgetal:
-                     return Pricecapgetal
-            return flaf * OVkmtarief + starttarief
-        return 0
 
     for mot in motieven:
         TVOM = TVOMwerk if mot == 'werk' else TVOMoverig
@@ -114,7 +115,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                 quit()
             aantal_zones = aantal_zones_tijd
 
-            #kostenmatrix
+            # kostenmatrix
             if OV_Kostenbestand:
                 KostenmatrixOV = datasource.read_skims("OV_Kosten", ds)
             else:
