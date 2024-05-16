@@ -1,5 +1,6 @@
 import logging
 import ikob.Routines as Routines
+import numpy as np
 from ikob.datasource import DataSource
 
 logger = logging.getLogger(__name__)
@@ -112,25 +113,33 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                 quit()
             aantal_zones = aantal_zones_tijd
 
+            afmeting = len(OVafstandmatrix)
+
             # kostenmatrix
             if OV_Kostenbestand:
                 KostenmatrixOV = datasource.read_skims("OV_Kosten", ds)
             else:
                 logger.debug("Bezig kosten berekenen.")
-                afmeting = len (OVafstandmatrix)
-                KostenmatrixOV =  [ [ KostenOV(OVafstandmatrix[i][j], OVkmtarief, starttarief,Pricecap,Pricecapgetal,)
-                                        for j in range(afmeting) ]
-                                        for i in range(afmeting) ]
+                KostenmatrixOV = np.zeros((afmeting, afmeting))
+                for i in range(afmeting):
+                    for j in range(afmeting):
+                        KostenmatrixOV[i][j] = KostenOV(OVafstandmatrix[i][j], OVkmtarief, starttarief, Pricecap, Pricecapgetal)
+                KostenmatrixOV = KostenmatrixOV.tolist()
+
             if Ketens:
-                KostenbestemmingsPplusROV = [ [ KostenOV(PplusRbestemmingsOVafstandmatrix[i][j], OVkmtarief, starttarief,Pricecap,Pricecapgetal,)
-                                        for j in range(afmeting) ]
-                                        for i in range(afmeting) ]
-                KostenherkomstPplusROV = [ [ KostenOV(PplusRherkomstOVafstandmatrix[i][j], OVkmtarief, starttarief,)
-                                        for j in range(afmeting) ]
-                                        for i in range(afmeting) ]
-            for i in range (0,10):
-                for j in range (0,10):
+                KostenbestemmingsPplusROV = np.zeros((afmeting, afmeting))
+                KostenherkomstPplusROV = np.zeros((afmeting, afmeting))
+                for i in range(afmeting):
+                    for j in range(afmeting):
+                        KostenbestemmingsPplusROV[i][j] = KostenOV(PplusRbestemmingsOVafstandmatrix[i][j], OVkmtarief, starttarief, Pricecap, Pricecapgetal)
+                        KostenherkomstPplusROV[i][j] = KostenOV(PplusRherkomstOVafstandmatrix[i][j], OVkmtarief, starttarief)
+                KostenbestemmingsPplusROV = KostenbestemmingsPplusROV.tolist()
+                KostenherkomstPplusROV = KostenherkomstPplusROV.tolist()
+
+            for i in range(afmeting):
+                for j in range(afmeting):
                     logger.debug("KostenmatrixOV[%d][%d]=%f", i, j, KostenmatrixOV[i][j])
+
             # Eerst de fiets:
 
             GGRskim = []
