@@ -141,25 +141,17 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                     logger.debug("KostenmatrixOV[%d][%d]=%f", i, j, KostenmatrixOV[i][j])
 
             # Eerst de fiets:
-
-            GGRskim = []
-            aantal_zones_fiets = len (Fietstijdmatrix)
-            for i in range (0,aantal_zones_fiets):
-                GGRskim.append([])
-                for j in range (0,aantal_zones_fiets):
-                    if Fietstijdmatrix[i][j]<180:
-                        GGRskim[i].append(int(Fietstijdmatrix [i][j]))
-                    else:
-                        GGRskim[i].append(9999)
-                for j in range (aantal_zones_fiets, aantal_zones) :
-                    GGRskim[i].append ( 9999 )
-            for i in range (aantal_zones_fiets, aantal_zones):
-                GGRskim.append([])
-                for j in range (0,aantal_zones) :
-                    GGRskim[i].append(9999)
+            aantal_zones_fiets = len(Fietstijdmatrix)
+            GGRskim = np.ones((aantal_zones, aantal_zones), dtype=int) * 9999
+            for i in range(aantal_zones_fiets):
+                for j in range(aantal_zones_fiets):
+                    if Fietstijdmatrix[i][j] < 180:
+                        GGRskim[i][j] = int(Fietstijdmatrix[i][j])
+            GGRskim = GGRskim.tolist()
 
             datasource.write_csv(GGRskim, 'Ervarenreistijd', 'Fiets', ds, regime=regime, mot=mot)
 
+            GGRskim = np.zeros((aantal_zones, aantal_zones), dtype=int)
             for ink in inkomens:
                 for srtbr in soortbrandstof:
                     if srtbr == 'fossiel':
@@ -168,83 +160,75 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                     else:
                         varautotarief = varelektrisch
                         kmheffing = kmheffingelektrisch
-                    GGRskim = []
                     Vermenigvuldigingsfactor = TVOM.get(ink)
                     for i in range (0,aantal_zones):
-                        GGRskim.append([])
                         for j in range (0,aantal_zones):
                             totaleTijd = Autotijdmatrix[i][j] + round(float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
                             if Additionele_kosten:
-                                GGRskim[i].append ( int ( totaleTijd + Vermenigvuldigingsfactor * (Autoafstandmatrix[i][j] *
+                                GGRskim[i][j] = int (totaleTijd + Vermenigvuldigingsfactor * (Autoafstandmatrix[i][j] *
                                                           (varautotarief + kmheffing) + Additionele_kostenmatrix[i][j]/100) +
-                                                          Parkeerkostenlijst[j]/100))
+                                                          Parkeerkostenlijst[j]/100)
                             else:
-                                GGRskim[i].append(int(totaleTijd + Vermenigvuldigingsfactor * (Autoafstandmatrix [i][j] *
+                                GGRskim[i][j] = int(totaleTijd + Vermenigvuldigingsfactor * (Autoafstandmatrix [i][j] *
                                                   Correctiefactoren[i][inkomens.index(ink)] *
-                                                   (varautotarief+kmheffing) + Parkeerkostenlijst[j]/100)))
-        
+                                                   (varautotarief+kmheffing) + Parkeerkostenlijst[j]/100))
+
                     datasource.write_csv(GGRskim, 'Ervarenreistijd', f"Auto_{srtbr}", ds, ink=ink, regime=regime, mot=mot)
 
-
                 #Dan het OV
-                GGRskim = []
+                GGRskim.fill(0)
                 Vermenigvuldigingsfactor = TVOM.get (ink)
                 for i in range (0, aantal_zones):
-                    GGRskim.append([])
                     for j in range (0, aantal_zones):
                         if float(OVtijdmatrix[i][j])>0.5:
                             Resultaat = float(OVtijdmatrix [i][j]) + Vermenigvuldigingsfactor * float(KostenmatrixOV [i][j])
-                            Resultaatint = int (Resultaat)
-                            GGRskim[i].append(Resultaatint)
+                            GGRskim[i][j] = int(Resultaat)
                         else:
-                            GGRskim[i].append(9999)
+                            GGRskim[i][j] = 9999
 
                 datasource.write_csv(GGRskim, 'Ervarenreistijd', 'OV', ds, ink=ink, regime=regime, mot=mot)
 
                 #Dan geen auto (rijbewijs)
                 for sga in soortgeenauto :
-                    GGRskim = []
+                    GGRskim.fill(0)
                     Vermenigvuldigingsfactor = TVOM.get(ink)
                     for i in range (0,aantal_zones):
-                        GGRskim.append([])
                         for j in range (0,aantal_zones):
                             if Autotijdmatrix[i][j] < 7:
-                                GGRskim[i].append(99999)
+                                GGRskim[i][j] = 99999
                             else:
                                 totaleTijd = Autotijdmatrix[i][j] +round(float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
                                 totaleKosten = Autotijdmatrix[i][j] * tijdkostenga.get(sga) + \
                                                Correctiefactoren[i][inkomens.index(ink)] * Autoafstandmatrix[i][j] * (varkostenga.get(sga) + kmheffing)
-                                GGRskim[i].append(int(totaleTijd + Vermenigvuldigingsfactor * totaleKosten))
+                                GGRskim[i][j] = int(totaleTijd + Vermenigvuldigingsfactor * totaleKosten)
 
                     datasource.write_csv(GGRskim, 'Ervarenreistijd', f'{sga}', ds, ink=ink, regime=regime, mot=mot)
 
                 # Nu GratisAuto
                 for ink in inkomens:
-                    GGRskim = []
+                    GGRskim.fill(0)
                     Vermenigvuldigingsfactor = TVOM.get ( ink )
                     for i in range ( 0, aantal_zones ):
-                        GGRskim.append ( [] )
                         for j in range ( 0, aantal_zones ):
                             totaleTijd = Autotijdmatrix[i][j] + round(float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
                             if Additionele_kosten:
-                                GGRskim[i].append ( int ( totaleTijd + Vermenigvuldigingsfactor * Autoafstandmatrix[i][j] *
+                                GGRskim[i][j] = int ( totaleTijd + Vermenigvuldigingsfactor * Autoafstandmatrix[i][j] *
                                                     kmheffing + Additionele_kostenmatrix[i][j]/100 +
-                                                      Parkeerkostenlijst[j]/100) )
+                                                      Parkeerkostenlijst[j]/100)
                             else:
-                                GGRskim[i].append ( int ( totaleTijd + Correctiefactoren[i][inkomens.index(ink)] *
+                                GGRskim[i][j] = int ( totaleTijd + Correctiefactoren[i][inkomens.index(ink)] *
                                                           Vermenigvuldigingsfactor * Autoafstandmatrix[i][j] *
-                                                        kmheffing + Parkeerkostenlijst[j]/100) )
+                                                        kmheffing + Parkeerkostenlijst[j]/100)
                     datasource.write_csv(GGRskim, 'Ervarenreistijd', 'GratisAuto', ds, ink=ink, regime=regime, mot=mot)
 
                 #Nu GratisOV
-                GGRskim = []
+                GGRskim.fill(0)
                 for i in range (0,aantal_zones):
-                    GGRskim.append([])
                     for j in range (0,aantal_zones):
                         if OVtijdmatrix[i][j]>0.5:
-                            GGRskim[i].append(int(OVtijdmatrix [i][j]))
+                            GGRskim[i][j] = int(OVtijdmatrix [i][j])
                         else:
-                            GGRskim[i].append(9999)
+                            GGRskim[i][j] = 9999
 
                 datasource.write_csv(GGRskim, 'Ervarenreistijd', 'GratisOV', ds, regime=regime, mot=mot)
 
@@ -252,55 +236,46 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                 #Eerst P+Fiets
                 if Ketens :
                     for ink in inkomens:
-                        GGRskim = []
+                        GGRskim.fill(0)
                         Vermenigvuldigingsfactor = TVOM.get ( ink )
                         for i in range (0,aantal_zones):
-                            GGRskim.append([])
                             for j in range (0,aantal_zones):
                                 if Additionele_kosten:
-                                    GGRskim[i].append ( int ( Pplusfietstijdmatrix[i][j] + Vermenigvuldigingsfactor *
+                                    GGRskim[i][j] = int ( Pplusfietstijdmatrix[i][j] + Vermenigvuldigingsfactor *
                                                               (Pplusfietsafstandmatrix[i][j] *
-                                                              (varautotarief + kmheffing) + Additionele_kostenmatrix[i][j]/100)))
+                                                              (varautotarief + kmheffing) + Additionele_kostenmatrix[i][j]/100))
                                 else:
-                                    GGRskim[i].append(int(Pplusfietstijdmatrix[i][j] + Vermenigvuldigingsfactor * Pplusfietsafstandmatrix [i][j] *
-                                                      varautotarief+kmheffing))
+                                    GGRskim[i][j] = int(Pplusfietstijdmatrix[i][j] + Vermenigvuldigingsfactor * Pplusfietsafstandmatrix [i][j] *
+                                                      varautotarief+kmheffing)
 
                         datasource.write_csv(GGRskim, 'Ervarenreistijd', 'Pplusfiets', ds, ink=ink, hubnaam=Hubnaam, regime=regime, mot=mot)
 
                         # Dan P+R
 
-                        GGRskim = []
-
+                        GGRskim.fill(0)
                         for i in range ( 0, aantal_zones ):
-                            GGRskim.append ( [] )
                             for j in range ( 0, aantal_zones ):
                                 if Additionele_kosten:
-                                    GGRskim[i].append (
-                                        int ( PplusRbestemmingstijdmatrix[i][j] + Vermenigvuldigingsfactor *
+                                    GGRskim[i][j] = int ( PplusRbestemmingstijdmatrix[i][j] + Vermenigvuldigingsfactor *
                                               (PplusRbestemmingsautoafstandmatrix[i][j] * (varautotarief + kmheffing) +
-                                                 Additionele_kostenmatrix[i][j] / 100  + KostenbestemmingsPplusROV[i][j])))
+                                                 Additionele_kostenmatrix[i][j] / 100  + KostenbestemmingsPplusROV[i][j]))
                                 else:
-                                    GGRskim[i].append (
-                                    int ( PplusRbestemmingstijdmatrix[i][j] + Vermenigvuldigingsfactor *
+                                    GGRskim[i][j] = int ( PplusRbestemmingstijdmatrix[i][j] + Vermenigvuldigingsfactor *
                                           (PplusRbestemmingsautoafstandmatrix[i][j] * (varautotarief + kmheffing) +
-                                            KostenbestemmingsPplusROV[i][j] )))
+                                            KostenbestemmingsPplusROV[i][j] ))
 
                         datasource.write_csv(GGRskim, 'Ervarenreistijd', 'PplusRbestemmings', ds, ink=ink, hubnaam=Hubnaam, regime=regime, mot=mot)
 
-                        GGRskim = []
-
+                        GGRskim.fill(0)
                         for i in range ( 0, aantal_zones ):
-                            GGRskim.append ( [] )
                             for j in range ( 0, aantal_zones ):
                                 if Additionele_kosten:
-                                    GGRskim[i].append (
-                                        int ( PplusRherkomsttijdmatrix + Vermenigvuldigingsfactor *
+                                    GGRskim[i][j] = int ( PplusRherkomsttijdmatrix + Vermenigvuldigingsfactor *
                                               (PplusRherkomstautoafstandmatrix[i][j] * (varautotarief + kmheffing) +
-                                                 Additionele_kostenmatrix[i][j] / 100  + KostenherkomstPplusROV[i][j])))
+                                                 Additionele_kostenmatrix[i][j] / 100  + KostenherkomstPplusROV[i][j]))
                                 else:
-                                    GGRskim[i].append (
-                                    int ( PplusRherkomsttijdmatrix[i][j] + Vermenigvuldigingsfactor *
+                                    GGRskim[i][j] = int ( PplusRherkomsttijdmatrix[i][j] + Vermenigvuldigingsfactor *
                                           (PplusRherkomstautoafstandmatrix[i][j] * (varautotarief + kmheffing) +
-                                            KostenherkomstPplusROV[i][j] )))
+                                            KostenherkomstPplusROV[i][j] ))
 
                         datasource.write_csv(GGRskim, 'Ervarenreistijd', 'PplusRherkomst', ds, ink=ink, hubnaam=Hubnaam, regime=regime, mot=mot)
