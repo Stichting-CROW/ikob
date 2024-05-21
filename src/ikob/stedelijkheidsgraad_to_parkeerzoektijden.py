@@ -1,5 +1,5 @@
 import csv
-import Routines
+from ikob.Routines import csvintlezen, csvwegschrijven
 import pathlib
 import sys
 from tkinter import filedialog
@@ -22,19 +22,16 @@ def inlezenfile(filenaam, aantal_lege_regels=0):
 
 
 def stedelijkheid_to_parkeerzoektijden(infile: pathlib.Path, outfile: pathlib.Path):
-    SGlijst = Routines.csvintlezen(infile)
+    SGlijst = csvintlezen(infile)
     header = ["Zone", "AankomstZT", "VertrekZT"]
     Parkeerzoektijdenlijst = []
-    Parkeerzoektijdenlijst.append(header)
     for i in range(len(SGlijst)):
         Omzetting = {1: 12, 2: 8, 3: 4, 4: 0, 5: 0}
         Aankomsttijd = Omzetting.get(SGlijst[i])
-        print(Aankomsttijd)
         Parkeerzoektijdenlijst.append(
             [i + 1, Omzetting.get(SGlijst[i]), int(round(Aankomsttijd / 4))]
         )
-    print(outfile)
-    Routines.csvwegschrijven(Parkeerzoektijdenlijst, outfile)
+    csvwegschrijven(Parkeerzoektijdenlijst, outfile, header)
 
 
 # TODO: Remove script interface once conversion is embedded within GUI.
