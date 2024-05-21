@@ -1,8 +1,12 @@
 import csv
 from ikob.Routines import csvintlezen, csvwegschrijven
+import logging
 import pathlib
 import sys
 from tkinter import filedialog
+
+
+logger = logging.getLogger(__name__)
 
 
 def inlezenfile(filenaam, aantal_lege_regels=0):
@@ -31,7 +35,9 @@ def stedelijkheid_to_parkeerzoektijden(infile: pathlib.Path, outfile: pathlib.Pa
         Parkeerzoektijdenlijst.append(
             [i + 1, Omzetting.get(SGlijst[i]), int(round(Aankomsttijd / 4))]
         )
+
     csvwegschrijven(Parkeerzoektijdenlijst, outfile, header)
+    logger.info("Converted: '%s' to '%s.csv'", infile, outfile)
 
 
 # TODO: Remove script interface once conversion is embedded within GUI.
