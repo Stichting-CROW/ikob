@@ -1,4 +1,3 @@
-import csv
 from ikob.Routines import csvintlezen, csvwegschrijven
 import logging
 import pathlib
@@ -7,22 +6,6 @@ from tkinter import filedialog
 
 
 logger = logging.getLogger(__name__)
-
-
-def inlezenfile(filenaam, aantal_lege_regels=0):
-    uitvoerlijst = []
-    with open(filenaam, "r") as csvfile:
-        reader = csv.reader(csvfile, delimiter=";")
-        for i in range(aantal_lege_regels):
-            next(reader)
-        for row in reader:
-            uitvoerlijst.append(row)
-    for i in range(len(uitvoerlijst)):
-        for j in range(len(uitvoerlijst[0])):
-            Tussenstring = uitvoerlijst[i][j].replace(",", ".")
-            Tussenstring = Tussenstring.replace("ï»¿", "")
-            uitvoerlijst[i][j] = int(float(Tussenstring))
-    return uitvoerlijst
 
 
 def stedelijkheid_to_parkeerzoektijden(infile: pathlib.Path, outfile: pathlib.Path):
