@@ -12,13 +12,12 @@ def stedelijkheid_to_parkeerzoektijden(infile: pathlib.Path, outfile: pathlib.Pa
     stedelijkheidsgraad = csvintlezen(infile)
     header = ["Zone", "AankomstZT", "VertrekZT"]
 
+    # TODO: This conversion is missing documentation. Why these values?
+    omzetting = {1: 12, 2: 8, 3: 4, 4: 0, 5: 0}
+
     parkeerzoektijden = []
     for i, sg in enumerate(stedelijkheidsgraad):
-        omzetting = {1: 12, 2: 8, 3: 4, 4: 0, 5: 0}
-        aankomsttijd = omzetting.get(sg)
-        parkeerzoektijden.append(
-            [i + 1, omzetting.get(sg), int(round(aankomsttijd / 4))]
-        )
+        parkeerzoektijden.append([i + 1, omzetting[sg], round(omzetting[sg] / 4)])
 
     csvwegschrijven(parkeerzoektijden, outfile, header)
     logger.info("Converted: '%s' to '%s.csv'", infile, outfile)
