@@ -9,18 +9,18 @@ logger = logging.getLogger(__name__)
 
 
 def stedelijkheid_to_parkeerzoektijden(infile: pathlib.Path, outfile: pathlib.Path):
-    SGlijst = csvintlezen(infile)
+    stedelijkheidsgraad = csvintlezen(infile)
     header = ["Zone", "AankomstZT", "VertrekZT"]
-    Parkeerzoektijdenlijst = []
-    for i in range(len(SGlijst)):
+    Parkeerzoektijden = []
+    for i, sg in enumerate(stedelijkheidsgraad):
         Omzetting = {1: 12, 2: 8, 3: 4, 4: 0, 5: 0}
-        Aankomsttijd = Omzetting.get(SGlijst[i])
-        Parkeerzoektijdenlijst.append(
-            [i + 1, Omzetting.get(SGlijst[i]), int(round(Aankomsttijd / 4))]
+        Aankomsttijd = Omzetting.get(sg)
+        Parkeerzoektijden.append(
+            [i + 1, Omzetting.get(sg), int(round(Aankomsttijd / 4))]
         )
 
-    csvwegschrijven(Parkeerzoektijdenlijst, outfile, header)
     logger.info("Converted: '%s' to '%s.csv'", infile, outfile)
+    csvwegschrijven(Parkeerzoektijden, outfile, header)
 
 
 # TODO: Remove script interface once conversion is embedded within GUI.
