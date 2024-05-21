@@ -1,5 +1,5 @@
 from ikob.stedelijkheidsgraad_to_parkeerzoektijden import (
-    stedelijkheid_to_parkeerzoektijden,
+    stedelijkheidfile_to_parkeerzoektijdenfile,
 )
 
 from tests.test_end_to_end import is_equal_file
@@ -12,6 +12,5 @@ def test_stedelijkheid_converter(tmp_path):
     reference = pathlib.Path("tests/vlaanderen/SEGS/Parkeerzoektijd.csv")
     result = tmp_path.with_suffix(".csv")
 
-    stedelijkheid_to_parkeerzoektijden(input, tmp_path)
-
+    stedelijkheidfile_to_parkeerzoektijdenfile(input, tmp_path)
     assert is_equal_file(result, reference)
