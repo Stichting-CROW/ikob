@@ -72,18 +72,23 @@ def test_end_to_end(case):
     test_dir = pathlib.Path("tests")
     project_dir = test_dir.joinpath(case).resolve()
     project = project_dir.joinpath(f"{case}.json")
-    result_dir = project_dir.joinpath(case).joinpath("Resultaten")
+
+    compare_paths = [f"{case}/Resultaten", "Basis"]
+    compare_dirs = [project_dir / path for path in compare_paths]
 
     # Delete old results if still present
-    remove_directory(result_dir)
+    for result_dir in compare_dirs:
+        remove_directory(result_dir)
 
     # End-to-end test should not skip any steps: all scripts should pass.
     skip_tests = [False for _ in stappen]
     for step, result in run_scripts(project, skip_tests):
         assert result is None, f"Step {step} should pass."
 
-    reference_dir = project_dir.joinpath("reference").joinpath("Resultaten")
-    assert compare_directories(result_dir, reference_dir)
+    for result_dir in compare_dirs:
+        reference_dir = project_dir / "reference" / result_dir.stem
+        assert compare_directories(result_dir, reference_dir)
 
     # Clean up files if test succeeds
-    remove_directory(result_dir)
+    for result_dir in compare_dirs:
+        remove_directory(result_dir)
