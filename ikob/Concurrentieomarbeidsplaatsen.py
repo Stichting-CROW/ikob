@@ -3,112 +3,6 @@ import Berekeningen
 import os
 
 
-def Lijstvolnullen(lengte) :
-    print ('Lengtelijstvolnullen is ', lengte)
-    Lijst = []
-    for i in range (lengte) :
-        Lijst.append(0)
-    return Lijst
-
-def inkomensgroepbepalen(naam):
-    if naam[-4:] == 'hoog':
-        if naam[-10:] == 'middelhoog':
-            return 'middelhoog'
-        else:
-            return 'hoog'
-    elif naam[-4:] == 'laag':
-        if naam[-10:] == 'middellaag':
-            return 'middellaag'
-        else:
-            return 'laag'
-    else:
-        return ''
-
-def vindvoorkeur(naam, mod):
-    if 'vk' in naam:
-        Beginvk = naam.find ('vk')
-        if naam[Beginvk + 2] == "A":
-            return 'Auto'
-        elif naam[Beginvk + 2] == "N":
-            return 'Neutraal'
-        elif naam[Beginvk + 2] == "O":
-            return 'OV'
-        elif naam[Beginvk + 2] == "F":
-            return 'Fiets'
-        else:
-            return ''
-    elif 'GratisAuto' in naam:
-        if 'GratisAuto_GratisOV' in naam and 'OV' in mod and 'Auto' in mod:
-            return 'Neutraal'
-        else:
-            if 'Auto' in mod:
-                return 'Auto'
-            else:
-                return 'OV'
-    elif 'GratisOV' in naam:
-        return 'OV'
-    else:
-        return ''
-
-def enkelegroep(mod, gr) :
-    if mod == 'Auto':
-        if 'GratisAuto' in gr:
-            return 'GratisAuto'
-        elif 'Wel' in gr:
-            return 'Auto'
-        if 'GeenAuto' in gr:
-            return 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            return 'GeenRijbewijs'
-    if mod == 'OV':
-        if 'GratisOV' in gr:
-            return 'GratisOV'
-        else:
-            return 'OV'
-
-def combigroep(mod, gr) :
-    string = ''
-    if 'Auto' in mod:
-        if 'GratisAuto' in gr:
-            string = 'GratisAuto'
-        elif 'Wel' in gr:
-            string = 'Auto'
-        if 'GeenAuto' in gr:
-            string = 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            string = 'GeenRijbewijs'
-    if 'OV' in mod:
-        if 'GratisOV' in gr:
-            if string == '':
-                string = string + 'GratisOV'
-            else:
-                string = string + '_GratisOV'
-        else:
-            if string == '':
-                string = string + 'OV'
-            else:
-                string = string + '_OV'
-    if 'EFiets' in mod:
-        string = string + '_EFiets'
-    elif 'Fiets' in mod:
-        string = string + '_Fiets'
-    return string
-
-
-def bereken_concurrentie (Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen):
-    Dezegroeplijst = []
-    Arbeidsplaatsentrans = Berekeningen.Transponeren ( Arbeidsplaatsen )
-    for i in range ( len ( Matrix ) ):
-        Gewogenmatrix = []
-        for Getal1, Getal2, Getal3 in zip ( Matrix[i], Bereik, Arbeidsplaatsentrans[inkgroepen.index ( inkgr )] ):
-            if Getal2 > 0:
-                Gewogenmatrix.append ( Getal1 * Getal3 / Getal2 )
-            else :
-                Gewogenmatrix.append (0)
-        Dezegroeplijst.append ( sum ( Gewogenmatrix ) )
-    return Dezegroeplijst
-
-
 def concurrentie_om_arbeidsplaatsen(config):
     Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
     project_config = config['project']
@@ -203,7 +97,7 @@ def concurrentie_om_arbeidsplaatsen(config):
         Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_{Doelgroep}')
         Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
         print('Verdelingsmatrix 4 is', Verdelingsmatrix[4])
-        Verdelingstransmatrix = Berekeningen.Transponeren(Verdelingsmatrix)
+        Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
 
         for ds in dagsoort:
             Combinatiedirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', 'Combinaties', ds)
@@ -221,12 +115,12 @@ def concurrentie_om_arbeidsplaatsen(config):
                 # Eerst de fiets
                 print ( 'We zijn het nu aan het uitrekenen voor de inkomensgroep', inkgr )
                 for mod in modaliteiten:
-                    Bijhoudlijst = Lijstvolnullen(len(Arbeidsplaatsen))
+                    Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaatsen))
                     for gr in Groepen:
                         print ( 'Bezig met Groep ', gr )
-                        ink = inkomensgroepbepalen ( gr )
+                        ink = Routines.inkomensgroepbepalen ( gr )
                         if inkgr == ink or inkgr == 'alle':
-                            vk = vindvoorkeur ( gr, mod )
+                            vk = Routines.vindvoorkeur ( gr, mod )
                             if mod == 'Fiets' or mod == 'EFiets':
                                 if vk == 'Fiets':
                                     vkklad = 'Fiets'
@@ -238,7 +132,7 @@ def concurrentie_om_arbeidsplaatsen(config):
                                 print ( 'Lengte Fietsmatrix is', len ( Fietsmatrix ) )
                                 Bereikfilenaam = os.path.join(Herkomstendirectory,f'Totaal_{mod}_{inkgr}')
                                 Bereik = Routines.csvintlezen (Bereikfilenaam)
-                                Dezegroeplijst = bereken_concurrentie ( Fietsmatrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                Dezegroeplijst = Berekeningen.bereken_concurrentie ( Fietsmatrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
 
                                 for i in range ( 0, len ( Fietsmatrix ) ):
                                     if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
@@ -247,7 +141,7 @@ def concurrentie_om_arbeidsplaatsen(config):
                                         Bijhoudlijst[i] +=  Bijhoudklad
 
                             elif mod == 'Auto' :
-                                String = enkelegroep ( mod, gr )
+                                String = Routines.enkelegroep ( mod, gr )
                                 print ( String )
                                 if 'WelAuto' in gr:
                                     for srtbr in soortbrandstof:
@@ -257,7 +151,7 @@ def concurrentie_om_arbeidsplaatsen(config):
                                         Matrix = Routines.csvlezen(AutoFilenaam)
                                         Bereikfilenaam = os.path.join(Herkomstendirectory,f'Totaal_{mod}_{inkgr}')
                                         Bereik = Routines.csvintlezen (Bereikfilenaam)
-                                        Dezegroeplijst1 = bereken_concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                        Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr) / 100
                                             print('aandeel elektrisch is', K)
@@ -278,21 +172,21 @@ def concurrentie_om_arbeidsplaatsen(config):
                                     Matrix = Routines.csvlezen(AutoFilenaam)
                                     Bereikfilenaam = os.path.join(Herkomstendirectory, f'Totaal_{mod}_{inkgr}')
                                     Bereik = Routines.csvintlezen(Bereikfilenaam)
-                                    Dezegroeplijst = bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                    Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                     for i in range(len(Matrix)):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                             Bijhoudklad = Dezegroeplijst[i] * Verdelingsmatrix[i][Groepen.index(gr)]/\
                                                       Inkomensverdeling[i][inkgroepen.index(inkgr)]
                                             Bijhoudlijst[i] += Bijhoudklad
                             elif mod == 'OV':
-                                String = enkelegroep(mod, gr)
+                                String = Routines.enkelegroep(mod, gr)
                                 print(String)
                                 OVFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
                                 print('Filenaam is', OVFilenaam)
                                 Matrix = Routines.csvlezen(OVFilenaam)
                                 Bereikfilenaam = os.path.join(Herkomstendirectory, f'Totaal_{mod}_{inkgr}')
                                 Bereik = Routines.csvintlezen(Bereikfilenaam)
-                                Dezegroeplijst = bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                 for i in range(len(Matrix)):
                                     if Inkomensverdeling[i][inkgroepen.index(inkgr)] > 0:
                                         Bijhoudklad = Dezegroeplijst[i] * Verdelingsmatrix[i][Groepen.index(gr)] / \
@@ -300,7 +194,7 @@ def concurrentie_om_arbeidsplaatsen(config):
                                         Bijhoudlijst[i] += Bijhoudklad
 
                             else:
-                                String = combigroep(mod, gr)
+                                String = Routines.combigroep(mod, gr)
                                 print('de gr is', gr)
                                 print('de string is', String)
                                 if String[0] == 'A':
@@ -311,7 +205,7 @@ def concurrentie_om_arbeidsplaatsen(config):
                                         Matrix = Routines.csvlezen(CombiFilenaam)
                                         Bereikfilenaam = os.path.join ( Herkomstendirectory, f'Totaal_{mod}_{inkgr}' )
                                         Bereik = Routines.csvintlezen ( Bereikfilenaam )
-                                        Dezegroeplijst1 = bereken_concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                        Dezegroeplijst1 = Berekeningen.bereken_concurrentie ( Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr)/100
                                             DezegroeplijstE = [x * K for x in Dezegroeplijst1]
@@ -330,7 +224,7 @@ def concurrentie_om_arbeidsplaatsen(config):
                                     Matrix = Routines.csvlezen ( CombiFilenaam )
                                     Bereikfilenaam = os.path.join(Herkomstendirectory, f'Totaal_{mod}_{inkgr}')
                                     Bereik = Routines.csvintlezen(Bereikfilenaam)
-                                    Dezegroeplijst = bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                    Dezegroeplijst = Berekeningen.bereken_concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
                                     for i in range (len(Matrix)):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                             Bijhoudklad = Dezegroeplijst[i] * Verdelingsmatrix[i][Groepen.index(gr)]/\
@@ -345,7 +239,7 @@ def concurrentie_om_arbeidsplaatsen(config):
                     Totaalmodfilenaam = os.path.join ( Concurrentiedirectory, f'Totaal_{mod}_{inkgr}' )
                     Totaalrij = Routines.csvlezen ( Totaalmodfilenaam )
                     Generaaltotaal_potenties.append ( Totaalrij )
-                    Generaaltotaaltrans = Berekeningen.Transponeren ( Generaaltotaal_potenties )
+                    Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
                     Uitvoerfilenaam = os.path.join ( Concurrentiedirectory, f'Ontpl_conc_{inkgr}' )
                     Routines.csvwegschrijvenmetheader ( Generaaltotaaltrans, Uitvoerfilenaam, headstring )
                     Routines.xlswegschrijven ( Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel )
@@ -360,7 +254,7 @@ def concurrentie_om_arbeidsplaatsen(config):
                     Totaalmodfilenaam = os.path.join (Concurrentiedirectory, f'Totaal_{mod}_{inkgr}')
                     Totaalrij = Routines.csvlezen(Totaalmodfilenaam)
                     Generaalmatrix.append(Totaalrij)
-                    Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+                    Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                 for i in range (len(Inwonersperklasse)):
                     Generaalmatrixproduct.append([])
                     for j in range (len(Inwonersperklasse[0])):

@@ -2,29 +2,6 @@ import Routines
 import os
 
 
-def minmaxmatrix(matrix1, matrix2, minmax="max"):
-    eindmatrix = []
-    for i in range(0, len(matrix1)):
-        eindmatrix.append([])
-        for j in range(0, len(matrix1)):
-            if minmax == "max":
-                eindmatrix[i].append(max(matrix1[i][j], matrix2[i][j]))
-            else:
-                eindmatrix[i].append(min(matrix1[i][j], matrix2[i][j]))
-    return eindmatrix
-
-
-def minmaxmatrix3(matrix1, matrix2, matrix3, minmax="max"):
-    eindmatrix = []
-    for i in range(0, len(matrix1)):
-        eindmatrix.append([])
-        for j in range(0, len(matrix1)):
-            if minmax == "max":
-                eindmatrix[i].append(max(matrix1[i][j], matrix2[i][j], matrix3[i][j]))
-            else:
-                eindmatrix[i].append(min(matrix1[i][j], matrix2[i][j], matrix3[i][j]))
-    return eindmatrix
-
 def kanvoorkeur(soortauto, soortOV, voorkeur) :
     if soortauto == 'GeenAuto' or soortauto == 'GeenRijbewijs':
         if voorkeur == 'Auto':
@@ -57,14 +34,14 @@ def kanvoorkeur(soortauto, soortOV, voorkeur) :
         return True
 
 def Maxberekenen_en_wegschrijven (Directory,Matrix1, Matrix2,mod1, mod2,vk,ink):
-    Maxmatrix = minmaxmatrix ( Matrix1, Matrix2 )
+    Maxmatrix = Routines.minmaxmatrix ( Matrix1, Matrix2 )
     Uitvoerfilenaam = os.path.join (Directory, f'{mod1}_{mod2}_vk{vk}_{ink}')
     print ('Uitvoerfilenaam is', Uitvoerfilenaam)
     Routines.csvwegschrijven ( Maxmatrix, Uitvoerfilenaam )
     return
 
 def Maxberekenen_en_wegschrijvenvan3 (Directory, Matrix1, Matrix2, Matrix3, mod1, mod2, mod3, vk,ink):
-    Maxmatrix = minmaxmatrix3 ( Matrix1, Matrix2, Matrix3 )
+    Maxmatrix = Routines.minmaxmatrix3 ( Matrix1, Matrix2, Matrix3 )
     Uitvoerfilenaam = os.path.join (Directory, f'{mod1}_{mod2}_{mod3}_vk{vk}_{ink}')
     Routines.csvwegschrijven ( Maxmatrix, Uitvoerfilenaam )
     return

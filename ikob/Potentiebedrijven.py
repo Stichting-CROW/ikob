@@ -3,96 +3,6 @@ import Berekeningen
 import os
 
 
-def Lijstvolnullen(lengte):
-    Lijst = [] 
-    for i in range (lengte) :
-        Lijst.append(0)
-    return Lijst
-
-def inkomensgroepbepalen(naam):
-    if naam[-4:] == 'hoog':
-        if naam[-10:] == 'middelhoog':
-            return 'middelhoog'
-        else:
-            return 'hoog'
-    elif naam[-4:] == 'laag':
-        if naam[-10:] == 'middellaag':
-            return 'middellaag'
-        else:
-            return 'laag'
-    else:
-        return ''
-
-def vindvoorkeur(naam, mod):
-    if 'vk' in naam:
-        Beginvk = naam.find ('vk')
-        if naam[Beginvk + 2] == "A":
-            return 'Auto'
-        elif naam[Beginvk + 2] == "N":
-            return 'Neutraal'
-        elif naam[Beginvk + 2] == "O":
-            return 'OV'
-        elif naam[Beginvk + 2] == "F":
-            return 'Fiets'
-        else:
-            return ''
-    elif 'GratisAuto' in naam:
-        if 'GratisAuto_GratisOV' in naam and 'OV' in mod and 'Auto' in mod:
-            return 'Neutraal'
-        else:
-            if 'Auto' in mod:
-                return 'Auto'
-            else:
-                return 'OV'
-    elif 'GratisOV' in naam:
-        return 'OV'
-    else:
-        return ''
-
-def enkelegroep(mod, gr) :
-    if mod == 'Auto':
-        if 'GratisAuto' in gr:
-            return 'GratisAuto'
-        elif 'Wel' in gr:
-            return 'Auto'
-        if 'GeenAuto' in gr:
-            return 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            return 'GeenRijbewijs'
-    if mod == 'OV':
-        if 'GratisOV' in gr:
-            return 'GratisOV'
-        else:
-            return 'OV'
-
-def combigroep(mod, gr) :
-    string = ''
-    if 'Auto' in mod:
-        if 'GratisAuto' in gr:
-            string = 'GratisAuto'
-        elif 'Wel' in gr:
-            string = 'Auto'
-        if 'GeenAuto' in gr:
-            string = 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            string = 'GeenRijbewijs'
-    if 'OV' in mod:
-        if 'GratisOV' in gr:
-            if string == '':
-                string = string + 'GratisOV'
-            else:
-                string = string + '_GratisOV'
-        else:
-            if string == '':
-                string = string + 'OV'
-            else:
-                string = string + '_OV'
-    if 'EFiets' in mod:
-        string = string + '_EFiets'
-    elif 'Fiets' in mod:
-        string = string + '_Fiets'
-    return string
-
 def inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking):
     Inwonersfile = []
     for i in range (len(Beroepsbevolking)) :
@@ -199,7 +109,7 @@ def potentie_bedrijven(config):
     print ('Lengte inwoners is', len(Beroepsbevolking))
 
     Inwoners = inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking)
-    Inwonerstransmatrix = Berekeningen.Transponeren(Inwoners)
+    Inwonerstransmatrix = Routines.transponeren(Inwoners)
 
     for mot in motieven:
         if mot == 'werk':
@@ -212,7 +122,7 @@ def potentie_bedrijven(config):
                                               f'Verdeling_over_groepen_{Doelgroep}_alleen_autobezit')
         Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
         print('Verdelingsmatrix 4 is', Verdelingsmatrix[4])
-        Verdelingstransmatrix = Berekeningen.Transponeren(Verdelingsmatrix)
+        Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
 
     for ds in dagsoort:
         Combinatiedirectory = os.path.join ( Basisdirectory, regime, motieven[0] , 'Gewichten', 'Combinaties', ds )
@@ -229,11 +139,11 @@ def potentie_bedrijven(config):
             #Eerst de fiets
             print('We zijn het nu aan het uitrekenen voor de inkomensgroep', inkgr)
             for mod in modaliteiten:
-                Bijhoudlijst = Lijstvolnullen(len(Beroepsbevolking))
+                Bijhoudlijst = Routines.lijstvolnullen(len(Beroepsbevolking))
                 for gr in Groepen:
-                    ink = inkomensgroepbepalen ( gr )
+                    ink = Routines.inkomensgroepbepalen ( gr )
                     if inkgr == ink or inkgr == 'alle':
-                        vk = vindvoorkeur (gr, mod)
+                        vk = Routines.vindvoorkeur (gr, mod)
                         if mod == 'Fiets' or mod == 'EFiets':
                             if vk == 'Fiets':
                                 vkklad = 'Fiets'
@@ -247,7 +157,7 @@ def potentie_bedrijven(config):
                             for i in range(0, len(Fietsmatrix) ):
                                 Bijhoudlijst[i]+= round(Dezegroeplijst[i])
                         elif mod == 'Auto':
-                            String = enkelegroep(mod, gr)
+                            String = Routines.enkelegroep(mod, gr)
                             print(String)
                             if 'WelAuto' in gr:
                                 for srtbr in soortbrandstof:
@@ -277,7 +187,7 @@ def potentie_bedrijven(config):
                                 print('Bijhoudlijst niet fossiel is:', Bijhoudlijst)
 
                         elif mod == 'OV':
-                            String = enkelegroep (mod,gr)
+                            String = Routines.enkelegroep (mod,gr)
                             print (String)
                             Filenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
                             Matrix = Routines.csvlezen(Filenaam)
@@ -285,7 +195,7 @@ def potentie_bedrijven(config):
                             for i in range(0, len(Matrix) ):
                                 Bijhoudlijst[i]+= round(Dezegroeplijst[i])
                         else:
-                            String = combigroep(mod, gr)
+                            String = Routines.combigroep(mod, gr)
                             print('de gr is', gr)
                             print('de string is', String)
                             if String[0] == 'A':
@@ -320,7 +230,7 @@ def potentie_bedrijven(config):
                 Totaalmodfilenaam = os.path.join (Totalendirectoryherkomsten, f'Totaal_{mod}_{inkgr}')
                 Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
                 Generaaltotaal_potenties.append(Totaalrij)
-            Generaaltotaaltrans = Berekeningen.Transponeren(Generaaltotaal_potenties)
+            Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
             Uitvoerfilenaam = os.path.join(Totalendirectoryherkomsten, f'Pot_totaal_{inkgr}')
             Routines.csvwegschrijvenmetheader(Generaaltotaaltrans, Uitvoerfilenaam, headstring)
             Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel)
@@ -334,7 +244,7 @@ def potentie_bedrijven(config):
                 Totaalmodfilenaam = os.path.join (Totalendirectoryherkomsten, f'Totaal_{mod}_{inkgr}')
                 Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
                 Generaalmatrix.append(Totaalrij)
-            Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+            Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
             for i in range (len(Arbeidsplaatsenperklasse)):
                 Generaalmatrixproduct.append([])
                 for j in range (len(Arbeidsplaatsenperklasse[0])):

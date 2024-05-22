@@ -3,97 +3,6 @@ import Berekeningen
 import os
 
 
-def inkomensgroepbepalen(naam):
-    if naam[-4:] == 'hoog':
-        if naam[-10:] == 'middelhoog':
-            return 'middelhoog'
-        else:
-            return 'hoog'
-    elif naam[-4:] == 'laag':
-        if naam[-10:] == 'middellaag':
-            return 'middellaag'
-        else:
-            return 'laag'
-    else:
-        return ''
-
-def vindvoorkeur(naam, mod):
-    if 'vk' in naam:
-        Beginvk = naam.find ('vk')
-        if naam[Beginvk + 2] == "A":
-            return 'Auto'
-        elif naam[Beginvk + 2] == "N":
-            return 'Neutraal'
-        elif naam[Beginvk + 2] == "O":
-            return 'OV'
-        elif naam[Beginvk + 2] == "F":
-            return 'Fiets'
-        else:
-            return ''
-    elif 'GratisAuto' in naam:
-        if 'GratisAuto_GratisOV' in naam and 'OV' in mod and 'Auto' in mod:
-            return 'Neutraal'
-        else:
-            if 'Auto' in mod:
-                return 'Auto'
-            else:
-                return 'OV'
-    elif 'GratisOV' in naam:
-        return 'OV'
-    else:
-        return ''
-
-def enkelegroep(mod, gr) :
-    if mod == 'Auto':
-        if 'GratisAuto' in gr:
-            return 'GratisAuto'
-        elif 'Wel' in gr:
-            return 'Auto'
-        if 'GeenAuto' in gr:
-            return 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            return 'GeenRijbewijs'
-    if mod == 'OV':
-        if 'GratisOV' in gr:
-            return 'GratisOV'
-        else:
-            return 'OV'
-
-def combigroep(mod, gr) :
-    string = ''
-    if 'Auto' in mod:
-        if 'GratisAuto' in gr:
-            string = 'GratisAuto'
-        elif 'Wel' in gr:
-            string = 'Auto'
-        if 'GeenAuto' in gr:
-            string = 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            string = 'GeenRijbewijs'
-    if 'OV' in mod:
-        if 'GratisOV' in gr:
-            if string == '':
-                string = string + 'GratisOV'
-            else:
-                string = string + '_GratisOV'
-        else:
-            if string == '':
-                string = string + 'OV'
-            else:
-                string = string + '_OV'
-    if 'EFiets' in mod:
-        string = string + '_EFiets'
-    elif 'Fiets' in mod:
-        string = string + '_Fiets'
-    return string
-
-
-def Lijstvolnullen(lengte) :
-    Lijst = [] 
-    for i in range (lengte) :
-        Lijst.append(0)
-    return Lijst
-
 def bereken_potenties (Matrix, Arbeidsplaatsen, Beroepsbevolkingsverdeling, Beroepsbevolkingaandeel, inkgr, gr, inkgroepen, Groepen):
     Dezegroeplijst = []
     for i in range ( len ( Matrix ) ):
@@ -204,7 +113,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
         Arbeidsplaatsenfilenaam = os.path.join(SEGSdirectory, scenario, f'Leerlingenplaatsen')
         print(Arbeidsplaatsenfilenaam)
         Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
-        Arbeidsplaatsen = Berekeningen.Transponeren(Arbeidsplaats)
+        Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
         print('Lengte Leerlingenplaatsen is', len(Arbeidsplaats))
     else:
         Beroepsbevolkingperklassenaam = os.path.join (SEGSdirectory, scenario, f'Beroepsbevolking_inkomensklasse')
@@ -213,7 +122,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
         Arbeidsplaatsenfilenaam = os.path.join(SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
         print(Arbeidsplaatsenfilenaam)
         Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
-        Arbeidsplaatsen = Berekeningen.Transponeren(Arbeidsplaats)
+        Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
         print('Lengte arbeidsplaatsen is', len(Arbeidsplaats))
     for i in range(len(Beroepsbevolkingperklasse)):
         Beroepsbevolkingtotalen.append(sum(Beroepsbevolkingperklasse[i]))
@@ -237,7 +146,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                 Inkomensverdeling[i].append(Beroepsbevolkingperklasse[i][j]/Beroepsbevolkingtotalen[i])
             else:
                 Inkomensverdeling[i].append (0)
-    Inkomenstransverdeling = Berekeningen.Transponeren (Inkomensverdeling)
+    Inkomenstransverdeling = Routines.transponeren (Inkomensverdeling)
 
     for abg in autobezitgroepen:
         for mot in motieven:
@@ -253,7 +162,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                 Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_{Doelgroep}_alleen_autobezit')
             Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
             print('Verdelingsmatrix 4 is', Verdelingsmatrix[4])
-            Verdelingstransmatrix = Berekeningen.Transponeren(Verdelingsmatrix)
+            Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
             for ds in dagsoort:
                 Combinatiedirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', 'Combinaties', ds )
                 Enkelemodaliteitdirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', ds )
@@ -271,11 +180,11 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                     #Eerst de fiets
                     print('We zijn het nu aan het uitrekenen voor de inkomensgroep', inkgr)
                     for mod in modaliteiten:
-                        Bijhoudlijst = Lijstvolnullen(len(Arbeidsplaats))
+                        Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaats))
                         for gr in Groepen:
-                            ink = inkomensgroepbepalen ( gr )
+                            ink = Routines.inkomensgroepbepalen ( gr )
                             if inkgr == ink or inkgr == 'alle':
-                                vk = vindvoorkeur (gr, mod)
+                                vk = Routines.vindvoorkeur (gr, mod)
                                 if mod == 'Fiets' or mod == 'EFiets':
                                     if vk == 'Fiets':
                                         vkklad = 'Fiets'
@@ -294,7 +203,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                     for i in range(0, len(Fietsmatrix) ):
                                         Bijhoudlijst[i]+= int(Dezegroeplijst[i])
                                 elif mod == 'Auto':
-                                    String = enkelegroep (mod,gr)
+                                    String = Routines.enkelegroep (mod,gr)
                                     print (String)
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
@@ -340,7 +249,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                         print ('Bijhoudlijst niet fossiel is:',Bijhoudlijst)
                                 elif mod == 'OV':
-                                    String = enkelegroep(mod, gr)
+                                    String = Routines.enkelegroep(mod, gr)
                                     print(String)
                                     OVFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
                                     print('Filenaam is', OVFilenaam)
@@ -359,7 +268,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                         Bijhoudlijst[i] += int(Dezegroeplijst[i])
 
                                 else:
-                                    String = combigroep (mod,gr)
+                                    String = Routines.combigroep (mod,gr)
                                     print ('de gr is', gr)
                                     print ('de string is', String)
                                     if String[0] == 'A':
@@ -411,7 +320,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                         Totaalmodfilenaam = os.path.join (Totalendirectorybestemmingen, f'Totaal_{mod}_{inkgr}')
                         Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
                         Generaaltotaal_potenties.append(Totaalrij)
-                    Generaaltotaaltrans = Berekeningen.Transponeren(Generaaltotaal_potenties)
+                    Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
                     Uitvoerfilenaam = os.path.join(Totalendirectorybestemmingen, f'Ontpl_totaal_{inkgr}')
                     Routines.csvwegschrijvenmetheader(Generaaltotaaltrans, Uitvoerfilenaam, headstring)
                     Routines.xlswegschrijven(Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel)
@@ -425,7 +334,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                         Totaalrij = Routines.csvintlezen(Totaalmodfilenaam)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
-                        Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+                        Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                     else:
                         Generaaltotaaltrans = Generaalmatrix
                     for i in range (len(Beroepsbevolkingperklasse)):

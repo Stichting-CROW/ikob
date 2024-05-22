@@ -83,118 +83,10 @@ for i in range (len(Beroepsbevolkingperklasse)):
             Inkomensverdeling[i].append(Beroepsbevolkingperklasse[i][j]/Beroepsbevolkingtotalen[i])
         else:
             Inkomensverdeling[i].append (0)
-Inkomenstransverdeling = Berekeningen.Transponeren (Inkomensverdeling)
+Inkomenstransverdeling = Routines.transponeren (Inkomensverdeling)
 
 Arbeidsplaatsenfilenaam = os.path.join (SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
 Arbeidsplaatsen = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
-
-
-def Lijstvolnullen(lengte=len(Arbeidsplaatsen)) :
-    print ('Lengtelijstvolnullen is ', lengte)
-    Lijst = []
-    for i in range (lengte) :
-        Lijst.append(0)
-    return Lijst
-
-def inkomensgroepbepalen(naam):
-    if naam[-4:] == 'hoog':
-        if naam[-10:] == 'middelhoog':
-            return 'middelhoog'
-        else:
-            return 'hoog'
-    elif naam[-4:] == 'laag':
-        if naam[-10:] == 'middellaag':
-            return 'middellaag'
-        else:
-            return 'laag'
-    else:
-        return ''
-
-def vindvoorkeur(naam, mod):
-    if 'vk' in naam:
-        Beginvk = naam.find ('vk')
-        if naam[Beginvk + 2] == "A":
-            return 'Auto'
-        elif naam[Beginvk + 2] == "N":
-            return 'Neutraal'
-        elif naam[Beginvk + 2] == "O":
-            return 'OV'
-        elif naam[Beginvk + 2] == "F":
-            return 'Fiets'
-        else:
-            return ''
-    elif 'GratisAuto' in naam:
-        if 'GratisAuto_GratisOV' in naam and 'OV' in mod and 'Auto' in mod:
-            return 'Neutraal'
-        else:
-            if 'Auto' in mod:
-                return 'Auto'
-            else:
-                return 'OV'
-    elif 'GratisOV' in naam:
-        return 'OV'
-    else:
-        return ''
-
-def enkelegroep(mod, gr) :
-    if mod == 'Auto':
-        if 'GratisAuto' in gr:
-            return 'GratisAuto'
-        elif 'Wel' in gr:
-            return 'Auto'
-        if 'GeenAuto' in gr:
-            return 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            return 'GeenRijbewijs'
-    if mod == 'OV':
-        if 'GratisOV' in gr:
-            return 'GratisOV'
-        else:
-            return 'OV'
-
-def combigroep(mod, gr) :
-    string = ''
-    if 'Auto' in mod:
-        if 'GratisAuto' in gr:
-            string = 'GratisAuto'
-        elif 'Wel' in gr:
-            string = 'Auto'
-        if 'GeenAuto' in gr:
-            string = 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            string = 'GeenRijbewijs'
-    if 'OV' in mod:
-        if 'GratisOV' in gr:
-            if string == '':
-                string = string + 'GratisOV'
-            else:
-                string = string + '_GratisOV'
-        else:
-            if string == '':
-                string = string + 'OV'
-            else:
-                string = string + '_OV'
-    if 'EFiets' in mod:
-        string = string + '_EFiets'
-    elif 'Fiets' in mod:
-        string = string + '_Fiets'
-    return string
-
-
-
-def bereken_concurrentie (Matrix, Beroepsbevolking, Bereik, inkgr):
-    Dezegroeplijst = []
-    Beroepsbevolkingtrans = Berekeningen.Transponeren ( Beroepsbevolking )
-    for i in range ( len ( Matrix ) ):
-        Gewogenmatrix = []
-        for Getal1, Getal2, Getal3 in zip ( Matrix[i], Bereik, Beroepsbevolkingtrans[inkgroepen.index ( inkgr )] ):
-            if Getal2 > 0:
-                Gewogenmatrix.append ( Getal1 * Getal3 / Getal2 )
-            else :
-                Gewogenmatrix.append (0)
-        Dezegroeplijst.append ( sum ( Gewogenmatrix ) )
-    return Dezegroeplijst
-
 
 
 for ca in conc_afstand:
@@ -205,7 +97,7 @@ for ca in conc_afstand:
             else:
                 Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_alleen_autobezit')
             Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
-            Verdelingstransmatrix = Berekeningen.Transponeren(Verdelingsmatrix)
+            Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
             for mot in motieven:
                 if mot == 'werk':
                     Bestemmingen = Arbeidsplaatsen
@@ -226,12 +118,12 @@ for ca in conc_afstand:
                         # Eerst de fiets
                         print ( 'We zijn het nu aan het uitrekenen voor de inkomensgroep', inkgr )
                         for mod in modaliteiten:
-                            Bijhoudlijst = Lijstvolnullen ( )
+                            Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaatsen))
                             for gr in Groepen:
                                 print ( 'Bezig met Groep ', gr )
-                                ink = inkomensgroepbepalen ( gr )
+                                ink = Routines.inkomensgroepbepalen ( gr )
                                 if inkgr == ink or inkgr == 'alle':
-                                    vk = vindvoorkeur ( gr, mod )
+                                    vk = Routines.vindvoorkeur ( gr, mod )
                                     if mod == 'Fiets' or mod == 'EFiets':
 
                                         if vk == 'Fiets':
@@ -244,31 +136,31 @@ for ca in conc_afstand:
                                         print ( 'Lengte Fietsmatrix is', len ( Fietsmatrix ) )
                                         Bereikfilenaam = os.path.join(Bestemmingendirectory,f'Totaal_{mod}_{inkgr}')
                                         Bereik = Routines.csvintlezen (Bereikfilenaam)
-                                        Dezegroeplijst = bereken_concurrentie ( Fietsmatrix, Beroepsbevolkingperklasse, Bereik, inkgr)
+                                        Dezegroeplijst = Berekeningen.bereken_concurrentie ( Fietsmatrix, Beroepsbevolkingperklasse, Bereik, inkgr, inkgroepen)
 
                                         for i in range ( 0, len ( Fietsmatrix ) ):
                                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                                 Bijhoudlijst[i] += Dezegroeplijst[i]
 
                                     elif mod == 'Auto' or mod == 'OV':
-                                        String = enkelegroep(mod, gr)
+                                        String = Routines.enkelegroep(mod, gr)
                                         print ( String )
                                         Filenaam = os.path.join ( Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}' )
                                         Matrix = Routines.csvlezen ( Filenaam )
                                         Bereikfilenaam = os.path.join(Bestemmingendirectory,f'Totaal_{mod}_{inkgr}')
                                         Bereik = Routines.csvintlezen (Bereikfilenaam)
-                                        Dezegroeplijst = bereken_concurrentie ( Matrix, Beroepsbevolkingperklasse, Bereik, inkgr)
+                                        Dezegroeplijst = Berekeningen.bereken_concurrentie ( Matrix, Beroepsbevolkingperklasse, Bereik, inkgr, inkgroepen)
                                         for i in range ( 0, len ( Matrix ) ):
                                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                                 Bijhoudlijst[i] += Dezegroeplijst[i]
                                     else:
-                                        String = combigroep ( mod, gr )
+                                        String = Routines.combigroep ( mod, gr )
                                         print ( String )
                                         Filenaam = os.path.join ( Combinatiedirectory, f'{String}_vk{vk}_{ink}' )
                                         Matrix = Routines.csvlezen ( Filenaam )
                                         Bereikfilenaam = os.path.join ( Bestemmingendirectory, f'Totaal_{mod}_{inkgr}' )
                                         Bereik = Routines.csvintlezen ( Bereikfilenaam )
-                                        Dezegroeplijst = bereken_concurrentie ( Matrix, Beroepsbevolkingperklasse, Bereik, inkgr)
+                                        Dezegroeplijst = Berekeningen.bereken_concurrentie ( Matrix, Beroepsbevolkingperklasse, Bereik, inkgr, inkgroepen)
                                         for i in range ( 0, len ( Matrix ) ):
                                             if Inkomensverdeling[i][inkgroepen.index(inkgr)]>0:
                                                 Bijhoudlijst[i] += Dezegroeplijst[i]
@@ -280,7 +172,7 @@ for ca in conc_afstand:
                             Totaalmodfilenaam = os.path.join ( Concurrentiedirectory, f'Totaal_{mod}_{inkgr}' )
                             Totaalrij = Routines.csvlezen ( Totaalmodfilenaam )
                             Generaaltotaal_potenties.append ( Totaalrij )
-                            Generaaltotaaltrans = Berekeningen.Transponeren ( Generaaltotaal_potenties )
+                            Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
                             Uitvoerfilenaam = os.path.join ( Concurrentiedirectory, f'Ontpl_conc_{inkgr}' )
                             Routines.csvwegschrijvenmetheader ( Generaaltotaaltrans, Uitvoerfilenaam, headstring )
                             Routines.xlswegschrijven ( Generaaltotaaltrans, Uitvoerfilenaam, headstringExcel )
@@ -295,7 +187,7 @@ for ca in conc_afstand:
                             Totaalmodfilenaam = os.path.join (Concurrentiedirectory, f'Totaal_{mod}_{inkgr}')
                             Totaalrij = Routines.csvlezen(Totaalmodfilenaam)
                             Generaalmatrix.append(Totaalrij)
-                            Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+                            Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                         for i in range (len(Beroepsbevolkingperklasse)):
                             Generaalmatrixproduct.append([])
                             for j in range (len(Beroepsbevolkingperklasse[0])):
@@ -332,7 +224,7 @@ for ca in conc_afstand:
                         print (afstsrt, inkgr)
                         Bereikfilenaam = os.path.join(Bestemmingendirectory, f'Totaal_{afstsrt}_{inkgr}')
                         Bereik = Routines.csvintlezen(Bereikfilenaam)
-                        Bijhoudlijst = Lijstvolnullen()
+                        Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaatsen))
                         for vk in voorkeuren:
                             if afstsrt == 'Auto':
                                 Filenaam = os.path.join(Enkelemodaliteitdirectory, f'{afstsrt}_vk{vk}_{inkgr}')
@@ -358,7 +250,7 @@ for ca in conc_afstand:
                         Totaalmodfilenaam = os.path.join ( Afstandsdirectory, f'Totaal_{afstsrt}_{inkgr}' )
                         Totaalrij = Routines.csvlezen ( Totaalmodfilenaam )
                         Generaaltotaal_potenties.append ( Totaalrij )
-                        Generaaltotaaltrans = Berekeningen.Transponeren ( Generaaltotaal_potenties )
+                        Generaaltotaaltrans = Routines.transponeren ( Generaaltotaal_potenties )
                         Uitvoerfilenaam = os.path.join ( Afstandsdirectory, f'Afstanden_{inkgr}' )
                         Routines.csvwegschrijvenmetheader ( Generaaltotaaltrans, Uitvoerfilenaam, headstringkort )
                         Routines.xlswegschrijven ( Generaaltotaaltrans, Uitvoerfilenaam, headstringkortExcel )
@@ -373,7 +265,7 @@ for ca in conc_afstand:
                         Totaalmodfilenaam = os.path.join (Afstandsdirectory, f'Totaal_{afstsrt}_{inkgr}')
                         Totaalrij = Routines.csvlezen(Totaalmodfilenaam)
                         Generaalmatrix.append(Totaalrij)
-                        Generaaltotaaltrans = Berekeningen.Transponeren(Generaalmatrix)
+                        Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                     for i in range (len(Beroepsbevolkingperklasse)):
                         Generaalmatrixproduct.append([])
                         for j in range (len(Beroepsbevolkingperklasse[0])):
