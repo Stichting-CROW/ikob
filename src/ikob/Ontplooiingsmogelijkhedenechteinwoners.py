@@ -5,36 +5,6 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def potenties(Matrix, Arbeidsplaatsen, Beroepsbevolkingsverdeling, Beroepsbevolkingaandeel, inkgr, gr, inkgroepen, Groepen):
-    Dezegroeplijst = np.zeros(len(Matrix))
-
-    for i, row in enumerate(Matrix):
-        Gewogenmatrix = np.zeros(len(row))
-
-        for j, (r, abp) in enumerate(zip(row, Arbeidsplaatsen[inkgroepen.index(inkgr)])):
-            Gewogenmatrix[j] = r * abp * Beroepsbevolkingsverdeling[Groepen.index(gr)][i]
-
-        if Beroepsbevolkingaandeel[i] > 0:
-            Dezegroeplijst[i] = sum(Gewogenmatrix)/Beroepsbevolkingaandeel[i]
-
-    return Dezegroeplijst.tolist()
-
-
-def bereken_potenties_nietwerk(Matrix, Bestemmingen, Inwonersverdeling, Inwonersaandeel, gr, Groepen):
-    Dezegroeplijst = np.zeros(len(Matrix))
-
-    for i, row in enumerate(Matrix):
-        Gewogenmatrix = np.zeros(len(row))
-
-        for j, (r, b) in enumerate(zip(row, Bestemmingen)):
-            Gewogenmatrix[j] = r * b * Inwonersverdeling[Groepen.index(gr)][i]
-
-        if Inwonersaandeel[i] > 0:
-            Dezegroeplijst[i] = sum(Gewogenmatrix)/(Inwonersaandeel[i])
-
-    return Dezegroeplijst.tolist()
-
-
 def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
     project_config = config['project']
     skims_config = config['skims']
@@ -112,11 +82,14 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
             Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
 
             for ds in dagsoort:
-                for inkgr in inkgroepen:
+                for i_inkgr, inkgr in enumerate(inkgroepen):
+                    arbeidsplaats = np.array(Arbeidsplaatsen[i_inkgr])
+                    inkomens = np.array(Inkomenstransverdeling[i_inkgr])
                     logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep: %s', inkgr)
                     for mod in modaliteiten:
-                        Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaats))
-                        for gr in Groepen:
+                        potentie_totaal = Routines.lijstvolnullen(len(Arbeidsplaats))
+                        for igr, gr in enumerate(Groepen):
+                            verdeling = np.array(Verdelingstransmatrix[igr])
                             ink = Routines.inkomensgroepbepalen(gr)
                             if inkgr == ink or inkgr == 'alle':
                                 vk = Routines.vindvoorkeur(gr, mod)
@@ -125,14 +98,12 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                     Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
 
                                     if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                        Dezegroeplijst = potenties(Fietsmatrix, Arbeidsplaatsen, Verdelingstransmatrix,
-                                                                   Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
+                                        potentie = Fietsmatrix @ arbeidsplaats * verdeling
                                     else:
-                                        Dezegroeplijst = bereken_potenties_nietwerk(Fietsmatrix, Inwonerstotalen, Verdelingstransmatrix,
-                                                                           Inkomenstransverdeling[inkgroepen.index(inkgr)],
-                                                                           gr, Groepen)
-                                    for i in range(len(Fietsmatrix)):
-                                        Bijhoudlijst[i] += int(Dezegroeplijst[i])
+                                        potentie = Fietsmatrix @ Inwonerstotalen * Verdelingstransmatrix
+
+                                    potentie = np.where(inkomens > 0, potentie / inkomens, 0)
+                                    potentie_totaal += potentie.astype(int)
 
                                 elif mod == 'Auto':
                                     String = Routines.enkelegroep(mod,gr)
@@ -142,103 +113,71 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                             Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
 
                                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                                Dezegroeplijst1 = potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
-                                                                                     Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
+                                                potentie = Matrix @ arbeidsplaats * verdeling
                                             else:
-                                                Dezegroeplijst1 = bereken_potenties_nietwerk(Matrix, Inwonerstotalen, Verdelingstransmatrix,
-                                                                                   Inkomenstransverdeling[inkgroepen.index(inkgr)],
-                                                                                   gr, Groepen)
+                                                potentie = Matrix @ Inwonerstotalen * Verdelingstransmatrix
+
+                                            potentie = np.where(inkomens > 0, potentie / inkomens, 0)
+                                            K = percentageelektrisch.get(inkgr)/100
+
                                             if srtbr == 'elektrisch':
-                                                K = percentageelektrisch.get(inkgr)/100
-                                                logger.debug('aandeel elektrisch is %s', K)
-                                                DezegroeplijstE = [x * K for x in Dezegroeplijst1]
+                                                potentie_elektrisch = K * potentie
                                             else:
-                                                L = 1 - percentageelektrisch.get(inkgr)/100
-                                                logger.debug('aandeel fossiel is %s', L)
-                                                DezegroeplijstF = [x * L for x in Dezegroeplijst1]
+                                                potentie_fossiel = (1 - K) * potentie
 
-                                        for i in range(len(Matrix)):
-                                            Dezegroeplijst[i] = DezegroeplijstE[i] + DezegroeplijstF[i]
-
-                                        for i in range(len(Matrix)):
-                                            Bijhoudlijst[i] += int(Dezegroeplijst[i])
+                                        potentie = potentie_elektrisch + potentie_fossiel
+                                        potentie_totaal += potentie.astype(int)
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                         if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                            Dezegroeplijst = potenties(Matrix, Arbeidsplaatsen,
-                                                                               Verdelingstransmatrix,
-                                                                               Inkomenstransverdeling[
-                                                                                   inkgroepen.index(inkgr)],
-                                                                               inkgr, gr, inkgroepen, Groepen)
+                                            potentie = Matrix @ arbeidsplaats * verdeling
                                         else:
-                                            Dezegroeplijst = bereken_potenties_nietwerk(Matrix, Inwonerstotalen,
-                                                                                        Verdelingstransmatrix,
-                                                                                        Inkomenstransverdeling[
-                                                                                            inkgroepen.index(inkgr)],
-                                                                                        gr, Groepen)
-                                        for i in range(len(Matrix)):
-                                            Bijhoudlijst[i] += int(Dezegroeplijst[i])
-                                        logger.debug('Bijhoudlijst niet fossiel is: %s', Bijhoudlijst)
+                                            potentie = Matrix @ Inwonerstotalen * Verdelingstransmatrix
+
+                                        potentie = np.where(inkomens > 0, potentie / inkomens, 0)
+                                        potentie_totaal += potentie.astype(int)
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep(mod, gr)
                                     Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                     if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                        Dezegroeplijst = potenties(Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
-                                                                           Inkomenstransverdeling[inkgroepen.index(inkgr)],
-                                                                           inkgr, gr, inkgroepen, Groepen)
+                                        potentie = Matrix @ arbeidsplaats * verdeling
                                     else:
-                                        Dezegroeplijst = bereken_potenties_nietwerk(Matrix, Inwonerstotalen,
-                                                                                    Verdelingstransmatrix,
-                                                                                    Inkomenstransverdeling[
-                                                                                        inkgroepen.index(inkgr)],
-                                                                                    gr, Groepen)
-                                    for i in range(len(Matrix)):
-                                        Bijhoudlijst[i] += int(Dezegroeplijst[i])
+                                        potentie = Matrix @ Inwonerstotalen * Verdelingstransmatrix
 
+                                    potentie = np.where(inkomens > 0, potentie / inkomens, 0)
+                                    potentie_totaal += potentie.astype(int)
                                 else:
                                     String = Routines.combigroep(mod, gr)
-                                    logger.debug('de gr is %s', gr)
-                                    logger.debug('de string is %s', String)
                                     if String[0] == 'A':
                                         for srtbr in soortbrandstof:
                                             Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                                Dezegroeplijst1 = potenties(Matrix, Arbeidsplaatsen,
-                                                                                    Verdelingstransmatrix,
-                                                                                    Inkomenstransverdeling[
-                                                                                        inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
+                                                potentie = Matrix @ arbeidsplaats * verdeling
                                             else:
-                                                Dezegroeplijst1 = bereken_potenties_nietwerk(Matrix, Inwonerstotalen,
-                                                                                             Verdelingstransmatrix,
-                                                                                             Inkomenstransverdeling[
-                                                                                                 inkgroepen.index(inkgr)],
-                                                                                             gr, Groepen)
+                                                potentie = Matrix @ Inwonerstotalen * Verdelingstransmatrix
+
+                                            potentie = np.where(inkomens > 0, potentie / inkomens, 0)
+                                            K = percentageelektrisch.get(inkgr)/100
+
                                             if srtbr == 'elektrisch':
-                                                K = percentageelektrisch.get(inkgr)/100
-                                                DezegroeplijstE = [x * K for x in Dezegroeplijst1]
+                                                potentie_elektrisch = K * potentie
                                             else:
-                                                K = 1 - percentageelektrisch.get(inkgr)/100
-                                                DezegroeplijstF = [x * K for x in Dezegroeplijst1]
+                                                potentie_fossiel = (1 - K) * potentie
 
-                                        for i in range(len(Matrix)):
-                                            Dezegroeplijst[i] = DezegroeplijstE[i] + DezegroeplijstF[i]
-
-                                        for i in range(len(Matrix)):
-                                            Bijhoudlijst[i] += int(Dezegroeplijst[i])
+                                        potentie = potentie_elektrisch + potentie_fossiel
+                                        potentie_totaal += potentie.astype(int)
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
 
                                         if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                            Dezegroeplijst = potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
-                                                                                 Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
+                                            potentie = Matrix @ arbeidsplaats * verdeling
                                         else:
-                                            Dezegroeplijst = bereken_potenties_nietwerk(Matrix, Inwonerstotalen, Verdelingstransmatrix,
-                                                                               Inkomenstransverdeling[inkgroepen.index(inkgr)],
-                                                                               gr, Groepen)
-                                        for i in range(len ( Matrix ) ):
-                                            Bijhoudlijst[i] += int(Dezegroeplijst[i])
+                                            potentie = Matrix @ Inwonerstotalen * Verdelingstransmatrix
 
-                        datasource.write_csv(Bijhoudlijst, abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='Bestemmingen')
+                                        potentie = np.where(inkomens > 0, potentie / inkomens, 0)
+                                        potentie_totaal += potentie.astype(int)
+
+                        datasource.write_csv(potentie_totaal, abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='Bestemmingen')
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten :
