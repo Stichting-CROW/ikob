@@ -6,8 +6,8 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def gewichtenberekenen(skim, alpha, omega, weging):
-    logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
+def gewichtenberekenen(skim, mod, vk, mot):
+    alpha, omega, weging = Constantengenerator.alomwerk(mod, vk, mot)
     Gewichtenmatrix = np.zeros((len(skim), len(skim)))
 
     for r in range(0, len(skim)):
@@ -37,12 +37,9 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
 
     # Vaste waarden
     inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
-    voorkeuren = ['Auto','Neutraal','Fiets','OV']
+    voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
     modaliteitenfiets = ['Fiets']
-    soortbrandstof = ['fossiel','elektrisch']
-
-
-    # Avondspits en Ochtendspits eruit verwijderd
+    soortbrandstof = ['fossiel', 'elektrisch']
 
     for ds in dagsoort:
         for mot in motieven:
@@ -50,108 +47,46 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
                 for vk in voorkeuren:
                     if vk == 'Auto' or vk == 'Fiets':
                         GGRskim = datasource.read_csv('Ervarenreistijd', 'Fiets', ds, type_caster=int, regime=regime, mot=mot)
-
-                        if mot == 'werk' or mot == 'sociaal-recreatief':
-                            constanten = Constantengenerator.alomwerk ( mod, vk )
-                        elif mot == 'winkeldagelijkszorg':
-                            constanten = Constantengenerator.alomwinkeldagelijkszorg ( mod, vk )
-                        else:
-                            constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( mod, vk )
-                        alpha = constanten[0]
-                        omega = constanten[1]
-                        weging = constanten[2]
-                        logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
-                        Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
+                        Gewichten = gewichtenberekenen(GGRskim, mod, vk, mot)
                         if vk == 'Auto':
                             datasource.write_csv(Gewichten, 'Gewichten', f'{mod}_vk', ds, regime=regime, mot=mot)
                         else :
                             datasource.write_csv(Gewichten, 'Gewichten', f'{mod}_vk', ds, vk=vk, regime=regime, mot=mot)
+
             # Nu Auto
             for ink in inkomen:
                 for vk in voorkeuren:
                     for srtbr in soortbrandstof:
                         GGRskim = datasource.read_csv('Ervarenreistijd', f'Auto_{srtbr}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
-                        if mot == 'werk' or mot == 'sociaal-recreatief':
-                            constanten = Constantengenerator.alomwerk ('Auto', vk )
-                        elif mot == 'winkeldagelijkszorg':
-                            constanten = Constantengenerator.alomwinkeldagelijkszorg ('Auto', vk )
-                        else:
-                            constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ('Auto', vk )
-                        alpha = constanten[0]
-                        omega = constanten[1]
-                        weging = constanten[2]
-                        logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
-                        Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
+                        Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
                         datasource.write_csv(Gewichten, 'Gewichten', 'Auto_vk', ds, vk=vk, ink=ink, srtbr=srtbr, regime=regime, mot=mot)
 
             soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
             voorkeurengeenauto = ['Neutraal', 'OV', 'Fiets']
             for sga in soortgeenauto:
-                for vk in voorkeurengeenauto :
+                for vk in voorkeurengeenauto:
                     for ink in inkomen:
-                        GGRskim = datasource.read_csv('Ervarenreistijd', f'{sga}', ds, ink=ink, regime=regime, mot=mot)
-                        if mot == 'werk' or mot == 'sociaal-recreatief':
-                            constanten = Constantengenerator.alomwerk ( 'Auto',vk )
-                        elif mot == 'winkeldagelijkszorg':
-                            constanten = Constantengenerator.alomwinkeldagelijkszorg ( 'Auto', vk )
-                        else:
-                            constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( 'Auto', vk )
-                        alpha = constanten[0]
-                        omega = constanten[1]
-                        weging = constanten[2]
-                        logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
-                        Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
+                        GGRskim = datasource.read_csv('Ervarenreistijd', f'{sga}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
+                        Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
                         datasource.write_csv(Gewichten, 'Gewichten', f'{sga}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
 
-            # Nu OV
             modaliteitenOV = ['OV']
             for modOV in modaliteitenOV:
                 for ink in inkomen:
                     for vk in voorkeuren:
                         GGRskim = datasource.read_csv('Ervarenreistijd', f'{modOV}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
-
-                        if mot == 'werk' or mot == 'sociaal-recreatief':
-                            constanten = Constantengenerator.alomwerk ( modOV, vk )
-                        elif mot == 'winkeldagelijks' or 'onderwijs':
-                            constanten = Constantengenerator.alomwinkeldagelijkszorg ( modOV, vk )
-                        else:
-                            constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( modOV, vk )
-                        alpha = constanten[0]
-                        omega = constanten[1]
-                        weging = constanten[2]
-                        logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
-                        Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
+                        Gewichten = gewichtenberekenen(GGRskim, modOV, vk, mot)
                         datasource.write_csv(Gewichten, 'Gewichten', f'{modOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
 
             for ink in inkomen:
                 GGRskim = datasource.read_csv('Ervarenreistijd', 'GratisAuto', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
-                if mot == 'werk' or mot == 'sociaal-recreatief':
-                    constanten = Constantengenerator.alomwerk ( 'Auto', 'Auto' )
-                elif mot == 'winkeldagelijkszorg':
-                    constanten = Constantengenerator.alomwinkeldagelijkszorg ( 'Auto', 'Auto' )
-                else:
-                    constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( 'Auto', 'Auto' )
-                alpha = constanten[0]
-                omega = constanten[1]
-                weging = constanten[2]
-                logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
-                Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
+                Gewichten = gewichtenberekenen(GGRskim, 'Auto', 'Auto', mot)
                 specialauto = ['Neutraal', 'Auto']
                 for vks in specialauto:
                     datasource.write_csv(Gewichten, 'Gewichten', 'GratisAuto_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot)
 
                 GGRskim = datasource.read_csv('Ervarenreistijd', 'GratisOV', ds, type_caster=int, regime=regime, mot=mot)
-                if mot == 'werk' or mot == 'sociaal-recreatief':
-                    constanten = Constantengenerator.alomwerk ( 'OV', 'OV' )
-                elif mot == 'winkeldagelijkszorg':
-                    constanten = Constantengenerator.alomwinkeldagelijkszorg ( 'OV', 'OV' )
-                else:
-                    constanten = Constantengenerator.alomwinkelnietdagelijksonderwijs ( 'OV', 'OV' )
-                alpha = constanten[0]
-                omega = constanten[1]
-                weging = constanten[2]
-                logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
-                Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
+                Gewichten = gewichtenberekenen(GGRskim, 'OV', 'OV', mot)
                 specialOV = ['Neutraal', 'OV']
                 for vks in specialOV:
                     datasource.write_csv(Gewichten, 'Gewichten', 'GratisOV_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot)
