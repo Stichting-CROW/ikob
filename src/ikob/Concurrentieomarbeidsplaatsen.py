@@ -1,6 +1,5 @@
 import logging
 import ikob.Routines as Routines
-import ikob.Berekeningen as Berekeningen
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -72,13 +71,15 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
         logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
 
         for ds in dagsoort:
-            for inkgr in inkgroepen:
+            for i_inkgr, inkgr in enumerate(inkgroepen):
 
                 # Eerst de fiets
                 logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep %s', inkgr)
                 for mod in modaliteiten:
                     concurrentie_totaal = Routines.lijstvolnullen(len(Arbeidsplaatsen))
                     for gr in Groepen:
+                        arbeidsplaatsen_groep = Arbeidsplaatsen.T[i_inkgr]
+
                         logger.debug('Bezig met Groep %s', gr)
                         ink = Routines.inkomensgroepbepalen(gr)
                         if inkgr == ink or inkgr == 'alle':
@@ -87,7 +88,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                 vkfiets = 'Fiets' if vk == 'Fiets' else ''
                                 Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
                                 Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                concurrentie = Berekeningen.concurrentie(Fietsmatrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                concurrentie = Fietsmatrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
 
                                 for i in range(len(Fietsmatrix)):
                                     if Inkomensverdeling[i][inkgroepen.index(inkgr)] > 0:
@@ -101,7 +102,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                     for srtbr in soortbrandstof:
                                         Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                                         Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                        concurrentie = Berekeningen.concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                        concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr) / 100
                                             logger.debug('aandeel elektrisch is %s', K)
@@ -118,7 +119,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                 else:
                                     Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                     Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                    concurrentie = Berekeningen.concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                    concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
                                     for i in range(len(Matrix)):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)] > 0:
                                             concurrentie_totaal[i] += concurrentie[i] * Verdelingsmatrix[i][Groepen.index(gr)] /\
@@ -127,7 +128,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                 String = Routines.enkelegroep(mod, gr)
                                 Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                 Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                concurrentie = Berekeningen.concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
                                 for i in range(len(Matrix)):
                                     if Inkomensverdeling[i][inkgroepen.index(inkgr)] > 0:
                                         concurrentie_totaal[i] += concurrentie[i] * Verdelingsmatrix[i][Groepen.index(gr)] / \
@@ -141,7 +142,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                     for srtbr in soortbrandstof:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                                         Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                        concurrentie = Berekeningen.concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                        concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr)/100
                                             concurrentie_elektrisch = [x * K for x in concurrentie]
@@ -156,7 +157,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
                                 else:
                                     Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
                                     Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                    concurrentie = Berekeningen.concurrentie(Matrix, Arbeidsplaatsen, Bereik, inkgr, inkgroepen)
+                                    concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
                                     for i in range(len(Matrix)):
                                         if Inkomensverdeling[i][inkgroepen.index(inkgr)] > 0:
                                             concurrentie_totaal[i] += concurrentie[i] * Verdelingsmatrix[i][Groepen.index(gr)] /\
