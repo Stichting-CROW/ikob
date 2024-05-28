@@ -1,5 +1,8 @@
+import logging
 import os
 import Routines
+
+logger = logging.getLogger(__name__)
 
 
 def ervaren_reistijd_berekenen(config):
@@ -19,13 +22,13 @@ def ervaren_reistijd_berekenen(config):
     Skimsdirectory = os.path.join (Basisdirectory, 'skims')
     os.makedirs ( Skimsdirectory, exist_ok=True )
     SEGSdirectory = paden_config['segs_directory']
-    print (Skimsdirectory)
+    logger.debug("Skimsdirectory: %s", Skimsdirectory)
     scenario = project_config['verstedelijkingsscenario']
     motieven = project_config['motieven']
     Ketens = project_config['ketens']['gebruiken']
     Hubnaam = project_config['ketens']['naam hub']
     OV_Kostenbestand = skims_config ['OV kostenbestand']['gebruiken']
-    print(OV_Kostenbestand)
+    logger.debug("OV_Kostenbestand: %s", OV_Kostenbestand)
     TVOMwerk = tvom_config['werk']
     TVOMoverig = tvom_config['overig']
     varfossiel = skims_config['Kosten auto fossiele brandstof']['variabele kosten']
@@ -62,9 +65,9 @@ def ervaren_reistijd_berekenen(config):
     kmheffingelektrisch = float (kmheffingelelektrisch/100)
     Parkeerzoektijdfile=Parkeerzoektijdfile.replace('.csv','')
     Parkeertijdlijst = Routines.csvlezen (Parkeerzoektijdfile, aantal_lege_regels=1)
-    print (Projectbestandsnaam)
+    logger.debug("Projectbestandsnaam: %s", Projectbestandsnaam)
     Projectdirectory = os.path.join (Basisdirectory, Projectbestandsnaam)
-    print (Projectdirectory)
+    logger.debug("Projectdirectory: %s", Projectdirectory)
     os.makedirs ( Projectdirectory, exist_ok=True)
     soortbrandstof = ['fossiel', 'elektrisch']
     if 'orrectie' in regime:
@@ -91,11 +94,11 @@ def ervaren_reistijd_berekenen(config):
 
     for mot in motieven:
         TVOM = TVOMwerk if mot == 'werk' else TVOMoverig
-        print (TVOM)
+        logger.debug("TVOM: %s", TVOM)
         for ds in dagsoort:
             Invoerdirectory = os.path.join(Skimsdirectory, ds)
             Ervarenreistijddirectory = os.path.join(Basisdirectory, regime, mot, 'Ervarenreistijd', ds)
-            print(Ervarenreistijddirectory)
+            logger.debug("Ervarenreistijddirectory: %s", Ervarenreistijddirectory)
             os.makedirs(Ervarenreistijddirectory, exist_ok=True)
             Autotijdfilenaam = os.path.join(Invoerdirectory, f'Auto_Tijd')
             Autotijdmatrix = Routines.csvfloatlezen(Autotijdfilenaam, aantal_lege_regels=0)
@@ -112,7 +115,7 @@ def ervaren_reistijd_berekenen(config):
                 Parkeerkostenlijst = Routines.csvintlezen ( Parkeerkostenfile, aantal_lege_regels=0 )
             else:
                 Parkeerkostenlijst = Routines.lijstvolnullen ( len ( OVafstandmatrix ) )
-            print ( Parkeerkostenlijst )
+            logger.debug("Parkeerkostenlijst = %s", Parkeerkostenlijst)
 
             if Ketens :
                 Pplusfietstijdfilenaam = os.path.join(Invoerdirectory, f'Pplusfiets_{Hubnaam}_Tijd')
@@ -134,23 +137,23 @@ def ervaren_reistijd_berekenen(config):
 
 
 
-            print("Parkeertijden bevat {} zones.".format(len(Parkeertijdlijst)))
+            logger.debug("Parkeertijden bevat %d zones.", len(Parkeertijdlijst))
             aantal_zones_tijd = len(Autotijdmatrix)
-            print("Autotijdmatrix bevat {} zones.".format(aantal_zones_tijd))
+            logger.debug("Autotijdmatrix bevat %d zones.", aantal_zones_tijd)
             aantal_zones_afstand = len(Autoafstandmatrix)
-            print("Auto-afstandmatrix bevat {} zones.".format(aantal_zones_afstand))
+            logger.debug("Auto-afstandmatrix bevat %d zones.", aantal_zones_afstand)
             if aantal_zones_afstand != aantal_zones_tijd:
-                print("FOUT: Aantal zones niet gelijk!?")
+                logger.debug("FOUT: Aantal zones niet gelijk!?")
                 quit()
             aantal_zones = aantal_zones_tijd
 
             #kostenmatrix
             if OV_Kostenbestand:
                 OVKostenbestandsnaam=os.path.join(Skimsdirectory,ds, f'OV_Kosten')
-                print (OVKostenbestandsnaam)
+                logger.debug("OVKostenbestandsnaam: %s", OVKostenbestandsnaam)
                 KostenmatrixOV=Routines.csvlezen(OVKostenbestandsnaam)
             else:
-                print("Bezig kosten berekenen.")
+                logger.debug("Bezig kosten berekenen.")
                 afmeting = len (OVafstandmatrix)
                 KostenmatrixOV =  [ [ KostenOV(OVafstandmatrix[i][j], OVkmtarief, starttarief,Pricecap,Pricecapgetal,)
                                         for j in range(afmeting) ]
@@ -164,7 +167,7 @@ def ervaren_reistijd_berekenen(config):
                                         for i in range(afmeting) ]
             for i in range (0,10):
                 for j in range (0,10):
-                    print(KostenmatrixOV[i][j])
+                    logger.debug("KostenmatrixOV[%d][%d]=%f", i, j, KostenmatrixOV[i][j])
             # Eerst de fiets:
 
             GGRskim = []

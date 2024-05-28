@@ -1,5 +1,8 @@
+import logging
 import Routines
 import os
+
+logger = logging.getLogger(__name__)
 
 
 def verdeling_over_groepen(config):
@@ -111,7 +114,7 @@ def verdeling_over_groepen(config):
                     Inkomensverdeling[i].append(Inwonersperklasse[i][j]/Inwonerstotalen[i])
                 else:
                     Inkomensverdeling[i].append (0)
-        print('Lengte Inkomensverdelingsgegevens', len(Inkomensverdeling), len(Inkomensverdeling[0]))
+        logger.debug("Lengte Inkomensverdelingsgegevens: %d, %d", len(Inkomensverdeling), len(Inkomensverdeling[0]))
 
         for ink in inkomens:
             for srt in soorten :
@@ -211,7 +214,7 @@ def verdeling_over_groepen(config):
                         Overzichttotaalautobezit[i].append(0)
 
 
-        print (Overzichttotaalautobezit)
+        logger.debug("Overzichttotaalautobezit: %s", Overzichttotaalautobezit)
         Totaaloverzichtfilenaam = os.path.join ( SEGSdirectory, scenario, f'Verdeling_over_groepen_{Bevolkingsdeel}' )
         Overzichttotaalautofilenaam = os.path.join ( SEGSdirectory, scenario, f'Verdeling_over_groepen_{Bevolkingsdeel}_alleen_autobezit' )
         Routines.csvwegschrijvenmetheader ( Totaaloverzicht, Totaaloverzichtfilenaam, Header )

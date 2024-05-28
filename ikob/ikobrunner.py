@@ -1,3 +1,4 @@
+import logging
 from tkinter import Tk, Frame, BooleanVar, StringVar
 from tkinter import Button
 from tkinter import filedialog, messagebox
@@ -14,6 +15,8 @@ from Ontplooiingsmogelijkhedenechteinwoners import ontplooingsmogelijkheden_echt
 from Potentiebedrijven import potentie_bedrijven
 from Concurrentieomarbeidsplaatsen import concurrentie_om_arbeidsplaatsen
 from Concurrentieominwoners import concurrentie_om_inwoners
+
+logger = logging.getLogger(__name__)
 
 
 # fmt: off
@@ -39,12 +42,15 @@ def run_scripts(project_file, skip_steps):
     Tests are skipped if skip_steps is set.
     Yields the current step and corresponding return code.
     """
+    logger.info("Reading project file: %s.", project_file)
     config = getConfigFromArgs(project_file)
 
     for (description, method), skip in zip(stappen, skip_steps):
         if skip:
+            logger.info("Skipping step: %s.", description)
             continue
 
+        logger.info("Running step: %s.", description)
         result = method(config)
         yield description, result
 

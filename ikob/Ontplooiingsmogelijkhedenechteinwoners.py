@@ -1,6 +1,8 @@
+import logging
 import Routines
-import Berekeningen
 import os
+
+logger = logging.getLogger(__name__)
 
 
 def bereken_potenties (Matrix, Arbeidsplaatsen, Beroepsbevolkingsverdeling, Beroepsbevolkingaandeel, inkgr, gr, inkgroepen, Groepen):
@@ -47,7 +49,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
     autobezitgroepen = project_config ['welke_groepen']
     inkgroepen = project_config ['welke_inkomensgroepen']
     percentageelektrisch = verdeling_config ['Percelektrisch']
-    print (percentageelektrisch)
+    logger.debug("percentageelektrisch: %s", percentageelektrisch)
 
     #Scenario = project_config['scenario']
     #Grverdelingfile = verdeling_config['uitvoernaam']
@@ -61,13 +63,13 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
         Basisgroepen = ['GratisAuto', 'GratisAuto_GratisOV','WelAuto_GratisOV','WelAuto_vkAuto',
                'WelAuto_vkNeutraal', 'WelAuto_vkFiets','WelAuto_vkOV']
 
-    print ('autobezitgroepen zijn', autobezitgroepen)
+    logger.debug("autobezitgroepen zijn: %s", autobezitgroepen)
 
     Groepen = []
     for inkgr in inkgroepen:
         for bg in Basisgroepen:
             Groepen.append(f'{bg}_{inkgr}')
-    print (Groepen)
+    logger.debug("Groepen: %s", Groepen)
     """
     Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag','WelAuto_GratisOV_laag','WelAuto_vkAuto_laag',
                'WelAuto_vkNeutraal_laag', 'WelAuto_vkFiets_laag','WelAuto_vkOV_laag','GeenAuto_GratisOV_laag',
@@ -100,7 +102,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                       'Auto_OV_Fiets']
     soortbrandstof = ['fossiel','elektrisch']
     Vermenigvuldig = []
-    print (motieven)
+    logger.debug("motieven: %s", motieven)
 
     #Grverdelingfile=Grverdelingfile.replace('.csv','')
 
@@ -111,19 +113,19 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
         Beroepsbevolkingperklasse = Routines.csvintlezen(Beroepsbevolkingperklassenaam, aantal_lege_regels=1)
         Beroepsbevolkingtotalen = []
         Arbeidsplaatsenfilenaam = os.path.join(SEGSdirectory, scenario, f'Leerlingenplaatsen')
-        print(Arbeidsplaatsenfilenaam)
+        logger.debug("Arbeidsplaatsenfilenaam: %s", Arbeidsplaatsenfilenaam)
         Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
         Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
-        print('Lengte Leerlingenplaatsen is', len(Arbeidsplaats))
+        logger.debug("Lengte Leerlingenplaatsen is %s", len(Arbeidsplaats))
     else:
         Beroepsbevolkingperklassenaam = os.path.join (SEGSdirectory, scenario, f'Beroepsbevolking_inkomensklasse')
         Beroepsbevolkingperklasse = Routines.csvintlezen(Beroepsbevolkingperklassenaam, aantal_lege_regels=1)
         Beroepsbevolkingtotalen = []
         Arbeidsplaatsenfilenaam = os.path.join(SEGSdirectory, scenario, f'Arbeidsplaatsen_inkomensklasse')
-        print(Arbeidsplaatsenfilenaam)
+        logger.debug("Arbeidsplaatsenfilenaam: %s", Arbeidsplaatsenfilenaam)
         Arbeidsplaats = Routines.csvintlezen(Arbeidsplaatsenfilenaam, aantal_lege_regels=1)
         Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
-        print('Lengte arbeidsplaatsen is', len(Arbeidsplaats))
+        logger.debug("Lengte arbeidsplaatsen is %s", len(Arbeidsplaats))
     for i in range(len(Beroepsbevolkingperklasse)):
         Beroepsbevolkingtotalen.append(sum(Beroepsbevolkingperklasse[i]))
     if 'sociaal-recreatief' in motieven:
@@ -161,7 +163,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
             else:
                 Groepverdelingfile = os.path.join(SEGSdirectory, scenario, f'Verdeling_over_groepen_{Doelgroep}_alleen_autobezit')
             Verdelingsmatrix = Routines.csvlezen(Groepverdelingfile, aantal_lege_regels=1)
-            print('Verdelingsmatrix 4 is', Verdelingsmatrix[4])
+            logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
             Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
             for ds in dagsoort:
                 Combinatiedirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', 'Combinaties', ds )
@@ -169,7 +171,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                 Totalendirectorybestemmingen = os.path.join ( Basisdirectory, Projectbestandsnaam, 'Resultaten', mot, abg,
                                                               'Bestemmingen', ds )
                 os.makedirs ( Totalendirectorybestemmingen, exist_ok=True )
-                print ("De bestemmingen komen in",Totalendirectorybestemmingen)
+                logger.debug("De bestemmingen komen in %s", Totalendirectorybestemmingen)
                 # Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, 'Restdag')
                 # Enkelemodaliteitdirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, 'Restdag')
                 # Totalendirectorybestemmingen = os.path.join ( Skimsdirectory, 'Bestemmingen', Scenario, 'Restdag', Naamuitvoer)
@@ -178,7 +180,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
 
 
                     #Eerst de fiets
-                    print('We zijn het nu aan het uitrekenen voor de inkomensgroep', inkgr)
+                    logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep: %s', inkgr)
                     for mod in modaliteiten:
                         Bijhoudlijst = Routines.lijstvolnullen(len(Arbeidsplaats))
                         for gr in Groepen:
@@ -191,7 +193,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                     else:
                                         vkklad = ''
                                     Fietsfilenaam = os.path.join (Enkelemodaliteitdirectory, f'{mod}_vk{vkklad}')
-                                    print ('Filenaam is',Fietsfilenaam)
+                                    logger.debug('Filenaam is: %s', Fietsfilenaam)
                                     Fietsmatrix = Routines.csvlezen (Fietsfilenaam)
                                     if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                         Dezegroeplijst = bereken_potenties ( Fietsmatrix, Arbeidsplaatsen, Verdelingstransmatrix,
@@ -204,11 +206,11 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                         Bijhoudlijst[i]+= int(Dezegroeplijst[i])
                                 elif mod == 'Auto':
                                     String = Routines.enkelegroep (mod,gr)
-                                    print (String)
+                                    logger.debug("String: %s", String)
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
                                             AutoFilenaam = os.path.join(Enkelemodaliteitdirectory, srtbr, f'{String}_vk{vk}_{ink}')
-                                            print ('Filenaam is', AutoFilenaam)
+                                            logger.debug('Filenaam is %s', AutoFilenaam)
                                             Matrix = Routines.csvlezen(AutoFilenaam)
                                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                                 Dezegroeplijst1 = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
@@ -219,11 +221,11 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                                                                    gr, Groepen)
                                             if srtbr == 'elektrisch':
                                                 K = percentageelektrisch.get(inkgr)/100
-                                                print ('aandeel elektrisch is', K)
+                                                logger.debug('aandeel elektrisch is %s', K)
                                                 DezegroeplijstE = [x * K for x in Dezegroeplijst1]
                                             else :
                                                 L = 1 - percentageelektrisch.get(inkgr)/100
-                                                print ('aandeel fossiel is', L)
+                                                logger.debug('aandeel fossiel is %s', L)
                                                 DezegroeplijstF = [x * L for x in Dezegroeplijst1]
                                         for i in range (len(Matrix)):
                                             Dezegroeplijst[i] = DezegroeplijstE[i] + DezegroeplijstF[i]
@@ -231,7 +233,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                     else:
                                         AutoFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
-                                        print('Filenaam is', AutoFilenaam)
+                                        logger.debug('Filenaam is %s', AutoFilenaam)
                                         Matrix = Routines.csvlezen(AutoFilenaam)
                                         if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                             Dezegroeplijst = bereken_potenties(Matrix, Arbeidsplaatsen,
@@ -247,12 +249,12 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                                                                         gr, Groepen)
                                         for i in range(0, len(Matrix)):
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
-                                        print ('Bijhoudlijst niet fossiel is:',Bijhoudlijst)
+                                        logger.debug('Bijhoudlijst niet fossiel is: %s', Bijhoudlijst)
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep(mod, gr)
-                                    print(String)
+                                    logger.debug("String: %s", String)
                                     OVFilenaam = os.path.join(Enkelemodaliteitdirectory, f'{String}_vk{vk}_{ink}')
-                                    print('Filenaam is', OVFilenaam)
+                                    logger.debug('Filenaam is %s', OVFilenaam)
                                     Matrix = Routines.csvlezen(OVFilenaam)
                                     if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                         Dezegroeplijst = bereken_potenties(Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
@@ -269,13 +271,13 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
 
                                 else:
                                     String = Routines.combigroep (mod,gr)
-                                    print ('de gr is', gr)
-                                    print ('de string is', String)
+                                    logger.debug('de gr is %s', gr)
+                                    logger.debug('de string is %s', String)
                                     if String[0] == 'A':
                                         for srtbr in soortbrandstof:
                                             CombiFilenaam = os.path.join(Combinatiedirectory, srtbr,
                                                                         f'{String}_vk{vk}_{ink}')
-                                            print ('Filenaam is', CombiFilenaam)
+                                            logger.debug('Filenaam is %s', CombiFilenaam)
                                             Matrix = Routines.csvlezen(CombiFilenaam)
                                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
                                                 Dezegroeplijst1 = bereken_potenties(Matrix, Arbeidsplaatsen,
@@ -300,7 +302,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config):
                                             Bijhoudlijst[i] += int ( Dezegroeplijst[i] )
                                     else:
                                         CombiFilenaam = os.path.join (Combinatiedirectory, f'{String}_vk{vk}_{ink}')
-                                        print ('Filenaam is', CombiFilenaam)
+                                        logger.debug('Filenaam is %s', CombiFilenaam)
                                         Matrix = Routines.csvlezen ( CombiFilenaam )
 
                                         if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':

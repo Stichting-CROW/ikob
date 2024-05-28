@@ -1,7 +1,9 @@
+import logging
 import Routines
 import Constantengenerator
 import os
 
+logger = logging.getLogger(__name__)
 
 def gewichten_berekenen_enkel_scenarios(config):
     # Deze routine kijkt naar de command-line en leest
@@ -62,7 +64,7 @@ def gewichten_berekenen_enkel_scenarios(config):
 
     def gewichtenberekenen (skim, alpha, omega, weging):
         import math
-        print (alpha, omega, weging)
+        logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
         Gewichtenmatrix = []
 
         for r in range(0, len(skim)):
@@ -102,7 +104,7 @@ def gewichten_berekenen_enkel_scenarios(config):
                         alpha = constanten[0]
                         omega = constanten[1]
                         weging = constanten[2]
-                        print ( alpha, omega, weging )
+                        logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
                         if vk == 'Auto':
                             Uitvoerfilenaam = os.path.join(Gewichtendirectory, f'{mod}_vk')
@@ -124,7 +126,7 @@ def gewichten_berekenen_enkel_scenarios(config):
                         alpha = constanten[0]
                         omega = constanten[1]
                         weging = constanten[2]
-                        print ( alpha, omega, weging )
+                        logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
                         Brandstofgewichtendirectory = os.path.join (Gewichtendirectory,f'{srtbr}')
                         os.makedirs(Brandstofgewichtendirectory, exist_ok=True)
@@ -147,7 +149,7 @@ def gewichten_berekenen_enkel_scenarios(config):
                         alpha = constanten[0]
                         omega = constanten[1]
                         weging = constanten[2]
-                        print ( alpha, omega, weging )
+                        logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
                         Uitvoerfilenaam = os.path.join ( Gewichtendirectory, f'{sga}_vk{vk}_{ink}' )
                         Routines.csvwegschrijven ( Gewichten, Uitvoerfilenaam )
@@ -169,7 +171,7 @@ def gewichten_berekenen_enkel_scenarios(config):
                         alpha = constanten[0]
                         omega = constanten[1]
                         weging = constanten[2]
-                        print ( alpha, omega, weging )
+                        logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
                         Uitvoerfilenaam = os.path.join(Gewichtendirectory, f'{modOV}_vk{vk}_{ink}')
                         Routines.csvwegschrijven(Gewichten,Uitvoerfilenaam)
@@ -186,7 +188,7 @@ def gewichten_berekenen_enkel_scenarios(config):
                 alpha = constanten[0]
                 omega = constanten[1]
                 weging = constanten[2]
-                print ( alpha, omega, weging )
+                logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                 Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
                 specialauto = ['Neutraal', 'Auto']
                 for vks in specialauto:
@@ -203,7 +205,7 @@ def gewichten_berekenen_enkel_scenarios(config):
                 alpha = constanten[0]
                 omega = constanten[1]
                 weging = constanten[2]
-                print ( alpha, omega, weging )
+                logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                 Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
                 specialOV = ['Neutraal', 'OV']
                 for vks in specialOV:
