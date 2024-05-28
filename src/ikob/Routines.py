@@ -11,11 +11,6 @@ def transponeren(matrix):
     return np.array(matrix).T.tolist()
 
 
-def maxmatrix(*matrices):
-    matrices = [np.array(m) for m in matrices]
-    return np.maximum.reduce(matrices).tolist()
-
-
 def xlswegschrijven(matrix, filenaam, header):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
