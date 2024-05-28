@@ -83,25 +83,28 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
 
             for ds in dagsoort:
                 for i_inkgr, inkgr in enumerate(inkgroepen):
-                    arbeidsplaats = np.array(Arbeidsplaatsen[i_inkgr])
+                    if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
+                        arbeidsplaats = np.array(Arbeidsplaatsen[i_inkgr])
+                    else:
+                        arbeidsplaats = Inwonerstotalen
+
                     inkomens = np.array(Inkomenstransverdeling[i_inkgr])
                     logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep: %s', inkgr)
                     for mod in modaliteiten:
                         potentie_totaal = Routines.lijstvolnullen(len(Arbeidsplaats))
                         for igr, gr in enumerate(Groepen):
-                            verdeling = np.array(Verdelingstransmatrix[igr])
+                            if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
+                                verdeling = np.array(Verdelingstransmatrix[igr])
+                            else:
+                                verdeling = Verdelingstransmatrix
+
                             ink = Routines.inkomensgroepbepalen(gr)
                             if inkgr == ink or inkgr == 'alle':
                                 vk = Routines.vindvoorkeur(gr, mod)
                                 if mod == 'Fiets' or mod == 'EFiets':
                                     vkfiets = 'Fiets' if vk == 'Fiets' else ''
-                                    Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
-
-                                    if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                        potentie = Fietsmatrix @ arbeidsplaats * verdeling
-                                    else:
-                                        potentie = Fietsmatrix @ Inwonerstotalen * Verdelingstransmatrix
-
+                                    Matrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
+                                    potentie = Matrix @ arbeidsplaats * verdeling
                                     potentie = np.where(inkomens > 0, potentie / inkomens, 0)
                                     potentie_totaal += potentie.astype(int)
 
@@ -111,13 +114,9 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
                                             Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
-
-                                            if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                                potentie = Matrix @ arbeidsplaats * verdeling
-                                            else:
-                                                potentie = Matrix @ Inwonerstotalen * Verdelingstransmatrix
-
+                                            potentie = Matrix @ arbeidsplaats * verdeling
                                             potentie = np.where(inkomens > 0, potentie / inkomens, 0)
+
                                             K = percentageelektrisch.get(inkgr)/100
 
                                             if srtbr == 'elektrisch':
@@ -129,21 +128,13 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                         potentie_totaal += potentie.astype(int)
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                        if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                            potentie = Matrix @ arbeidsplaats * verdeling
-                                        else:
-                                            potentie = Matrix @ Inwonerstotalen * Verdelingstransmatrix
-
+                                        potentie = Matrix @ arbeidsplaats * verdeling
                                         potentie = np.where(inkomens > 0, potentie / inkomens, 0)
                                         potentie_totaal += potentie.astype(int)
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep(mod, gr)
                                     Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                    if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                        potentie = Matrix @ arbeidsplaats * verdeling
-                                    else:
-                                        potentie = Matrix @ Inwonerstotalen * Verdelingstransmatrix
-
+                                    potentie = Matrix @ arbeidsplaats * verdeling
                                     potentie = np.where(inkomens > 0, potentie / inkomens, 0)
                                     potentie_totaal += potentie.astype(int)
                                 else:
@@ -151,11 +142,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                     if String[0] == 'A':
                                         for srtbr in soortbrandstof:
                                             Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
-                                            if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                                potentie = Matrix @ arbeidsplaats * verdeling
-                                            else:
-                                                potentie = Matrix @ Inwonerstotalen * Verdelingstransmatrix
-
+                                            potentie = Matrix @ arbeidsplaats * verdeling
                                             potentie = np.where(inkomens > 0, potentie / inkomens, 0)
                                             K = percentageelektrisch.get(inkgr)/100
 
@@ -168,12 +155,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                         potentie_totaal += potentie.astype(int)
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
-
-                                        if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                            potentie = Matrix @ arbeidsplaats * verdeling
-                                        else:
-                                            potentie = Matrix @ Inwonerstotalen * Verdelingstransmatrix
-
+                                        potentie = Matrix @ arbeidsplaats * verdeling
                                         potentie = np.where(inkomens > 0, potentie / inkomens, 0)
                                         potentie_totaal += potentie.astype(int)
 
