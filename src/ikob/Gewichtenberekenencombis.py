@@ -1,5 +1,5 @@
 import logging
-import ikob.Routines as Routines
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ def gewichten_berekenen_combis(config, datasource):
                             vkfiets = 'Fiets' if vk == 'Fiets' else ''
                             Fietsmatrix = datasource.read_csv('Gewichten', f'{modft}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
                             OVmatrix = datasource.read_csv('Gewichten', f'{srtOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                            max = Routines.maxmatrix(Fietsmatrix, OVmatrix)
+                            max = np.maximum.reduce((Fietsmatrix, OVmatrix))
                             datasource.write_csv(max, 'Gewichten', f"{srtOV}_{modft}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
 
                         for srtauto in soortauto:
@@ -77,11 +77,11 @@ def gewichten_berekenen_combis(config, datasource):
                             if srtauto == 'Auto':
                                 for srtbr in soortbrandstof:
                                     Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, srtbr=srtbr, mot=mot, regime=regime)
-                                    max = Routines.maxmatrix(Fietsmatrix, Automatrix)
+                                    max = np.maximum.reduce((Fietsmatrix, Automatrix))
                                     datasource.write_csv(max, 'Gewichten', f"{srtauto}_{modft}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                             else:
                                 Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, mot=mot, regime=regime)
-                                max = Routines.maxmatrix(Fietsmatrix, Automatrix)
+                                max = np.maximum.reduce((Fietsmatrix, Automatrix))
                                 datasource.write_csv(max, 'Gewichten', f"{srtauto}_{modft}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
 
                     for srtOV in soortOV:
@@ -93,11 +93,11 @@ def gewichten_berekenen_combis(config, datasource):
                             if srtauto == 'Auto':
                                 for srtbr in soortbrandstof:
                                     Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, srtbr=srtbr, regime=regime, mot=mot)
-                                    max = Routines.maxmatrix(OVmatrix, Automatrix)
+                                    max = np.maximum.reduce((OVmatrix, Automatrix))
                                     datasource.write_csv(max, 'Gewichten', f"{srtauto}_{srtOV}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                             else:
                                 Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                max = Routines.maxmatrix(OVmatrix, Automatrix)
+                                max = np.maximum.reduce((OVmatrix, Automatrix))
                                 datasource.write_csv(max, 'Gewichten', f"{srtauto}_{srtOV}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
 
                     for modft in modaliteitenfiets:
@@ -112,9 +112,9 @@ def gewichten_berekenen_combis(config, datasource):
                                 if srtauto == 'Auto':
                                     for srtbr in soortbrandstof:
                                         Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, srtbr=srtbr, regime=regime, mot=mot)
-                                        max = Routines.maxmatrix(Automatrix, Fietsmatrix, OVmatrix)
+                                        max = np.maximum.reduce((Automatrix, Fietsmatrix, OVmatrix))
                                         datasource.write_csv(max, 'Gewichten', f"{srtauto}_{srtOV}_{modft}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                                 else:
                                     Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                    max = Routines.maxmatrix(Automatrix, Fietsmatrix, OVmatrix)
+                                    max = np.maximum.reduce((Automatrix, Fietsmatrix, OVmatrix))
                                     datasource.write_csv(max, 'Gewichten', f"{srtauto}_{srtOV}_{modft}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
