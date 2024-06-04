@@ -22,6 +22,7 @@ dev = [
 ]
 
 [project.scripts]
+ikobconfig = "ikob:ikobconfig.main"
 ikobrunner = "ikob:ikobrunner.main"
 
 [tool.pytest.ini_options]
