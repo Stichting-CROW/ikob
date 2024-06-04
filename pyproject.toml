@@ -14,9 +14,6 @@ dependencies = [
     "xlsxwriter",
 ]
 
-[tool.setuptools.packages.find]
-where = ["ikob"]
-
 [project.optional-dependencies]
 dev = [
     "pandas",
