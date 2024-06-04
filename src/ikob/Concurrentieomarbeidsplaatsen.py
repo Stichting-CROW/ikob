@@ -1,6 +1,6 @@
 import logging
-import Routines
-import Berekeningen
+import ikob.Routines as Routines
+import ikob.Berekeningen as Berekeningen
 
 logger = logging.getLogger(__name__)
 

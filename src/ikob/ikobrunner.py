@@ -2,20 +2,20 @@ import logging
 from tkinter import Tk, Frame, BooleanVar, StringVar
 from tkinter import Button
 from tkinter import filedialog, messagebox
-from config import widgets
+from ikob.config import widgets
 
 # from ConfiguratieDefinitie import *
-from ikobconfig import loadConfig, getConfigFromArgs
+from ikob.ikobconfig import loadConfig, getConfigFromArgs
 
-from Ervarenreistijdberekenen import ervaren_reistijd_berekenen
-from Verdelingovergroepen import verdeling_over_groepen
-from Gewichtenberekenenenkelscenarios import gewichten_berekenen_enkel_scenarios
-from Gewichtenberekenencombis import gewichten_berekenen_combis
-from Ontplooiingsmogelijkhedenechteinwoners import ontplooingsmogelijkheden_echte_inwoners
-from Potentiebedrijven import potentie_bedrijven
-from Concurrentieomarbeidsplaatsen import concurrentie_om_arbeidsplaatsen
-from Concurrentieominwoners import concurrentie_om_inwoners
-from datasource import DataSource
+from ikob.Ervarenreistijdberekenen import ervaren_reistijd_berekenen
+from ikob.Verdelingovergroepen import verdeling_over_groepen
+from ikob.Gewichtenberekenenenkelscenarios import gewichten_berekenen_enkel_scenarios
+from ikob.Gewichtenberekenencombis import gewichten_berekenen_combis
+from ikob.Ontplooiingsmogelijkhedenechteinwoners import ontplooingsmogelijkheden_echte_inwoners
+from ikob.Potentiebedrijven import potentie_bedrijven
+from ikob.Concurrentieomarbeidsplaatsen import concurrentie_om_arbeidsplaatsen
+from ikob.Concurrentieominwoners import concurrentie_om_inwoners
+from ikob.datasource import DataSource
 
 logger = logging.getLogger(__name__)
 

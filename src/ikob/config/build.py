@@ -1,7 +1,7 @@
 
 from tkinter import *
 from tkinter import ttk
-from config.widgets import *
+from ikob.config.widgets import *
 
 ### Buid a config dictionary from the template
 

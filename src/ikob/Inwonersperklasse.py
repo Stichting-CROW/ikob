@@ -1,6 +1,6 @@
-import Routines
-import Berekeningen
-import Constantengenerator
+import ikob.Routines as Routines
+import ikob.Berekeningen as Berekeningen
+import ikob.Constantengenerator as Constantengenerator
 from tkinter import filedialog
 from tkinter import *
 import os

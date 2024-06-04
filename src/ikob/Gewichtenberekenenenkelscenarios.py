@@ -1,5 +1,5 @@
 import logging
-import Constantengenerator
+import ikob.Constantengenerator as Constantengenerator
 
 logger = logging.getLogger(__name__)
 

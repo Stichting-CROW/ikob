@@ -1,4 +1,4 @@
-from config import validate, build
+from ikob.config import validate, build
 
 
 def StandaardConfiguratieDefinitie():
