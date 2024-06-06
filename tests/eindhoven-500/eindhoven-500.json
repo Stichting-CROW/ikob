@@ -1,0 +1,102 @@
+{
+  "verdeling": {
+    "GratisOVpercentage": 0.03,
+    "additionele_kosten": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "Percelektrisch": {
+      "middellaag": 0.0,
+      "hoog": 0.0,
+      "middelhoog": 0.0,
+      "laag": 0.0
+    },
+    "kunstmab": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "parkeerkosten": {
+      "bestand": "",
+      "gebruiken": false
+    }
+  },
+  "TVOM": {
+    "overig": {
+      "middellaag": 10.9,
+      "hoog": 4.8,
+      "middelhoog": 7.25,
+      "laag": 15.5
+    },
+    "werk": {
+      "middellaag": 9.0,
+      "hoog": 4.0,
+      "middelhoog": 6.0,
+      "laag": 12.0
+    }
+  },
+  "skims": {
+    "pricecap": {
+      "getal": 9999.0,
+      "gebruiken": false
+    },
+    "OV kostenbestand": {
+      "gebruiken": false
+    },
+    "dagsoort": [
+      "Restdag"
+    ],
+    "varkostenga": {
+      "GeenAuto": 0.33,
+      "GeenRijbewijs": 2.4
+    },
+    "OV kosten": {
+      "kmkosten": 12.0,
+      "starttarief": 75.0
+    },
+    "tijdkostenga": {
+      "GeenAuto": 0.05,
+      "GeenRijbewijs": 0.4
+    },
+    "Kosten elektrische auto": {
+      "kmheffing": 0.0,
+      "variabele kosten": 5.0
+    },
+    "Kosten auto fossiele brandstof": {
+      "kmheffing": 0.0,
+      "variabele kosten": 16.0
+    },
+    "parkeerzoektijden_bestand": "tests/eindhoven-500/SEGS/Parkeerzoektijd.csv"
+  },
+  "project": {
+    "conc_afstand": [
+      "concurrentie"
+    ],
+    "ketens": {
+      "naam hub": "",
+      "gebruiken": false
+    },
+    "welke_groepen": [
+      "alle groepen"
+    ],
+    "paden": {
+      "segs_directory": "tests/eindhoven-500/SEGS",
+      "output_directory": "tests/eindhoven-500",
+      "skims_directory": "tests/eindhoven-500/skims"
+    },
+    "schatten_of_bekend": [
+      "geschat"
+    ],
+    "verstedelijkingsscenario": "2018",
+    "welke_inkomensgroepen": [
+      "laag",
+      "middellaag",
+      "middelhoog",
+      "hoog"
+    ],
+    "naam": "eindhoven-500",
+    "motieven": [
+      "werk"
+    ],
+    "beprijzingsregime": "Basis"
+  }
+}

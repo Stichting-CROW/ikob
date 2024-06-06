@@ -90,7 +90,7 @@ def remove_directory(dir: pathlib.Path):
         shutil.rmtree(dir)
 
 
-@pytest.mark.parametrize("case", ["vlaanderen"])
+@pytest.mark.parametrize("case", ["vlaanderen", "eindhoven-500"])
 def test_end_to_end(case):
     test_dir = pathlib.Path("tests")
     project_dir = test_dir.joinpath(case).resolve()
