@@ -17,6 +17,10 @@ class DataSource:
         self.project_dir = self.output_dir / project_name
         # TODO: This should be based on 'beprijzingsregime'
         self.basis_dir = self.skims_dir.parent
+        # TODO: Improve handling of data directory structure:
+        # - Extract paths/directory names from constants, e.g. Enum;
+        # - Support multi-lingual directory names.
+        self.tmp_dir = self.project_dir / 'Tussenresultaten'
 
     def _add_id_suffix(self, id, vk, mod, hubnaam, ink):
         id += vk
@@ -71,19 +75,49 @@ class DataSource:
         stedelijkheidsgraad = Routines.csvintlezen(stedelijkheid_path)
         return stedelijkheid_to_parkeerzoektijd(stedelijkheidsgraad)
 
-    def _segs_dir(self, id, jaar, scenario):
-        return self.segs_dir / scenario / (id + jaar)
+    def _segs_input_dir(self, id, jaar, scenario):
+        return self._segs_dir(self.segs_dir, id, jaar, scenario)
 
-    def write_segs_csv(self, data, id, header, jaar="", scenario=""):
-        path = self._segs_dir(id, jaar, scenario).with_suffix(".csv")
+    def _segs_output_dir(self, id, jaar, scenario, group="", modifier=""):
+        root = self.tmp_dir / 'Groepenverdeling'
+        return self._segs_dir(root, id, jaar, scenario, group, modifier)
+
+    def _segs_dir(self, path, id, jaar, scenario, group="", modifier=""):
+        filename = id + jaar
+
+        for postfix in [group, modifier]:
+            if postfix:
+                filename += f"_{postfix}"
+
+        path = path / scenario
+        os.makedirs(path, exist_ok=True)
+        return path / filename
+
+    def write_segs_csv(self, data, id, header, group="", jaar="", modifier="", scenario=""):
+        path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".csv")
         return Routines.csvwegschrijven(data, path, header=header)
 
-    def write_segs_xlsx(self, data, id, header, jaar="", scenario=""):
-        path = self._segs_dir(id, jaar, scenario).with_suffix(".xlsx")
+    def write_segs_xlsx(self, data, id, header, group="", jaar="", modifier="", scenario=""):
+        path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".xlsx")
         return Routines.xlswegschrijven(data, path, header)
 
     def read_segs(self, id: str, jaar="", type_caster=int, scenario=""):
-        path = self._segs_dir(id, jaar, scenario).with_suffix(".csv")
+        # TODO: This is a temporary fix. The 'Verdeling_over_groepen*'
+        # files are written to disk as SEGS files. These were originally
+        # written back into the _input_ directory and read out in later
+        # stages of the program. This detects that behaviour and diverts
+        # reading to the SEGS _output_ directory. Since this only happens
+        # for one variable, the fix is introduced here. Once that data is
+        # passed along as function arguments (kept in memory), this TODO
+        # is to be resolved.
+        should_read_from_output = 'Verdeling_over_groepen' in id
+
+        if should_read_from_output:
+            path = self._segs_output_dir(id, jaar, scenario)
+        else:
+            path = self._segs_input_dir(id, jaar, scenario)
+
+        path = path.with_suffix(".csv")
         return Routines.csvlezen(path, type_caster=type_caster)
 
     def _get_base_dir(self, datatype, id):
