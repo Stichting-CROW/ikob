@@ -1,23 +1,14 @@
 import logging
-import Routines
 import Constantengenerator
-import os
 
 logger = logging.getLogger(__name__)
 
-def gewichten_berekenen_enkel_scenarios(config):
-    # Deze routine kijkt naar de command-line en leest
-    # het opgegeven configuratie bestand in een dict.
-    # Indien er een probleem is, sluit het script hier af.
+def gewichten_berekenen_enkel_scenarios(config, datasource):
     project_config = config['project']
-    paden_config = config['project']['paden']
     skims_config = config['skims']
 
-
     # Ophalen van instellingen
-    Basisdirectory = paden_config['skims_directory']
     dagsoort = skims_config['dagsoort']
-    #Scenario = project_config['scenario']
     motieven = project_config['motieven']
     regime = project_config['beprijzingsregime']
 
@@ -84,16 +75,10 @@ def gewichten_berekenen_enkel_scenarios(config):
 
     for ds in dagsoort:
         for mot in motieven:
-            Gewichtendirectory = os.path.join ( Basisdirectory, regime, mot, 'Gewichten', ds )
-            #Gewichtendirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
-            os.makedirs(Gewichtendirectory,exist_ok=True)
-            Ervarenreistijddirectory = os.path.join ( Basisdirectory, regime, mot, 'Ervarenreistijd', ds)
-            #Ervarenreistijddirectory = os.path.join ( Skimsdirectory, 'Ervarenreistijd', Scenario, ds )
             for mod in modaliteitenfiets:
                 for vk in voorkeuren:
                     if vk == 'Auto' or vk == 'Fiets':
-                        Filenaam = os.path.join(Ervarenreistijddirectory,'Fiets')
-                        GGRskim = Routines.csvintlezen(Filenaam, aantal_lege_regels=0)
+                        GGRskim = datasource.read_csv('Ervarenreistijd', 'Fiets', ds, type_caster=int, regime=regime, mot=mot)
 
                         if mot == 'werk' or mot == 'sociaal-recreatief':
                             constanten = Constantengenerator.alomwerk ( mod, vk )
@@ -107,16 +92,14 @@ def gewichten_berekenen_enkel_scenarios(config):
                         logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
                         if vk == 'Auto':
-                            Uitvoerfilenaam = os.path.join(Gewichtendirectory, f'{mod}_vk')
+                            datasource.write_csv(Gewichten, 'Gewichten', f'{mod}_vk', ds, regime=regime, mot=mot)
                         else :
-                            Uitvoerfilenaam = os.path.join(Gewichtendirectory, f'{mod}_vk{vk}' )
-                        Routines.csvwegschrijven(Gewichten,Uitvoerfilenaam)
+                            datasource.write_csv(Gewichten, 'Gewichten', f'{mod}_vk', ds, vk=vk, regime=regime, mot=mot)
             # Nu Auto
             for ink in inkomen:
                 for vk in voorkeuren:
                     for srtbr in soortbrandstof:
-                        ErvarenReistijdfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{srtbr}_{ink}')
-                        GGRskim = Routines.csvintlezen(ErvarenReistijdfilenaam)
+                        GGRskim = datasource.read_csv('Ervarenreistijd', f'Auto_{srtbr}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
                         if mot == 'werk' or mot == 'sociaal-recreatief':
                             constanten = Constantengenerator.alomwerk ('Auto', vk )
                         elif mot == 'winkeldagelijkszorg':
@@ -128,18 +111,14 @@ def gewichten_berekenen_enkel_scenarios(config):
                         weging = constanten[2]
                         logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
-                        Brandstofgewichtendirectory = os.path.join (Gewichtendirectory,f'{srtbr}')
-                        os.makedirs(Brandstofgewichtendirectory, exist_ok=True)
-                        Uitvoerfilenaam = os.path.join (Brandstofgewichtendirectory,f'Auto_vk{vk}_{ink}')
-                        Routines.csvwegschrijven(Gewichten,Uitvoerfilenaam)
+                        datasource.write_csv(Gewichten, 'Gewichten', 'Auto_vk', ds, vk=vk, ink=ink, srtbr=srtbr, regime=regime, mot=mot)
 
             soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
             voorkeurengeenauto = ['Neutraal', 'OV', 'Fiets']
             for sga in soortgeenauto:
                 for vk in voorkeurengeenauto :
                     for ink in inkomen:
-                        ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{sga}_{ink}' )
-                        GGRskim = Routines.csvfloatlezen ( ErvarenReistijdfilenaam )
+                        GGRskim = datasource.read_csv('Ervarenreistijd', f'{sga}', ds, ink=ink, regime=regime, mot=mot)
                         if mot == 'werk' or mot == 'sociaal-recreatief':
                             constanten = Constantengenerator.alomwerk ( 'Auto',vk )
                         elif mot == 'winkeldagelijkszorg':
@@ -151,16 +130,14 @@ def gewichten_berekenen_enkel_scenarios(config):
                         weging = constanten[2]
                         logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
-                        Uitvoerfilenaam = os.path.join ( Gewichtendirectory, f'{sga}_vk{vk}_{ink}' )
-                        Routines.csvwegschrijven ( Gewichten, Uitvoerfilenaam )
+                        datasource.write_csv(Gewichten, 'Gewichten', f'{sga}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
 
             # Nu OV
             modaliteitenOV = ['OV']
             for modOV in modaliteitenOV:
                 for ink in inkomen:
                     for vk in voorkeuren:
-                        ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'{modOV}_{ink}' )
-                        GGRskim = Routines.csvintlezen(ErvarenReistijdfilenaam)
+                        GGRskim = datasource.read_csv('Ervarenreistijd', f'{modOV}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
 
                         if mot == 'werk' or mot == 'sociaal-recreatief':
                             constanten = Constantengenerator.alomwerk ( modOV, vk )
@@ -173,12 +150,10 @@ def gewichten_berekenen_enkel_scenarios(config):
                         weging = constanten[2]
                         logger.debug("alpha: %f, omega: %f, weging: %f", alpha, omega, weging)
                         Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging)
-                        Uitvoerfilenaam = os.path.join(Gewichtendirectory, f'{modOV}_vk{vk}_{ink}')
-                        Routines.csvwegschrijven(Gewichten,Uitvoerfilenaam)
+                        datasource.write_csv(Gewichten, 'Gewichten', f'{modOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
 
             for ink in inkomen:
-                ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisAuto_{ink}' )
-                GGRskim = Routines.csvintlezen ( ErvarenReistijdfilenaam )
+                GGRskim = datasource.read_csv('Ervarenreistijd', 'GratisAuto', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
                 if mot == 'werk' or mot == 'sociaal-recreatief':
                     constanten = Constantengenerator.alomwerk ( 'Auto', 'Auto' )
                 elif mot == 'winkeldagelijkszorg':
@@ -192,10 +167,9 @@ def gewichten_berekenen_enkel_scenarios(config):
                 Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
                 specialauto = ['Neutraal', 'Auto']
                 for vks in specialauto:
-                    Uitvoerfilenaam = os.path.join ( Gewichtendirectory, f'GratisAuto_vk{vks}_{ink}' )
-                    Routines.csvwegschrijven ( Gewichten, Uitvoerfilenaam )
-                ErvarenReistijdfilenaam = os.path.join ( Ervarenreistijddirectory, 'GratisOV' )
-                GGRskim = Routines.csvintlezen ( ErvarenReistijdfilenaam )
+                    datasource.write_csv(Gewichten, 'Gewichten', 'GratisAuto_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot)
+
+                GGRskim = datasource.read_csv('Ervarenreistijd', 'GratisOV', ds, type_caster=int, regime=regime, mot=mot)
                 if mot == 'werk' or mot == 'sociaal-recreatief':
                     constanten = Constantengenerator.alomwerk ( 'OV', 'OV' )
                 elif mot == 'winkeldagelijkszorg':
@@ -209,5 +183,4 @@ def gewichten_berekenen_enkel_scenarios(config):
                 Gewichten = gewichtenberekenen ( GGRskim, alpha, omega, weging )
                 specialOV = ['Neutraal', 'OV']
                 for vks in specialOV:
-                    Uitvoerfilenaam = os.path.join ( Gewichtendirectory, f'GratisOV_vk{vks}_{ink}' )
-                    Routines.csvwegschrijven ( Gewichten, Uitvoerfilenaam )
+                    datasource.write_csv(Gewichten, 'Gewichten', 'GratisOV_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot)

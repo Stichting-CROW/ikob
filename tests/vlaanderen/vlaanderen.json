@@ -24,7 +24,8 @@
     "beprijzingsregime": "Basis",
     "paden": {
       "segs_directory": "tests/vlaanderen/SEGS",
-      "skims_directory": "tests/vlaanderen"
+      "skims_directory": "tests/vlaanderen/skims",
+      "output_directory": "tests/vlaanderen/"
     },
     "verstedelijkingsscenario": "2023",
     "welke_groepen": [

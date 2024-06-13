@@ -1,16 +1,12 @@
 import logging
-import os
 import Routines
 
 logger = logging.getLogger(__name__)
 
 
-def ervaren_reistijd_berekenen(config):
-    Projectbestandsnaam = config['__filename__']  # nieuw automatisch toegevoegd config item.
-
+def ervaren_reistijd_berekenen(config, datasource):
     # Haal (voor het gemak) onderdelen voor dit script er uit.
     project_config = config['project']
-    paden_config = config['project']['paden']
     skims_config = config['skims']
     tvom_config = config['TVOM']
     verdeling_config = config['verdeling']
@@ -18,11 +14,6 @@ def ervaren_reistijd_berekenen(config):
     # Ophalen van instellingen
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
-    Basisdirectory = paden_config['skims_directory']
-    Skimsdirectory = os.path.join (Basisdirectory, 'skims')
-    os.makedirs ( Skimsdirectory, exist_ok=True )
-    SEGSdirectory = paden_config['segs_directory']
-    logger.debug("Skimsdirectory: %s", Skimsdirectory)
     scenario = project_config['verstedelijkingsscenario']
     motieven = project_config['motieven']
     Ketens = project_config['ketens']['gebruiken']
@@ -39,20 +30,16 @@ def ervaren_reistijd_berekenen(config):
     tijdkostenga = skims_config['tijdkostenga']
     dagsoort = skims_config['dagsoort']
     soortgeenauto = ['GeenAuto','GeenRijbewijs']
-    #benader_kosten = skims_config['OV kosten']['benaderen']['gebruiken']
     OVkmtarief = skims_config['OV kosten']['kmkosten']
     starttarief = skims_config['OV kosten']['starttarief']
-    Parkeerzoektijdfile = skims_config['parkeerzoektijden_bestand']
     Additionele_kosten = verdeling_config['additionele_kosten']['gebruiken']
-    Additionele_kostenfile = verdeling_config['additionele_kosten']['bestand']
     Parkeerkosten = verdeling_config['parkeerkosten']['gebruiken']
     Parkeerkostenfile = verdeling_config['parkeerkosten']['bestand']
     Pricecap = skims_config['pricecap']['gebruiken']
     Pricecapgetal = skims_config['pricecap']['getal']
 
     if Additionele_kosten:
-        Additionele_kostenfile=Additionele_kostenfile.replace('.csv','')
-        Additionele_kostenmatrix = Routines.csvintlezen(Additionele_kostenfile , aantal_lege_regels=0)
+        Additionele_kostenmatrix = datasource.read_config('skims', 'additionele_kosten')
 
     # Vaste waarden
     inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
@@ -63,20 +50,14 @@ def ervaren_reistijd_berekenen(config):
     varelektrisch = float(varelektrisch/100)
     kmheffingfossiel = float (kmheffingfossiel/100)
     kmheffingelektrisch = float (kmheffingelelektrisch/100)
-    Parkeerzoektijdfile=Parkeerzoektijdfile.replace('.csv','')
-    Parkeertijdlijst = Routines.csvlezen (Parkeerzoektijdfile, aantal_lege_regels=1)
-    logger.debug("Projectbestandsnaam: %s", Projectbestandsnaam)
-    Projectdirectory = os.path.join (Basisdirectory, Projectbestandsnaam)
-    logger.debug("Projectdirectory: %s", Projectdirectory)
-    os.makedirs ( Projectdirectory, exist_ok=True)
+    Parkeertijdlijst = datasource.read_config('skims', 'parkeerzoektijden_bestand')
     soortbrandstof = ['fossiel', 'elektrisch']
     if 'orrectie' in regime:
         motief=motieven[0]
         if '65+' in regime:
-            Correctiefile=os.path.join(SEGSdirectory, scenario, f'Correctiefactoren_{motief}_65plus')
+            Correctiefactoren = datasource.read_segs(f"Correctiefactoren_{motief}_65plus", scenario=scenario)
         else:
-            Correctiefile=os.path.join(SEGSdirectory, scenario, f'Correctiefactoren_{motief}')
-        Correctiefactoren = Routines.csvlezen(Correctiefile, aantal_lege_regels=1)
+            Correctiefactoren = datasource.read_segs(f"Correctiefactoren_{motief}", scenario=scenario)
     else:
         Correctiefactoren = []
         for i in range(len(Parkeertijdlijst)):
@@ -96,21 +77,13 @@ def ervaren_reistijd_berekenen(config):
         TVOM = TVOMwerk if mot == 'werk' else TVOMoverig
         logger.debug("TVOM: %s", TVOM)
         for ds in dagsoort:
-            Invoerdirectory = os.path.join(Skimsdirectory, ds)
-            Ervarenreistijddirectory = os.path.join(Basisdirectory, regime, mot, 'Ervarenreistijd', ds)
-            logger.debug("Ervarenreistijddirectory: %s", Ervarenreistijddirectory)
-            os.makedirs(Ervarenreistijddirectory, exist_ok=True)
-            Autotijdfilenaam = os.path.join(Invoerdirectory, f'Auto_Tijd')
-            Autotijdmatrix = Routines.csvfloatlezen(Autotijdfilenaam, aantal_lege_regels=0)
-            Autoafstandfilenaam = os.path.join(Invoerdirectory, f'Auto_Afstand')
-            Autoafstandmatrix = Routines.csvfloatlezen(Autoafstandfilenaam, aantal_lege_regels=0)
-            Fietstijdfilenaam = os.path.join(Invoerdirectory, f'Fiets_Tijd')
-            Fietstijdmatrix = Routines.csvfloatlezen (Fietstijdfilenaam, aantal_lege_regels=0)
-            OVtijdfilenaam = os.path.join(Invoerdirectory, f'OV_Tijd')
-            OVtijdmatrix = Routines.csvfloatlezen(OVtijdfilenaam, aantal_lege_regels=0)
-            OVafstandfilenaam = os.path.join(Invoerdirectory, f'OV_Afstand')
-            OVafstandmatrix = Routines.csvfloatlezen(OVafstandfilenaam, aantal_lege_regels=0)
+            Autotijdmatrix = datasource.read_skims('Auto_Tijd', ds)
+            Autoafstandmatrix = datasource.read_skims('Auto_Afstand', ds)
+            Fietstijdmatrix = datasource.read_skims('Fiets_Tijd', ds)
+            OVtijdmatrix = datasource.read_skims('OV_Tijd', ds)
+            OVafstandmatrix = datasource.read_skims('OV_Afstand', ds)
             if Parkeerkosten:
+                raise NotImplementedError("Needs to be replaced with datasource reading...")
                 Parkeerkostenfile = Parkeerkostenfile.replace ( '.csv', '' )
                 Parkeerkostenlijst = Routines.csvintlezen ( Parkeerkostenfile, aantal_lege_regels=0 )
             else:
@@ -118,24 +91,14 @@ def ervaren_reistijd_berekenen(config):
             logger.debug("Parkeerkostenlijst = %s", Parkeerkostenlijst)
 
             if Ketens :
-                Pplusfietstijdfilenaam = os.path.join(Invoerdirectory, f'Pplusfiets_{Hubnaam}_Tijd')
-                Pplusfietstijdmatrix = Routines.csvfloatlezen(Pplusfietstijdfilenaam, aantal_lege_regels=0)
-                Pplusfietsafstandfilenaam = os.path.join(Invoerdirectory, f'Pplusfiets_{Hubnaam}_Afstand_Auto')
-                Pplusfietsafstandmatrix = Routines.csvfloatlezen(Pplusfietsafstandfilenaam, aantal_lege_regels=0)
-                PplusRbestemmingstijdfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_bestemmings_Tijd')
-                PplusRbestemmingstijdmatrix = Routines.csvfloatlezen(PplusRbestemmingstijdfilenaam, aantal_lege_regels=0)
-                PplusRherkomsttijdfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_herkomst_Tijd')
-                PplusRherkomsttijdmatrix = Routines.csvfloatlezen(PplusRherkomsttijdfilenaam, aantal_lege_regels=0)
-                PplusRbestemmingsOVafstandfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_bestemmings_Afstand_OV')
-                PplusRbestemmingsOVafstandmatrix = Routines.csvfloatlezen(PplusRbestemmingsOVafstandfilenaam, aantal_lege_regels=0)
-                PplusRbestemmingsautoafstandfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_bestemmings_Afstand_Auto')
-                PplusRbestemmingsautoafstandmatrix = Routines.csvfloatlezen(PplusRbestemmingsautoafstandfilenaam, aantal_lege_regels=0)
-                PplusRherkomstOVafstandfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_herkomst_Afstand_OV')
-                PplusRherkomstOVafstandmatrix = Routines.csvfloatlezen(PplusRherkomstOVafstandfilenaam, aantal_lege_regels=0)
-                PplusRherkomstautoafstandfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_herkomst_Afstand_Auto')
-                PplusRherkomstautoafstandmatrix = Routines.csvfloatlezen(PplusRherkomstautoafstandfilenaam, aantal_lege_regels=0)
-
-
+                Pplusfietstijdmatrix = datasource.read_skims(f'Pplusfiets_{Hubnaam}_Tijd', ds)
+                Pplusfietsafstandmatrix = datasource.read_skims(f'Pplusfiets_{Hubnaam}_Afstand_Auto', ds)
+                PplusRbestemmingstijdmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_bestemmings_Tijd', ds)
+                PplusRherkomsttijdmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Tijd', ds)
+                PplusRbestemmingsOVafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_bestemmings_Afstand_OV', ds)
+                PplusRbestemmingsautoafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_bestemmings_Afstand_Auto', ds)
+                PplusRherkomstOVafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Afstand_OV', ds)
+                PplusRherkomstautoafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Afstand_Auto', ds)
 
             logger.debug("Parkeertijden bevat %d zones.", len(Parkeertijdlijst))
             aantal_zones_tijd = len(Autotijdmatrix)
@@ -149,9 +112,7 @@ def ervaren_reistijd_berekenen(config):
 
             #kostenmatrix
             if OV_Kostenbestand:
-                OVKostenbestandsnaam=os.path.join(Skimsdirectory,ds, f'OV_Kosten')
-                logger.debug("OVKostenbestandsnaam: %s", OVKostenbestandsnaam)
-                KostenmatrixOV=Routines.csvlezen(OVKostenbestandsnaam)
+                KostenmatrixOV = datasource.read_skims("OV_Kosten", ds)
             else:
                 logger.debug("Bezig kosten berekenen.")
                 afmeting = len (OVafstandmatrix)
@@ -186,9 +147,8 @@ def ervaren_reistijd_berekenen(config):
                 for j in range (0,aantal_zones) :
                     GGRskim[i].append(9999)
 
+            datasource.write_csv(GGRskim, 'Ervarenreistijd', 'Fiets', ds, regime=regime, mot=mot)
 
-            Uitvoerfilenaam = os.path.join(Ervarenreistijddirectory, 'Fiets')
-            Routines.csvwegschrijven(GGRskim,Uitvoerfilenaam)
             for ink in inkomens:
                 for srtbr in soortbrandstof:
                     if srtbr == 'fossiel':
@@ -212,8 +172,7 @@ def ervaren_reistijd_berekenen(config):
                                                   Correctiefactoren[i][inkomens.index(ink)] *
                                                    (varautotarief+kmheffing) + Parkeerkostenlijst[j]/100)))
         
-                    Uitvoerfilenaam = os.path.join(Ervarenreistijddirectory, f'Auto_{srtbr}_{ink}')
-                    Routines.csvwegschrijven(GGRskim, Uitvoerfilenaam)
+                    datasource.write_csv(GGRskim, 'Ervarenreistijd', f"Auto_{srtbr}", ds, ink=ink, regime=regime, mot=mot)
 
 
                 #Dan het OV
@@ -229,8 +188,7 @@ def ervaren_reistijd_berekenen(config):
                         else:
                             GGRskim[i].append(9999)
 
-                Uitvoerfilenaam = os.path.join(Ervarenreistijddirectory, f'OV_{ink}')
-                Routines.csvwegschrijven(GGRskim,Uitvoerfilenaam)
+                datasource.write_csv(GGRskim, 'Ervarenreistijd', 'OV', ds, ink=ink, regime=regime, mot=mot)
 
                 #Dan geen auto (rijbewijs)
                 for sga in soortgeenauto :
@@ -247,8 +205,7 @@ def ervaren_reistijd_berekenen(config):
                                                Correctiefactoren[i][inkomens.index(ink)] * Autoafstandmatrix[i][j] * (varkostenga.get(sga) + kmheffing)
                                 GGRskim[i].append(int(totaleTijd + Vermenigvuldigingsfactor * totaleKosten))
 
-                    Uitvoerfilenaam = os.path.join(Ervarenreistijddirectory, f'{sga}_{ink}')
-                    Routines.csvwegschrijven(GGRskim, Uitvoerfilenaam)
+                    datasource.write_csv(GGRskim, 'Ervarenreistijd', f'{sga}', ds, ink=ink, regime=regime, mot=mot)
 
                 # Nu GratisAuto
                 for ink in inkomens:
@@ -266,8 +223,7 @@ def ervaren_reistijd_berekenen(config):
                                 GGRskim[i].append ( int ( totaleTijd + Correctiefactoren[i][inkomens.index(ink)] *
                                                           Vermenigvuldigingsfactor * Autoafstandmatrix[i][j] *
                                                         kmheffing + Parkeerkostenlijst[j]/100) )
-                    Uitvoerfilenaam = os.path.join ( Ervarenreistijddirectory, f'GratisAuto_{ink}' )
-                    Routines.csvwegschrijven ( GGRskim, Uitvoerfilenaam )
+                    datasource.write_csv(GGRskim, 'Ervarenreistijd', 'GratisAuto', ds, ink=ink, regime=regime, mot=mot)
 
                 #Nu GratisOV
                 GGRskim = []
@@ -279,8 +235,7 @@ def ervaren_reistijd_berekenen(config):
                         else:
                             GGRskim[i].append(9999)
 
-                Uitvoerfilenaam = os.path.join(Ervarenreistijddirectory, 'GratisOV')
-                Routines.csvwegschrijven(GGRskim,Uitvoerfilenaam)
+                datasource.write_csv(GGRskim, 'Ervarenreistijd', 'GratisOV', ds, regime=regime, mot=mot)
 
                 #Nu de ketens
                 #Eerst P+Fiets
@@ -299,8 +254,7 @@ def ervaren_reistijd_berekenen(config):
                                     GGRskim[i].append(int(Pplusfietstijdmatrix[i][j] + Vermenigvuldigingsfactor * Pplusfietsafstandmatrix [i][j] *
                                                       varautotarief+kmheffing))
 
-                        Uitvoerfilenaam = os.path.join(Ervarenreistijddirectory, f'Pplusfiets_{Hubnaam}_{ink}')
-                        Routines.csvwegschrijven(GGRskim, Uitvoerfilenaam)
+                        datasource.write_csv(GGRskim, 'Ervarenreistijd', 'Pplusfiets', ds, ink=ink, hubnaam=Hubnaam, regime=regime, mot=mot)
 
                         # Dan P+R
 
@@ -320,8 +274,7 @@ def ervaren_reistijd_berekenen(config):
                                           (PplusRbestemmingsautoafstandmatrix[i][j] * (varautotarief + kmheffing) +
                                             KostenbestemmingsPplusROV[i][j] )))
 
-                        Uitvoerfilenaam = os.path.join ( Ervarenreistijddirectory, f'PplusRbestemmings_{Hubnaam}_{ink}' )
-                        Routines.csvwegschrijven ( GGRskim, Uitvoerfilenaam )
+                        datasource.write_csv(GGRskim, 'Ervarenreistijd', 'PplusRbestemmings', ds, ink=ink, hubnaam=Hubnaam, regime=regime, mot=mot)
 
                         GGRskim = []
 
@@ -339,5 +292,4 @@ def ervaren_reistijd_berekenen(config):
                                           (PplusRherkomstautoafstandmatrix[i][j] * (varautotarief + kmheffing) +
                                             KostenherkomstPplusROV[i][j] )))
 
-                        Uitvoerfilenaam = os.path.join ( Ervarenreistijddirectory, f'PplusRherkomst_{Hubnaam}_{ink}' )
-                        Routines.csvwegschrijven ( GGRskim, Uitvoerfilenaam )
+                        datasource.write_csv(GGRskim, 'Ervarenreistijd', 'PplusRherkomst', ds, ink=ink, hubnaam=Hubnaam, regime=regime, mot=mot)

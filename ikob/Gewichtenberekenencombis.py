@@ -1,6 +1,5 @@
 import logging
 import Routines
-import os
 
 logger = logging.getLogger(__name__)
 
@@ -36,27 +35,19 @@ def kanvoorkeur(soortauto, soortOV, voorkeur) :
     else :
         return True
 
-def Maxberekenen_en_wegschrijven (Directory,Matrix1, Matrix2,mod1, mod2,vk,ink):
+def Maxberekenen_en_wegschrijven(datasource, Matrix1, Matrix2, mod1, mod2, vk, ink, ds, regime, mot, srtbr=''):
     Maxmatrix = Routines.minmaxmatrix ( Matrix1, Matrix2 )
-    Uitvoerfilenaam = os.path.join (Directory, f'{mod1}_{mod2}_vk{vk}_{ink}')
-    logger.debug("Uitvoerfilenaam is %s", Uitvoerfilenaam)
-    Routines.csvwegschrijven ( Maxmatrix, Uitvoerfilenaam )
-    return
+    return datasource.write_csv(Maxmatrix,'Gewichten', f"{mod1}_{mod2}_vk",ds,subtopic='Combinaties', vk=vk,ink=ink, srtbr=srtbr, regime=regime, mot=mot)
 
-def Maxberekenen_en_wegschrijvenvan3 (Directory, Matrix1, Matrix2, Matrix3, mod1, mod2, mod3, vk,ink):
+def Maxberekenen_en_wegschrijvenvan3(datasource, Matrix1, Matrix2, Matrix3, mod1, mod2, mod3, vk, ink, ds, regime, mot, srtbr=''):
     Maxmatrix = Routines.minmaxmatrix3 ( Matrix1, Matrix2, Matrix3 )
-    Uitvoerfilenaam = os.path.join (Directory, f'{mod1}_{mod2}_{mod3}_vk{vk}_{ink}')
-    Routines.csvwegschrijven ( Maxmatrix, Uitvoerfilenaam )
-    return
+    return datasource.write_csv(Maxmatrix,'Gewichten', f"{mod1}_{mod2}_{mod3}_vk",ds,subtopic='Combinaties', vk=vk,ink=ink, srtbr=srtbr, regime=regime, mot=mot)
 
-def gewichten_berekenen_combis(config):
+def gewichten_berekenen_combis(config, datasource):
     project_config = config['project']
-    paden_config = config['project']['paden']
     skims_config = config['skims']
 
-
     # Ophalen van instellingen
-    Basisdirectory = paden_config['skims_directory']
     motieven = project_config['motieven']
     regime = project_config['beprijzingsregime']
     dagsoort = skims_config['dagsoort']
@@ -73,13 +64,6 @@ def gewichten_berekenen_combis(config):
 
     for mot in motieven:
         for ds in dagsoort:
-
-            Combinatiedirectory = os.path.join(Basisdirectory, regime, mot, 'Gewichten', 'Combinaties', ds)
-            Enkeldirectory = os.path.join(Basisdirectory, regime, mot, 'Gewichten', ds)
-            #Combinatiedirectory = os.path.join ( Skimsdirectory, 'Gewichten', 'Combinaties', Scenario, ds )
-            #Enkeldirectory = os.path.join ( Skimsdirectory, 'Gewichten', Scenario, ds )
-            os.makedirs(Combinatiedirectory, exist_ok=True)
-
             for ink in inkomen:
                 for vk in voorkeuren:
                     for modft in modaliteitenfiets:
@@ -89,53 +73,35 @@ def gewichten_berekenen_combis(config):
                                     vkklad = 'Fiets'
                                 else:
                                     vkklad = ''
-                                Fietsfile = os.path.join (Enkeldirectory, f'{modft}_vk{vkklad}')
-                                Fietsmatrix = Routines.csvlezen(Fietsfile)
-                                OVfile = os.path.join (Enkeldirectory, f'{srtOV}_vk{vk}_{ink}')
-                                OVmatrix = Routines.csvlezen(OVfile)
-                                Maxberekenen_en_wegschrijven(Combinatiedirectory, Fietsmatrix,OVmatrix, srtOV, modft, vk, ink)
+                                Fietsmatrix = datasource.read_csv('Gewichten', f'{modft}_vk',ds,vk=vkklad, regime=regime, mot=mot)
+                                OVmatrix = datasource.read_csv('Gewichten', f'{srtOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                Maxberekenen_en_wegschrijven(datasource, Fietsmatrix, OVmatrix, srtOV, modft, vk, ink, ds, regime=regime, mot=mot)
                         for srtauto in soortauto:
                             if kanvoorkeur (srtauto, 'OV', vk):
                                 if vk == 'Fiets':
                                     vkklad = 'Fiets'
                                 else:
                                     vkklad = ''
-                                Fietsfile = os.path.join ( Enkeldirectory, f'{modft}_vk{vkklad}' )
-                                Fietsmatrix = Routines.csvlezen ( Fietsfile )
+                                Fietsmatrix = datasource.read_csv('Gewichten', f'{modft}_vk',ds, vk=vkklad, regime=regime, mot=mot)
                                 if srtauto == 'Auto':
                                     for srtbr in soortbrandstof:
-                                        Autofile = os.path.join ( Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}' )
-                                        Automatrix = Routines.csvlezen ( Autofile )
-                                        logger.debug("Autofile: %s", Autofile)
-                                        logger.debug("Fietsfile: %s", Fietsfile)
-                                        Brandstofdirectory = os.path.join (Combinatiedirectory, srtbr)
-                                        os.makedirs(Brandstofdirectory, exist_ok=True)
-                                        Maxberekenen_en_wegschrijven ( Brandstofdirectory, Fietsmatrix,
-                                                                       Automatrix, srtauto, modft, vk, ink )
+                                        Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink, srtbr=srtbr, mot=mot, regime=regime)
+                                        Maxberekenen_en_wegschrijven(datasource, Fietsmatrix, Automatrix, srtauto, modft, vk, ink, ds, regime=regime, mot=mot, srtbr=srtbr)
                                 else:
-                                    Autofile = os.path.join(Enkeldirectory, f'{srtauto}_vk{vk}_{ink}')
-                                    Automatrix = Routines.csvlezen(Autofile)
-                                    Maxberekenen_en_wegschrijven(Combinatiedirectory, Fietsmatrix, Automatrix, srtauto, modft, vk, ink)
+                                    Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink, mot=mot, regime=regime)
+                                    Maxberekenen_en_wegschrijven(datasource, Fietsmatrix, Automatrix, srtauto, modft, vk, ink, ds, regime=regime, mot=mot)
 
                     for srtOV in soortOV:
                         for srtauto in soortauto:
                             if kanvoorkeur (srtauto, srtOV, vk):
-                                OVfile = os.path.join ( Enkeldirectory, f'{srtOV}_vk{vk}_{ink}' )
-                                OVmatrix = Routines.csvlezen ( OVfile )
+                                OVmatrix = datasource.read_csv('Gewichten', f'{srtOV}_vk',ds,vk=vk,ink=ink,regime=regime, mot=mot)
                                 if srtauto == 'Auto':
                                     for srtbr in soortbrandstof:
-                                        Autofile = os.path.join(Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}')
-                                        Automatrix = Routines.csvlezen(Autofile)
-                                        logger.debug("Autofile: %s", Autofile)
-                                        logger.debug("Belangrijk! OVFile=%s", OVfile)
-                                        Brandstofdirectory = os.path.join (Combinatiedirectory, srtbr)
-                                        os.makedirs(Brandstofdirectory, exist_ok=True)
-                                        Maxberekenen_en_wegschrijven ( Brandstofdirectory, OVmatrix, Automatrix, srtauto, srtOV, vk, ink )
+                                        Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink,srtbr=srtbr, regime=regime, mot=mot)
+                                        Maxberekenen_en_wegschrijven(datasource, OVmatrix, Automatrix, srtauto, srtOV, vk, ink, ds, regime=regime, mot=mot, srtbr=srtbr)
                                 else:
-                                    Autofile = os.path.join(Enkeldirectory, f'{srtauto}_vk{vk}_{ink}')
-                                    Automatrix = Routines.csvlezen(Autofile)
-                                    Maxberekenen_en_wegschrijven(Combinatiedirectory, OVmatrix, Automatrix,
-                                                                 srtauto, srtOV, vk, ink)
+                                    Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink, regime=regime, mot=mot)
+                                    Maxberekenen_en_wegschrijven(datasource, OVmatrix, Automatrix, srtauto, srtOV, vk, ink, ds, regime=regime, mot=mot)
                     for modft in modaliteitenfiets:
                         for srtOV in soortOV:
                             for srtauto in soortauto:
@@ -144,25 +110,12 @@ def gewichten_berekenen_combis(config):
                                         vkklad = 'Fiets'
                                     else:
                                         vkklad = ''
-                                    Fietsfile = os.path.join (Enkeldirectory, f'{modft}_vk{vkklad}')
-                                    Fietsmatrix = Routines.csvlezen(Fietsfile)
-                                    OVfile = os.path.join (Enkeldirectory, f'{srtOV}_vk{vk}_{ink}')
-                                    OVmatrix = Routines.csvlezen(OVfile)
+                                    Fietsmatrix = datasource.read_csv('Gewichten', f'{modft}_vk',ds,vk=vkklad, regime=regime, mot=mot)
+                                    OVmatrix= datasource.read_csv('Gewichten', f'{srtOV}_vk',ds,vk=vk,ink=ink, regime=regime, mot=mot)
                                     if srtauto == 'Auto':
                                         for srtbr in soortbrandstof:
-                                            Autofile = os.path.join(Enkeldirectory, srtbr, f'{srtauto}_vk{vk}_{ink}')
-                                            Automatrix = Routines.csvlezen(Autofile)
-                                            logger.debug("Autofile: %s", Autofile)
-                                            logger.debug("Fietsfile: %s", Fietsfile)
-                                            logger.debug("OVfile: %s", OVfile)
-                                            Brandstofdirectory = os.path.join(Combinatiedirectory, srtbr)
-                                            os.makedirs(Brandstofdirectory, exist_ok=True)
-                                            Maxberekenen_en_wegschrijvenvan3(Brandstofdirectory,Automatrix,
-                                                                             Fietsmatrix, OVmatrix, srtauto, srtOV,
-                                                                             modft, vk, ink)
+                                            Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink,srtbr=srtbr, regime=regime, mot=mot)
+                                            Maxberekenen_en_wegschrijvenvan3(datasource, Automatrix, Fietsmatrix, OVmatrix, srtauto, srtOV, modft, vk, ink, ds, regime=regime, mot=mot, srtbr=srtbr)
                                     else:
-                                        Autofile = os.path.join(Enkeldirectory,f'{srtauto}_vk{vk}_{ink}')
-                                        Automatrix = Routines.csvlezen(Autofile)
-                                        Maxberekenen_en_wegschrijvenvan3(Combinatiedirectory,Automatrix,
-                                                                         Fietsmatrix, OVmatrix, srtauto, srtOV,
-                                                                         modft, vk, ink)
+                                        Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk',ds,vk=vk,ink=ink, regime=regime, mot=mot)
+                                        Maxberekenen_en_wegschrijvenvan3(datasource, Automatrix, Fietsmatrix, OVmatrix, srtauto, srtOV, modft, vk, ink, ds, mot=mot, regime=regime)

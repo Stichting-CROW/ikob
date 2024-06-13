@@ -6,35 +6,43 @@ import shutil
 import pandas as pd
 
 
-def is_equal_excel_file(result, reference) -> bool:
-    """Compare two xlsx files within numerical tolerances.
+def file_to_frame(path: pathlib.Path) -> pd.DataFrame:
+    if path.suffix == ".xlsx":
+        return pd.read_excel(path)
 
-    The files are considered equal if their pandas.DataFrame representations
-    are considered equal up to given relative and absolute tolerance differences.
-    """
-    result_frame = pd.read_excel(result)
-    reference_frame = pd.read_excel(reference)
-    # These match the defaults of assert_frame_equal.
-    rtol = 1e-5
-    atol = 1e-8
-    try:
-        pd.testing.assert_frame_equal(result_frame, reference_frame, rtol=rtol, atol=atol)
-        return True
-    except AssertionError as err:
-        print(f"Excel file {result} differs from reference:\n{err}")
-        return False
+    if path.suffix == ".csv":
+        try:
+            return pd.read_csv(path, dtype=float, header=None)
+        except ValueError:
+            return pd.read_csv(path, dtype=float)
 
 
 def is_equal_file(dcmp: filecmp.dircmp, file: pathlib.Path) -> bool:
-    """Compare files in detail with filetype specific comparisons."""
+    """Compare reportedly differing files with some tolerance slack.
 
+    The Excel and CSV files in the reference set are first directly
+    compared, ignoring any numerical tolerances, which fail when
+    floating point data is stored. This reevaluates the file equality
+    by comparing their DataFrame representations up to a given relative
+    and absolute tolerances.
+    """
     result = pathlib.Path(dcmp.left).joinpath(file)
     reference = pathlib.Path(dcmp.right).joinpath(file)
 
-    if file.suffix == ".xlsx":
-        return is_equal_excel_file(result, reference)
+    # Only reevaluate Excel/CSV files.
+    if file.suffix not in [".xlsx", ".csv"]:
+        return False
 
-    return False
+    result_frame = file_to_frame(result)
+    reference_frame = file_to_frame(reference)
+
+    try:
+        pd.testing.assert_frame_equal(result_frame, reference_frame,
+                                      rtol=1e-5, atol=1e-8)
+        return True
+    except AssertionError as err:
+        print(f"File {result} differs from reference:\n{err}")
+        return False
 
 
 def same_directory(dcmp: filecmp.dircmp) -> bool:
@@ -73,8 +81,8 @@ def test_end_to_end(case):
     project_dir = test_dir.joinpath(case).resolve()
     project = project_dir.joinpath(f"{case}.json")
 
-    compare_paths = [f"{case}/Resultaten", "Basis"]
-    compare_dirs = [project_dir / path for path in compare_paths]
+    suffixes = ["Resultaten", "Basis"]
+    compare_dirs = [project_dir / case / s for s in suffixes]
 
     # Delete old results if still present
     for result_dir in compare_dirs:

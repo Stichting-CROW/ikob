@@ -15,6 +15,7 @@ from Ontplooiingsmogelijkhedenechteinwoners import ontplooingsmogelijkheden_echt
 from Potentiebedrijven import potentie_bedrijven
 from Concurrentieomarbeidsplaatsen import concurrentie_om_arbeidsplaatsen
 from Concurrentieominwoners import concurrentie_om_inwoners
+from datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,7 @@ def run_scripts(project_file, skip_steps):
     """
     logger.info("Reading project file: %s.", project_file)
     config = getConfigFromArgs(project_file)
+    datasource = DataSource(config, config['__filename__'])
 
     for (description, method), skip in zip(stappen, skip_steps):
         if skip:
@@ -51,7 +53,7 @@ def run_scripts(project_file, skip_steps):
             continue
 
         logger.info("Running step: %s.", description)
-        result = method(config)
+        result = method(config, datasource)
         yield description, result
 
 
