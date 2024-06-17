@@ -7,7 +7,7 @@ name = "ikob"
 version = "0.0.1"
 description = "IKOB"
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.12"
 dependencies = [
     "numpy",
     "openpyxl",
@@ -33,4 +33,4 @@ testpaths = [
 [tool.ruff]
 line-length = 88
 indent-width = 4
-target-version = "py38"
+target-version = "py312"
