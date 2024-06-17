@@ -6,11 +6,6 @@ import shutil
 import pandas as pd
 import logging
 
-
-logger = logging.getLogger(__name__)
-
-import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -61,8 +56,11 @@ def same_directory(dcmp: filecmp.dircmp) -> bool:
 
     # File is only present in one of the directory trees.
     if dcmp.left_only or dcmp.right_only:
-        msg = "Mismatch reference and result files.\nResult: %s. Reference: %s"
-        logger.warning(msg, dcmp.left_only, dcmp.right_only)
+        msg = (
+            "Result and reference directories contain different files:"
+            f"{dcmp.left_only}, {dcmp.right_only}"
+        )
+        logger.warning(msg)
         return False
 
     for filepath in dcmp.diff_files:
