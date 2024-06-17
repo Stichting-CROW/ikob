@@ -1,7 +1,7 @@
 import math
 import os
 import pickle
-import Routines
+import ikob.Routines as Routines
 
 
 def correctie_voor_parkeren (Basisdirectory, Parkeerdirectory, motief, aantal_groepen=20):
