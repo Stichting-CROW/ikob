@@ -1,10 +1,6 @@
-import logging
-
 import ikob.Routines as Routines
 import numpy as np
 from ikob.datasource import DataSource
-
-logger = logging.getLogger(__name__)
 
 
 def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
@@ -32,7 +28,6 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
     Ketens = project_config['ketens']['gebruiken']
     Hubnaam = project_config['ketens']['naam hub']
     OV_Kostenbestand = skims_config ['OV kostenbestand']['gebruiken']
-    logger.debug("OV_Kostenbestand: %s", OV_Kostenbestand)
     TVOMwerk = tvom_config['werk']
     TVOMoverig = tvom_config['overig']
     varfossiel = skims_config['Kosten auto fossiele brandstof']['variabele kosten']
@@ -81,7 +76,6 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
 
     for mot in motieven:
         TVOM = TVOMwerk if mot == 'werk' else TVOMoverig
-        logger.debug("TVOM: %s", TVOM)
         for ds in dagsoort:
             Autotijdmatrix = datasource.read_skims('Auto_Tijd', ds)
             Autoafstandmatrix = datasource.read_skims('Auto_Afstand', ds)
@@ -94,7 +88,6 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                 Parkeerkostenlijst = Routines.csvintlezen(Parkeerkostenfile, aantal_lege_regels=0)
             else:
                 Parkeerkostenlijst = Routines.lijstvolnullen(len(OVafstandmatrix))
-            logger.debug("Parkeerkostenlijst = %s", Parkeerkostenlijst)
 
             if Ketens:
                 Pplusfietstijdmatrix = datasource.read_skims(f'Pplusfiets_{Hubnaam}_Tijd', ds)
@@ -106,14 +99,13 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                 PplusRherkomstOVafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Afstand_OV', ds)
                 PplusRherkomstautoafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Afstand_Auto', ds)
 
-            logger.debug("Parkeertijden bevat %d zones.", len(Parkeertijdlijst))
             aantal_zones_tijd = len(Autotijdmatrix)
-            logger.debug("Autotijdmatrix bevat %d zones.", aantal_zones_tijd)
             aantal_zones_afstand = len(Autoafstandmatrix)
-            logger.debug("Auto-afstandmatrix bevat %d zones.", aantal_zones_afstand)
-            if aantal_zones_afstand != aantal_zones_tijd:
-                logger.debug("FOUT: Aantal zones niet gelijk!?")
-                quit()
+            msg = (
+                "Number of zones in time and distance have to match: "
+                f"{aantal_zones_afstand} == {aantal_zones_tijd}"
+            )
+            assert aantal_zones_afstand == aantal_zones_tijd, msg
             aantal_zones = aantal_zones_tijd
 
             afmeting = len(OVafstandmatrix)
@@ -122,7 +114,6 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
             if OV_Kostenbestand:
                 KostenmatrixOV = datasource.read_skims("OV_Kosten", ds)
             else:
-                logger.debug("Bezig kosten berekenen.")
                 KostenmatrixOV = np.zeros((afmeting, afmeting))
                 KostenmatrixOV = KostenOV(OVafstandmatrix, OVkmtarief, starttarief, Pricecap, Pricecapgetal)
 
