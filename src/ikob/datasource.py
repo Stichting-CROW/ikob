@@ -34,29 +34,29 @@ class DataSource:
         if isinstance(csv_path, dict):
             csv_path = csv_path["bestand"]
 
-        csv_path = pathlib.Path(csv_path).with_suffix('')
+        csv_path = pathlib.Path(csv_path)
         return Routines.csvlezen(csv_path, type_caster)
 
     def read_skims(self, id: str, dagsoort: str, type_caster = float):
         """Expects a filename to read, which should be located in 
         in subfolder 'dagsoort' of the global path 'Jaarinvoerdirectory'
         """
-        path = self.skims_dir / dagsoort / id
+        path = (self.skims_dir / dagsoort / id).with_suffix(".csv")
         return Routines.csvlezen(path, type_caster=type_caster)
 
     def _segs_dir(self, id, jaar, scenario):
         return self.segs_dir / scenario / (id + jaar)
 
     def write_segs_csv(self, data, id, header, jaar="", scenario=""):
-        path = self._segs_dir(id, jaar, scenario)
+        path = self._segs_dir(id, jaar, scenario).with_suffix(".csv")
         return Routines.csvwegschrijven(data, path, header=header)
 
     def write_segs_xlsx(self, data, id, header, jaar="", scenario=""):
-        path = self._segs_dir(id, jaar, scenario)
+        path = self._segs_dir(id, jaar, scenario).with_suffix(".xlsx")
         return Routines.xlswegschrijven(data, path, header)
 
     def read_segs(self, id: str, jaar="", type_caster=int, scenario=""):
-        path = self._segs_dir(id, jaar, scenario)
+        path = self._segs_dir(id, jaar, scenario).with_suffix(".csv")
         return Routines.csvlezen(path, type_caster=type_caster)
 
     def _get_base_dir(self, datatype, id):
@@ -72,15 +72,18 @@ class DataSource:
 
     def read_csv(self, datatype, id, dagsoort, regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr='', type_caster=float):
         base = self._get_base_dir(datatype, id)
-        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
-        return Routines.csvlezen(bestandspad, type_caster=type_caster)
+        path = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+        path = path.with_suffix(".csv")
+        return Routines.csvlezen(path, type_caster=type_caster)
 
     def write_csv(self, data, datatype, id, dagsoort, header=[], regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
         base = self._get_base_dir(datatype, id)
-        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
-        return Routines.csvwegschrijven(data, bestandspad, header=header)
+        path = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+        path = path.with_suffix(".csv")
+        return Routines.csvwegschrijven(data, path, header=header)
 
     def write_xlsx(self, data, datatype, id, dagsoort, header=[], regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
         base = self._get_base_dir(datatype, id)
-        bestandspad = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
-        return Routines.xlswegschrijven(data, bestandspad, header)
+        path = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+        path = path.with_suffix(".xlsx")
+        return Routines.xlswegschrijven(data, path, header)

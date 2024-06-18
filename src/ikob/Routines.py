@@ -15,7 +15,7 @@ def xlswegschrijven(matrix, filenaam, header):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
-    workbook = xlsxwriter.Workbook(filenaam.with_suffix('.xlsx'))
+    workbook = xlsxwriter.Workbook(filenaam)
     worksheet = workbook.add_worksheet()
     worksheet.write_row(0, 0, header)
     for r in range(0, len(matrix)):
@@ -29,7 +29,7 @@ def xlswegschrijven_totalen(matrix, header, getallenlijst, filenaam, aantal_zone
         filenaam = pathlib.Path(filenaam)
 
     transmatrix = transponeren(matrix)
-    workbook = xlsxwriter.Workbook(filenaam.with_suffix('.xlsx'))
+    workbook = xlsxwriter.Workbook(filenaam)
     worksheet = workbook.add_worksheet()
     worksheet.write_row(0, 0, header)
     worksheet.write_column(1, 0, getallenlijst)
@@ -49,11 +49,11 @@ def csvlezen(filenaam, type_caster=float):
     # First, attempt to read without header.
     # If this fails, read with skipping the header.
     try:
-        matrix = np.loadtxt(filenaam.with_suffix(".csv"),
+        matrix = np.loadtxt(filenaam,
                             dtype=type_caster,
                             delimiter=',')
     except ValueError:
-        matrix = np.loadtxt(filenaam.with_suffix(".csv"),
+        matrix = np.loadtxt(filenaam,
                             dtype=type_caster,
                             skiprows=1,
                             delimiter=',')
@@ -83,7 +83,7 @@ def csvwegschrijven(matrix, filenaam, header=[]):
     delim = ","
     header = delim.join(header)
 
-    np.savetxt(filenaam.with_suffix(".csv"),
+    np.savetxt(filenaam,
                matrix,
                fmt=fmt,
                delimiter=delim,
