@@ -139,7 +139,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                         kmheffing = kmheffingelektrisch
                     for i in range(aantal_zones):
                         for j in range(aantal_zones):
-                            totaleTijd = Autotijdmatrix[i][j] + round(float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
+                            totaleTijd = Autotijdmatrix[i][j] + round(Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2])
                             if Additionele_kosten:
                                 GGRskim[i][j] = int(totaleTijd + factor * (Autoafstandmatrix[i][j] *
                                                     (varautotarief + kmheffing) + Additionele_kostenmatrix[i][j]/100) +
@@ -163,7 +163,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                     for i in range(aantal_zones):
                         for j in range(aantal_zones):
                             if Autotijdmatrix[i][j] >= 7:
-                                totaleTijd = Autotijdmatrix[i][j] +round(float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
+                                totaleTijd = Autotijdmatrix[i][j] + round(Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2])
                                 totaleKosten = Autotijdmatrix[i][j] * tijdkostenga.get(sga) + Correctiefactoren[i][inkomens.index(ink)] * Autoafstandmatrix[i][j] * (varkostenga.get(sga) + kmheffing)
                                 GGRskim[i][j] = int(totaleTijd + factor * totaleKosten)
 
@@ -175,7 +175,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                     factor = TVOM.get(ink)
                     for i in range(aantal_zones):
                         for j in range(aantal_zones):
-                            totaleTijd = Autotijdmatrix[i][j] + round(float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
+                            totaleTijd = Autotijdmatrix[i][j] + round(Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2])
                             if Additionele_kosten:
                                 GGRskim[i][j] = int(totaleTijd + factor * Autoafstandmatrix[i][j] *
                                                     kmheffing + Additionele_kostenmatrix[i][j]/100 +
