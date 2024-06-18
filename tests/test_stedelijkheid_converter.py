@@ -6,19 +6,16 @@ from ikob.datasource import DataSource
 from ikob.ikobconfig import getConfigFromArgs
 from ikob.Routines import csvintlezen
 from ikob.stedelijkheidsgraad_to_parkeerzoektijden import (
-    stedelijkheidfile_to_parkeerzoektijdenfile,
+    stedelijkheid_to_parkeerzoektijd
 )
 
-from tests.test_end_to_end import is_equal_file
 
-
-def test_stedelijkheid_converter(tmp_path):
-    input = pathlib.Path("tests/vlaanderen/SEGS/Stedelijkheidsgraad.csv")
-    reference = pathlib.Path("tests/vlaanderen/SEGS/Parkeerzoektijd.csv")
-    result = tmp_path.with_suffix(".csv")
-
-    stedelijkheidfile_to_parkeerzoektijdenfile(input, tmp_path)
-    assert is_equal_file(result, reference)
+def test_stedelijkheid_converter():
+    segs_dir = pathlib.Path("tests/vlaanderen/SEGS")
+    reference = csvintlezen(segs_dir / "Parkeerzoektijd.csv")
+    stedelijkheid = csvintlezen(segs_dir / "Stedelijkheidsgraad.csv")
+    parkeerzoektijden = stedelijkheid_to_parkeerzoektijd(stedelijkheid)
+    assert np.all(parkeerzoektijden == reference)
 
 
 def test_generate_parkeerzoektijden_datasource():
