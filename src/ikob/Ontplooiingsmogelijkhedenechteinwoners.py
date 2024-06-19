@@ -18,7 +18,6 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
     autobezitgroepen = project_config['welke_groepen']
     inkgroepen = project_config['welke_inkomensgroepen']
     percentageelektrisch = verdeling_config['Percelektrisch']
-    logger.debug("percentageelektrisch: %s", percentageelektrisch)
 
     if 'alle groepen' in autobezitgroepen:
         Basisgroepen = ['GratisAuto', 'GratisAuto_GratisOV', 'WelAuto_GratisOV', 'WelAuto_vkAuto',
@@ -29,30 +28,24 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
         Basisgroepen = ['GratisAuto', 'GratisAuto_GratisOV', 'WelAuto_GratisOV', 'WelAuto_vkAuto',
                         'WelAuto_vkNeutraal', 'WelAuto_vkFiets', 'WelAuto_vkOV']
 
-    logger.debug("autobezitgroepen zijn: %s", autobezitgroepen)
-
     Groepen = []
     for inkgr in inkgroepen:
         for bg in Basisgroepen:
             Groepen.append(f'{bg}_{inkgr}')
-    logger.debug("Groepen: %s", Groepen)
 
     modaliteiten = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
     headstring = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
     headstringExcel = ['Zone', 'Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
     soortbrandstof = ['fossiel', 'elektrisch']
-    logger.debug("motieven: %s", motieven)
 
     if 'winkelnietdagelijksonderwijs' in motieven:
         Beroepsbevolkingperklasse = datasource.read_segs("Leerlingen", scenario=scenario, type_caster=float)
         Arbeidsplaats = datasource.read_segs("Leerlingenplaatsen", scenario=scenario, type_caster=float)
         Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
-        logger.debug("Lengte Leerlingenplaatsen is %s", len(Arbeidsplaats))
     else:
         Beroepsbevolkingperklasse = datasource.read_segs("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
         Arbeidsplaats = datasource.read_segs("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
         Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
-        logger.debug("Lengte arbeidsplaatsen is %s", len(Arbeidsplaats))
 
     Beroepsbevolkingtotalen = [sum(bbpk) for bbpk in Beroepsbevolkingperklasse]
 
@@ -89,7 +82,6 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                         arbeidsplaats = Inwonerstotalen
 
                     inkomens = np.array(Inkomenstransverdeling[i_inkgr])
-                    logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep: %s', inkgr)
                     for mod in modaliteiten:
                         potentie_totaal = Routines.lijstvolnullen(len(Arbeidsplaats))
                         for igr, gr in enumerate(Groepen):
@@ -110,7 +102,6 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
 
                                 elif mod == 'Auto':
                                     String = Routines.enkelegroep(mod,gr)
-                                    logger.debug("String: %s", String)
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
                                             Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
