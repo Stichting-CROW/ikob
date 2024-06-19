@@ -97,54 +97,31 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                 if mod == 'Fiets' or mod == 'EFiets':
                                     vkfiets = 'Fiets' if vk == 'Fiets' else ''
                                     Matrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
-                                    potentie = Matrix @ arbeidsplaats * verdeling
-                                    potentie = np.where(inkomens > 0, potentie / inkomens, 0)
-                                    potentie_totaal += potentie.astype(int)
-
                                 elif mod == 'Auto':
                                     String = Routines.enkelegroep(mod,gr)
                                     if 'WelAuto' in gr:
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
-                                        potentie_fossiel = Matrix @ arbeidsplaats * verdeling
-                                        potentie_fossiel = np.where(inkomens > 0, potentie_fossiel / inkomens, 0)
-
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
-                                        potentie_elektrisch = Matrix @ arbeidsplaats * verdeling
-                                        potentie_elektrisch = np.where(inkomens > 0, potentie_fossiel / inkomens, 0)
-
+                                        Matrix_fossiel = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
+                                        Matrix_elektrisch = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
                                         K = percentageelektrisch.get(inkgr)/100
-                                        potentie = K * potentie_elektrisch + (1 - K) *potentie_fossiel
-                                        potentie_totaal += potentie.astype(int)
+                                        Matrix = K * Matrix_elektrisch + (1 - K) * Matrix_fossiel
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                        potentie = Matrix @ arbeidsplaats * verdeling
-                                        potentie = np.where(inkomens > 0, potentie / inkomens, 0)
-                                        potentie_totaal += potentie.astype(int)
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep(mod, gr)
                                     Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                    potentie = Matrix @ arbeidsplaats * verdeling
-                                    potentie = np.where(inkomens > 0, potentie / inkomens, 0)
-                                    potentie_totaal += potentie.astype(int)
                                 else:
                                     String = Routines.combigroep(mod, gr)
                                     if String[0] == 'A':
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
-                                        potentie_fossiel = Matrix @ arbeidsplaats * verdeling
-                                        potentie_fossiel = np.where(inkomens > 0, potentie_fossiel / inkomens, 0)
-
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
-                                        potentie_elektrisch = Matrix @ arbeidsplaats * verdeling
-                                        potentie_elektrisch = np.where(inkomens > 0, potentie_elektrisch / inkomens, 0)
-
+                                        Matrix_fossiel = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
+                                        Matrix_elektrisch = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
                                         K = percentageelektrisch.get(inkgr)/100
-                                        potentie = K * potentie_elektrisch + (1 - K) * potentie_fossiel
-                                        potentie_totaal += potentie.astype(int)
+                                        Matrix = K * Matrix_elektrisch + (1 - K) * Matrix_fossiel
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
-                                        potentie = Matrix @ arbeidsplaats * verdeling
-                                        potentie = np.where(inkomens > 0, potentie / inkomens, 0)
-                                        potentie_totaal += potentie.astype(int)
+
+                                potentie = Matrix @ arbeidsplaats * verdeling
+                                potentie = np.where(inkomens > 0, potentie / inkomens, 0)
+                                potentie_totaal += potentie.astype(int)
 
                         datasource.write_csv(potentie_totaal, abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='Bestemmingen')
                     # En tot slot alles bij elkaar harken:
