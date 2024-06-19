@@ -2,6 +2,8 @@ import logging
 import ikob.Routines as Routines
 import numpy as np
 
+from ikob.concurrentie import get_matrix
+
 logger = logging.getLogger(__name__)
 
 
@@ -96,31 +98,8 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
 
                             ink = Routines.inkomensgroepbepalen(gr)
                             if inkgr == ink or inkgr == 'alle':
-                                vk = Routines.vindvoorkeur(gr, mod)
-                                if mod == 'Fiets' or mod == 'EFiets':
-                                    vkfiets = 'Fiets' if vk == 'Fiets' else ''
-                                    Matrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
-                                elif mod == 'Auto':
-                                    String = Routines.enkelegroep(mod,gr)
-                                    if 'WelAuto' in gr:
-                                        Matrix_fossiel = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
-                                        Matrix_elektrisch = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
-                                        K = percentageelektrisch.get(inkgr)/100
-                                        Matrix = K * Matrix_elektrisch + (1 - K) * Matrix_fossiel
-                                    else:
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                elif mod == 'OV':
-                                    String = Routines.enkelegroep(mod, gr)
-                                    Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                else:
-                                    String = Routines.combigroep(mod, gr)
-                                    if String[0] == 'A':
-                                        Matrix_fossiel = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
-                                        Matrix_elektrisch = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
-                                        K = percentageelektrisch.get(inkgr)/100
-                                        Matrix = K * Matrix_elektrisch + (1 - K) * Matrix_fossiel
-                                    else:
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+                                K = percentageelektrisch.get(inkgr)/100
+                                Matrix = get_matrix(datasource, gr, mod, mot, regime, ds, ink, inkgr, K)
 
                                 potentie = Matrix @ arbeidsplaats * verdeling
                                 potentie = np.where(inkomens > 0, potentie / inkomens, 0)
