@@ -85,8 +85,6 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
 
             for ds in dagsoort:
                 for i_inkgr, inkgr in enumerate(inkgroepen):
-                    # Eerst de fiets
-                    logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep %s', inkgr)
                     for mod in modaliteiten:
                         concurrentie_totaal = Routines.lijstvolnullen(len(Arbeidsplaatsen))
                         for i_gr, gr in enumerate(Groepen):
@@ -97,57 +95,36 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
                             verdeling = Verdelingsmatrix[:, i_gr]
                             inkomens_verdeling = Inkomensverdeling[:, i_inkgr]
 
-                            logger.debug('Bezig met Groep %s', gr)
                             ink = Routines.inkomensgroepbepalen(gr)
                             if inkgr == ink or inkgr == 'alle':
+                                Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic=subtopic_gewichten)
                                 vk = Routines.vindvoorkeur(gr, mod)
                                 if mod == 'Fiets' or mod == 'EFiets':
                                     vkfiets = 'Fiets' if vk == 'Fiets' else ''
                                     Matrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
-                                    Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic=subtopic_gewichten)
-                                    concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
                                 elif mod == 'Auto':
                                     String = Routines.enkelegroep(mod, gr)
                                     if 'WelAuto' in gr:
-                                        Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr='elektrisch')
-                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic=subtopic_gewichten)
-                                        concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
+                                        Matrix_elektrisch = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr='elektrisch')
+                                        Matrix_fossiel = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr='fossiel')
                                         K = percentageelektrisch.get(inkgr) / 100
-                                        concurrentie_elektrisch = K * concurrentie
-
-                                        Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr='fossiel')
-                                        concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
-                                        concurrentie_fossiel = (1 - K) * concurrentie
-
-                                        concurrentie = concurrentie_elektrisch + concurrentie_fossiel
+                                        Matrix = K * Matrix_elektrisch + (1 - K) * Matrix_fossiel
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic=subtopic_gewichten)
-                                        concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep(mod, gr)
                                     Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                    Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic=subtopic_gewichten)
-                                    concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
                                 else:
                                     String = Routines.combigroep(mod, gr)
                                     if String[0] == 'A':
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr='elektrisch')
-                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic=subtopic_gewichten)
-                                        concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
+                                        Matrix_elektrisch = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr='elektrisch')
+                                        Matrix_fossiel = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr='fossiel')
                                         K = percentageelektrisch.get(inkgr)/100
-                                        concurrentie_elektrisch = K * concurrentie
-
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr='fossiel')
-                                        concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
-                                        concurrentie_fossiel = (1 - K) * concurrentie
-
-                                        concurrentie = concurrentie_elektrisch + concurrentie_fossiel
+                                        Matrix = K * Matrix_elektrisch + (1 - K) * Matrix_fossiel
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
-                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic=subtopic_gewichten)
-                                        concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
 
+                                concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
                                 concurrentie_totaal += concurrentie * verdeling / np.where(inkomens_verdeling > 0, inkomens_verdeling, 1)
 
                         datasource.write_csv(concurrentie_totaal, 'Concurrentie', 'Totaal', ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, ink=inkgr)
