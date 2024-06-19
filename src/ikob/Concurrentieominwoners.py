@@ -95,9 +95,8 @@ def concurrentie_om_inwoners(config, datasource):
                                 elif mod == 'Auto':
                                     String = Routines.enkelegroep(mod, gr)
                                     if 'WelAuto' in gr:
-                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen")
-
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr='elektrisch')
+                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen")
                                         concurrentie = Matrix @ (inwoners_per_klasse / np.where(Bereik > 0, Bereik, 1.0))
                                         K = percentageelektrisch.get(inkgr) / 100
                                         concurrentie_elektrisch = K * concurrentie
@@ -119,8 +118,8 @@ def concurrentie_om_inwoners(config, datasource):
                                 else:
                                     String = Routines.combigroep(mod, gr)
                                     if String[0] == 'A':
-                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen")
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr='elektrisch')
+                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mod=mod, ink=inkgr, mot=mot, subtopic="Bestemmingen")
                                         concurrentie = Matrix @ (inwoners_per_klasse / np.where(Bereik > 0, Bereik, 1.0))
                                         K = percentageelektrisch.get(inkgr)/100
                                         concurrentie_elektrisch = K  * concurrentie
