@@ -13,8 +13,8 @@ from ikob.Gewichtenberekenenenkelscenarios import gewichten_berekenen_enkel_scen
 from ikob.Gewichtenberekenencombis import gewichten_berekenen_combis
 from ikob.Ontplooiingsmogelijkhedenechteinwoners import ontplooingsmogelijkheden_echte_inwoners
 from ikob.Potentiebedrijven import potentie_bedrijven
-from ikob.Concurrentieomarbeidsplaatsen import concurrentie_om_arbeidsplaatsen
-from ikob.Concurrentieominwoners import concurrentie_om_inwoners
+from ikob.concurrentie import concurrentie_om_arbeidsplaatsen
+from ikob.concurrentie import concurrentie_om_inwoners
 from ikob.datasource import DataSource
 
 logger = logging.getLogger(__name__)
