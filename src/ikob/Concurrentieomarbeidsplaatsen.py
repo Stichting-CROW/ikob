@@ -15,6 +15,7 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
     motieven = project_config['motieven']
+    autobezitgroepen = project_config['welke_groepen']
     percentageelektrisch = verdeling_config['Percelektrisch']
     logger.debug("percentageelektrisch: %s", percentageelektrisch)
 
@@ -59,111 +60,109 @@ def concurrentie_om_arbeidsplaatsen(config, datasource):
             if Inwonerstotalen[i] > 0:
                 Inkomensverdeling[i][j] = Inwonersperklasse[i][j]/Inwonerstotalen[i]
 
-    for mot in motieven:
-        if mot == 'werk':
-            Doelgroep = 'Beroepsbevolking'
-        elif mot == 'winkelnietdagelijksonderwijs':
-            Doelgroep = 'Leerlingen'
-        else:
-            Doelgroep = 'Inwoners'
+    for abg in autobezitgroepen:
+        for mot in motieven:
+            if mot == 'werk':
+                Doelgroep = 'Beroepsbevolking'
+            elif mot == 'winkelnietdagelijksonderwijs':
+                Doelgroep = 'Leerlingen'
+            else:
+                Doelgroep = 'Inwoners'
 
-        Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
-        logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
+            Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
+            logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
 
-        for ds in dagsoort:
-            for i_inkgr, inkgr in enumerate(inkgroepen):
+            for ds in dagsoort:
+                for i_inkgr, inkgr in enumerate(inkgroepen):
+                    # Eerst de fiets
+                    logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep %s', inkgr)
+                    for mod in modaliteiten:
+                        concurrentie_totaal = Routines.lijstvolnullen(len(Arbeidsplaatsen))
+                        for i_gr, gr in enumerate(Groepen):
+                            arbeidsplaatsen_groep = Arbeidsplaatsen.T[i_inkgr]
+                            verdeling = Verdelingsmatrix[:, i_gr]
+                            inkomens_verdeling = Inkomensverdeling[:, i_inkgr]
 
-                # Eerst de fiets
-                logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep %s', inkgr)
-                for mod in modaliteiten:
-                    concurrentie_totaal = Routines.lijstvolnullen(len(Arbeidsplaatsen))
-                    for i_gr, gr in enumerate(Groepen):
-                        arbeidsplaatsen_groep = Arbeidsplaatsen.T[i_inkgr]
-                        verdeling = Verdelingsmatrix[:, i_gr]
-                        inkomens_verdeling = Inkomensverdeling[:, i_inkgr]
-
-                        logger.debug('Bezig met Groep %s', gr)
-                        ink = Routines.inkomensgroepbepalen(gr)
-                        if inkgr == ink or inkgr == 'alle':
-                            vk = Routines.vindvoorkeur(gr, mod)
-                            if mod == 'Fiets' or mod == 'EFiets':
-                                vkfiets = 'Fiets' if vk == 'Fiets' else ''
-                                Matrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
-                                Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
-                            elif mod == 'Auto':
-                                String = Routines.enkelegroep(mod, gr)
-                                logger.debug("String = %s", String)
-                                if 'WelAuto' in gr:
-                                    Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                    Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr='elektrisch')
+                            logger.debug('Bezig met Groep %s', gr)
+                            ink = Routines.inkomensgroepbepalen(gr)
+                            if inkgr == ink or inkgr == 'alle':
+                                vk = Routines.vindvoorkeur(gr, mod)
+                                if mod == 'Fiets' or mod == 'EFiets':
+                                    vkfiets = 'Fiets' if vk == 'Fiets' else ''
+                                    Matrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
+                                    Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic="Herkomsten")
                                     concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
-                                    K = percentageelektrisch.get(inkgr) / 100
-                                    concurrentie_elektrisch = K * concurrentie
+                                elif mod == 'Auto':
+                                    String = Routines.enkelegroep(mod, gr)
+                                    if 'WelAuto' in gr:
+                                        Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr='elektrisch')
+                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic="Herkomsten")
+                                        concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
+                                        K = percentageelektrisch.get(inkgr) / 100
+                                        concurrentie_elektrisch = K * concurrentie
 
-                                    Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr='fossiel')
-                                    concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
-                                    concurrentie_fossiel = (1 - K) * concurrentie
+                                        Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr='fossiel')
+                                        concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
+                                        concurrentie_fossiel = (1 - K) * concurrentie
 
-                                    concurrentie = concurrentie_elektrisch + concurrentie_fossiel
-                                else:
+                                        concurrentie = concurrentie_elektrisch + concurrentie_fossiel
+                                    else:
+                                        Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic="Herkomsten")
+                                        concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
+                                elif mod == 'OV':
+                                    String = Routines.enkelegroep(mod, gr)
                                     Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                    Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
+                                    Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic="Herkomsten")
                                     concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
-                            elif mod == 'OV':
-                                String = Routines.enkelegroep(mod, gr)
-                                Matrix = datasource.read_csv('Gewichten', f"{String}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
-                            else:
-                                String = Routines.combigroep(mod, gr)
-                                logger.debug('de gr is %s', gr)
-                                logger.debug('de string is %s', String)
-                                if String[0] == 'A':
-                                    Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                    Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr='elektrisch')
-                                    concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
-                                    K = percentageelektrisch.get(inkgr)/100
-                                    concurrentie_elektrisch = K * concurrentie
-
-                                    Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr='fossiel')
-                                    concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
-                                    concurrentie_fossiel = (1 - K) * concurrentie
-
-                                    concurrentie = concurrentie_elektrisch + concurrentie_fossiel
                                 else:
-                                    Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
-                                    Bereik = datasource.read_csv('Herkomsten', "Totaal", ds, mot=mot, mod=mod, ink=inkgr)
-                                    concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
+                                    String = Routines.combigroep(mod, gr)
+                                    if String[0] == 'A':
+                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr='elektrisch')
+                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic="Herkomsten")
+                                        concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
+                                        K = percentageelektrisch.get(inkgr)/100
+                                        concurrentie_elektrisch = K * concurrentie
 
-                            concurrentie_totaal += concurrentie * verdeling / np.where(inkomens_verdeling > 0, inkomens_verdeling, 1)
+                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr='fossiel')
+                                        concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
+                                        concurrentie_fossiel = (1 - K) * concurrentie
 
-                    datasource.write_csv(concurrentie_totaal, 'Concurrentie', 'Totaal', ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, ink=inkgr)
-                # En tot slot alles bij elkaar harken:
-                Generaaltotaal_potenties = []
+                                        concurrentie = concurrentie_elektrisch + concurrentie_fossiel
+                                    else:
+                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+                                        Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic="Herkomsten")
+                                        concurrentie = Matrix @ (arbeidsplaatsen_groep / np.where(Bereik > 0, Bereik, 1.0))
+
+                                concurrentie_totaal += concurrentie * verdeling / np.where(inkomens_verdeling > 0, inkomens_verdeling, 1)
+
+                        datasource.write_csv(concurrentie_totaal, 'Concurrentie', 'Totaal', ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, ink=inkgr)
+
+                    # En tot slot alles bij elkaar harken:
+                    Generaaltotaal_potenties = []
+                    for mod in modaliteiten:
+                        Totaalrij = datasource.read_csv('Concurrentie', "Totaal", ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, ink=inkgr)
+                        Generaaltotaal_potenties.append(Totaalrij)
+                        Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
+                        datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, ink=inkgr, header=headstring)
+                        datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, ink=inkgr, header=headstringExcel)
+
+                header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
                 for mod in modaliteiten:
-                    Totaalrij = datasource.read_csv('Concurrentie', "Totaal", ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, ink=inkgr)
-                    Generaaltotaal_potenties.append(Totaalrij)
-                    Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                    # TODO: This loops over mod, but does _not_ use mod as filename modifiers?
-                    datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, ink=inkgr, header=headstring)
-                    datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, ink=inkgr, header=headstringExcel)
+                    Generaalmatrixproduct = []
+                    Generaalmatrix = []
+                    for inkgr in inkgroepen:
+                        Totaalrij = datasource.read_csv("Concurrentie", "Totaal", ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, ink=inkgr)
+                        Generaalmatrix.append(Totaalrij)
+                        Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
 
-            header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
-            for mod in modaliteiten:
-                Generaalmatrixproduct = []
-                Generaalmatrix = []
-                for inkgr in inkgroepen:
-                    Totaalrij = datasource.read_csv("Concurrentie", "Totaal", ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, ink=inkgr)
-                    Generaalmatrix.append(Totaalrij)
-                    Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
-                for i in range(len(Inwonersperklasse)):
-                    Generaalmatrixproduct.append([])
-                    for j in range(len(Inwonersperklasse[0])):
-                        if Inwonersperklasse[i][j] > 0:
-                            Generaalmatrixproduct[i].append(round(Generaaltotaaltrans[i][j]*Inwonersperklasse[i][j]))
-                        else:
-                            Generaalmatrixproduct[i].append(0)
+                    for i in range(len(Inwonersperklasse)):
+                        Generaalmatrixproduct.append([])
+                        for j in range(len(Inwonersperklasse[0])):
+                            if Inwonersperklasse[i][j] > 0:
+                                Generaalmatrixproduct[i].append(round(Generaaltotaaltrans[i][j]*Inwonersperklasse[i][j]))
+                            else:
+                                Generaalmatrixproduct[i].append(0)
 
-                datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, header=header)
-                datasource.write_xlsx(Generaalmatrixproduct, 'Concurrentie', 'Ontpl_concproduct', ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, header=header)
+                    datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, header=header)
+                    datasource.write_xlsx(Generaalmatrixproduct, 'Concurrentie', 'Ontpl_concproduct', ds, subtopic="arbeidsplaatsen", mot=mot, mod=mod, header=header)
