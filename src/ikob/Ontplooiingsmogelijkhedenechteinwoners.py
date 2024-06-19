@@ -71,6 +71,11 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
             else:
                 Doelgroep = 'Inwoners'
 
+            if abg == 'alle groepen':
+                Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
+            else:
+                Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", type_caster=float, scenario=scenario)
+
             Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
             Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
 
