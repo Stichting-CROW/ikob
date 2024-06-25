@@ -1,5 +1,7 @@
 import logging
 import numpy as np
+from typing import Dict
+from numpy.typing import NDArray
 from ikob.datasource import DataSource, DataKey
 
 logger = logging.getLogger(__name__)
@@ -37,7 +39,7 @@ def kanvoorkeur(soortauto, soortOV, voorkeur):
         return True
 
 
-def gewichten_berekenen_combis(config, datasource: DataSource):
+def gewichten_berekenen_combis(config, datasource: DataSource, gewichten_enkel: Dict[DataKey, NDArray]) -> Dict[DataKey, NDArray]:
     logger.info("Maximum gewichten van meerdere modaliteiten")
 
     project_config = config['project']
@@ -56,6 +58,8 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
     soortOV = ['OV', 'GratisOV']
     soortbrandstof = ['fossiel', 'elektrisch']
 
+    gewichten_combi: Dict[DataKey, NDArray] = dict()
+
     for mot in motieven:
         for ds in dagsoort:
             for ink in inkomen:
@@ -71,7 +75,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                           voorkeur=vkfiets,
                                           regime=regime,
                                           motief=mot)
-                            Fietsmatrix = datasource.read_csv(key)
+                            Fietsmatrix = gewichten_enkel[key]
 
                             key = DataKey('Gewichten', f'{srtOV}_vk',
                                           dagsoort=ds,
@@ -79,7 +83,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                           inkomen=ink,
                                           regime=regime,
                                           motief=mot)
-                            OVmatrix = datasource.read_csv(key)
+                            OVmatrix = gewichten_enkel[key]
 
                             max = np.maximum.reduce((Fietsmatrix, OVmatrix))
                             key = DataKey('Gewichten',
@@ -90,7 +94,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                           motief=mot,
                                           voorkeur=vk,
                                           subtopic='Combinaties')
-                            datasource.write_csv(max, key)
+                            gewichten_combi[key] = max.copy()
 
                         for srtauto in soortauto:
                             if not kanvoorkeur(srtauto, 'OV', vk):
@@ -102,7 +106,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                           voorkeur=vkfiets,
                                           regime=regime,
                                           motief=mot)
-                            Fietsmatrix = datasource.read_csv(key)
+                            Fietsmatrix = gewichten_enkel[key]
 
                             if srtauto == 'Auto':
                                 for srtbr in soortbrandstof:
@@ -113,7 +117,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                                   regime=regime,
                                                   motief=mot,
                                                   brandstof=srtbr)
-                                    Automatrix = datasource.read_csv(key)
+                                    Automatrix = gewichten_enkel[key]
 
                                     max = np.maximum.reduce((Fietsmatrix, Automatrix))
                                     key = DataKey('Gewichten',
@@ -125,7 +129,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                                   voorkeur=vk,
                                                   subtopic='Combinaties',
                                                   brandstof=srtbr)
-                                    datasource.write_csv(max, key)
+                                    gewichten_combi[key] = max.copy()
                             else:
                                 key = DataKey('Gewichten', f'{srtauto}_vk',
                                               dagsoort=ds,
@@ -133,7 +137,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                               inkomen=ink,
                                               regime=regime,
                                               motief=mot)
-                                Automatrix = datasource.read_csv(key)
+                                Automatrix = gewichten_enkel[key]
 
                                 max = np.maximum.reduce((Fietsmatrix, Automatrix))
                                 key = DataKey('Gewichten',
@@ -144,7 +148,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                               motief=mot,
                                               voorkeur=vk,
                                               subtopic='Combinaties')
-                                datasource.write_csv(max, key)
+                                gewichten_combi[key] = max.copy()
 
                     for srtOV in soortOV:
                         for srtauto in soortauto:
@@ -157,7 +161,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                           inkomen=ink,
                                           regime=regime,
                                           motief=mot)
-                            OVmatrix = datasource.read_csv(key)
+                            OVmatrix = gewichten_enkel[key]
 
                             if srtauto == 'Auto':
                                 for srtbr in soortbrandstof:
@@ -168,7 +172,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                                   regime=regime,
                                                   motief=mot,
                                                   brandstof=srtbr)
-                                    Automatrix = datasource.read_csv(key)
+                                    Automatrix = gewichten_enkel[key]
                                     max = np.maximum.reduce((OVmatrix, Automatrix))
                                     key = DataKey('Gewichten',
                                                   f"{srtauto}_{srtOV}_vk",
@@ -179,7 +183,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                                   voorkeur=vk,
                                                   subtopic='Combinaties',
                                                   brandstof=srtbr)
-                                    datasource.write_csv(max, key)
+                                    gewichten_combi[key] = max.copy()
                             else:
                                 key = DataKey('Gewichten', f'{srtauto}_vk',
                                               dagsoort=ds,
@@ -187,7 +191,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                               inkomen=ink,
                                               regime=regime,
                                               motief=mot)
-                                Automatrix = datasource.read_csv(key)
+                                Automatrix = gewichten_enkel[key]
 
                                 max = np.maximum.reduce((OVmatrix, Automatrix))
                                 key = DataKey('Gewichten',
@@ -198,7 +202,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                               motief=mot,
                                               voorkeur=vk,
                                               subtopic='Combinaties')
-                                datasource.write_csv(max, key)
+                                gewichten_combi[key] = max.copy()
 
                     for modft in modaliteitenfiets:
                         for srtOV in soortOV:
@@ -212,7 +216,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                               voorkeur=vkfiets,
                                               regime=regime,
                                               motief=mot)
-                                Fietsmatrix = datasource.read_csv(key)
+                                Fietsmatrix = gewichten_enkel[key]
 
                                 key = DataKey('Gewichten', f'{srtOV}_vk',
                                               dagsoort=ds,
@@ -220,7 +224,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                               inkomen=ink,
                                               regime=regime,
                                               motief=mot)
-                                OVmatrix = datasource.read_csv(key)
+                                OVmatrix = gewichten_enkel[key]
 
                                 if srtauto == 'Auto':
                                     for srtbr in soortbrandstof:
@@ -231,7 +235,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                                       regime=regime,
                                                       motief=mot,
                                                       brandstof=srtbr)
-                                        Automatrix = datasource.read_csv(key)
+                                        Automatrix = gewichten_enkel[key]
 
                                         max = np.maximum.reduce((Automatrix, Fietsmatrix, OVmatrix))
                                         key = DataKey('Gewichten',
@@ -243,7 +247,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                                       voorkeur=vk,
                                                       subtopic='Combinaties',
                                                       brandstof=srtbr)
-                                        datasource.write_csv(max, key)
+                                        gewichten_combi[key] = max.copy()
                                 else:
                                     key = DataKey('Gewichten', f'{srtauto}_vk',
                                                   dagsoort=ds,
@@ -251,7 +255,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                                   inkomen=ink,
                                                   regime=regime,
                                                   motief=mot)
-                                    Automatrix = datasource.read_csv(key)
+                                    Automatrix = gewichten_enkel[key]
 
                                     max = np.maximum.reduce((Automatrix, Fietsmatrix, OVmatrix))
                                     key = DataKey('Gewichten',
@@ -262,4 +266,6 @@ def gewichten_berekenen_combis(config, datasource: DataSource):
                                                   motief=mot,
                                                   voorkeur=vk,
                                                   subtopic='Combinaties')
-                                    datasource.write_csv(max, key)
+                                    gewichten_combi[key] = max.copy()
+
+    return gewichten_combi

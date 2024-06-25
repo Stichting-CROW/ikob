@@ -29,32 +29,41 @@ def run_scripts(project_file, skip_steps=None):
     config = getConfigFromArgs(project_file)
     datasource = DataSource(config, config['__filename__'])
 
+    # TODO: Improve handling of skipping steps.
+    # Replace generic list of bools with something better.
     if not skip_steps:
         skip_steps = [False] * 8
 
     if not skip_steps[0]:
-        ervaren_reistijd_berekenen(config, datasource)
+        ervaren_reistijd = ervaren_reistijd_berekenen(config, datasource)
 
     if not skip_steps[1]:
+        # TODO: Pass temporary SEGS output as arguments too.
         verdeling_over_groepen(config, datasource)
 
     if not skip_steps[2]:
-        gewichten_berekenen_enkel_scenarios(config, datasource)
+        gewichten_enkel = gewichten_berekenen_enkel_scenarios(config, datasource, ervaren_reistijd)
 
     if not skip_steps[3]:
-        gewichten_berekenen_combis(config, datasource)
+        gewichten_combi = gewichten_berekenen_combis(config, datasource, gewichten_enkel)
 
     if not skip_steps[4]:
-        ontplooingsmogelijkheden_echte_inwoners(config, datasource)
+        potenties = ontplooingsmogelijkheden_echte_inwoners(config, datasource, gewichten_enkel, gewichten_combi)
 
     if not skip_steps[5]:
-        potentie_bedrijven(config, datasource)
+        herkomsten = potentie_bedrijven(config, datasource, gewichten_enkel, gewichten_combi)
 
     if not skip_steps[6]:
-        concurrentie_om_arbeidsplaatsen(config, datasource)
+        concurrentie_arbeid = concurrentie_om_arbeidsplaatsen(config, datasource, gewichten_enkel, gewichten_combi, herkomsten)
 
     if not skip_steps[7]:
-        concurrentie_om_inwoners(config, datasource)
+        concurrentie_inwoners = concurrentie_om_inwoners(config, datasource, gewichten_enkel, gewichten_combi, potenties)
+
+    # TODO: For now all files are written to disk to assert their contents in
+    # end-to-end testing. Ultimately only files that are essential outputs should persist.
+    for output in [ervaren_reistijd, gewichten_enkel, gewichten_combi, potenties, herkomsten, concurrentie_arbeid, concurrentie_inwoners]:
+        for key, data in output.items():
+            datasource.write_csv(data, key)
 
 
 # User interface

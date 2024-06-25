@@ -2,6 +2,7 @@ import ikob.Routines as Routines
 import os
 import pathlib
 from dataclasses import dataclass
+from typing import Optional
 
 
 @dataclass(eq=True, frozen=True)
@@ -13,15 +14,15 @@ class DataKey:
     """
     datatype: str
     id: str
-    dagsoort: str = ""
-    regime: str = ""
-    subtopic: str = ""
-    voorkeur: str = ""
-    inkomen: str = ""
-    hubnaam: str = ""
-    motief: str = ""
-    modaliteit: str = ""
-    brandstof: str = ""
+    dagsoort: str
+    regime: Optional[str] = ""
+    subtopic: Optional[str] = ""
+    voorkeur: Optional[str] = ""
+    inkomen: Optional[str] = ""
+    hubnaam: Optional[str] = ""
+    motief: Optional[str] = ""
+    modaliteit: Optional[str] = ""
+    brandstof: Optional[str] = ""
 
 
 class DataSource:

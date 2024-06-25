@@ -2,6 +2,8 @@ import ikob.Routines as Routines
 import numpy as np
 import logging
 from ikob.datasource import DataSource, DataKey
+from typing import Dict
+from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +18,7 @@ def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
     return afstand
 
 
-def ervaren_reistijd_berekenen(config, datasource: DataSource):
+def ervaren_reistijd_berekenen(config, datasource: DataSource) -> Dict[DataKey, NDArray]:
     logger.info("Gegeneraliseerde reistijd berekenen uit tijd en kosten.")
 
     # Haal (voor het gemak) onderdelen voor dit script er uit.
@@ -78,6 +80,8 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
         for i in range(len(Parkeertijdlijst)):
             Correctiefactoren.append([1, 1, 1, 1])
 
+    ervaren_reistijd: Dict[DataKey, NDArray] = dict()
+
     for mot in motieven:
         TVOM = TVOMwerk if mot == 'werk' else TVOMoverig
         for ds in dagsoort:
@@ -135,7 +139,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                           dagsoort=ds,
                           regime=regime,
                           motief=mot)
-            datasource.write_csv(GGRskim, key)
+            ervaren_reistijd[key] = GGRskim.copy()
 
             GGRskim = np.zeros((aantal_zones, aantal_zones), dtype=int)
             for ink in inkomens:
@@ -166,7 +170,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                                   inkomen=ink,
                                   regime=regime,
                                   motief=mot)
-                    datasource.write_csv(GGRskim, key)
+                    ervaren_reistijd[key] = GGRskim.copy()
 
                 # Dan het OV
                 factor = TVOM.get(ink)
@@ -177,7 +181,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                               inkomen=ink,
                               motief=mot,
                               regime=regime)
-                datasource.write_csv(GGRskim, key)
+                ervaren_reistijd[key] = GGRskim.copy()
 
                 # Dan geen auto (rijbewijs)
                 for sga in soortgeenauto:
@@ -196,7 +200,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                                   inkomen=ink,
                                   motief=mot,
                                   regime=regime)
-                    datasource.write_csv(GGRskim, key)
+                    ervaren_reistijd[key] = GGRskim.copy()
 
                 # GratisAuto
                 for ink in inkomens:
@@ -219,7 +223,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                                   inkomen=ink,
                                   motief=mot,
                                   regime=regime)
-                    datasource.write_csv(GGRskim, key)
+                    ervaren_reistijd[key] = GGRskim.copy()
 
                 # GratisOV
                 GGRskim = np.where(OVtijdmatrix > 0.5, OVtijdmatrix, 9999).astype(int)
@@ -228,7 +232,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                               dagsoort=ds,
                               motief=mot,
                               regime=regime)
-                datasource.write_csv(GGRskim, key)
+                ervaren_reistijd[key] = GGRskim.copy()
 
                 if Ketens:
                     # P+Fiets
@@ -247,7 +251,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                                       hubnaam=Hubnaam,
                                       motief=mot,
                                       regime=regime)
-                        datasource.write_csv(GGRskim.astype(int), key)
+                        ervaren_reistijd[key] = GGRskim.copy()
 
                         # P+R
                         GGRskim.fill(0)
@@ -263,7 +267,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                                       hubnaam=Hubnaam,
                                       motief=mot,
                                       regime=regime)
-                        datasource.write_csv(GGRskim.astype(int), key)
+                        ervaren_reistijd[key] = GGRskim.copy()
 
                         GGRskim.fill(0)
                         kosten = (PplusRherkomstautoafstandmatrix * (varautotarief + kmheffing) + KostenherkomstPplusROV)
@@ -278,4 +282,6 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                                       hubnaam=Hubnaam,
                                       motief=mot,
                                       regime=regime)
-                        datasource.write_csv(GGRskim.astype(int), key)
+                        ervaren_reistijd[key] = GGRskim.copy()
+
+    return ervaren_reistijd

@@ -1,6 +1,8 @@
 import logging
 import ikob.Routines as Routines
 import numpy as np
+from typing import Dict
+from numpy.typing import NDArray
 
 from ikob.concurrentie import get_matrix
 from ikob.datasource import DataKey, DataSource
@@ -9,7 +11,9 @@ from ikob.datasource import DataKey, DataSource
 logger = logging.getLogger(__name__)
 
 
-def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource):
+def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource,
+                                            gewichten_enkel: Dict[DataKey, NDArray],
+                                            gewichten_combi: Dict[DataKey, NDArray]) -> Dict[DataKey, NDArray]:
     logger.info("Bereikbaarheid arbeidsplaatsen voor inwoners")
 
     project_config = config['project']
@@ -68,6 +72,8 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource):
 
     Inkomenstransverdeling = Routines.transponeren(Inkomensverdeling)
 
+    potenties: Dict[DataKey, NDArray] = dict()
+
     for abg in autobezitgroepen:
         for mot in motieven:
             if mot == 'werk':
@@ -91,8 +97,10 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource):
                         arbeidsplaats = Inwonerstotalen
 
                     inkomens = np.array(Inkomenstransverdeling[i_inkgr])
+                    Generaaltotaal_potenties = []
+
                     for mod in modaliteiten:
-                        potentie_totaal = np.zeros(len(Arbeidsplaats), dtype=int)
+                        potentie_sum = np.zeros(len(Arbeidsplaats), dtype=int)
 
                         for igr, gr in enumerate(Groepen):
                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
@@ -103,11 +111,11 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource):
                             ink = Routines.inkomensgroepbepalen(gr)
                             if inkgr == ink or inkgr == 'alle':
                                 K = percentageelektrisch.get(inkgr)/100
-                                Matrix = get_matrix(datasource, gr, mod, mot, regime, ds, ink, inkgr, K)
+                                Matrix = get_matrix(datasource, gewichten_enkel, gewichten_combi, gr, mod, mot, regime, ds, ink, inkgr, K)
 
                                 potentie = Matrix @ arbeidsplaats * verdeling
                                 potentie = np.where(inkomens > 0, potentie / inkomens, 0)
-                                potentie_totaal += potentie.astype(int)
+                                potentie_sum += potentie.astype(int)
 
                         key = DataKey(abg, 'Totaal',
                                       dagsoort=ds,
@@ -115,18 +123,8 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource):
                                       inkomen=inkgr,
                                       motief=mot,
                                       modaliteit=mod)
-                        datasource.write_csv(potentie_totaal, key)
-                    # En tot slot alles bij elkaar harken:
-                    Generaaltotaal_potenties = []
-                    for mod in modaliteiten:
-                        key = DataKey(abg, 'Totaal',
-                                      dagsoort=ds,
-                                      subtopic='Bestemmingen',
-                                      inkomen=inkgr,
-                                      motief=mot,
-                                      modaliteit=mod)
-                        Totaalrij = datasource.read_csv(key, type_caster=int)
-                        Generaaltotaal_potenties.append(Totaalrij)
+                        potenties[key] = potentie_sum.copy()
+                        Generaaltotaal_potenties.append(potenties[key])
 
                     Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
                     key = DataKey(abg, 'Ontpl_totaal',
@@ -148,7 +146,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource):
                                       inkomen=inkgr,
                                       motief=mot,
                                       modaliteit=mod)
-                        Totaalrij = datasource.read_csv(key, type_caster=int)
+                        Totaalrij = potenties[key]
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
                         Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
@@ -174,3 +172,5 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource):
                                   motief=mot,
                                   modaliteit=mod)
                     datasource.write_xlsx(Generaalmatrixproduct, key, header=header)
+
+    return potenties
