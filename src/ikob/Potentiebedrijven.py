@@ -15,6 +15,8 @@ def inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking):
 
 
 def potentie_bedrijven(config, datasource):
+    logger.info("Potentie bereikbaarheid voor bedrijven en instellingen")
+
     project_config=config['project']
     skims_config = config['skims']
     verdeling_config = config['verdeling']

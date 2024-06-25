@@ -4,6 +4,8 @@ logger = logging.getLogger(__name__)
 
 
 def verdeling_over_groepen(config, datasource):
+    logger.info("Verdeling van de groepen over de buurten of zones")
+
     project_config = config['project']
     verdeling_config = config['verdeling']
 

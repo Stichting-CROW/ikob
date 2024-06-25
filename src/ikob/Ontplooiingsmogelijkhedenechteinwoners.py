@@ -8,6 +8,8 @@ logger = logging.getLogger(__name__)
 
 
 def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
+    logger.info("Bereikbaarheid arbeidsplaatsen voor inwoners")
+
     project_config = config['project']
     skims_config = config['skims']
     verdeling_config = config['verdeling']

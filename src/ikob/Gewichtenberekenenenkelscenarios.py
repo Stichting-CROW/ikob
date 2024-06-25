@@ -27,6 +27,8 @@ def gewichtenberekenen(skim, mod, vk, mot):
 
 
 def gewichten_berekenen_enkel_scenarios(config, datasource):
+    logger.info("Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart.")
+
     project_config = config['project']
     skims_config = config['skims']
 
