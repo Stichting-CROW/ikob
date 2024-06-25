@@ -3,7 +3,7 @@ import ikob.Routines as Routines
 import numpy as np
 
 from ikob.concurrentie import get_gewichten_matrix
-from ikob.datasource import DataSource, SegsSource
+from ikob.datasource import DataKey, DataSource, SegsSource
 
 logger = logging.getLogger(__name__)
 
@@ -112,22 +112,46 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource):
                                 potentie = np.where(inkomens > 0, potentie / inkomens, 0)
                                 potentie_totaal += potentie.astype(int)
 
-                        datasource.write_csv(potentie_totaal, abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='bestemmingen')
+                        key = DataKey(abg, 'Totaal',
+                                      dagsoort=ds,
+                                      subtopic='bestemmingen',
+                                      inkomen=inkgr,
+                                      motief=mot,
+                                      modaliteit=mod)
+                        datasource.write_csv(potentie_totaal, key)
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
-                    for mod in modaliteiten :
-                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='bestemmingen', type_caster=int)
+                    for mod in modaliteiten:
+                        key = DataKey(abg, 'Totaal',
+                                      dagsoort=ds,
+                                      subtopic='bestemmingen',
+                                      inkomen=inkgr,
+                                      motief=mot,
+                                      modaliteit=mod)
+                        Totaalrij = datasource.read_csv(key, type_caster=int)
                         Generaaltotaal_potenties.append(Totaalrij)
+
                     Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                    datasource.write_csv(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstring, mot=mot, subtopic='bestemmingen')
-                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstringExcel, mot=mot, subtopic='bestemmingen')
+                    key = DataKey(abg, 'Ontpl_totaal',
+                                  dagsoort=ds,
+                                  subtopic='bestemmingen',
+                                  inkomen=inkgr,
+                                  motief=mot)
+                    datasource.write_csv(Generaaltotaaltrans, key, header=headstring)
+                    datasource.write_xlsx(Generaaltotaaltrans, key, header=headstringExcel)
 
                 header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='bestemmingen', type_caster=int)
+                        key = DataKey(abg, 'Totaal',
+                                      dagsoort=ds,
+                                      subtopic='bestemmingen',
+                                      inkomen=inkgr,
+                                      motief=mot,
+                                      modaliteit=mod)
+                        Totaalrij = datasource.read_csv(key, type_caster=int)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
                         Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
@@ -141,5 +165,15 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, mod=mod, header=header, mot=mot, subtopic='bestemmingen')
-                    datasource.write_xlsx(Generaalmatrixproduct, abg, 'Ontpl_totaalproduct', ds, mod=mod, header=header, mot=mot, subtopic='bestemmingen')
+                    key = DataKey(abg, 'Ontpl_totaal',
+                                  dagsoort=ds,
+                                  subtopic='bestemmingen',
+                                  motief=mot,
+                                  modaliteit=mod)
+                    datasource.write_xlsx(Generaaltotaaltrans, key, header=header)
+                    key = DataKey(abg, 'Ontpl_totaalproduct',
+                                  dagsoort=ds,
+                                  subtopic='bestemmingen',
+                                  motief=mot,
+                                  modaliteit=mod)
+                    datasource.write_xlsx(Generaalmatrixproduct, key, header=header)

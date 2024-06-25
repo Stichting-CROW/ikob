@@ -2,6 +2,7 @@ import ikob.Routines as Routines
 import logging
 import os
 import pathlib
+from dataclasses import dataclass
 from ikob.stedelijkheidsgraad_to_parkeerzoektijden import stedelijkheid_to_parkeerzoektijd
 
 logger = logging.getLogger(__name__)
@@ -132,6 +133,27 @@ class SegsSource:
         return Routines.xlswegschrijven(data, path, header)
 
 
+@dataclass(eq=True, frozen=True)
+class DataKey:
+    """A collection of strings to identify data from the DataSource.
+
+    A DataKey instance is constructed with a subset of the required
+    strings and can be passed towards the DataSource to read/write
+    the desired data.
+    """
+    datatype: str
+    id: str
+    dagsoort: str = ""
+    regime: str = ""
+    subtopic: str = ""
+    voorkeur: str = ""
+    inkomen: str = ""
+    hubnaam: str = ""
+    motief: str = ""
+    modaliteit: str = ""
+    brandstof: str = ""
+
+
 class DataSource:
     def __init__(self, config, project_name):
         self.config = config
@@ -140,46 +162,40 @@ class DataSource:
         # - Extract paths/directory names from constants, e.g. Enum;
         # - Support multi-lingual directory names.
 
-    def _add_id_suffix(self, id, vk, mod, hubnaam, ink):
-        id += vk
-        for suffix in [mod, hubnaam, ink]:
+    def _add_id_suffix(self, key: DataKey) -> str:
+        id = key.id + key.voorkeur
+        for suffix in [key.modaliteit, key.hubnaam, key.inkomen]:
             if suffix:
                 id += f"_{suffix}"
         return id
 
-    def _make_file_path(self, id, motief, topic, dagsoort, base, regime='', subtopic='', brandstof='', vk='', ink='', hubnaam='', mod=''):
-        id_with_suffix = self._add_id_suffix(id, vk, mod, hubnaam, ink)
-        dagsoort = dagsoort.lower()
-        regime = regime.lower()
-        path = self.project_dir / base / regime / motief / topic / subtopic / dagsoort / brandstof
+    def _make_file_path(self, key: DataKey) -> pathlib.Path:
+        base = self._get_base_dir(key)
+        id_with_suffix = self._add_id_suffix(key)
+        dagsoort = key.dagsoort.lower()
+        regime = key.regime.lower()
+        path = self.project_dir / base / regime / key.motief / key.datatype / key.subtopic / dagsoort / key.brandstof
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
 
-    def _get_base_dir(self, datatype, id):
-        if datatype == "concurrentie":
+    def _get_base_dir(self, key: DataKey) -> str:
+        if key.datatype == "concurrentie":
             return "resultaten"
-        if datatype == "herkomsten":
+        if key.datatype == "herkomsten":
             return "resultaten"
-        if "totaal" in id.lower():
+        if "totaal" in key.id.lower():
             # Totaal, Ontpl_totaal, Ontpl_totaalproduct
             return "resultaten"
-
         return ""
 
-    def read_csv(self, datatype, id, dagsoort, regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr='', type_caster=float):
-        base = self._get_base_dir(datatype, id)
-        path = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
-        path = path.with_suffix(".csv")
+    def read_csv(self, key: DataKey, type_caster=float):
+        path = self._make_file_path(key).with_suffix(".csv")
         return Routines.csvlezen(path, type_caster=type_caster)
 
-    def write_csv(self, data, datatype, id, dagsoort, header=[], regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
-        base = self._get_base_dir(datatype, id)
-        path = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
-        path = path.with_suffix(".csv")
+    def write_csv(self, data, key: DataKey, header=[]):
+        path = self._make_file_path(key).with_suffix(".csv")
         return Routines.csvwegschrijven(data, path, header=header)
 
-    def write_xlsx(self, data, datatype, id, dagsoort, header=[], regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
-        base = self._get_base_dir(datatype, id)
-        path = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
-        path = path.with_suffix(".xlsx")
+    def write_xlsx(self, data, key: DataKey, header=[]):
+        path = self._make_file_path(key).with_suffix(".xlsx")
         return Routines.xlswegschrijven(data, path, header)
