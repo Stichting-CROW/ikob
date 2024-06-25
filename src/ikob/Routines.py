@@ -4,11 +4,11 @@ import numpy as np
 
 
 def lijstvolnullen(lengte):
-    return [0] * lengte
+    return np.zeros(lengte)
 
 
 def transponeren(matrix):
-    return np.array(matrix).T.tolist()
+    return np.array(matrix).T
 
 
 def xlswegschrijven(matrix, filenaam, header):

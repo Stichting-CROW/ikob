@@ -6,7 +6,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def verdeling_over_groepen(config, datasource: DataSource):
+def verdeling_over_groepen(config):
     logger.info("Verdeling van de groepen over de buurten of zones")
 
     project_config = config['project']

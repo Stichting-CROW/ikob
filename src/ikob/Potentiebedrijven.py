@@ -1,7 +1,7 @@
 import logging
 import ikob.Routines as Routines
 import ikob.Berekeningen as Berekeningen
-from ikob.datasource import DataKey, DataSource, SegsSource
+from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,9 @@ def inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking):
     return Inwonersfile
 
 
-def potentie_bedrijven(config, datasource: DataSource):
+def potentie_bedrijven(config,
+                       gewichten_enkel: DataSource,
+                       gewichten_combi: DataSource) -> DataSource:
     logger.info("Potentie bereikbaarheid voor bedrijven en instellingen")
 
     project_config=config['project']
@@ -86,6 +88,8 @@ def potentie_bedrijven(config, datasource: DataSource):
     Inwoners = inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking)
     Inwonerstransmatrix = Routines.transponeren(Inwoners)
 
+    herkomsten = DataSource(config, DataType.HERKOMSTEN)
+
     for abg in autobezitgroepen:
         for mot in motieven:
             if mot == 'werk':
@@ -102,8 +106,7 @@ def potentie_bedrijven(config, datasource: DataSource):
 
             for ds in dagsoort:
                 for inkgr in inkgroepen:
-                    # Eerst de fiets
-                    logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep: %s', inkgr)
+                    Generaaltotaal_potenties = []
                     for mod in modaliteiten:
                         Bijhoudlijst = Routines.lijstvolnullen(len(Beroepsbevolking))
                         for gr in Groepen:
@@ -116,31 +119,28 @@ def potentie_bedrijven(config, datasource: DataSource):
                                     else:
                                         vkklad = ''
 
-                                    key = DataKey('gewichten',
-                                                  f'{mod}_vk',
+                                    key = DataKey(f'{mod}_vk',
                                                   dagsoort=ds,
                                                   voorkeur=vkklad,
                                                   regime=regime,
                                                   motief=mot)
-                                    Fietsmatrix = datasource.read_csv(key)
+                                    Fietsmatrix = gewichten_enkel.get(key)
                                     Dezegroeplijst = Berekeningen.potenties (Fietsmatrix, Inwonerstransmatrix, gr, Groepen)
 
                                     for i in range(0, len(Fietsmatrix) ):
                                         Bijhoudlijst[i]+= round(Dezegroeplijst[i])
                                 elif mod == 'Auto':
                                     String = Routines.enkelegroep(mod, gr)
-                                    logger.debug("String: %s", String)
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
-                                            key = DataKey('gewichten',
-                                                          f'{String}_vk',
+                                            key = DataKey(f'{String}_vk',
                                                           dagsoort=ds,
                                                           voorkeur=vk,
                                                           inkomen=ink,
                                                           regime=regime,
                                                           motief=mot,
                                                           brandstof=srtbr)
-                                            Matrix = datasource.read_csv(key)
+                                            Matrix = gewichten_enkel.get(key)
 
                                             Dezegroeplijst1 = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
                                             if srtbr == 'elektrisch':
@@ -156,14 +156,13 @@ def potentie_bedrijven(config, datasource: DataSource):
                                         for i in range(0, len(Matrix)):
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                     else:
-                                        key = DataKey('gewichten',
-                                                      f'{String}_vk',
+                                        key = DataKey(f'{String}_vk',
                                                       dagsoort=ds,
                                                       voorkeur=vk,
                                                       inkomen=ink,
                                                       regime=regime,
                                                       motief=mot)
-                                        Matrix = datasource.read_csv(key)
+                                        Matrix = gewichten_enkel.get(key)
 
                                         Dezegroeplijst = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
                                         for i in range(0, len(Matrix)):
@@ -172,14 +171,13 @@ def potentie_bedrijven(config, datasource: DataSource):
 
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep (mod,gr)
-                                    key = DataKey('gewichten',
-                                                  f'{String}_vk',
+                                    key = DataKey(f'{String}_vk',
                                                   dagsoort=ds,
                                                   voorkeur=vk,
                                                   inkomen=ink,
                                                   regime=regime,
                                                   motief=mot)
-                                    Matrix = datasource.read_csv(key)
+                                    Matrix = gewichten_enkel.get(key)
 
                                     Dezegroeplijst = Berekeningen.potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
                                     for i in range(0, len(Matrix) ):
@@ -190,8 +188,7 @@ def potentie_bedrijven(config, datasource: DataSource):
                                     logger.debug('de string is %s', String)
                                     if String[0] == 'A':
                                         for srtbr in soortbrandstof:
-                                            key = DataKey('gewichten',
-                                                          f'{String}_vk',
+                                            key = DataKey(f'{String}_vk',
                                                           dagsoort=ds,
                                                           voorkeur=vk,
                                                           inkomen=ink,
@@ -199,7 +196,7 @@ def potentie_bedrijven(config, datasource: DataSource):
                                                           motief=mot,
                                                           subtopic='combinaties',
                                                           brandstof=srtbr)
-                                            Matrix = datasource.read_csv(key)
+                                            Matrix = gewichten_combi.get(key)
 
                                             Dezegroeplijst1 = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
 
@@ -214,62 +211,51 @@ def potentie_bedrijven(config, datasource: DataSource):
                                         for i in range(0, len(Matrix)):
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                     else:
-                                        key = DataKey('gewichten',
-                                                      f'{String}_vk',
+                                        key = DataKey(f'{String}_vk',
                                                       dagsoort=ds,
                                                       voorkeur=vk,
                                                       inkomen=ink,
                                                       regime=regime,
                                                       motief=mot,
                                                       subtopic='combinaties')
-                                        Matrix = datasource.read_csv(key)
+                                        Matrix = gewichten_combi.get(key)
 
                                         Dezegroeplijst = Berekeningen.potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
                                         for i in range ( 0, len ( Matrix ) ):
                                             Bijhoudlijst[i] += round ( Dezegroeplijst[i])
 
-                        key = DataKey(abg, id='Totaal',
+                        key = DataKey(id='Totaal',
                                       dagsoort=ds,
-                                      subtopic='herkomsten',
+                                      groep=abg,
                                       inkomen=inkgr,
                                       motief=mot,
                                       modaliteit=mod)
-                        datasource.write_csv(Bijhoudlijst, key)
-                    # En tot slot alles bij elkaar harken:
-                    Generaaltotaal_potenties = []
-                    for mod in modaliteiten:
-                        key = DataKey(abg,
-                                      'Totaal',
-                                      dagsoort=ds,
-                                      inkomen=inkgr,
-                                      motief=mot,
-                                      modaliteit=mod,
-                                      subtopic='herkomsten')
-                        Totaalrij = datasource.read_csv(key, type_caster=int)
+                        herkomsten.set(key, Bijhoudlijst)
+                        Generaaltotaal_potenties.append(herkomsten.get(key))
 
-                        Generaaltotaal_potenties.append(Totaalrij)
-                    Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                    key = DataKey(abg, id='Pot_totaal',
+                    key = DataKey(id='Pot_totaal',
                                   dagsoort=ds,
-                                  subtopic='herkomsten',
+                                  groep=abg,
                                   inkomen=inkgr,
                                   motief=mot)
-                    datasource.write_csv(Generaaltotaaltrans, key, header=headstring)
-                    datasource.write_xlsx(Generaaltotaaltrans, key, header=headstringExcel)
+
+                    herkomsten_totaal = Routines.transponeren(Generaaltotaal_potenties)
+                    herkomsten.write_csv(herkomsten_totaal, key, header=headstring)
+                    herkomsten.write_xlsx(herkomsten_totaal, key, header=headstringExcel)
 
                 header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        key = DataKey(abg,
-                                      'Totaal',
+                        key = DataKey('Totaal',
                                       dagsoort=ds,
                                       inkomen=inkgr,
                                       motief=mot,
+                                      groep=abg,
                                       modaliteit=mod,
-                                      subtopic='herkomsten')
-                        Totaalrij = datasource.read_csv(key, type_caster=int)
+                                      subtopic='')
+                        Totaalrij = herkomsten.get(key)
 
                         Generaalmatrix.append(Totaalrij)
                     Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
@@ -281,16 +267,18 @@ def potentie_bedrijven(config, datasource: DataSource):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    key = DataKey(abg, id='Pot_totaal',
+                    key = DataKey(id='Pot_totaal',
                                   dagsoort=ds,
-                                  subtopic='herkomsten',
+                                  groep=abg,
                                   motief=mot,
                                   modaliteit=mod)
-                    datasource.write_xlsx(Generaaltotaaltrans, key, header=header)
+                    herkomsten.write_xlsx(Generaaltotaaltrans, key, header=header)
 
-                    key = DataKey(abg, id='Pot_totaalproduct',
+                    key = DataKey(id='Pot_totaalproduct',
                                   dagsoort=ds,
-                                  subtopic='herkomsten',
+                                  groep=abg,
                                   motief=mot,
                                   modaliteit=mod)
-                    datasource.write_xlsx(Generaalmatrixproduct, key, header=header)
+                    herkomsten.write_xlsx(Generaalmatrixproduct, key, header=header)
+
+    return herkomsten

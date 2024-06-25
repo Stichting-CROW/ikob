@@ -2,6 +2,9 @@ import ikob.Routines as Routines
 import logging
 import os
 import pathlib
+import enum
+from typing import Optional
+from numpy.typing import NDArray
 from dataclasses import dataclass
 from ikob.stedelijkheidsgraad_to_parkeerzoektijden import stedelijkheid_to_parkeerzoektijd
 
@@ -133,6 +136,15 @@ class SegsSource:
         return Routines.xlswegschrijven(data, path, header)
 
 
+class DataType(enum.Enum):
+    BESTEMMINGEN = "bestemmingen"
+    CONCURRENTIE = "concurrentie"
+    ERVARENREISTIJD = "ervarenreistijd"
+    GEWICHTEN = "gewichten"
+    HERKOMSTEN = "herkomsten"
+    POTENTIES = "potenties"
+
+
 @dataclass(eq=True, frozen=True)
 class DataKey:
     """A collection of strings to identify data from the DataSource.
@@ -141,23 +153,26 @@ class DataKey:
     strings and can be passed towards the DataSource to read/write
     the desired data.
     """
-    datatype: str
     id: str
-    dagsoort: str = ""
-    regime: str = ""
-    subtopic: str = ""
-    voorkeur: str = ""
-    inkomen: str = ""
-    hubnaam: str = ""
-    motief: str = ""
-    modaliteit: str = ""
-    brandstof: str = ""
+    dagsoort: str
+    regime: Optional[str] = ""
+    subtopic: Optional[str] = ""
+    voorkeur: Optional[str] = ""
+    inkomen: Optional[str] = ""
+    hubnaam: Optional[str] = ""
+    motief: Optional[str] = ""
+    groep: Optional[str] = ""
+    modaliteit: Optional[str] = ""
+    brandstof: Optional[str] = ""
 
 
 class DataSource:
-    def __init__(self, config, project_name):
+    def __init__(self, config, datatype: DataType):
         self.config = config
         self.project_dir = get_project_directory(config)
+        self.cache: dict[DataKey, NDArray] = {}
+        self.datatype = datatype
+
         # TODO: Improve handling of data directory structure:
         # - Extract paths/directory names from constants, e.g. Enum;
         # - Support multi-lingual directory names.
@@ -174,25 +189,39 @@ class DataSource:
         id_with_suffix = self._add_id_suffix(key)
         dagsoort = key.dagsoort.lower()
         regime = key.regime.lower()
-        path = self.project_dir / base / regime / key.motief / key.datatype / key.subtopic / dagsoort / key.brandstof
+        path = self.project_dir / base / regime / key.motief / key.groep / self.datatype.value / key.subtopic / dagsoort / key.brandstof
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
 
     def _get_base_dir(self, key: DataKey) -> str:
-        if key.datatype == "concurrentie":
-            return "resultaten"
-        if key.datatype == "herkomsten":
+        if self.datatype in [DataType.CONCURRENTIE, DataType.HERKOMSTEN]:
             return "resultaten"
         if "totaal" in key.id.lower():
             # Totaal, Ontpl_totaal, Ontpl_totaalproduct
             return "resultaten"
         return ""
 
-    def read_csv(self, key: DataKey, type_caster=float):
+    def set(self, key: DataKey, data: NDArray):
+        self.cache[key] = data
+
+    def get(self, key: DataKey, type_caster=float) -> NDArray:
+        if key in self.cache:
+            return self.cache[key]
+
+        data = self.read_csv(key, type_caster=type_caster)
+        self.set(key, data)
+        return data
+
+    def store(self):
+        for key, data in self.cache.items():
+            self.write_csv(data, key)
+
+    def read_csv(self, key: DataKey, type_caster=float) -> NDArray:
         path = self._make_file_path(key).with_suffix(".csv")
         return Routines.csvlezen(path, type_caster=type_caster)
 
     def write_csv(self, data, key: DataKey, header=[]):
+        assert isinstance(key, DataKey)
         path = self._make_file_path(key).with_suffix(".csv")
         return Routines.csvwegschrijven(data, path, header=header)
 

@@ -2,7 +2,7 @@ import logging
 import math
 import ikob.Constantengenerator as Constantengenerator
 import numpy as np
-from ikob.datasource import DataSource, DataKey
+from ikob.datasource import DataSource, DataKey, DataType
 
 logger = logging.getLogger(__name__)
 
@@ -24,10 +24,10 @@ def gewichtenberekenen(skim, mod, vk, mot):
                 reistijdwaarde = 0
 
             Gewichtenmatrix[r][k] = round(reistijdwaarde, 4)
-    return Gewichtenmatrix.tolist()
+    return Gewichtenmatrix
 
 
-def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource):
+def gewichten_berekenen_enkel_scenarios(config, ervaren_reistijd: DataSource) -> DataSource:
     logger.info("Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart.")
 
     project_config = config['project']
@@ -44,138 +44,130 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource):
     modaliteitenfiets = ['Fiets']
     soortbrandstof = ['fossiel', 'elektrisch']
 
+    gewichten = DataSource(config, DataType.GEWICHTEN)
+
     for ds in dagsoort:
         for mot in motieven:
             for mod in modaliteitenfiets:
                 for vk in voorkeuren:
                     if vk == 'Auto' or vk == 'Fiets':
-                        key = DataKey('ervarenreistijd',
-                                      'Fiets',
+                        key = DataKey('Fiets',
                                       dagsoort=ds,
                                       regime=regime,
                                       motief=mot)
-                        GGRskim = datasource.read_csv(key, type_caster=int)
+                        GGRskim = ervaren_reistijd.get(key)
                         Gewichten = gewichtenberekenen(GGRskim, mod, vk, mot)
+
                         if vk == 'Auto':
-                            key = DataKey('gewichten',
-                                          f'{mod}_vk',
+                            key = DataKey(f'{mod}_vk',
                                           dagsoort=ds,
                                           regime=regime,
                                           motief=mot)
-                            datasource.write_csv(Gewichten, key)
                         else:
-                            key = DataKey('gewichten',
-                                          f'{mod}_vk',
+                            key = DataKey(f'{mod}_vk',
                                           dagsoort=ds,
                                           regime=regime,
                                           motief=mot,
                                           voorkeur=vk)
-                            datasource.write_csv(Gewichten, key)
+
+                        gewichten.set(key, Gewichten.copy())
 
             # Nu Auto
             for ink in inkomen:
                 for vk in voorkeuren:
                     for srtbr in soortbrandstof:
-                        key = DataKey('ervarenreistijd',
-                                      f'Auto_{srtbr}',
+                        key = DataKey(f'Auto_{srtbr}',
                                       dagsoort=ds,
                                       inkomen=ink,
                                       regime=regime,
                                       motief=mot)
-                        GGRskim = datasource.read_csv(key, type_caster=int)
+                        GGRskim = ervaren_reistijd.get(key)
 
                         Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
-                        key = DataKey('gewichten',
-                                      'Auto_vk',
+                        key = DataKey('Auto_vk',
                                       dagsoort=ds,
                                       inkomen=ink,
                                       regime=regime,
                                       motief=mot,
                                       voorkeur=vk,
                                       brandstof=srtbr)
-                        datasource.write_csv(Gewichten, key)
+                        gewichten.set(key, Gewichten.copy())
 
             soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
             voorkeurengeenauto = ['Neutraal', 'OV', 'Fiets']
             for sga in soortgeenauto:
                 for vk in voorkeurengeenauto:
                     for ink in inkomen:
-                        key = DataKey('ervarenreistijd',
-                                      f'{sga}',
+                        key = DataKey(f'{sga}',
                                       dagsoort=ds,
                                       inkomen=ink,
                                       regime=regime,
                                       motief=mot)
-                        GGRskim = datasource.read_csv(key, type_caster=int)
+                        GGRskim = ervaren_reistijd.get(key)
 
                         Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
-                        key = DataKey('gewichten',
-                                      f'{sga}_vk',
+                        key = DataKey(f'{sga}_vk',
                                       dagsoort=ds,
                                       inkomen=ink,
                                       regime=regime,
                                       voorkeur=vk,
                                       motief=mot)
-                        datasource.write_csv(Gewichten, key)
+                        gewichten.set(key, Gewichten.copy())
 
             modaliteitenOV = ['OV']
             for modOV in modaliteitenOV:
                 for ink in inkomen:
                     for vk in voorkeuren:
-                        key = DataKey('ervarenreistijd',
-                                      f'{modOV}',
+                        key = DataKey(f'{modOV}',
                                       dagsoort=ds,
                                       inkomen=ink,
                                       regime=regime,
                                       motief=mot)
-                        GGRskim = datasource.read_csv(key, type_caster=int)
+                        GGRskim = ervaren_reistijd.get(key)
 
                         Gewichten = gewichtenberekenen(GGRskim, modOV, vk, mot)
-                        key = DataKey('gewichten',
-                                      f'{modOV}_vk',
+                        key = DataKey(f'{modOV}_vk',
                                       dagsoort=ds,
                                       voorkeur=vk,
                                       inkomen=ink,
                                       regime=regime,
                                       motief=mot)
-                        datasource.write_csv(Gewichten, key)
+                        gewichten.set(key, Gewichten.copy())
 
             for ink in inkomen:
-                key = DataKey('ervarenreistijd',
-                              'GratisAuto',
+                key = DataKey('GratisAuto',
                               dagsoort=ds,
                               inkomen=ink,
                               regime=regime,
                               motief=mot)
-                GGRskim = datasource.read_csv(key, type_caster=int)
+                GGRskim = ervaren_reistijd.get(key)
 
                 Gewichten = gewichtenberekenen(GGRskim, 'Auto', 'Auto', mot)
                 specialauto = ['Neutraal', 'Auto']
                 for vks in specialauto:
-                    key = DataKey('gewichten',
-                                  'GratisAuto_vk',
+                    key = DataKey('GratisAuto_vk',
                                   dagsoort=ds,
                                   voorkeur=vks,
                                   inkomen=ink,
                                   regime=regime,
                                   motief=mot)
-                    datasource.write_csv(Gewichten, key)
+                    gewichten.set(key, Gewichten.copy())
 
-                key = DataKey('ervarenreistijd',
-                              'GratisOV',
+                key = DataKey('GratisOV',
                               dagsoort=ds,
                               regime=regime,
                               motief=mot)
-                GGRskim = datasource.read_csv(key, type_caster=int)
+                GGRskim = ervaren_reistijd.get(key)
 
                 Gewichten = gewichtenberekenen(GGRskim, 'OV', 'OV', mot)
                 specialOV = ['Neutraal', 'OV']
                 for vks in specialOV:
-                    key = DataKey('gewichten',
-                                  'GratisOV_vk',
+                    key = DataKey('GratisOV_vk',
                                   dagsoort=ds,
                                   voorkeur=vks,
                                   inkomen=ink,
                                   regime=regime,
                                   motief=mot)
-                    datasource.write_csv(Gewichten, key)
+                    gewichten.set(key, Gewichten.copy())
+
+    return gewichten
