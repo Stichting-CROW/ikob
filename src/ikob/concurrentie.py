@@ -38,6 +38,12 @@ def concurrentie_om_inwoners(config, datasource: DataSource):
 
 
 def concurrentie(config, datasource: DataSource, inwoners: bool = True):
+    if inwoners:
+        msg = "Concurrentiepositie voor bedrijven qua bereikbaarheid"
+    else:
+        msg = "Concurrentiepositie voor bereik arbeidsplaatsen"
+    logger.info(msg)
+
     project_config = config['project']
     skims_config = config['skims']
     verdeling_config = config['verdeling']

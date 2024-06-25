@@ -34,6 +34,8 @@ def kanvoorkeur(soortauto, soortOV, voorkeur):
 
 
 def gewichten_berekenen_combis(config, datasource):
+    logger.info("Maximum gewichten van meerdere modaliteiten")
+
     project_config = config['project']
     skims_config = config['skims']
 

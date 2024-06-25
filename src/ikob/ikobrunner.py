@@ -20,70 +20,83 @@ from ikob.datasource import DataSource
 logger = logging.getLogger(__name__)
 
 
-# fmt: off
-stappen = (
-    ( "Gegeneraliseerde reistijd berekenen uit tijd en kosten", ervaren_reistijd_berekenen),
-    ( "Verdeling van de groepen over de buurten of zones", verdeling_over_groepen),
-    ( "Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart", gewichten_berekenen_enkel_scenarios),
-    ( "Maximum gewichten van meerdere modaliteiten", gewichten_berekenen_combis),
-    ( "Bereikbaarheid arbeidsplaatsen voor inwoners", ontplooingsmogelijkheden_echte_inwoners),
-    ( "Potentie bereikbaarheid voor bedrijven en instellingen", potentie_bedrijven),
-    ( "Concurrentiepositie voor bereik arbeidsplaatsen", concurrentie_om_arbeidsplaatsen),
-    ( "Concurrentiepositie voor bedrijven qua bereikbaarheid", concurrentie_om_inwoners),
-)
-# fmt: on
-
-PAD = {"padx": 5, "pady": 5}
-IPAD = {"ipadx": 5, "ipady": 5}
-
-
-def run_scripts(project_file, skip_steps):
+def run_scripts(project_file, skip_steps=None):
     """
     Run through all steps for a given project.
-    Tests are skipped if skip_steps is set.
-    Yields the current step and corresponding return code.
+    Steps are skipped if skip_steps is set.
     """
     logger.info("Reading project file: %s.", project_file)
     config = getConfigFromArgs(project_file)
     datasource = DataSource(config, config['__filename__'])
 
-    for (description, method), skip in zip(stappen, skip_steps):
-        if skip:
-            logger.info("Skipping step: %s.", description)
-            continue
+    if not skip_steps:
+        skip_steps = [False] * 8
 
-        logger.info("Running step: %s.", description)
-        result = method(config, datasource)
-        yield description, result
+    if not skip_steps[0]:
+        ervaren_reistijd_berekenen(config, datasource)
+
+    if not skip_steps[1]:
+        verdeling_over_groepen(config, datasource)
+
+    if not skip_steps[2]:
+        gewichten_berekenen_enkel_scenarios(config, datasource)
+
+    if not skip_steps[3]:
+        gewichten_berekenen_combis(config, datasource)
+
+    if not skip_steps[4]:
+        ontplooingsmogelijkheden_echte_inwoners(config, datasource)
+
+    if not skip_steps[5]:
+        potentie_bedrijven(config, datasource)
+
+    if not skip_steps[6]:
+        concurrentie_om_arbeidsplaatsen(config, datasource)
+
+    if not skip_steps[7]:
+        concurrentie_om_inwoners(config, datasource)
 
 
 # User interface
 
 
 class ConfigApp(Tk):
+    PAD = {"padx": 5, "pady": 5}
+    IPAD = {"ipadx": 5, "ipady": 5}
+
+    stappen = (
+            "Gegeneraliseerde reistijd berekenen uit tijd en kosten",
+            "Verdeling van de groepen over de buurten of zones",
+            "Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart",
+            "Maximum gewichten van meerdere modaliteiten",
+            "Bereikbaarheid arbeidsplaatsen voor inwoners",
+            "Potentie bereikbaarheid voor bedrijven en instellingen",
+            "Concurrentiepositie voor bereik arbeidsplaatsen",
+            "Concurrentiepositie voor bedrijven qua bereikbaarheid")
+
     def __init__(self):
         super().__init__()
         self.title("IKOB Runner")
-        self._checks = [BooleanVar(value=True) for _ in stappen]
+        self._checks = [BooleanVar(value=True) for _ in self.stappen]
         self._configvar = StringVar()
         self.create_widgets()
 
     def create_widgets(self):
         self.widgets = []
         F1 = Frame()
-        F1.pack(expand=1, fill="both", **PAD)
+        F1.pack(expand=1, fill="both", **self.PAD)
         self.widgets.extend(
             widgets.pathWidget(F1, "Project", self._configvar, file=True)
         )
         self.widgets.append(F1)
-        labels = [x[0] for x in stappen]
+        labels = [stap for stap in self.stappen]
         self.widgets.extend(
             widgets.checklistWidget(
                 F1, "Stappen", labels, self._checks, row=1, itemsperrow=1
             )
         )
         B = Button(master=F1, text="Start", command=self.cmdRun)
-        B.grid(row=2, column=2, sticky="ew", **PAD)
+        B.grid(row=2, column=2, sticky="ew", **self.PAD)
         self.widgets.append(B)
 
     def cmdRun(self):
@@ -92,17 +105,10 @@ class ConfigApp(Tk):
         # Skip the test when its _not_ selected.
         skip_steps = [not check.get() for check in self._checks]
 
-        # Initialise step in case iterator fails before step is set.
-        step = stappen[0]
-
         try:
-            for step, result in run_scripts(project_file, skip_steps):
-                if result is not None:
-                    msg = f"Python gaf fout code: {result} in stap {step}.",
-                    messagebox.showerror(title="FOUT", message=msg)
-                    return
+            run_scripts(project_file, skip_steps)
         except BaseException as err:
-            msg = f"Fout in Stap {step}: {err}"
+            msg = f"An error occured: {err}"
             messagebox.showerror(title="FOUT", message=msg)
         else:
             msg = "Alle stappen zijn succesvol uitegevoerd."

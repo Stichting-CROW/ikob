@@ -1,7 +1,10 @@
 import ikob.Routines as Routines
 import numpy as np
+import logging
 from ikob.datasource import DataSource, SkimsSource, SegsSource
 from ikob.datasource import read_parkeerzoektijden, read_csv_from_config
+
+logger = logging.getLogger(__name__)
 
 
 def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
@@ -15,6 +18,8 @@ def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
 
 
 def ervaren_reistijd_berekenen(config, datasource: DataSource):
+    logger.info("Gegeneraliseerde reistijd berekenen uit tijd en kosten.")
+
     # Haal (voor het gemak) onderdelen voor dit script er uit.
     project_config = config['project']
     skims_config = config['skims']
