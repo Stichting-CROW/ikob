@@ -1,7 +1,7 @@
 import logging
 import ikob.Routines as Routines
 import numpy as np
-from ikob.datasource import DataSource
+from ikob.datasource import DataKey, DataSource
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +11,13 @@ def get_matrix(datasource: DataSource, gr, mod, mot, regime, ds, ink, inkgr, K):
 
     if mod == 'Fiets' or mod == 'EFiets':
         vkfiets = 'Fiets' if vk == 'Fiets' else ''
-        return datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
+        key = DataKey('Gewichten',
+                      f"{mod}_vk",
+                      dagsoort=ds,
+                      regime=regime,
+                      motief=mot,
+                      voorkeur=vkfiets)
+        return datasource.read_csv(key)
 
     enkele_groep = Routines.enkelegroep(mod, gr)
     combi_groep = Routines.combigroep(mod, gr)
@@ -19,14 +25,50 @@ def get_matrix(datasource: DataSource, gr, mod, mot, regime, ds, ink, inkgr, K):
     if mod == 'Auto' and 'WelAuto' in gr or combi_groep[0] == 'A':
         subtopic = '' if mod == 'Auto' else 'Combinaties'
         string = enkele_groep if mod == 'Auto' else combi_groep
-        Matrix_fossiel = datasource.read_csv('Gewichten', f"{string}_vk", ds, subtopic=subtopic, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
-        Matrix_elektrisch = datasource.read_csv('Gewichten', f"{string}_vk", ds, subtopic=subtopic, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
+        key = DataKey('Gewichten',
+                      f"{string}_vk",
+                      dagsoort=ds,
+                      regime=regime,
+                      motief=mot,
+                      voorkeur=vk,
+                      inkomen=ink,
+                      subtopic=subtopic,
+                      brandstof="fossiel")
+        Matrix_fossiel = datasource.read_csv(key)
+
+        key = DataKey('Gewichten',
+                      f"{string}_vk",
+                      dagsoort=ds,
+                      regime=regime,
+                      motief=mot,
+                      voorkeur=vk,
+                      inkomen=ink,
+                      subtopic=subtopic,
+                      brandstof="elektrisch")
+        Matrix_elektrisch = datasource.read_csv(key)
+
         return K * Matrix_elektrisch + (1 - K) * Matrix_fossiel
 
     if mod == 'Auto' or mod == 'OV':
-        return datasource.read_csv('Gewichten', f"{enkele_groep}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
+        key = DataKey('Gewichten',
+                      f"{enkele_groep}_vk",
+                      dagsoort=ds,
+                      regime=regime,
+                      motief=mot,
+                      voorkeur=vk,
+                      inkomen=ink)
+        Matrix_elektrisch = datasource.read_csv(key)
+        return datasource.read_csv(key)
 
-    return datasource.read_csv('Gewichten', f'{combi_groep}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+    key = DataKey('Gewichten',
+                  f"{combi_groep}_vk",
+                  dagsoort=ds,
+                  regime=regime,
+                  motief=mot,
+                  voorkeur=vk,
+                  inkomen=ink,
+                  subtopic="Combinaties")
+    return datasource.read_csv(key)
 
 
 def concurrentie_om_arbeidsplaatsen(config, datasource: DataSource):
@@ -114,7 +156,14 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
             for ds in dagsoort:
                 for i_inkgr, inkgr in enumerate(inkgroepen):
                     for mod in modaliteiten:
-                        Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic=subtopic_gewichten)
+                        key = DataKey(abg, "Totaal",
+                                      dagsoort=ds,
+                                      motief=mot,
+                                      modaliteit=mod,
+                                      inkomen=inkgr,
+                                      subtopic=subtopic_gewichten)
+                        Bereik = datasource.read_csv(key)
+
                         concurrentie_totaal = np.zeros(len(Arbeidsplaatsen))
                         for i_gr, gr in enumerate(Groepen):
                             if inwoners:
@@ -133,22 +182,47 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
                                 concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
                                 concurrentie_totaal += concurrentie * verdeling / np.where(inkomens_verdeling > 0, inkomens_verdeling, 1)
 
-                        datasource.write_csv(concurrentie_totaal, 'Concurrentie', 'Totaal', ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, ink=inkgr)
+                        key = DataKey('Concurrentie', id='Totaal',
+                                      dagsoort=ds,
+                                      subtopic=subtopic_concurrentie,
+                                      inkomen=inkgr,
+                                      motief=mot,
+                                      modaliteit=mod)
+                        datasource.write_csv(concurrentie_totaal, key)
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten:
-                        Totaalrij = datasource.read_csv('Concurrentie', "Totaal", ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, ink=inkgr)
+                        key = DataKey("Concurrentie", "Totaal",
+                                      dagsoort=ds,
+                                      motief=mot,
+                                      modaliteit=mod,
+                                      inkomen=inkgr,
+                                      subtopic=subtopic_concurrentie)
+                        Totaalrij = datasource.read_csv(key)
+
                         Generaaltotaal_potenties.append(Totaalrij)
                         Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                        datasource.write_csv(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic=subtopic_concurrentie, mot=mot, ink=inkgr, header=headstring)
-                        datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic=subtopic_concurrentie, mot=mot, ink=inkgr, header=headstringExcel)
+                        key = DataKey('Concurrentie', id='Ontpl_conc',
+                                      dagsoort=ds,
+                                      subtopic=subtopic_concurrentie,
+                                      inkomen=inkgr,
+                                      motief=mot)
+                        datasource.write_csv(Generaaltotaaltrans, key, header=headstring)
+                        datasource.write_xlsx(Generaaltotaaltrans, key, header=headstringExcel)
 
                 header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        Totaalrij = datasource.read_csv("Concurrentie", "Totaal", ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, ink=inkgr)
+                        key = DataKey("Concurrentie", "Totaal",
+                                      dagsoort=ds,
+                                      motief=mot,
+                                      modaliteit=mod,
+                                      inkomen=inkgr,
+                                      subtopic=subtopic_concurrentie)
+                        Totaalrij = datasource.read_csv(key)
+
                         Generaalmatrix.append(Totaalrij)
                         Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
 
@@ -160,5 +234,16 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.write_xlsx(Generaaltotaaltrans, 'Concurrentie', 'Ontpl_conc', ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, header=header)
-                    datasource.write_xlsx(Generaalmatrixproduct, 'Concurrentie', 'Ontpl_concproduct', ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, header=header)
+                    key = DataKey('Concurrentie', id='Ontpl_conc',
+                                  dagsoort=ds,
+                                  subtopic=subtopic_concurrentie,
+                                  motief=mot,
+                                  modaliteit=mod)
+                    datasource.write_xlsx(Generaaltotaaltrans, key, header=header)
+
+                    key = DataKey('Concurrentie', id='Ontpl_concproduct',
+                                  dagsoort=ds,
+                                  subtopic=subtopic_concurrentie,
+                                  motief=mot,
+                                  modaliteit=mod)
+                    datasource.write_xlsx(Generaalmatrixproduct, key, header=header)

@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+from ikob.datasource import DataSource, DataKey
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ def kanvoorkeur(soortauto, soortOV, voorkeur):
         return True
 
 
-def gewichten_berekenen_combis(config, datasource):
+def gewichten_berekenen_combis(config, datasource: DataSource):
     logger.info("Maximum gewichten van meerdere modaliteiten")
 
     project_config = config['project']
@@ -65,42 +66,139 @@ def gewichten_berekenen_combis(config, datasource):
                                 continue
 
                             vkfiets = 'Fiets' if vk == 'Fiets' else ''
-                            Fietsmatrix = datasource.read_csv('Gewichten', f'{modft}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
-                            OVmatrix = datasource.read_csv('Gewichten', f'{srtOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                            key = DataKey('Gewichten', f'{modft}_vk',
+                                          dagsoort=ds,
+                                          voorkeur=vkfiets,
+                                          regime=regime,
+                                          motief=mot)
+                            Fietsmatrix = datasource.read_csv(key)
+
+                            key = DataKey('Gewichten', f'{srtOV}_vk',
+                                          dagsoort=ds,
+                                          voorkeur=vk,
+                                          inkomen=ink,
+                                          regime=regime,
+                                          motief=mot)
+                            OVmatrix = datasource.read_csv(key)
+
                             max = np.maximum.reduce((Fietsmatrix, OVmatrix))
-                            datasource.write_csv(max, 'Gewichten', f"{srtOV}_{modft}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+                            key = DataKey('Gewichten',
+                                          f"{srtOV}_{modft}_vk",
+                                          dagsoort=ds,
+                                          inkomen=ink,
+                                          regime=regime,
+                                          motief=mot,
+                                          voorkeur=vk,
+                                          subtopic='Combinaties')
+                            datasource.write_csv(max, key)
 
                         for srtauto in soortauto:
                             if not kanvoorkeur(srtauto, 'OV', vk):
                                 continue
 
                             vkfiets = 'Fiets' if vk == 'Fiets' else ''
-                            Fietsmatrix = datasource.read_csv('Gewichten', f'{modft}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
+                            key = DataKey('Gewichten', f'{modft}_vk',
+                                          dagsoort=ds,
+                                          voorkeur=vkfiets,
+                                          regime=regime,
+                                          motief=mot)
+                            Fietsmatrix = datasource.read_csv(key)
+
                             if srtauto == 'Auto':
                                 for srtbr in soortbrandstof:
-                                    Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, srtbr=srtbr, mot=mot, regime=regime)
+                                    key = DataKey('Gewichten', f'{srtauto}_vk',
+                                                  dagsoort=ds,
+                                                  voorkeur=vk,
+                                                  inkomen=ink,
+                                                  regime=regime,
+                                                  motief=mot,
+                                                  brandstof=srtbr)
+                                    Automatrix = datasource.read_csv(key)
+
                                     max = np.maximum.reduce((Fietsmatrix, Automatrix))
-                                    datasource.write_csv(max, 'Gewichten', f"{srtauto}_{modft}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
+                                    key = DataKey('Gewichten',
+                                                  f"{srtauto}_{modft}_vk",
+                                                  dagsoort=ds,
+                                                  inkomen=ink,
+                                                  regime=regime,
+                                                  motief=mot,
+                                                  voorkeur=vk,
+                                                  subtopic='Combinaties',
+                                                  brandstof=srtbr)
+                                    datasource.write_csv(max, key)
                             else:
-                                Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, mot=mot, regime=regime)
+                                key = DataKey('Gewichten', f'{srtauto}_vk',
+                                              dagsoort=ds,
+                                              voorkeur=vk,
+                                              inkomen=ink,
+                                              regime=regime,
+                                              motief=mot)
+                                Automatrix = datasource.read_csv(key)
+
                                 max = np.maximum.reduce((Fietsmatrix, Automatrix))
-                                datasource.write_csv(max, 'Gewichten', f"{srtauto}_{modft}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+                                key = DataKey('Gewichten',
+                                              f"{srtauto}_{modft}_vk",
+                                              dagsoort=ds,
+                                              inkomen=ink,
+                                              regime=regime,
+                                              motief=mot,
+                                              voorkeur=vk,
+                                              subtopic='Combinaties')
+                                datasource.write_csv(max, key)
 
                     for srtOV in soortOV:
                         for srtauto in soortauto:
                             if not kanvoorkeur(srtauto, srtOV, vk):
                                 continue
 
-                            OVmatrix = datasource.read_csv('Gewichten', f'{srtOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                            key = DataKey('Gewichten', f'{srtOV}_vk',
+                                          dagsoort=ds,
+                                          voorkeur=vk,
+                                          inkomen=ink,
+                                          regime=regime,
+                                          motief=mot)
+                            OVmatrix = datasource.read_csv(key)
+
                             if srtauto == 'Auto':
                                 for srtbr in soortbrandstof:
-                                    Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, srtbr=srtbr, regime=regime, mot=mot)
+                                    key = DataKey('Gewichten', f'{srtauto}_vk',
+                                                  dagsoort=ds,
+                                                  voorkeur=vk,
+                                                  inkomen=ink,
+                                                  regime=regime,
+                                                  motief=mot,
+                                                  brandstof=srtbr)
+                                    Automatrix = datasource.read_csv(key)
                                     max = np.maximum.reduce((OVmatrix, Automatrix))
-                                    datasource.write_csv(max, 'Gewichten', f"{srtauto}_{srtOV}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
+                                    key = DataKey('Gewichten',
+                                                  f"{srtauto}_{srtOV}_vk",
+                                                  dagsoort=ds,
+                                                  inkomen=ink,
+                                                  regime=regime,
+                                                  motief=mot,
+                                                  voorkeur=vk,
+                                                  subtopic='Combinaties',
+                                                  brandstof=srtbr)
+                                    datasource.write_csv(max, key)
                             else:
-                                Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                key = DataKey('Gewichten', f'{srtauto}_vk',
+                                              dagsoort=ds,
+                                              voorkeur=vk,
+                                              inkomen=ink,
+                                              regime=regime,
+                                              motief=mot)
+                                Automatrix = datasource.read_csv(key)
+
                                 max = np.maximum.reduce((OVmatrix, Automatrix))
-                                datasource.write_csv(max, 'Gewichten', f"{srtauto}_{srtOV}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+                                key = DataKey('Gewichten',
+                                              f"{srtauto}_{srtOV}_vk",
+                                              dagsoort=ds,
+                                              inkomen=ink,
+                                              regime=regime,
+                                              motief=mot,
+                                              voorkeur=vk,
+                                              subtopic='Combinaties')
+                                datasource.write_csv(max, key)
 
                     for modft in modaliteitenfiets:
                         for srtOV in soortOV:
@@ -109,14 +207,59 @@ def gewichten_berekenen_combis(config, datasource):
                                     continue
 
                                 vkfiets = 'Fiets' if vk == 'Fiets' else ''
-                                Fietsmatrix = datasource.read_csv('Gewichten', f'{modft}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
-                                OVmatrix = datasource.read_csv('Gewichten', f'{srtOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                key = DataKey('Gewichten', f'{modft}_vk',
+                                              dagsoort=ds,
+                                              voorkeur=vkfiets,
+                                              regime=regime,
+                                              motief=mot)
+                                Fietsmatrix = datasource.read_csv(key)
+
+                                key = DataKey('Gewichten', f'{srtOV}_vk',
+                                              dagsoort=ds,
+                                              voorkeur=vk,
+                                              inkomen=ink,
+                                              regime=regime,
+                                              motief=mot)
+                                OVmatrix = datasource.read_csv(key)
+
                                 if srtauto == 'Auto':
                                     for srtbr in soortbrandstof:
-                                        Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, srtbr=srtbr, regime=regime, mot=mot)
+                                        key = DataKey('Gewichten', f'{srtauto}_vk',
+                                                      dagsoort=ds,
+                                                      voorkeur=vk,
+                                                      inkomen=ink,
+                                                      regime=regime,
+                                                      motief=mot,
+                                                      brandstof=srtbr)
+                                        Automatrix = datasource.read_csv(key)
+
                                         max = np.maximum.reduce((Automatrix, Fietsmatrix, OVmatrix))
-                                        datasource.write_csv(max, 'Gewichten', f"{srtauto}_{srtOV}_{modft}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
+                                        key = DataKey('Gewichten',
+                                                      f"{srtauto}_{srtOV}_{modft}_vk",
+                                                      dagsoort=ds,
+                                                      inkomen=ink,
+                                                      regime=regime,
+                                                      motief=mot,
+                                                      voorkeur=vk,
+                                                      subtopic='Combinaties',
+                                                      brandstof=srtbr)
+                                        datasource.write_csv(max, key)
                                 else:
-                                    Automatrix = datasource.read_csv('Gewichten', f'{srtauto}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                    key = DataKey('Gewichten', f'{srtauto}_vk',
+                                                  dagsoort=ds,
+                                                  voorkeur=vk,
+                                                  inkomen=ink,
+                                                  regime=regime,
+                                                  motief=mot)
+                                    Automatrix = datasource.read_csv(key)
+
                                     max = np.maximum.reduce((Automatrix, Fietsmatrix, OVmatrix))
-                                    datasource.write_csv(max, 'Gewichten', f"{srtauto}_{srtOV}_{modft}_vk", ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+                                    key = DataKey('Gewichten',
+                                                  f"{srtauto}_{srtOV}_{modft}_vk",
+                                                  dagsoort=ds,
+                                                  inkomen=ink,
+                                                  regime=regime,
+                                                  motief=mot,
+                                                  voorkeur=vk,
+                                                  subtopic='Combinaties')
+                                    datasource.write_csv(max, key)

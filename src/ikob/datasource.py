@@ -1,6 +1,27 @@
 import ikob.Routines as Routines
 import os
 import pathlib
+from dataclasses import dataclass
+
+
+@dataclass(eq=True, frozen=True)
+class DataKey:
+    """A collection of strings to identify data.
+
+    TODO: Consider replacing strings with limited sets
+          of variants with explicit enumerate types.
+    """
+    datatype: str
+    id: str
+    dagsoort: str = ""
+    regime: str = ""
+    subtopic: str = ""
+    voorkeur: str = ""
+    inkomen: str = ""
+    hubnaam: str = ""
+    motief: str = ""
+    modaliteit: str = ""
+    brandstof: str = ""
 
 
 class DataSource:
@@ -21,9 +42,10 @@ class DataSource:
                 id += f"_{suffix}"
         return id
 
-    def _make_file_path(self, id, motief, topic, dagsoort, base, regime='', subtopic='', brandstof='', vk='', ink='', hubnaam='', mod=''):
-        id_with_suffix = self._add_id_suffix(id, vk, mod, hubnaam, ink)
-        path = self.project_dir / base / regime / motief / topic / subtopic / dagsoort / brandstof
+    def _make_file_path(self, key: DataKey) -> pathlib.Path:
+        base = self._get_base_dir(key.datatype, key.id)
+        id_with_suffix = self._add_id_suffix(key.id, key.voorkeur, key.modaliteit, key.hubnaam, key.inkomen)
+        path = self.project_dir / base / key.regime / key.motief / key.datatype / key.subtopic / key.dagsoort / key.brandstof
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
 
@@ -59,7 +81,7 @@ class DataSource:
         path = self._segs_dir(id, jaar, scenario).with_suffix(".csv")
         return Routines.csvlezen(path, type_caster=type_caster)
 
-    def _get_base_dir(self, datatype, id):
+    def _get_base_dir(self, datatype, id) -> str:
         if datatype == "Concurrentie":
             return "Resultaten"
         if datatype == "Herkomsten":
@@ -70,20 +92,17 @@ class DataSource:
 
         return ""
 
-    def read_csv(self, datatype, id, dagsoort, regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr='', type_caster=float):
-        base = self._get_base_dir(datatype, id)
-        path = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+    def read_csv(self, key: DataKey, type_caster=float):
+        path = self._make_file_path(key)
         path = path.with_suffix(".csv")
         return Routines.csvlezen(path, type_caster=type_caster)
 
-    def write_csv(self, data, datatype, id, dagsoort, header=[], regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
-        base = self._get_base_dir(datatype, id)
-        path = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+    def write_csv(self, data, key: DataKey, header=[]):
+        path = self._make_file_path(key)
         path = path.with_suffix(".csv")
         return Routines.csvwegschrijven(data, path, header=header)
 
-    def write_xlsx(self, data, datatype, id, dagsoort, header=[], regime='', subtopic='', vk='', ink='', hubnaam='', mot='', mod='', srtbr=''):
-        base = self._get_base_dir(datatype, id)
-        path = self._make_file_path(id, mot, datatype, dagsoort, base, mod=mod, regime=regime, subtopic=subtopic, brandstof=srtbr, vk=vk, ink=ink, hubnaam=hubnaam)
+    def write_xlsx(self, data, key: DataKey, header=[]):
+        path = self._make_file_path(key)
         path = path.with_suffix(".xlsx")
         return Routines.xlswegschrijven(data, path, header)
