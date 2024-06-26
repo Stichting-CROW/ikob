@@ -8,6 +8,9 @@ class Inkomen(Enum):
     MIDDELHOOG = "middelhoog"
     HOOG = "hoog"
 
+class DagSoort(Enum):
+    RESTDAG = "Restdag"
+
 
 def StandaardConfiguratieDefinitie():
     """
@@ -120,8 +123,8 @@ def StandaardConfiguratieDefinitie():
             'dagsoort': {
                 'label': 'Dagsoorten',
                 'type': 'checklist',
-                'items': ['Ochtendspits', 'Restdag', 'Avondspits'],
-                'default': ['Restdag']
+                'items': [dagsoort.value for dagsoort in DagSoort],
+                'default': [DagSoort.RESTDAG.value]
             },
 
             'OV kosten': {
