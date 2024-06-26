@@ -141,9 +141,18 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource) -> Dict[DataKey, 
                           motief=mot)
             ervaren_reistijd[key] = GGRskim.copy()
 
-            GGRskim = np.zeros((aantal_zones, aantal_zones), dtype=int)
-            for ink in inkomens:
+            # GratisOV
+            GGRskim = np.where(OVtijdmatrix > 0.5, OVtijdmatrix, 9999).astype(int)
+            key = DataKey(datatype='Ervarenreistijd',
+                          id='GratisOV',
+                          dagsoort=ds,
+                          motief=mot,
+                          regime=regime)
+            ervaren_reistijd[key] = GGRskim.copy()
+
+            for i_ink, ink in enumerate(inkomens):
                 factor = TVOM.get(ink)
+                GGRskim = np.zeros((aantal_zones, aantal_zones), dtype=int)
 
                 for srtbr in soortbrandstof:
                     if srtbr == 'fossiel':
@@ -161,7 +170,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource) -> Dict[DataKey, 
                                                     Parkeerkostenlijst[j]/100)
                             else:
                                 GGRskim[i][j] = int(totaleTijd + factor * (Autoafstandmatrix [i][j] *
-                                                    Correctiefactoren[i][inkomens.index(ink)] *
+                                                    Correctiefactoren[i][i_ink] *
                                                     (varautotarief+kmheffing) + Parkeerkostenlijst[j]/100))
 
                     key = DataKey(datatype='Ervarenreistijd',
@@ -173,7 +182,6 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource) -> Dict[DataKey, 
                     ervaren_reistijd[key] = GGRskim.copy()
 
                 # Dan het OV
-                factor = TVOM.get(ink)
                 GGRskim = np.where(OVtijdmatrix > 0.5, OVtijdmatrix + factor * KostenmatrixOV, 9999).astype(int)
                 key = DataKey(datatype='Ervarenreistijd',
                               id='OV',
@@ -186,12 +194,11 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource) -> Dict[DataKey, 
                 # Dan geen auto (rijbewijs)
                 for sga in soortgeenauto:
                     GGRskim.fill(99999)
-                    factor = TVOM.get(ink)
                     for i in range(aantal_zones):
                         for j in range(aantal_zones):
                             if Autotijdmatrix[i][j] >= 7:
                                 totaleTijd = Autotijdmatrix[i][j] + round(Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2])
-                                totaleKosten = Autotijdmatrix[i][j] * tijdkostenga.get(sga) + Correctiefactoren[i][inkomens.index(ink)] * Autoafstandmatrix[i][j] * (varkostenga.get(sga) + kmheffing)
+                                totaleKosten = Autotijdmatrix[i][j] * tijdkostenga.get(sga) + Correctiefactoren[i][i_ink] * Autoafstandmatrix[i][j] * (varkostenga.get(sga) + kmheffing)
                                 GGRskim[i][j] = int(totaleTijd + factor * totaleKosten)
 
                     key = DataKey(datatype='Ervarenreistijd',
@@ -203,85 +210,72 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource) -> Dict[DataKey, 
                     ervaren_reistijd[key] = GGRskim.copy()
 
                 # GratisAuto
-                for ink in inkomens:
-                    GGRskim.fill(0)
-                    factor = TVOM.get(ink)
-                    for i in range(aantal_zones):
-                        for j in range(aantal_zones):
-                            totaleTijd = Autotijdmatrix[i][j] + round(Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2])
-                            if Additionele_kosten:
-                                GGRskim[i][j] = int(totaleTijd + factor * Autoafstandmatrix[i][j] *
-                                                    kmheffing + Additionele_kostenmatrix[i][j]/100 +
-                                                    Parkeerkostenlijst[j]/100)
-                            else:
-                                GGRskim[i][j] = int(totaleTijd + Correctiefactoren[i][inkomens.index(ink)] *
-                                                    factor * Autoafstandmatrix[i][j] *
-                                                    kmheffing + Parkeerkostenlijst[j]/100)
-                    key = DataKey(datatype='Ervarenreistijd',
-                                  id='GratisAuto',
-                                  dagsoort=ds,
-                                  inkomen=ink,
-                                  motief=mot,
-                                  regime=regime)
-                    ervaren_reistijd[key] = GGRskim.copy()
-
-                # GratisOV
-                GGRskim = np.where(OVtijdmatrix > 0.5, OVtijdmatrix, 9999).astype(int)
+                GGRskim.fill(0)
+                for i in range(aantal_zones):
+                    for j in range(aantal_zones):
+                        totaleTijd = Autotijdmatrix[i][j] + round(Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2])
+                        if Additionele_kosten:
+                            GGRskim[i][j] = int(totaleTijd + factor * Autoafstandmatrix[i][j] *
+                                                kmheffing + Additionele_kostenmatrix[i][j]/100 +
+                                                Parkeerkostenlijst[j]/100)
+                        else:
+                            GGRskim[i][j] = int(totaleTijd + Correctiefactoren[i][i_ink] *
+                                                factor * Autoafstandmatrix[i][j] *
+                                                kmheffing + Parkeerkostenlijst[j]/100)
                 key = DataKey(datatype='Ervarenreistijd',
-                              id='GratisOV',
+                              id='GratisAuto',
                               dagsoort=ds,
+                              inkomen=ink,
                               motief=mot,
                               regime=regime)
                 ervaren_reistijd[key] = GGRskim.copy()
 
+                # P+Fiets
                 if Ketens:
-                    # P+Fiets
-                    for ink in inkomens:
-                        GGRskim.fill(0)
-                        kosten = Pplusfietsafstandmatrix * (varautotarief + kmheffing)
-                        if Additionele_kosten:
-                            kosten += Additionele_kostenmatrix/100
+                    GGRskim.fill(0)
+                    kosten = Pplusfietsafstandmatrix * (varautotarief + kmheffing)
+                    if Additionele_kosten:
+                        kosten += Additionele_kostenmatrix/100
 
-                        factor = TVOM.get(ink)
-                        GGRskim = Pplusfietstijdmatrix + factor * kosten
-                        key = DataKey(datatype='Ervarenreistijd',
-                                      id='Pplusfiets',
-                                      dagsoort=ds,
-                                      inkomen=ink,
-                                      hubnaam=Hubnaam,
-                                      motief=mot,
-                                      regime=regime)
-                        ervaren_reistijd[key] = GGRskim.copy()
+                    GGRskim = Pplusfietstijdmatrix + factor * kosten
+                    key = DataKey(datatype='Ervarenreistijd',
+                                  id='Pplusfiets',
+                                  dagsoort=ds,
+                                  inkomen=ink,
+                                  hubnaam=Hubnaam,
+                                  motief=mot,
+                                  regime=regime)
+                    ervaren_reistijd[key] = GGRskim.copy()
 
-                        # P+R
-                        GGRskim.fill(0)
-                        kosten = PplusRbestemmingsautoafstandmatrix * (varautotarief + kmheffing) + KostenbestemmingsPplusROV
-                        if Additionele_kosten:
-                            kosten += Additionele_kostenmatrix / 100
+                    # P+R
+                    GGRskim.fill(0)
+                    kosten = PplusRbestemmingsautoafstandmatrix * (varautotarief + kmheffing) + KostenbestemmingsPplusROV
+                    if Additionele_kosten:
+                        kosten += Additionele_kostenmatrix / 100
 
-                        GGRskim = PplusRbestemmingstijdmatrix + factor * kosten
-                        key = DataKey(datatype='Ervarenreistijd',
-                                      id='PplusRbestemmings',
-                                      dagsoort=ds,
-                                      inkomen=ink,
-                                      hubnaam=Hubnaam,
-                                      motief=mot,
-                                      regime=regime)
-                        ervaren_reistijd[key] = GGRskim.copy()
+                    GGRskim = PplusRbestemmingstijdmatrix + factor * kosten
+                    key = DataKey(datatype='Ervarenreistijd',
+                                  id='PplusRbestemmings',
+                                  dagsoort=ds,
+                                  inkomen=ink,
+                                  hubnaam=Hubnaam,
+                                  motief=mot,
+                                  regime=regime)
+                    ervaren_reistijd[key] = GGRskim.copy()
 
-                        GGRskim.fill(0)
-                        kosten = (PplusRherkomstautoafstandmatrix * (varautotarief + kmheffing) + KostenherkomstPplusROV)
-                        if Additionele_kosten:
-                            kosten += Additionele_kostenmatrix / 100
+                    GGRskim.fill(0)
+                    kosten = (PplusRherkomstautoafstandmatrix * (varautotarief + kmheffing) + KostenherkomstPplusROV)
+                    if Additionele_kosten:
+                        kosten += Additionele_kostenmatrix / 100
 
-                        GGRskim = PplusRherkomsttijdmatrix + factor * kosten
-                        key = DataKey(datatype='Ervarenreistijd',
-                                      id='PplusRherkomst',
-                                      dagsoort=ds,
-                                      inkomen=ink,
-                                      hubnaam=Hubnaam,
-                                      motief=mot,
-                                      regime=regime)
-                        ervaren_reistijd[key] = GGRskim.copy()
+                    GGRskim = PplusRherkomsttijdmatrix + factor * kosten
+                    key = DataKey(datatype='Ervarenreistijd',
+                                  id='PplusRherkomst',
+                                  dagsoort=ds,
+                                  inkomen=ink,
+                                  hubnaam=Hubnaam,
+                                  motief=mot,
+                                  regime=regime)
+                    ervaren_reistijd[key] = GGRskim.copy()
 
     return ervaren_reistijd
