@@ -287,7 +287,7 @@ def StandaardConfiguratieDefinitie():
                     'unit': 'Minuten/Euro',
                     'default': 9
                 },
-                'laag': {
+                Inkomen.LAAG.value: {
                     'label': Inkomen.LAAG.value,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
@@ -296,7 +296,7 @@ def StandaardConfiguratieDefinitie():
             },
             'overig': {
                 'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief overig',
-                'hoog': {
+                Inkomen.HOOG.value: {
                     'label': Inkomen.HOOG.value,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
@@ -314,7 +314,7 @@ def StandaardConfiguratieDefinitie():
                     'unit': 'Minuten/Euro',
                     'default': 10.9
                 },
-                'laag': {
+                Inkomen.LAAG.value: {
                     'label': Inkomen.LAAG.value,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
@@ -326,7 +326,7 @@ def StandaardConfiguratieDefinitie():
             'label': 'Verdeling Over Groepen',
             'Percelektrisch': {
                 'label': 'Percentage elektrische autos per inkomensgroep',
-                'laag': {
+                Inkomen.LAAG.value: {
                     'label': Inkomen.LAAG.value,
                     'type': 'number',
                     'unit': '%',
@@ -344,8 +344,8 @@ def StandaardConfiguratieDefinitie():
                     'unit': '%',
                     'default': 0
                 },
-                'hoog': {
-                    'label': 'hoog',
+                Inkomen.HOOG.value: {
+                    'label': Inkomen.HOOG.value,
                     'type': 'number',
                     'unit': '%',
                     'default': 0
@@ -367,7 +367,7 @@ def StandaardConfiguratieDefinitie():
             },
             # 'Gratisautopercentage': {
             #  'label': 'Gratis Auto',
-            #  'laag': {
+            #  Inkomen.LAAG.value: {
             #    'label': Inkomen.LAAG.value,
             #    'type': 'number',
             #    'unit': '(fractie)',
@@ -388,7 +388,7 @@ def StandaardConfiguratieDefinitie():
             #    'range': [ 0, 100 ],
             #    'default': 0.35
             #  },
-            #  'hoog': {
+            #  Inkomen.HOOG.value: {
             #    'label': Inkomen.HOOG.value,
             #    'type': 'number',
             #    'unit': '(fractie)',
