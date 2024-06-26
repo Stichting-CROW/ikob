@@ -45,6 +45,9 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource, ervaren_
     voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
     modaliteitenfiets = ['Fiets']
     soortbrandstof = ['fossiel', 'elektrisch']
+    soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
+    voorkeurengeenauto = ['Neutraal', 'OV', 'Fiets']
+    modaliteitenOV = ['OV']
 
     gewichten: Dict[DataKey, NDArray] = dict()
 
@@ -77,8 +80,8 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource, ervaren_
 
                         gewichten[key] = Gewichten.copy()
 
-            # Nu Auto
             for ink in inkomen:
+                # Nu Auto
                 for vk in voorkeuren:
                     for srtbr in soortbrandstof:
                         key = DataKey('Ervarenreistijd',
@@ -100,11 +103,8 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource, ervaren_
                                       brandstof=srtbr)
                         gewichten[key] = Gewichten.copy()
 
-            soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
-            voorkeurengeenauto = ['Neutraal', 'OV', 'Fiets']
-            for sga in soortgeenauto:
-                for vk in voorkeurengeenauto:
-                    for ink in inkomen:
+                for sga in soortgeenauto:
+                    for vk in voorkeurengeenauto:
                         key = DataKey('Ervarenreistijd',
                                       f'{sga}',
                                       dagsoort=ds,
@@ -123,9 +123,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource, ervaren_
                                       motief=mot)
                         gewichten[key] = Gewichten.copy()
 
-            modaliteitenOV = ['OV']
-            for modOV in modaliteitenOV:
-                for ink in inkomen:
+                for modOV in modaliteitenOV:
                     for vk in voorkeuren:
                         key = DataKey('Ervarenreistijd',
                                       f'{modOV}',
@@ -145,7 +143,6 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource, ervaren_
                                       motief=mot)
                         gewichten[key] = Gewichten.copy()
 
-            for ink in inkomen:
                 key = DataKey('Ervarenreistijd',
                               'GratisAuto',
                               dagsoort=ds,
