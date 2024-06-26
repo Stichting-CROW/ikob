@@ -21,6 +21,10 @@ dev = [
     "ruff",
 ]
 
+deploy = [
+    "pyinstaller",
+]
+
 [project.scripts]
 ikobconfig = "ikob:ikobconfig.main"
 ikobrunner = "ikob:ikobrunner.main"
