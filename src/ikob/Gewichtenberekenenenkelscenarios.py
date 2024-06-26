@@ -1,6 +1,7 @@
 import logging
 import math
 import ikob.Constantengenerator as Constantengenerator
+from ikob.ConfiguratieDefinitie import Inkomen
 import numpy as np
 from typing import Dict
 from numpy.typing import NDArray
@@ -41,7 +42,7 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource, ervaren_
     regime = project_config['beprijzingsregime']
 
     # Vaste waarden
-    inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
+    inkomen = [inkomen.value for inkomen in Inkomen]
     voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
     modaliteitenfiets = ['Fiets']
     soortbrandstof = ['fossiel', 'elektrisch']

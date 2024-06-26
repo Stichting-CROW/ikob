@@ -1,6 +1,7 @@
 import logging
 import ikob.Routines as Routines
 import ikob.Berekeningen as Berekeningen
+from ikob.ConfiguratieDefinitie import Inkomen
 from ikob.datasource import DataKey, DataSource
 from typing import Dict
 from numpy.typing import NDArray
@@ -59,7 +60,7 @@ def potentie_bedrijven(config, datasource: DataSource,
     modaliteiten = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV',
                       'Auto_OV_Fiets']
 
-    inkgroepen = ['laag', 'middellaag', 'middelhoog', 'hoog']
+    inkgroepen = [inkomen.value for inkomen in Inkomen]
     headstring = ['Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_EFiets', 'OV_EFiets', 'Auto_OV',
                       'Auto_OV_Fiets', 'Auto_OV_EFiets']
     headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_EFiets', 'OV_EFiets', 'Auto_OV',
@@ -249,7 +250,7 @@ def potentie_bedrijven(config, datasource: DataSource,
                     datasource.write_csv(herkomsten_totaal, key, header=headstring)
                     datasource.write_xlsx(herkomsten_totaal, key, header=headstringExcel)
 
-                header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
+                header = ['Zone', *[inkomen.value for inkomen in Inkomen]]
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []

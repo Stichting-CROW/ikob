@@ -1,4 +1,12 @@
 from ikob.config import validate, build
+from enum import Enum
+
+
+class Inkomen(Enum):
+    LAAG = "laag"
+    MIDDELLAAG = "middellaag"
+    MIDDELHOOG = "middelhoog"
+    HOOG = "hoog"
 
 
 def StandaardConfiguratieDefinitie():
@@ -84,8 +92,8 @@ def StandaardConfiguratieDefinitie():
             'welke_inkomensgroepen': {
                 'label': 'Welke inkomensgroepen moeten worden meegenomen',
                 'type': 'checklist',
-                'items': ['laag', 'middellaag','middelhoog','hoog'],
-                'default': ['laag', 'middellaag','middelhoog','hoog']
+                'items': [inkomen.value for inkomen in Inkomen],
+                'default': [inkomen.value for inkomen in Inkomen],
             },
             'conc_afstand': {
                 'label': 'Moet in stap 8 alleen concurrentie of ook afstand worden berekend',
@@ -258,26 +266,26 @@ def StandaardConfiguratieDefinitie():
 
             'werk': {
                 'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief werk',
-                'hoog': {
-                    'label': 'Hoog',
+                Inkomen.HOOG.value: {
+                    'label': Inkomen.HOOG.value,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
                     'default': 4
                 },
-                'middelhoog': {
-                    'label': 'Middelhoog',
+                Inkomen.MIDDELHOOG.value: {
+                    'label': Inkomen.MIDDELHOOG.value,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
                     'default': 6
                 },
-                'middellaag': {
-                    'label': 'Middellaag',
+                Inkomen.MIDDELLAAG: {
+                    'label': Inkomen.MIDDELLAAG,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
                     'default': 9
                 },
                 'laag': {
-                    'label': 'Laag',
+                    'label': Inkomen.LAAG.value,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
                     'default': 12
@@ -286,25 +294,25 @@ def StandaardConfiguratieDefinitie():
             'overig': {
                 'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief overig',
                 'hoog': {
-                    'label': 'Hoog',
+                    'label': Inkomen.HOOG.value,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
                     'default': 4.8
                 },
-                'middelhoog': {
-                    'label': 'Middelhoog',
+                Inkomen.MIDDELHOOG.value: {
+                    'label': Inkomen.MIDDELHOOG.value,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
                     'default': 7.25
                 },
-                'middellaag': {
-                    'label': 'Middellaag',
+                Inkomen.MIDDELLAAG: {
+                    'label': Inkomen.MIDDELLAAG,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
                     'default': 10.9
                 },
                 'laag': {
-                    'label': 'Laag',
+                    'label': Inkomen.LAAG.value,
                     'type': 'number',
                     'unit': 'Minuten/Euro',
                     'default': 15.5
@@ -316,19 +324,19 @@ def StandaardConfiguratieDefinitie():
             'Percelektrisch': {
                 'label': 'Percentage elektrische autos per inkomensgroep',
                 'laag': {
-                    'label': 'Laag',
+                    'label': Inkomen.LAAG.value,
                     'type': 'number',
                     'unit': '%',
                     'default': 0
                 },
-                'middellaag': {
-                    'label': 'Middellaag',
+                Inkomen.MIDDELLAAG: {
+                    'label': Inkomen.MIDDELLAAG,
                     'type': 'number',
                     'unit': '%',
                     'default': 0
                 },
-                'middelhoog': {
-                    'label': 'Middelhoog',
+                Inkomen.MIDDELHOOG.value: {
+                    'label': Inkomen.MIDDELHOOG.value,
                     'type': 'number',
                     'unit': '%',
                     'default': 0
@@ -357,28 +365,28 @@ def StandaardConfiguratieDefinitie():
             # 'Gratisautopercentage': {
             #  'label': 'Gratis Auto',
             #  'laag': {
-            #    'label': 'Laag',
+            #    'label': Inkomen.LAAG.value,
             #    'type': 'number',
             #    'unit': '(fractie)',
             #    'range': [ 0, 100 ],
             #    'default': 0
             #  },
-            #  'middellaag': {
-            #    'label': 'Middellaag',
+            #  Inkomen.MIDDELLAAG: {
+            #    'label': Inkomen.MIDDELLAAG,
             #    'type': 'number',
             #    'unit': '(fractie)',
             #    'range': [ 0, 100 ],
             #    'default': 0.1
             #  },
-            #  'middelhoog': {
-            #    'label': 'Middelhoog',
+            #  Inkomen.MIDDELHOOG.value: {
+            #    'label': Inkomen.MIDDELHOOG.value,
             #    'type': 'number',
             #    'unit': '(fractie)',
             #    'range': [ 0, 100 ],
             #    'default': 0.35
             #  },
             #  'hoog': {
-            #    'label': 'Hoog',
+            #    'label': Inkomen.HOOG.value,
             #    'type': 'number',
             #    'unit': '(fractie)',
             #    'range': [ 0, 100 ],

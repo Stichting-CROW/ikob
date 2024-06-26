@@ -3,6 +3,7 @@ import numpy as np
 from typing import Dict
 from numpy.typing import NDArray
 from ikob.datasource import DataSource, DataKey
+from ikob.ConfiguratieDefinitie import Inkomen
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ def gewichten_berekenen_combis(config, datasource: DataSource, gewichten_enkel: 
     dagsoort = skims_config['dagsoort']
 
     # Vaste waarden
-    inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
+    inkomen = [inkomen.value for inkomen in Inkomen]
     voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
     modaliteitenfiets = ['Fiets']
     soortauto = ['Auto', 'GeenAuto', 'GeenRijbewijs', 'GratisAuto']

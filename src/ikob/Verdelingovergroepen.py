@@ -1,3 +1,4 @@
+from ikob.ConfiguratieDefinitie import Inkomen
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,9 +15,6 @@ def verdeling_over_groepen(config, datasource):
     Kunst = verdeling_config['kunstmab']['gebruiken']
     GratisOVpercentage = verdeling_config['GratisOVpercentage']
     motieven = project_config ['motieven']
-
-    # Vaste waarden
-    inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
 
     CBSAutobezitegevens = datasource.read_segs('CBS_autos_per_huishouden')
     Stedelijkheidsgraadgegevens = datasource.read_segs('Stedelijkheidsgraad')
@@ -43,7 +41,7 @@ def verdeling_over_groepen(config, datasource):
     Voorkeuren = datasource.read_segs('Voorkeuren')
     VoorkeurenGeenAuto = datasource.read_segs('VoorkeurenGeenAuto')
 
-    inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
+    inkomens = [inkomen.value for inkomen in Inkomen]
     voorkeuren = ['Auto','Neutraal', 'Fiets', 'OV']
     voorkeurengeenauto = ['Neutraal', 'Fiets', 'OV']
     soorten = ['GratisAuto', 'WelAuto', 'GeenAuto', 'GeenRijbewijs' ]

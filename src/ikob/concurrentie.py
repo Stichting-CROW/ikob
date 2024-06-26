@@ -1,5 +1,6 @@
 import logging
 import ikob.Routines as Routines
+from ikob.ConfiguratieDefinitie import Inkomen
 import numpy as np
 from typing import Dict
 from numpy.typing import NDArray
@@ -134,7 +135,7 @@ def concurrentie(config, datasource: DataSource,
                'GeenRijbewijs_vkNeutraal_hoog', 'GeenRijbewijs_vkFiets_hoog', 'GeenRijbewijs_vkOV_hoog']
 
     modaliteiten = ['Fiets',  'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets',  'Auto_OV', 'Auto_OV_Fiets']
-    inkgroepen = ['laag', 'middellaag', 'middelhoog', 'hoog']
+    inkgroepen = [inkomen.value for inkomen in Inkomen]
     headstring = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
     headstringExcel = ['Zone', 'Fiets', 'Auto', 'OV', 'Auto-Fiets' 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
 
@@ -217,7 +218,7 @@ def concurrentie(config, datasource: DataSource,
                         datasource.write_csv(Generaaltotaaltrans, key, header=headstring)
                         datasource.write_xlsx(Generaaltotaaltrans, key, header=headstringExcel)
 
-                header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
+                header = ['Zone', *[inkomen.value for inkomen in Inkomen]]
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []

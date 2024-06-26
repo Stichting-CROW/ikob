@@ -1,5 +1,6 @@
 import logging
 import ikob.Routines as Routines
+from ikob.ConfiguratieDefinitie import Inkomen
 import numpy as np
 from typing import Dict
 from numpy.typing import NDArray
@@ -135,7 +136,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource,
                     datasource.write_csv(Generaaltotaaltrans, key, header=headstring)
                     datasource.write_xlsx(Generaaltotaaltrans, key, header=headstringExcel)
 
-                header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
+                header = ['Zone', *[inkomen.value for inkomen in Inkomen]]
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []

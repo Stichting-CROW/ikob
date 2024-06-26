@@ -2,6 +2,7 @@ import ikob.Routines as Routines
 import numpy as np
 import logging
 from ikob.datasource import DataSource, DataKey
+from ikob.ConfiguratieDefinitie import Inkomen
 from typing import Dict
 from numpy.typing import NDArray
 
@@ -57,7 +58,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource) -> Dict[DataKey, 
         Additionele_kostenmatrix = datasource.read_config('skims', 'additionele_kosten')
 
     # Vaste waarden
-    inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
+    inkomens = [inkomen.value for inkomen in Inkomen]
 
     OVkmtarief = OVkmtarief/100
     starttarief = starttarief/100

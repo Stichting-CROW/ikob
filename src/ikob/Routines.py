@@ -1,6 +1,7 @@
 import xlsxwriter
 import pathlib
 import numpy as np
+from ikob.ConfiguratieDefinitie import Inkomen
 
 
 def lijstvolnullen(lengte):
@@ -92,16 +93,16 @@ def csvwegschrijven(matrix, filenaam, header=[]):
 
 
 def inkomensgroepbepalen(naam):
-    if naam[-4:] == 'hoog':
-        if naam[-10:] == 'middelhoog':
-            return 'middelhoog'
+    if naam[-4:] == Inkomen.HOOG.value:
+        if naam[-10:] == Inkomen.MIDDELHOOG.value:
+            return Inkomen.MIDDELHOOG.value
         else:
-            return 'hoog'
-    elif naam[-4:] == 'laag':
-        if naam[-10:] == 'middellaag':
-            return 'middellaag'
+            return Inkomen.HOOG.value
+    elif naam[-4:] == Inkomen.LAAG.value:
+        if naam[-10:] == Inkomen.MIDDELLAAG.value:
+            return Inkomen.MIDDELLAAG.value
         else:
-            return 'laag'
+            return Inkomen.LAAG.value
     else:
         return ''
 
