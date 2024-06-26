@@ -8,6 +8,7 @@ class Inkomen(Enum):
     MIDDELHOOG = "middelhoog"
     HOOG = "hoog"
 
+
 class DagSoort(Enum):
     RESTDAG = "Restdag"
 
