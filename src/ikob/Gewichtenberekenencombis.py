@@ -64,59 +64,75 @@ def gewichten_berekenen_combis(config, datasource: DataSource, gewichten_enkel: 
         for ds in dagsoort:
             for ink in inkomen:
                 for vk in voorkeuren:
-                    for modft in modaliteitenfiets:
-                        for srtOV in soortOV:
-                            if not kanvoorkeur('Auto', srtOV, vk):
-                                continue
+                    for srtOV in soortOV:
+                        for modft in modaliteitenfiets:
+                            if kanvoorkeur('Auto', srtOV, vk):
+                                vkfiets = 'Fiets' if vk == 'Fiets' else ''
+                                key = DataKey('Gewichten', f'{modft}_vk',
+                                              dagsoort=ds,
+                                              voorkeur=vkfiets,
+                                              regime=regime,
+                                              motief=mot)
+                                Fietsmatrix = gewichten_enkel[key]
 
-                            vkfiets = 'Fiets' if vk == 'Fiets' else ''
-                            key = DataKey('Gewichten', f'{modft}_vk',
-                                          dagsoort=ds,
-                                          voorkeur=vkfiets,
-                                          regime=regime,
-                                          motief=mot)
-                            Fietsmatrix = gewichten_enkel[key]
+                                key = DataKey('Gewichten', f'{srtOV}_vk',
+                                              dagsoort=ds,
+                                              voorkeur=vk,
+                                              inkomen=ink,
+                                              regime=regime,
+                                              motief=mot)
+                                OVmatrix = gewichten_enkel[key]
 
-                            key = DataKey('Gewichten', f'{srtOV}_vk',
-                                          dagsoort=ds,
-                                          voorkeur=vk,
-                                          inkomen=ink,
-                                          regime=regime,
-                                          motief=mot)
-                            OVmatrix = gewichten_enkel[key]
-
-                            max = np.maximum.reduce((Fietsmatrix, OVmatrix))
-                            key = DataKey('Gewichten',
-                                          f"{srtOV}_{modft}_vk",
-                                          dagsoort=ds,
-                                          inkomen=ink,
-                                          regime=regime,
-                                          motief=mot,
-                                          voorkeur=vk,
-                                          subtopic='Combinaties')
-                            gewichten_combi[key] = max.copy()
+                                max = np.maximum.reduce((Fietsmatrix, OVmatrix))
+                                key = DataKey('Gewichten',
+                                              f"{srtOV}_{modft}_vk",
+                                              dagsoort=ds,
+                                              inkomen=ink,
+                                              regime=regime,
+                                              motief=mot,
+                                              voorkeur=vk,
+                                              subtopic='Combinaties')
+                                gewichten_combi[key] = max.copy()
 
                         for srtauto in soortauto:
-                            if not kanvoorkeur(srtauto, 'OV', vk):
-                                continue
+                            if kanvoorkeur(srtauto, 'OV', vk):
+                                vkfiets = 'Fiets' if vk == 'Fiets' else ''
+                                key = DataKey('Gewichten', f'{modft}_vk',
+                                              dagsoort=ds,
+                                              voorkeur=vkfiets,
+                                              regime=regime,
+                                              motief=mot)
+                                Fietsmatrix = gewichten_enkel[key]
 
-                            vkfiets = 'Fiets' if vk == 'Fiets' else ''
-                            key = DataKey('Gewichten', f'{modft}_vk',
-                                          dagsoort=ds,
-                                          voorkeur=vkfiets,
-                                          regime=regime,
-                                          motief=mot)
-                            Fietsmatrix = gewichten_enkel[key]
+                                if srtauto == 'Auto':
+                                    for srtbr in soortbrandstof:
+                                        key = DataKey('Gewichten', f'{srtauto}_vk',
+                                                      dagsoort=ds,
+                                                      voorkeur=vk,
+                                                      inkomen=ink,
+                                                      regime=regime,
+                                                      motief=mot,
+                                                      brandstof=srtbr)
+                                        Automatrix = gewichten_enkel[key]
 
-                            if srtauto == 'Auto':
-                                for srtbr in soortbrandstof:
+                                        max = np.maximum.reduce((Fietsmatrix, Automatrix))
+                                        key = DataKey('Gewichten',
+                                                      f"{srtauto}_{modft}_vk",
+                                                      dagsoort=ds,
+                                                      inkomen=ink,
+                                                      regime=regime,
+                                                      motief=mot,
+                                                      voorkeur=vk,
+                                                      subtopic='Combinaties',
+                                                      brandstof=srtbr)
+                                        gewichten_combi[key] = max.copy()
+                                else:
                                     key = DataKey('Gewichten', f'{srtauto}_vk',
                                                   dagsoort=ds,
                                                   voorkeur=vk,
                                                   inkomen=ink,
                                                   regime=regime,
-                                                  motief=mot,
-                                                  brandstof=srtbr)
+                                                  motief=mot)
                                     Automatrix = gewichten_enkel[key]
 
                                     max = np.maximum.reduce((Fietsmatrix, Automatrix))
@@ -127,52 +143,48 @@ def gewichten_berekenen_combis(config, datasource: DataSource, gewichten_enkel: 
                                                   regime=regime,
                                                   motief=mot,
                                                   voorkeur=vk,
-                                                  subtopic='Combinaties',
-                                                  brandstof=srtbr)
+                                                  subtopic='Combinaties')
                                     gewichten_combi[key] = max.copy()
-                            else:
-                                key = DataKey('Gewichten', f'{srtauto}_vk',
+
+                            if kanvoorkeur(srtauto, srtOV, vk):
+                                key = DataKey('Gewichten', f'{srtOV}_vk',
                                               dagsoort=ds,
                                               voorkeur=vk,
                                               inkomen=ink,
                                               regime=regime,
                                               motief=mot)
-                                Automatrix = gewichten_enkel[key]
+                                OVmatrix = gewichten_enkel[key]
 
-                                max = np.maximum.reduce((Fietsmatrix, Automatrix))
-                                key = DataKey('Gewichten',
-                                              f"{srtauto}_{modft}_vk",
-                                              dagsoort=ds,
-                                              inkomen=ink,
-                                              regime=regime,
-                                              motief=mot,
-                                              voorkeur=vk,
-                                              subtopic='Combinaties')
-                                gewichten_combi[key] = max.copy()
-
-                    for srtOV in soortOV:
-                        for srtauto in soortauto:
-                            if not kanvoorkeur(srtauto, srtOV, vk):
-                                continue
-
-                            key = DataKey('Gewichten', f'{srtOV}_vk',
-                                          dagsoort=ds,
-                                          voorkeur=vk,
-                                          inkomen=ink,
-                                          regime=regime,
-                                          motief=mot)
-                            OVmatrix = gewichten_enkel[key]
-
-                            if srtauto == 'Auto':
-                                for srtbr in soortbrandstof:
+                                if srtauto == 'Auto':
+                                    for srtbr in soortbrandstof:
+                                        key = DataKey('Gewichten', f'{srtauto}_vk',
+                                                      dagsoort=ds,
+                                                      voorkeur=vk,
+                                                      inkomen=ink,
+                                                      regime=regime,
+                                                      motief=mot,
+                                                      brandstof=srtbr)
+                                        Automatrix = gewichten_enkel[key]
+                                        max = np.maximum.reduce((OVmatrix, Automatrix))
+                                        key = DataKey('Gewichten',
+                                                      f"{srtauto}_{srtOV}_vk",
+                                                      dagsoort=ds,
+                                                      inkomen=ink,
+                                                      regime=regime,
+                                                      motief=mot,
+                                                      voorkeur=vk,
+                                                      subtopic='Combinaties',
+                                                      brandstof=srtbr)
+                                        gewichten_combi[key] = max.copy()
+                                else:
                                     key = DataKey('Gewichten', f'{srtauto}_vk',
                                                   dagsoort=ds,
                                                   voorkeur=vk,
                                                   inkomen=ink,
                                                   regime=regime,
-                                                  motief=mot,
-                                                  brandstof=srtbr)
+                                                  motief=mot)
                                     Automatrix = gewichten_enkel[key]
+
                                     max = np.maximum.reduce((OVmatrix, Automatrix))
                                     key = DataKey('Gewichten',
                                                   f"{srtauto}_{srtOV}_vk",
@@ -181,34 +193,10 @@ def gewichten_berekenen_combis(config, datasource: DataSource, gewichten_enkel: 
                                                   regime=regime,
                                                   motief=mot,
                                                   voorkeur=vk,
-                                                  subtopic='Combinaties',
-                                                  brandstof=srtbr)
+                                                  subtopic='Combinaties')
                                     gewichten_combi[key] = max.copy()
-                            else:
-                                key = DataKey('Gewichten', f'{srtauto}_vk',
-                                              dagsoort=ds,
-                                              voorkeur=vk,
-                                              inkomen=ink,
-                                              regime=regime,
-                                              motief=mot)
-                                Automatrix = gewichten_enkel[key]
 
-                                max = np.maximum.reduce((OVmatrix, Automatrix))
-                                key = DataKey('Gewichten',
-                                              f"{srtauto}_{srtOV}_vk",
-                                              dagsoort=ds,
-                                              inkomen=ink,
-                                              regime=regime,
-                                              motief=mot,
-                                              voorkeur=vk,
-                                              subtopic='Combinaties')
-                                gewichten_combi[key] = max.copy()
-
-                    for modft in modaliteitenfiets:
-                        for srtOV in soortOV:
-                            for srtauto in soortauto:
-                                if not kanvoorkeur(srtauto, srtOV, vk):
-                                    continue
+                            if kanvoorkeur(srtauto, srtOV, vk):
 
                                 vkfiets = 'Fiets' if vk == 'Fiets' else ''
                                 key = DataKey('Gewichten', f'{modft}_vk',

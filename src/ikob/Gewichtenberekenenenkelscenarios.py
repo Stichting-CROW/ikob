@@ -53,17 +53,17 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource, ervaren_
 
     for ds in dagsoort:
         for mot in motieven:
-            for mod in modaliteitenfiets:
-                for vk in voorkeuren:
-                    if vk == 'Auto' or vk == 'Fiets':
-                        key = DataKey('Ervarenreistijd',
-                                      'Fiets',
-                                      dagsoort=ds,
-                                      regime=regime,
-                                      motief=mot)
-                        GGRskim = ervaren_reistijd[key]
-                        Gewichten = gewichtenberekenen(GGRskim, mod, vk, mot)
+            for vk in voorkeuren:
+                for mod in modaliteitenfiets:
+                    key = DataKey('Ervarenreistijd',
+                                  'Fiets',
+                                  dagsoort=ds,
+                                  regime=regime,
+                                  motief=mot)
+                    GGRskim = ervaren_reistijd[key]
+                    Gewichten = gewichtenberekenen(GGRskim, mod, vk, mot)
 
+                    if vk == 'Auto' or vk == 'Fiets':
                         if vk == 'Auto':
                             key = DataKey('Gewichten',
                                           f'{mod}_vk',
@@ -77,21 +77,19 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource, ervaren_
                                           regime=regime,
                                           motief=mot,
                                           voorkeur=vk)
-
                         gewichten[key] = Gewichten.copy()
 
             for ink in inkomen:
-                # Nu Auto
-                for vk in voorkeuren:
-                    for srtbr in soortbrandstof:
-                        key = DataKey('Ervarenreistijd',
-                                      f'Auto_{srtbr}',
-                                      dagsoort=ds,
-                                      inkomen=ink,
-                                      regime=regime,
-                                      motief=mot)
-                        GGRskim = ervaren_reistijd[key]
+                for srtbr in soortbrandstof:
+                    key = DataKey('Ervarenreistijd',
+                                  f'Auto_{srtbr}',
+                                  dagsoort=ds,
+                                  inkomen=ink,
+                                  regime=regime,
+                                  motief=mot)
+                    GGRskim = ervaren_reistijd[key]
 
+                    for vk in voorkeuren:
                         Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
                         key = DataKey('Gewichten',
                                       'Auto_vk',
@@ -104,15 +102,15 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource, ervaren_
                         gewichten[key] = Gewichten.copy()
 
                 for sga in soortgeenauto:
-                    for vk in voorkeurengeenauto:
-                        key = DataKey('Ervarenreistijd',
-                                      f'{sga}',
-                                      dagsoort=ds,
-                                      inkomen=ink,
-                                      regime=regime,
-                                      motief=mot)
-                        GGRskim = ervaren_reistijd[key]
+                    key = DataKey('Ervarenreistijd',
+                                  f'{sga}',
+                                  dagsoort=ds,
+                                  inkomen=ink,
+                                  regime=regime,
+                                  motief=mot)
+                    GGRskim = ervaren_reistijd[key]
 
+                    for vk in voorkeurengeenauto:
                         Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
                         key = DataKey('Gewichten',
                                       f'{sga}_vk',
@@ -124,15 +122,15 @@ def gewichten_berekenen_enkel_scenarios(config, datasource: DataSource, ervaren_
                         gewichten[key] = Gewichten.copy()
 
                 for modOV in modaliteitenOV:
-                    for vk in voorkeuren:
-                        key = DataKey('Ervarenreistijd',
-                                      f'{modOV}',
-                                      dagsoort=ds,
-                                      inkomen=ink,
-                                      regime=regime,
-                                      motief=mot)
-                        GGRskim = ervaren_reistijd[key]
+                    key = DataKey('Ervarenreistijd',
+                                  f'{modOV}',
+                                  dagsoort=ds,
+                                  inkomen=ink,
+                                  regime=regime,
+                                  motief=mot)
+                    GGRskim = ervaren_reistijd[key]
 
+                    for vk in voorkeuren:
                         Gewichten = gewichtenberekenen(GGRskim, modOV, vk, mot)
                         key = DataKey('Gewichten',
                                       f'{modOV}_vk',
