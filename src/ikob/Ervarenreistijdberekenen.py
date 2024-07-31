@@ -1,10 +1,12 @@
 import logging
+
 import ikob.Routines as Routines
+from ikob.datasource import DataSource
 
 logger = logging.getLogger(__name__)
 
 
-def ervaren_reistijd_berekenen(config, datasource):
+def ervaren_reistijd_berekenen(config, datasource: DataSource):
     # Haal (voor het gemak) onderdelen voor dit script er uit.
     project_config = config['project']
     skims_config = config['skims']
@@ -50,7 +52,9 @@ def ervaren_reistijd_berekenen(config, datasource):
     varelektrisch = float(varelektrisch/100)
     kmheffingfossiel = float (kmheffingfossiel/100)
     kmheffingelektrisch = float (kmheffingelelektrisch/100)
-    Parkeertijdlijst = datasource.read_config('skims', 'parkeerzoektijden_bestand')
+
+    Parkeertijdlijst = datasource.read_parkeerzoektijden()
+
     soortbrandstof = ['fossiel', 'elektrisch']
     if 'orrectie' in regime:
         motief=motieven[0]

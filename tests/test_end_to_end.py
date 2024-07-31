@@ -5,6 +5,10 @@ import filecmp
 import shutil
 import pandas as pd
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def file_to_frame(path: pathlib.Path) -> pd.DataFrame:
     if path.suffix == ".xlsx":
@@ -17,22 +21,8 @@ def file_to_frame(path: pathlib.Path) -> pd.DataFrame:
             return pd.read_csv(path, dtype=float)
 
 
-def is_equal_file(dcmp: filecmp.dircmp, file: pathlib.Path) -> bool:
-    """Compare reportedly differing files with some tolerance slack.
-
-    The Excel and CSV files in the reference set are first directly
-    compared, ignoring any numerical tolerances, which fail when
-    floating point data is stored. This reevaluates the file equality
-    by comparing their DataFrame representations up to a given relative
-    and absolute tolerances.
-    """
-    result = pathlib.Path(dcmp.left).joinpath(file)
-    reference = pathlib.Path(dcmp.right).joinpath(file)
-
-    # Only reevaluate Excel/CSV files.
-    if file.suffix not in [".xlsx", ".csv"]:
-        return False
-
+def is_equal_excel_csv(result: pathlib.Path, reference: pathlib.Path) -> bool:
+    """Compare Excel/CSV files up to numerical tolerances."""
     result_frame = file_to_frame(result)
     reference_frame = file_to_frame(reference)
 
@@ -41,8 +31,25 @@ def is_equal_file(dcmp: filecmp.dircmp, file: pathlib.Path) -> bool:
                                       rtol=1e-5, atol=1e-8)
         return True
     except AssertionError as err:
-        print(f"File {result} differs from reference:\n{err}")
+        logger.warning(f"File {result} differs from reference:\n{err}")
         return False
+
+
+def is_equal_file(result: pathlib.Path, reference: pathlib.Path) -> bool:
+    """Compare if two files are the same.
+
+    For Excel (.xlsx) and CSV (.csv) files a specialised comparison
+    is used to allow for some numerical tolerances to exist between
+    both files.
+    """
+    if result.suffix != reference.suffix:
+        logger.warning(f"File {result} and {reference} have different suffix.")
+        return False
+
+    if result.suffix in [".xlsx", ".csv"]:
+        return is_equal_excel_csv(result, reference)
+
+    return filecmp.cmp(result, reference, shallow=False)
 
 
 def same_directory(dcmp: filecmp.dircmp) -> bool:
@@ -53,7 +60,9 @@ def same_directory(dcmp: filecmp.dircmp) -> bool:
         return False
 
     for filepath in dcmp.diff_files:
-        if not is_equal_file(dcmp, pathlib.Path(filepath)):
+        result = pathlib.Path(dcmp.left) / filepath
+        reference = pathlib.Path(dcmp.right) / filepath
+        if not is_equal_file(result, reference):
             return False
 
     # Recursively compare directories.
