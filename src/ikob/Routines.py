@@ -8,7 +8,7 @@ def lijstvolnullen(lengte):
 
 
 def transponeren(matrix):
-    return [list(i) for i in zip(*matrix)]
+    return np.array(matrix).T.tolist()
 
 
 def xlswegschrijven(matrix, filenaam, header):
@@ -89,30 +89,6 @@ def csvwegschrijven(matrix, filenaam, header=[]):
                delimiter=delim,
                header=header,
                comments='')
-
-
-def minmaxmatrix(Matrix1, Matrix2, minmax="max"):
-    Eindmatrix = []
-    for i in range(0, len(Matrix1)):
-        Eindmatrix.append([])
-        for j in range(0, len(Matrix1)):
-            if minmax == "max":
-                Eindmatrix[i].append(max(Matrix1[i][j], Matrix2[i][j]))
-            else:
-                Eindmatrix[i].append(min(Matrix1[i][j], Matrix2[i][j]))
-    return Eindmatrix
-
-
-def minmaxmatrix3(matrix1, matrix2, matrix3, minmax="max"):
-    eindmatrix = []
-    for i in range(0, len(matrix1)):
-        eindmatrix.append([])
-        for j in range(0, len(matrix1)):
-            if minmax == "max":
-                eindmatrix[i].append(max(matrix1[i][j], matrix2[i][j], matrix3[i][j]))
-            else:
-                eindmatrix[i].append(min(matrix1[i][j], matrix2[i][j], matrix3[i][j]))
-    return eindmatrix
 
 
 def inkomensgroepbepalen(naam):
