@@ -57,7 +57,7 @@ def csvlezen(filenaam, type_caster=float):
                             dtype=type_caster,
                             skiprows=1,
                             delimiter=',')
-    return matrix.tolist()
+    return matrix
 
 
 def csvintlezen(filenaam):
