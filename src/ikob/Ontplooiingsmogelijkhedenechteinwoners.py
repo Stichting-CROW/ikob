@@ -4,7 +4,7 @@ import ikob.Routines as Routines
 logger = logging.getLogger(__name__)
 
 
-def bereken_potenties (Matrix, Arbeidsplaatsen, Beroepsbevolkingsverdeling, Beroepsbevolkingaandeel, inkgr, gr, inkgroepen, Groepen):
+def potenties (Matrix, Arbeidsplaatsen, Beroepsbevolkingsverdeling, Beroepsbevolkingaandeel, inkgr, gr, inkgroepen, Groepen):
     Dezegroeplijst = []
     for i in range ( len ( Matrix ) ):
         Gewogenmatrix = []
@@ -158,7 +158,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
 
                                     Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkklad, regime=regime, mot=mot)
                                     if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                        Dezegroeplijst = bereken_potenties ( Fietsmatrix, Arbeidsplaatsen, Verdelingstransmatrix,
+                                        Dezegroeplijst = potenties ( Fietsmatrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                              Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
                                     else:
                                         Dezegroeplijst = bereken_potenties_nietwerk(Fietsmatrix, Inwonerstotalen, Verdelingstransmatrix,
@@ -174,7 +174,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                             Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
 
                                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                                Dezegroeplijst1 = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
+                                                Dezegroeplijst1 = potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                                      Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
                                             else:
                                                 Dezegroeplijst1 = bereken_potenties_nietwerk(Matrix, Inwonerstotalen, Verdelingstransmatrix,
@@ -195,7 +195,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                     else:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                         if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                            Dezegroeplijst = bereken_potenties(Matrix, Arbeidsplaatsen,
+                                            Dezegroeplijst = potenties(Matrix, Arbeidsplaatsen,
                                                                                Verdelingstransmatrix,
                                                                                Inkomenstransverdeling[
                                                                                    inkgroepen.index(inkgr)],
@@ -213,7 +213,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                     String = Routines.enkelegroep(mod, gr)
                                     Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                     if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                        Dezegroeplijst = bereken_potenties(Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
+                                        Dezegroeplijst = potenties(Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                            Inkomenstransverdeling[inkgroepen.index(inkgr)],
                                                                            inkgr, gr, inkgroepen, Groepen)
                                     else:
@@ -233,7 +233,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                         for srtbr in soortbrandstof:
                                             Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                                             if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                                Dezegroeplijst1 = bereken_potenties(Matrix, Arbeidsplaatsen,
+                                                Dezegroeplijst1 = potenties(Matrix, Arbeidsplaatsen,
                                                                                     Verdelingstransmatrix,
                                                                                     Inkomenstransverdeling[
                                                                                         inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
@@ -257,7 +257,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
 
                                         if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                            Dezegroeplijst = bereken_potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
+                                            Dezegroeplijst = potenties ( Matrix, Arbeidsplaatsen, Verdelingstransmatrix,
                                                                                  Inkomenstransverdeling[inkgroepen.index(inkgr)], inkgr, gr, inkgroepen, Groepen)
                                         else:
                                             Dezegroeplijst = bereken_potenties_nietwerk(Matrix, Inwonerstotalen, Verdelingstransmatrix,

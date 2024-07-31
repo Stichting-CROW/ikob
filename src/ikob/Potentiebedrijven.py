@@ -1,5 +1,6 @@
 import logging
 import ikob.Routines as Routines
+import ikob.Berekeningen as Berekeningen
 
 logger = logging.getLogger(__name__)
 
@@ -11,15 +12,6 @@ def inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking):
         for j in range (len(Verdelingsmatrix[0])) :
             Inwonersfile[i].append(round(Beroepsbevolking[i]*Verdelingsmatrix[i][j]))
     return Inwonersfile
-
-def bereken_potenties(Matrix, Inwonerstrans, gr, Groepen):
-    Dezegroeplijst = []
-    for i in range ( len ( Matrix ) ):
-        Gewogenmatrix = []
-        for Getal1, Getal2 in zip ( Matrix[i], Inwonerstrans[Groepen.index ( gr )] ):
-            Gewogenmatrix.append ( Getal1 * Getal2 )
-        Dezegroeplijst.append ( sum ( Gewogenmatrix ) )
-    return Dezegroeplijst
 
 
 def potentie_bedrijven(config, datasource):
@@ -116,7 +108,7 @@ def potentie_bedrijven(config, datasource):
                                     vkklad = ''
 
                                 Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkklad, regime=regime, mot=mot)
-                                Dezegroeplijst = bereken_potenties (Fietsmatrix, Inwonerstransmatrix, gr, Groepen)
+                                Dezegroeplijst = Berekeningen.potenties (Fietsmatrix, Inwonerstransmatrix, gr, Groepen)
 
                                 for i in range(0, len(Fietsmatrix) ):
                                     Bijhoudlijst[i]+= round(Dezegroeplijst[i])
@@ -126,7 +118,7 @@ def potentie_bedrijven(config, datasource):
                                 if 'WelAuto' in gr:
                                     for srtbr in soortbrandstof:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
-                                        Dezegroeplijst1 = bereken_potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
+                                        Dezegroeplijst1 = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr) / 100
                                             logger.debug('aandeel elektrisch is: %s', K)
@@ -141,7 +133,7 @@ def potentie_bedrijven(config, datasource):
                                         Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                 else:
                                     Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                    Dezegroeplijst = bereken_potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
+                                    Dezegroeplijst = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
                                     for i in range(0, len(Matrix)):
                                         Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                     logger.debug('Bijhoudlijst niet fossiel is: %s', Bijhoudlijst)
@@ -149,7 +141,7 @@ def potentie_bedrijven(config, datasource):
                             elif mod == 'OV':
                                 String = Routines.enkelegroep (mod,gr)
                                 Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                Dezegroeplijst = bereken_potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
+                                Dezegroeplijst = Berekeningen.potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
                                 for i in range(0, len(Matrix) ):
                                     Bijhoudlijst[i]+= round(Dezegroeplijst[i])
                             else:
@@ -159,7 +151,7 @@ def potentie_bedrijven(config, datasource):
                                 if String[0] == 'A':
                                     for srtbr in soortbrandstof:
                                         Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
-                                        Dezegroeplijst1 = bereken_potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
+                                        Dezegroeplijst1 = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
 
                                         if srtbr == 'elektrisch':
                                             K = percentageelektrisch.get(inkgr) / 100
@@ -173,7 +165,7 @@ def potentie_bedrijven(config, datasource):
                                         Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                 else:
                                     Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
-                                    Dezegroeplijst = bereken_potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
+                                    Dezegroeplijst = Berekeningen.potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
                                     for i in range ( 0, len ( Matrix ) ):
                                         Bijhoudlijst[i] += round ( Dezegroeplijst[i])
                     datasource.write_csv(Bijhoudlijst, 'Herkomsten', 'Totaal', ds, mot=mot, mod=mod, ink=inkgr)
