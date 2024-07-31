@@ -191,8 +191,8 @@ def verdeling_over_groepen(config, datasource):
                         Overzichttotaalautobezit[i].append(0)
 
         logger.debug("Overzichttotaalautobezit: %s", Overzichttotaalautobezit)
-        datasource.write_segs_csv(Totaaloverzicht, 'Verdeling_over_groepen', scenario=scenario, header=Header)
-        datasource.write_segs_csv(Overzichttotaalautobezit, 'Verdeling_over_groepen_alleen_autobezit', scenario=scenario, header=Header)
+        datasource.write_segs_csv(Totaaloverzicht, f'Verdeling_over_groepen', group=Bevolkingsdeel, scenario=scenario, header=Header)
+        datasource.write_segs_csv(Overzichttotaalautobezit, f'Verdeling_over_groepen', group=Bevolkingsdeel, modifier="alleen_autobezit", scenario=scenario, header=Header)
         Header.insert(0, 'Zone')
-        datasource.write_segs_xlsx(Totaaloverzicht, 'Verdeling_over_groepen', scenario=scenario, header=Header)
-        datasource.write_segs_xlsx(Overzichttotaalautobezit, 'Verdeling_over_groepen_alleen_autobezit', scenario=scenario, header=Header)
+        datasource.write_segs_xlsx(Totaaloverzicht, f'Verdeling_over_groepen', group=Bevolkingsdeel, scenario=scenario, header=Header)
+        datasource.write_segs_xlsx(Overzichttotaalautobezit, f'Verdeling_over_groepen', group=Bevolkingsdeel, modifier="alleen_autobezit", scenario=scenario, header=Header)
