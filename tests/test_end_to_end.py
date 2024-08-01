@@ -94,7 +94,7 @@ def test_end_to_end(case):
     project_dir = test_dir.joinpath(case).resolve()
     project = project_dir.joinpath(f"{case}.json")
 
-    suffixes = ["Resultaten", "Basis", "Tussenresultaten"]
+    suffixes = ["resultaten", "basis", "tussenresultaten"]
     compare_dirs = [project_dir / case / s for s in suffixes]
 
     # Delete old results if still present

@@ -20,7 +20,7 @@ class DataSource:
         # TODO: Improve handling of data directory structure:
         # - Extract paths/directory names from constants, e.g. Enum;
         # - Support multi-lingual directory names.
-        self.tmp_dir = self.project_dir / 'Tussenresultaten'
+        self.tmp_dir = self.project_dir / 'tussenresultaten'
 
     def _add_id_suffix(self, id, vk, mod, hubnaam, ink):
         id += vk
@@ -31,6 +31,8 @@ class DataSource:
 
     def _make_file_path(self, id, motief, topic, dagsoort, base, regime='', subtopic='', brandstof='', vk='', ink='', hubnaam='', mod=''):
         id_with_suffix = self._add_id_suffix(id, vk, mod, hubnaam, ink)
+        dagsoort = dagsoort.lower()
+        regime = regime.lower()
         path = self.project_dir / base / regime / motief / topic / subtopic / dagsoort / brandstof
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
@@ -79,7 +81,7 @@ class DataSource:
         return self._segs_dir(self.segs_dir, id, jaar, scenario)
 
     def _segs_output_dir(self, id, jaar, scenario, group="", modifier=""):
-        root = self.tmp_dir / 'Groepenverdeling'
+        root = self.tmp_dir / 'groepenverdeling'
         return self._segs_dir(root, id, jaar, scenario, group, modifier)
 
     def _segs_dir(self, path, id, jaar, scenario, group="", modifier=""):
@@ -121,13 +123,13 @@ class DataSource:
         return Routines.csvlezen(path, type_caster=type_caster)
 
     def _get_base_dir(self, datatype, id):
-        if datatype == "Concurrentie":
-            return "Resultaten"
-        if datatype == "Herkomsten":
-            return "Resultaten"
+        if datatype == "concurrentie":
+            return "resultaten"
+        if datatype == "herkomsten":
+            return "resultaten"
         if "totaal" in id.lower():
             # Totaal, Ontpl_totaal, Ontpl_totaalproduct
-            return "Resultaten"
+            return "resultaten"
 
         return ""
 

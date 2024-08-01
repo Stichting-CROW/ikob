@@ -111,7 +111,7 @@ def potentie_bedrijven(config, datasource):
                                     else:
                                         vkklad = ''
 
-                                    Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkklad, regime=regime, mot=mot)
+                                    Fietsmatrix = datasource.read_csv('gewichten', f'{mod}_vk', ds, vk=vkklad, regime=regime, mot=mot)
                                     Dezegroeplijst = Berekeningen.potenties (Fietsmatrix, Inwonerstransmatrix, gr, Groepen)
 
                                     for i in range(0, len(Fietsmatrix) ):
@@ -121,7 +121,7 @@ def potentie_bedrijven(config, datasource):
                                     logger.debug("String: %s", String)
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
-                                            Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
+                                            Matrix = datasource.read_csv('gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                                             Dezegroeplijst1 = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
                                             if srtbr == 'elektrisch':
                                                 K = percentageelektrisch.get(inkgr) / 100
@@ -136,7 +136,7 @@ def potentie_bedrijven(config, datasource):
                                         for i in range(0, len(Matrix)):
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                     else:
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                        Matrix = datasource.read_csv('gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                         Dezegroeplijst = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
                                         for i in range(0, len(Matrix)):
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
@@ -144,7 +144,7 @@ def potentie_bedrijven(config, datasource):
 
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep (mod,gr)
-                                    Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                    Matrix = datasource.read_csv('gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                     Dezegroeplijst = Berekeningen.potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
                                     for i in range(0, len(Matrix) ):
                                         Bijhoudlijst[i]+= round(Dezegroeplijst[i])
@@ -154,7 +154,7 @@ def potentie_bedrijven(config, datasource):
                                     logger.debug('de string is %s', String)
                                     if String[0] == 'A':
                                         for srtbr in soortbrandstof:
-                                            Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
+                                            Matrix = datasource.read_csv('gewichten', f'{String}_vk', ds, subtopic='combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
                                             Dezegroeplijst1 = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
 
                                             if srtbr == 'elektrisch':
@@ -168,26 +168,26 @@ def potentie_bedrijven(config, datasource):
                                         for i in range(0, len(Matrix)):
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                     else:
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+                                        Matrix = datasource.read_csv('gewichten', f'{String}_vk', ds, subtopic='combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
                                         Dezegroeplijst = Berekeningen.potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
                                         for i in range ( 0, len ( Matrix ) ):
                                             Bijhoudlijst[i] += round ( Dezegroeplijst[i])
-                        datasource.write_csv(Bijhoudlijst, abg, 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, subtopic="Herkomsten")
+                        datasource.write_csv(Bijhoudlijst, abg, 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, subtopic="herkomsten")
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten :
-                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mot=mot ,mod=mod, ink=inkgr, type_caster=int, subtopic="Herkomsten")
+                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mot=mot ,mod=mod, ink=inkgr, type_caster=int, subtopic="herkomsten")
                         Generaaltotaal_potenties.append(Totaalrij)
                     Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                    datasource.write_csv(Generaaltotaaltrans, abg, 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstring, subtopic="Herkomsten")
-                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstringExcel, subtopic="Herkomsten")
+                    datasource.write_csv(Generaaltotaaltrans, abg, 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstring, subtopic="herkomsten")
+                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstringExcel, subtopic="herkomsten")
 
                 header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, type_caster=int, subtopic="Herkomsten")
+                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, type_caster=int, subtopic="herkomsten")
                         Generaalmatrix.append(Totaalrij)
                     Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
                     for i in range (len(Arbeidsplaatsenperklasse)):
@@ -198,5 +198,5 @@ def potentie_bedrijven(config, datasource):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Pot_totaal', ds, mot=mot, mod=mod, header=header, subtopic="Herkomsten")
-                    datasource.write_xlsx(Generaalmatrixproduct, abg, 'Pot_totaalproduct', ds, mot=mot, mod=mod, header=header, subtopic="Herkomsten")
+                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Pot_totaal', ds, mot=mot, mod=mod, header=header, subtopic="herkomsten")
+                    datasource.write_xlsx(Generaalmatrixproduct, abg, 'Pot_totaalproduct', ds, mot=mot, mod=mod, header=header, subtopic="herkomsten")
