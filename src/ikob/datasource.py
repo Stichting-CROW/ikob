@@ -7,6 +7,37 @@ from ikob.stedelijkheidsgraad_to_parkeerzoektijden import stedelijkheid_to_parke
 logger = logging.getLogger(__name__)
 
 
+def read_parkeerzoektijden(config):
+    """Read parkeerzoektijden from disk.
+
+    When the parkeerzoektijden file is not present, it is attempted
+    to generate the parkeerzoektijden from stedelijkheidsgraad.
+    """
+
+    config_skims = config["skims"]
+    segs_dir = pathlib.Path(config['project']['paden']['segs_directory'])
+
+    parkeertijden_path = pathlib.Path(config_skims.get(
+        "parkeerzoektijden_bestand",
+        segs_dir / "Parkeerzoektijd.csv"
+    ))
+
+    if parkeertijden_path.exists():
+        logging.info("Reading parkeerzoektijden: '%s'", parkeertijden_path)
+        return Routines.csvintlezen(parkeertijden_path)
+
+    stedelijkheid_path = segs_dir / "Stedelijkheidsgraad.csv"
+    assert stedelijkheid_path.exists(), (
+        "Missing both Parkeerzoektijden, Stedelijkheidsgraad files."
+        "Parkeerzoektijden file cannot be generated."
+    )
+
+    msg = "Generating parkeerzoektijden from '%s'"
+    logger.info(msg, stedelijkheid_path)
+    stedelijkheidsgraad = Routines.csvintlezen(stedelijkheid_path)
+    return stedelijkheid_to_parkeerzoektijd(stedelijkheidsgraad)
+
+
 class SkimsSource:
     """A data provider for skims files."""
 
@@ -59,30 +90,6 @@ class DataSource:
 
         csv_path = pathlib.Path(csv_path)
         return Routines.csvlezen(csv_path, type_caster)
-
-
-    def read_parkeerzoektijden(self):
-        config_skims = self.config["skims"]
-
-        parkeertijden_path = pathlib.Path(config_skims.get(
-            "parkeerzoektijden_bestand",
-            self.segs_dir / "Parkeerzoektijd.csv"
-        ))
-
-        if parkeertijden_path.exists():
-            logging.info("Reading parkeerzoektijden: '%s'", parkeertijden_path)
-            return Routines.csvintlezen(parkeertijden_path)
-
-        stedelijkheid_path = self.segs_dir / "Stedelijkheidsgraad.csv"
-        assert stedelijkheid_path.exists(), (
-            "Missing both Parkeerzoektijden, Stedelijkheidsgraad files."
-            "Parkeerzoektijden file cannot be generated."
-        )
-
-        msg = "Generating parkeerzoektijden from '%s'"
-        logger.info(msg, stedelijkheid_path)
-        stedelijkheidsgraad = Routines.csvintlezen(stedelijkheid_path)
-        return stedelijkheid_to_parkeerzoektijd(stedelijkheidsgraad)
 
     def _segs_input_dir(self, id, jaar, scenario):
         return self._segs_dir(self.segs_dir, id, jaar, scenario)

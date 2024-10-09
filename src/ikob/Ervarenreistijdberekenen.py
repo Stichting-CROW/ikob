@@ -1,6 +1,6 @@
 import ikob.Routines as Routines
 import numpy as np
-from ikob.datasource import DataSource, SkimsSource
+from ikob.datasource import DataSource, SkimsSource, read_parkeerzoektijden
 
 
 def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
@@ -59,7 +59,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
     kmheffingfossiel = kmheffingfossiel/100
     kmheffingelektrisch = kmheffingelelektrisch/100
 
-    Parkeertijdlijst = datasource.read_parkeerzoektijden()
+    Parkeertijdlijst = read_parkeerzoektijden(config)
 
     soortbrandstof = ['fossiel', 'elektrisch']
 
