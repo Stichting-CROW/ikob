@@ -23,7 +23,8 @@ def potentie_bedrijven(config, datasource):
     # Ophalen van instellingen
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
-    motieven = project_config ['motieven']
+    motieven = project_config['motieven']
+    autobezitgroepen = project_config['welke_groepen']
     logger.debug("motieven: %s", motieven)
     soortbrandstof = ['fossiel', 'elektrisch']
     percentageelektrisch = verdeling_config ['Percelektrisch']
@@ -80,119 +81,122 @@ def potentie_bedrijven(config, datasource):
     Inwoners = inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking)
     Inwonerstransmatrix = Routines.transponeren(Inwoners)
 
-    for mot in motieven:
-        if mot == 'werk':
-            Doelgroep = 'Beroepsbevolking'
-        elif mot == 'winkelnietdagelijksonderwijs':
-            Doelgroep = 'Leerlingen'
-        else:
-            Doelgroep = 'Inwoners'
+    for abg in autobezitgroepen:
+        for mot in motieven:
+            if mot == 'werk':
+                Doelgroep = 'Beroepsbevolking'
+            elif mot == 'winkelnietdagelijksonderwijs':
+                Doelgroep = 'Leerlingen'
+            else:
+                Doelgroep = 'Inwoners'
 
-        Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", scenario=scenario, type_caster=float)
-        logger.debug('Verdelingsmatrix 4 is %s', Verdelingsmatrix[4])
+            if abg == "alle groepen":
+                Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
+            else:
+                Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", scenario=scenario, type_caster=float)
 
-        for ds in dagsoort:
-            for inkgr in inkgroepen:
-                # Eerst de fiets
-                logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep: %s', inkgr)
-                for mod in modaliteiten:
-                    Bijhoudlijst = Routines.lijstvolnullen(len(Beroepsbevolking))
-                    for gr in Groepen:
-                        ink = Routines.inkomensgroepbepalen ( gr )
-                        if inkgr == ink or inkgr == 'alle':
-                            vk = Routines.vindvoorkeur (gr, mod)
-                            if mod == 'Fiets' or mod == 'EFiets':
-                                if vk == 'Fiets':
-                                    vkklad = 'Fiets'
-                                else:
-                                    vkklad = ''
-
-                                Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkklad, regime=regime, mot=mot)
-                                Dezegroeplijst = Berekeningen.potenties (Fietsmatrix, Inwonerstransmatrix, gr, Groepen)
-
-                                for i in range(0, len(Fietsmatrix) ):
-                                    Bijhoudlijst[i]+= round(Dezegroeplijst[i])
-                            elif mod == 'Auto':
-                                String = Routines.enkelegroep(mod, gr)
-                                logger.debug("String: %s", String)
-                                if 'WelAuto' in gr:
-                                    for srtbr in soortbrandstof:
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
-                                        Dezegroeplijst1 = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
-                                        if srtbr == 'elektrisch':
-                                            K = percentageelektrisch.get(inkgr) / 100
-                                            logger.debug('aandeel elektrisch is: %s', K)
-                                            DezegroeplijstE = [x * K for x in Dezegroeplijst1]
-                                        else:
-                                            L = 1 - percentageelektrisch.get(inkgr) / 100
-                                            logger.debug('aandeel fossiel is %s', L)
-                                            DezegroeplijstF = [x * L for x in Dezegroeplijst1]
-                                    for i in range(len(Matrix)):
-                                        Dezegroeplijst[i] = DezegroeplijstE[i] + DezegroeplijstF[i]
-                                    for i in range(0, len(Matrix)):
-                                        Bijhoudlijst[i] += int(Dezegroeplijst[i])
-                                else:
-                                    Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                    Dezegroeplijst = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
-                                    for i in range(0, len(Matrix)):
-                                        Bijhoudlijst[i] += int(Dezegroeplijst[i])
-                                    logger.debug('Bijhoudlijst niet fossiel is: %s', Bijhoudlijst)
-
-                            elif mod == 'OV':
-                                String = Routines.enkelegroep (mod,gr)
-                                Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
-                                Dezegroeplijst = Berekeningen.potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
-                                for i in range(0, len(Matrix) ):
-                                    Bijhoudlijst[i]+= round(Dezegroeplijst[i])
-                            else:
-                                String = Routines.combigroep(mod, gr)
-                                logger.debug('de gr is %s', gr)
-                                logger.debug('de string is %s', String)
-                                if String[0] == 'A':
-                                    for srtbr in soortbrandstof:
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
-                                        Dezegroeplijst1 = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
-
-                                        if srtbr == 'elektrisch':
-                                            K = percentageelektrisch.get(inkgr) / 100
-                                            DezegroeplijstE = [x * K for x in Dezegroeplijst1]
-                                        else:
-                                            K = 1 - percentageelektrisch.get(inkgr) / 100
-                                            DezegroeplijstF = [x * K for x in Dezegroeplijst1]
-                                    for i in range(len(Matrix)):
-                                        Dezegroeplijst[i] = DezegroeplijstE[i] + DezegroeplijstF[i]
-                                    for i in range(0, len(Matrix)):
-                                        Bijhoudlijst[i] += int(Dezegroeplijst[i])
-                                else:
-                                    Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
-                                    Dezegroeplijst = Berekeningen.potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
-                                    for i in range ( 0, len ( Matrix ) ):
-                                        Bijhoudlijst[i] += round ( Dezegroeplijst[i])
-                    datasource.write_csv(Bijhoudlijst, 'Herkomsten', 'Totaal', ds, mot=mot, mod=mod, ink=inkgr)
-                # En tot slot alles bij elkaar harken:
-                Generaaltotaal_potenties = []
-                for mod in modaliteiten :
-                    Totaalrij = datasource.read_csv('Herkomsten', 'Totaal', ds, mot=mot ,mod=mod, ink=inkgr, type_caster=int)
-                    Generaaltotaal_potenties.append(Totaalrij)
-                Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                datasource.write_csv(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstring)
-                datasource.write_xlsx(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstringExcel)
-
-            header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
-            for mod in modaliteiten:
-                Generaalmatrixproduct = []
-                Generaalmatrix = []
+            for ds in dagsoort:
                 for inkgr in inkgroepen:
-                    Totaalrij = datasource.read_csv('Herkomsten', 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, type_caster=int)
-                    Generaalmatrix.append(Totaalrij)
-                Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
-                for i in range (len(Arbeidsplaatsenperklasse)):
-                    Generaalmatrixproduct.append([])
-                    for j in range (len(Arbeidsplaatsenperklasse[0])):
-                        if Arbeidsplaatsenperklasse[i][j]>0:
-                            Generaalmatrixproduct[i].append(int(Generaaltotaaltrans[i][j]*Arbeidsplaatsenperklasse[i][j]))
-                        else:
-                            Generaalmatrixproduct[i].append(0)
+                    # Eerst de fiets
+                    logger.debug('We zijn het nu aan het uitrekenen voor de inkomensgroep: %s', inkgr)
+                    for mod in modaliteiten:
+                        Bijhoudlijst = Routines.lijstvolnullen(len(Beroepsbevolking))
+                        for gr in Groepen:
+                            ink = Routines.inkomensgroepbepalen ( gr )
+                            if inkgr == ink or inkgr == 'alle':
+                                vk = Routines.vindvoorkeur (gr, mod)
+                                if mod == 'Fiets' or mod == 'EFiets':
+                                    if vk == 'Fiets':
+                                        vkklad = 'Fiets'
+                                    else:
+                                        vkklad = ''
 
-                datasource.write_xlsx(Generaaltotaaltrans, 'Herkomsten', 'Pot_totaal', ds, mot=mot, mod=mod, header=header)
-                datasource.write_xlsx(Generaalmatrixproduct, 'Herkomsten', 'Pot_totaalproduct', ds, mot=mot, mod=mod, header=header)
+                                    Fietsmatrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkklad, regime=regime, mot=mot)
+                                    Dezegroeplijst = Berekeningen.potenties (Fietsmatrix, Inwonerstransmatrix, gr, Groepen)
+
+                                    for i in range(0, len(Fietsmatrix) ):
+                                        Bijhoudlijst[i]+= round(Dezegroeplijst[i])
+                                elif mod == 'Auto':
+                                    String = Routines.enkelegroep(mod, gr)
+                                    logger.debug("String: %s", String)
+                                    if 'WelAuto' in gr:
+                                        for srtbr in soortbrandstof:
+                                            Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
+                                            Dezegroeplijst1 = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
+                                            if srtbr == 'elektrisch':
+                                                K = percentageelektrisch.get(inkgr) / 100
+                                                logger.debug('aandeel elektrisch is: %s', K)
+                                                DezegroeplijstE = [x * K for x in Dezegroeplijst1]
+                                            else:
+                                                L = 1 - percentageelektrisch.get(inkgr) / 100
+                                                logger.debug('aandeel fossiel is %s', L)
+                                                DezegroeplijstF = [x * L for x in Dezegroeplijst1]
+                                        for i in range(len(Matrix)):
+                                            Dezegroeplijst[i] = DezegroeplijstE[i] + DezegroeplijstF[i]
+                                        for i in range(0, len(Matrix)):
+                                            Bijhoudlijst[i] += int(Dezegroeplijst[i])
+                                    else:
+                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                        Dezegroeplijst = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
+                                        for i in range(0, len(Matrix)):
+                                            Bijhoudlijst[i] += int(Dezegroeplijst[i])
+                                        logger.debug('Bijhoudlijst niet fossiel is: %s', Bijhoudlijst)
+
+                                elif mod == 'OV':
+                                    String = Routines.enkelegroep (mod,gr)
+                                    Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                    Dezegroeplijst = Berekeningen.potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
+                                    for i in range(0, len(Matrix) ):
+                                        Bijhoudlijst[i]+= round(Dezegroeplijst[i])
+                                else:
+                                    String = Routines.combigroep(mod, gr)
+                                    logger.debug('de gr is %s', gr)
+                                    logger.debug('de string is %s', String)
+                                    if String[0] == 'A':
+                                        for srtbr in soortbrandstof:
+                                            Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr=srtbr)
+                                            Dezegroeplijst1 = Berekeningen.potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
+
+                                            if srtbr == 'elektrisch':
+                                                K = percentageelektrisch.get(inkgr) / 100
+                                                DezegroeplijstE = [x * K for x in Dezegroeplijst1]
+                                            else:
+                                                K = 1 - percentageelektrisch.get(inkgr) / 100
+                                                DezegroeplijstF = [x * K for x in Dezegroeplijst1]
+                                        for i in range(len(Matrix)):
+                                            Dezegroeplijst[i] = DezegroeplijstE[i] + DezegroeplijstF[i]
+                                        for i in range(0, len(Matrix)):
+                                            Bijhoudlijst[i] += int(Dezegroeplijst[i])
+                                    else:
+                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+                                        Dezegroeplijst = Berekeningen.potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
+                                        for i in range ( 0, len ( Matrix ) ):
+                                            Bijhoudlijst[i] += round ( Dezegroeplijst[i])
+                        datasource.write_csv(Bijhoudlijst, abg, 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, subtopic="Herkomsten")
+                    # En tot slot alles bij elkaar harken:
+                    Generaaltotaal_potenties = []
+                    for mod in modaliteiten :
+                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mot=mot ,mod=mod, ink=inkgr, type_caster=int, subtopic="Herkomsten")
+                        Generaaltotaal_potenties.append(Totaalrij)
+                    Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
+                    datasource.write_csv(Generaaltotaaltrans, abg, 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstring, subtopic="Herkomsten")
+                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Pot_totaal', ds, mot=mot, ink=inkgr, header=headstringExcel, subtopic="Herkomsten")
+
+                header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
+                for mod in modaliteiten:
+                    Generaalmatrixproduct = []
+                    Generaalmatrix = []
+                    for inkgr in inkgroepen:
+                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mot=mot, mod=mod, ink=inkgr, type_caster=int, subtopic="Herkomsten")
+                        Generaalmatrix.append(Totaalrij)
+                    Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
+                    for i in range (len(Arbeidsplaatsenperklasse)):
+                        Generaalmatrixproduct.append([])
+                        for j in range (len(Arbeidsplaatsenperklasse[0])):
+                            if Arbeidsplaatsenperklasse[i][j]>0:
+                                Generaalmatrixproduct[i].append(int(Generaaltotaaltrans[i][j]*Arbeidsplaatsenperklasse[i][j]))
+                            else:
+                                Generaalmatrixproduct[i].append(0)
+
+                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Pot_totaal', ds, mot=mot, mod=mod, header=header, subtopic="Herkomsten")
+                    datasource.write_xlsx(Generaalmatrixproduct, abg, 'Pot_totaalproduct', ds, mot=mot, mod=mod, header=header, subtopic="Herkomsten")
