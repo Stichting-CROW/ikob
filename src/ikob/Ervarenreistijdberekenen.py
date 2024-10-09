@@ -1,6 +1,6 @@
 import ikob.Routines as Routines
 import numpy as np
-from ikob.datasource import DataSource, SkimsSource, read_parkeerzoektijden
+from ikob.datasource import DataSource, SkimsSource, SegsSource, read_parkeerzoektijden
 
 
 def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
@@ -63,12 +63,14 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
 
     soortbrandstof = ['fossiel', 'elektrisch']
 
+    segs_source = SegsSource(config)
+
     if 'orrectie' in regime:
         motief = motieven[0]
         if '65+' in regime:
-            Correctiefactoren = datasource.read_segs(f"Correctiefactoren_{motief}_65plus", scenario=scenario)
+            Correctiefactoren = segs_source.read(f"Correctiefactoren_{motief}_65plus", scenario=scenario)
         else:
-            Correctiefactoren = datasource.read_segs(f"Correctiefactoren_{motief}", scenario=scenario)
+            Correctiefactoren = segs_source.read(f"Correctiefactoren_{motief}", scenario=scenario)
     else:
         Correctiefactoren = []
         for i in range(len(Parkeertijdlijst)):

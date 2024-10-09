@@ -1,6 +1,7 @@
 import logging
 import ikob.Routines as Routines
 import ikob.Berekeningen as Berekeningen
+from ikob.datasource import DataSource, SegsSource
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ def inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking):
     return Inwonersfile
 
 
-def potentie_bedrijven(config, datasource):
+def potentie_bedrijven(config, datasource: DataSource):
     project_config=config['project']
     skims_config = config['skims']
     verdeling_config = config['verdeling']
@@ -58,17 +59,19 @@ def potentie_bedrijven(config, datasource):
     headstringExcel=['Zone', 'Fiets', 'EFiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_EFiets', 'OV_EFiets', 'Auto_OV',
                       'Auto_OV_Fiets', 'Auto_OV_EFiets']
 
+    segs_source = SegsSource(config)
+
     #Grverdelingfile=Grverdelingfile.replace('.csv','')
     if 'werk' in motieven:
-        Verdelingsmatrix = datasource.read_segs("Verdeling_over_groepen_Beroepsbevolking", scenario=scenario, type_caster=float)
+        Verdelingsmatrix = segs_source.read("Verdeling_over_groepen_Beroepsbevolking", scenario=scenario, type_caster=float)
     elif 'winkelnietdagelijksonderwijs' in motieven:
-        Verdelingsmatrix = datasource.read_segs("Verdeling_over_groepen_Leerlingen", scenario=scenario, type_caster=float)
+        Verdelingsmatrix = segs_source.read("Verdeling_over_groepen_Leerlingen", scenario=scenario, type_caster=float)
     if 'winkelnietdagelijksonderwijs' in motieven:
-        Beroepsbevolking_inkomensklasse =  datasource.read_segs("Leerlingen", scenario=scenario, type_caster=int)
-        Arbeidsplaatsenperklasse = datasource.read_segs("Leerlingenplaatsen", scenario=scenario, type_caster=float)
+        Beroepsbevolking_inkomensklasse =  segs_source.read("Leerlingen", scenario=scenario, type_caster=int)
+        Arbeidsplaatsenperklasse = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
     else:
-        Beroepsbevolking_inkomensklasse =  datasource.read_segs("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=int)
-        Arbeidsplaatsenperklasse = datasource.read_segs("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
+        Beroepsbevolking_inkomensklasse =  segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=int)
+        Arbeidsplaatsenperklasse = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
 
     Beroepsbevolking = []
 
@@ -91,9 +94,9 @@ def potentie_bedrijven(config, datasource):
                 Doelgroep = 'Inwoners'
 
             if abg == "alle groepen":
-                Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
+                Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
             else:
-                Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", scenario=scenario, type_caster=float)
+                Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", scenario=scenario, type_caster=float)
 
             for ds in dagsoort:
                 for inkgr in inkgroepen:

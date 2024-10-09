@@ -3,11 +3,12 @@ import ikob.Routines as Routines
 import numpy as np
 
 from ikob.concurrentie import get_gewichten_matrix
+from ikob.datasource import DataSource, SegsSource
 
 logger = logging.getLogger(__name__)
 
 
-def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
+def ontplooingsmogelijkheden_echte_inwoners(config, datasource: DataSource):
     project_config = config['project']
     skims_config = config['skims']
     verdeling_config = config['verdeling']
@@ -40,20 +41,22 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
     headstringExcel = ['Zone', 'Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
     soortbrandstof = ['fossiel', 'elektrisch']
 
+    segs_source = SegsSource(config)
+
     if 'winkelnietdagelijksonderwijs' in motieven:
-        Beroepsbevolkingperklasse = datasource.read_segs("Leerlingen", scenario=scenario, type_caster=float)
-        Arbeidsplaats = datasource.read_segs("Leerlingenplaatsen", scenario=scenario, type_caster=float)
+        Beroepsbevolkingperklasse = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
+        Arbeidsplaats = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
         Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
     else:
-        Beroepsbevolkingperklasse = datasource.read_segs("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
-        Arbeidsplaats = datasource.read_segs("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
+        Beroepsbevolkingperklasse = segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
+        Arbeidsplaats = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
         Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
 
     Beroepsbevolkingtotalen = [sum(bbpk) for bbpk in Beroepsbevolkingperklasse]
 
     if 'sociaal-recreatief' in motieven:
         id = "L65plus_inkomensklasse" if '65+' in regime else "Inwoners_inkomensklasse"
-        Inwonersperklasse = datasource.read_segs(id, scenario=scenario, type_caster=float)
+        Inwonersperklasse = segs_source.read(id, scenario=scenario, type_caster=float)
         Inwonerstotalen = [sum(ipk) for ipk in Inwonersperklasse]
 
     Inkomensverdeling = np.zeros((len(Beroepsbevolkingperklasse), len(Beroepsbevolkingperklasse[0])))
@@ -74,11 +77,11 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                 Doelgroep = 'Inwoners'
 
             if abg == 'alle groepen':
-                Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
+                Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
             else:
-                Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", type_caster=float, scenario=scenario)
+                Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", type_caster=float, scenario=scenario)
 
-            Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
+            Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
             Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
 
             for ds in dagsoort:

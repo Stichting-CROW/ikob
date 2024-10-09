@@ -1,7 +1,7 @@
 import logging
 import ikob.Routines as Routines
 import numpy as np
-from ikob.datasource import DataSource
+from ikob.datasource import DataSource, SegsSource
 
 logger = logging.getLogger(__name__)
 
@@ -76,12 +76,14 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
     headstring = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
     headstringExcel = ['Zone', 'Fiets', 'Auto', 'OV', 'Auto-Fiets' 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
 
+    segs_source = SegsSource(config)
+
     if 'winkelnietdagelijksonderwijs' in motieven:
-        Inwonersperklasse = datasource.read_segs("Leerlingen", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = datasource.read_segs("Leerlingenplaatsen", scenario=scenario, type_caster=float)
+        Inwonersperklasse = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
+        Arbeidsplaatsen = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
     else:
-        Inwonersperklasse = datasource.read_segs("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = datasource.read_segs("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
+        Inwonersperklasse = segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
+        Arbeidsplaatsen = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
 
     Inwonerstotalen = [sum(ipk) for ipk in Inwonersperklasse]
 
@@ -103,7 +105,7 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
             else:
                 Doelgroep = 'Inwoners'
 
-            Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
+            Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
 
             for ds in dagsoort:
                 for i_inkgr, inkgr in enumerate(inkgroepen):
