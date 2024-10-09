@@ -7,16 +7,29 @@ from ikob.stedelijkheidsgraad_to_parkeerzoektijden import stedelijkheid_to_parke
 logger = logging.getLogger(__name__)
 
 
+class SkimsSource:
+    """A data provider for skims files."""
+
+    def __init__(self, skims_dir: pathlib.Path | str):
+        self.skims_dir = pathlib.Path(skims_dir)
+
+    def read(self, id: str, dagsoort: str, type_caster=float):
+        """Read skims from disk.
+
+        Reads the skim file formed by the identifier and dagsoort.
+        The ``type_caster`` allows to cast the data to a desired type.
+        """
+        path = (self.skims_dir / dagsoort / id).with_suffix(".csv")
+        return Routines.csvlezen(path, type_caster=type_caster)
+
+
 class DataSource:
     def __init__(self, config, project_name):
         self.config = config
         paden = self.config['project']['paden']
         self.segs_dir = pathlib.Path(paden['segs_directory'])
-        self.skims_dir = pathlib.Path(paden['skims_directory'])
         self.output_dir = pathlib.Path(paden['output_directory'])
         self.project_dir = self.output_dir / project_name
-        # TODO: This should be based on 'beprijzingsregime'
-        self.basis_dir = self.skims_dir.parent
         # TODO: Improve handling of data directory structure:
         # - Extract paths/directory names from constants, e.g. Enum;
         # - Support multi-lingual directory names.
@@ -47,12 +60,6 @@ class DataSource:
         csv_path = pathlib.Path(csv_path)
         return Routines.csvlezen(csv_path, type_caster)
 
-    def read_skims(self, id: str, dagsoort: str, type_caster = float):
-        """Expects a filename to read, which should be located in 
-        in subfolder 'dagsoort' of the global path 'Jaarinvoerdirectory'
-        """
-        path = (self.skims_dir / dagsoort / id).with_suffix(".csv")
-        return Routines.csvlezen(path, type_caster=type_caster)
 
     def read_parkeerzoektijden(self):
         config_skims = self.config["skims"]

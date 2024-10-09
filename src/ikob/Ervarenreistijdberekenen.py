@@ -1,6 +1,6 @@
 import ikob.Routines as Routines
 import numpy as np
-from ikob.datasource import DataSource
+from ikob.datasource import DataSource, SkimsSource
 
 
 def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
@@ -74,14 +74,17 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
         for i in range(len(Parkeertijdlijst)):
             Correctiefactoren.append([1, 1, 1, 1])
 
+    skims_dir = config['project']['paden']['skims_directory']
+    skims_reader = SkimsSource(skims_dir)
+
     for mot in motieven:
         TVOM = TVOMwerk if mot == 'werk' else TVOMoverig
         for ds in dagsoort:
-            Autotijdmatrix = datasource.read_skims('Auto_Tijd', ds)
-            Autoafstandmatrix = datasource.read_skims('Auto_Afstand', ds)
-            Fietstijdmatrix = datasource.read_skims('Fiets_Tijd', ds)
-            OVtijdmatrix = datasource.read_skims('OV_Tijd', ds)
-            OVafstandmatrix = datasource.read_skims('OV_Afstand', ds)
+            Autotijdmatrix = skims_reader.read('Auto_Tijd', ds)
+            Autoafstandmatrix = skims_reader.read('Auto_Afstand', ds)
+            Fietstijdmatrix = skims_reader.read('Fiets_Tijd', ds)
+            OVtijdmatrix = skims_reader.read('OV_Tijd', ds)
+            OVafstandmatrix = skims_reader.read('OV_Afstand', ds)
             if Parkeerkosten:
                 raise NotImplementedError("Needs to be replaced with datasource reading...")
                 Parkeerkostenfile = Parkeerkostenfile.replace('.csv', '')
@@ -90,14 +93,14 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
                 Parkeerkostenlijst = Routines.lijstvolnullen(len(OVafstandmatrix))
 
             if Ketens:
-                Pplusfietstijdmatrix = datasource.read_skims(f'Pplusfiets_{Hubnaam}_Tijd', ds)
-                Pplusfietsafstandmatrix = datasource.read_skims(f'Pplusfiets_{Hubnaam}_Afstand_Auto', ds)
-                PplusRbestemmingstijdmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_bestemmings_Tijd', ds)
-                PplusRherkomsttijdmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Tijd', ds)
-                PplusRbestemmingsOVafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_bestemmings_Afstand_OV', ds)
-                PplusRbestemmingsautoafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_bestemmings_Afstand_Auto', ds)
-                PplusRherkomstOVafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Afstand_OV', ds)
-                PplusRherkomstautoafstandmatrix = datasource.read_skims(f'PplusR_{Hubnaam}_herkomst_Afstand_Auto', ds)
+                Pplusfietstijdmatrix = skims_reader.read(f'Pplusfiets_{Hubnaam}_Tijd', ds)
+                Pplusfietsafstandmatrix = skims_reader.read(f'Pplusfiets_{Hubnaam}_Afstand_Auto', ds)
+                PplusRbestemmingstijdmatrix = skims_reader.read(f'PplusR_{Hubnaam}_bestemmings_Tijd', ds)
+                PplusRherkomsttijdmatrix = skims_reader.read(f'PplusR_{Hubnaam}_herkomst_Tijd', ds)
+                PplusRbestemmingsOVafstandmatrix = skims_reader.read(f'PplusR_{Hubnaam}_bestemmings_Afstand_OV', ds)
+                PplusRbestemmingsautoafstandmatrix = skims_reader.read(f'PplusR_{Hubnaam}_bestemmings_Afstand_Auto', ds)
+                PplusRherkomstOVafstandmatrix = skims_reader.read(f'PplusR_{Hubnaam}_herkomst_Afstand_OV', ds)
+                PplusRherkomstautoafstandmatrix = skims_reader.read(f'PplusR_{Hubnaam}_herkomst_Afstand_Auto', ds)
 
             aantal_zones_tijd = len(Autotijdmatrix)
             aantal_zones_afstand = len(Autoafstandmatrix)
@@ -112,7 +115,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
 
             # kostenmatrix
             if OV_Kostenbestand:
-                KostenmatrixOV = datasource.read_skims("OV_Kosten", ds)
+                KostenmatrixOV = skims_reader.read("OV_Kosten", ds)
             else:
                 KostenmatrixOV = np.zeros((afmeting, afmeting))
                 KostenmatrixOV = KostenOV(OVafstandmatrix, OVkmtarief, starttarief, Pricecap, Pricecapgetal)
