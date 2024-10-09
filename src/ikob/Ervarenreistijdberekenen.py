@@ -1,6 +1,7 @@
 import ikob.Routines as Routines
 import numpy as np
-from ikob.datasource import DataSource, SkimsSource, SegsSource, read_parkeerzoektijden
+from ikob.datasource import DataSource, SkimsSource, SegsSource
+from ikob.datasource import read_parkeerzoektijden, read_csv_from_config
 
 
 def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
@@ -47,7 +48,7 @@ def ervaren_reistijd_berekenen(config, datasource: DataSource):
     Pricecapgetal = skims_config['pricecap']['getal']
 
     if Additionele_kosten:
-        Additionele_kostenmatrix = datasource.read_config('skims', 'additionele_kosten')
+        Additionele_kostenmatrix = read_csv_from_config(config, key='skims', id='additionele_kosten')
 
     # Vaste waarden
     inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']

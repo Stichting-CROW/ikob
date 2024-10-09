@@ -1,4 +1,4 @@
-from ikob.datasource import DataSource, SegsSource
+from ikob.datasource import DataSource, SegsSource, read_csv_from_config
 import itertools
 import logging
 import numpy as np
@@ -33,7 +33,7 @@ def verdeling_over_groepen(config, datasource: DataSource):
     Minimumautobezit = CBSAutobezitegevens
 
     if Kunst:
-        Kunstmatigautobezit = datasource.read_config('verdeling', 'kunstmab', 'int')
+        Kunstmatigautobezit = read_csv_from_config(config, key='verdeling', id='kunstmab', type_caster=int)
         Minimumautobezit = list(itertools.starmap(min, zip(CBSAutobezitegevens, Kunstmatigautobezit)))
 
     # Read SEGS input files.

@@ -22,6 +22,16 @@ def get_temporary_directory(config) -> pathlib.Path:
     return project_dir / 'tussenresultaten'
 
 
+def read_csv_from_config(config, key: str, id: str, type_caster=float):
+    """Read key from id section in the configuration file."""
+    csv_path = config[key][id]
+    if isinstance(csv_path, dict):
+        csv_path = csv_path["bestand"]
+
+    csv_path = pathlib.Path(csv_path)
+    return Routines.csvlezen(csv_path, type_caster)
+
+
 def read_parkeerzoektijden(config):
     """Read parkeerzoektijden from disk.
 
@@ -144,16 +154,6 @@ class DataSource:
         path = self.project_dir / base / regime / motief / topic / subtopic / dagsoort / brandstof
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
-
-    def read_config(self, key: str, id: str, type_caster=float):
-        """Expects an id that is present in the config dict. Then
-        load the file specified by that dict."""
-        csv_path = self.config[key][id]
-        if isinstance(csv_path, dict):
-            csv_path = csv_path["bestand"]
-
-        csv_path = pathlib.Path(csv_path)
-        return Routines.csvlezen(csv_path, type_caster)
 
     def _get_base_dir(self, datatype, id):
         if datatype == "concurrentie":
