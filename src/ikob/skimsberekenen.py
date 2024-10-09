@@ -59,7 +59,7 @@ print (Projectbestandsnaam)
 Projectdirectory = os.path.join (Basisdirectory, Projectbestandsnaam)
 print (Projectdirectory)
 os.makedirs ( Projectdirectory, exist_ok=True)
-Ervarenreistijddirectory = os.path.join (Projectdirectory, 'Ervarenreistijd')
+Ervarenreistijddirectory = os.path.join (Projectdirectory, 'ervarenreistijd')
 print (Ervarenreistijddirectory)
 os.makedirs ( Ervarenreistijddirectory, exist_ok=True )
 

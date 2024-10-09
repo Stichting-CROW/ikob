@@ -101,49 +101,49 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                                 vk = Routines.vindvoorkeur(gr, mod)
                                 if mod == 'Fiets' or mod == 'EFiets':
                                     vkfiets = 'Fiets' if vk == 'Fiets' else ''
-                                    Matrix = datasource.read_csv('Gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
+                                    Matrix = datasource.read_csv('gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
                                 elif mod == 'Auto':
                                     String = Routines.enkelegroep(mod,gr)
                                     if 'WelAuto' in gr:
-                                        Matrix_fossiel = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
-                                        Matrix_elektrisch = datasource.read_csv('Gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
+                                        Matrix_fossiel = datasource.read_csv('gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
+                                        Matrix_elektrisch = datasource.read_csv('gewichten', f'{String}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
                                         K = percentageelektrisch.get(inkgr)/100
                                         Matrix = K * Matrix_elektrisch + (1 - K) * Matrix_fossiel
                                     else:
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                        Matrix = datasource.read_csv('gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                 elif mod == 'OV':
                                     String = Routines.enkelegroep(mod, gr)
-                                    Matrix = datasource.read_csv('Gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                                    Matrix = datasource.read_csv('gewichten', f'{String}_vk',ds, vk=vk, ink=ink, regime=regime, mot=mot)
                                 else:
                                     String = Routines.combigroep(mod, gr)
                                     if String[0] == 'A':
-                                        Matrix_fossiel = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
-                                        Matrix_elektrisch = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
+                                        Matrix_fossiel = datasource.read_csv('gewichten', f'{String}_vk', ds, subtopic='combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
+                                        Matrix_elektrisch = datasource.read_csv('gewichten', f'{String}_vk', ds, subtopic='combinaties', vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
                                         K = percentageelektrisch.get(inkgr)/100
                                         Matrix = K * Matrix_elektrisch + (1 - K) * Matrix_fossiel
                                     else:
-                                        Matrix = datasource.read_csv('Gewichten', f'{String}_vk', ds, subtopic='Combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+                                        Matrix = datasource.read_csv('gewichten', f'{String}_vk', ds, subtopic='combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
 
                                 potentie = Matrix @ arbeidsplaats * verdeling
                                 potentie = np.where(inkomens > 0, potentie / inkomens, 0)
                                 potentie_totaal += potentie.astype(int)
 
-                        datasource.write_csv(potentie_totaal, abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='Bestemmingen')
+                        datasource.write_csv(potentie_totaal, abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='bestemmingen')
                     # En tot slot alles bij elkaar harken:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten :
-                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='Bestemmingen', type_caster=int)
+                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='bestemmingen', type_caster=int)
                         Generaaltotaal_potenties.append(Totaalrij)
                     Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                    datasource.write_csv(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstring, mot=mot, subtopic='Bestemmingen')
-                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstringExcel, mot=mot, subtopic='Bestemmingen')
+                    datasource.write_csv(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstring, mot=mot, subtopic='bestemmingen')
+                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, ink=inkgr, header=headstringExcel, mot=mot, subtopic='bestemmingen')
 
                 header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='Bestemmingen', type_caster=int)
+                        Totaalrij = datasource.read_csv(abg, 'Totaal', ds, mod=mod, ink=inkgr, mot=mot, subtopic='bestemmingen', type_caster=int)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
                         Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
@@ -157,5 +157,5 @@ def ontplooingsmogelijkheden_echte_inwoners(config, datasource):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, mod=mod, header=header, mot=mot, subtopic='Bestemmingen')
-                    datasource.write_xlsx(Generaalmatrixproduct, abg, 'Ontpl_totaalproduct', ds, mod=mod, header=header, mot=mot, subtopic='Bestemmingen')
+                    datasource.write_xlsx(Generaaltotaaltrans, abg, 'Ontpl_totaal', ds, mod=mod, header=header, mot=mot, subtopic='bestemmingen')
+                    datasource.write_xlsx(Generaalmatrixproduct, abg, 'Ontpl_totaalproduct', ds, mod=mod, header=header, mot=mot, subtopic='bestemmingen')

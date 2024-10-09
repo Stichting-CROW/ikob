@@ -46,47 +46,47 @@ def gewichten_berekenen_enkel_scenarios(config, datasource):
             for mod in modaliteitenfiets:
                 for vk in voorkeuren:
                     if vk == 'Auto' or vk == 'Fiets':
-                        GGRskim = datasource.read_csv('Ervarenreistijd', 'Fiets', ds, type_caster=int, regime=regime, mot=mot)
+                        GGRskim = datasource.read_csv('ervarenreistijd', 'Fiets', ds, type_caster=int, regime=regime, mot=mot)
                         Gewichten = gewichtenberekenen(GGRskim, mod, vk, mot)
                         if vk == 'Auto':
-                            datasource.write_csv(Gewichten, 'Gewichten', f'{mod}_vk', ds, regime=regime, mot=mot)
+                            datasource.write_csv(Gewichten, 'gewichten', f'{mod}_vk', ds, regime=regime, mot=mot)
                         else :
-                            datasource.write_csv(Gewichten, 'Gewichten', f'{mod}_vk', ds, vk=vk, regime=regime, mot=mot)
+                            datasource.write_csv(Gewichten, 'gewichten', f'{mod}_vk', ds, vk=vk, regime=regime, mot=mot)
 
             # Nu Auto
             for ink in inkomen:
                 for vk in voorkeuren:
                     for srtbr in soortbrandstof:
-                        GGRskim = datasource.read_csv('Ervarenreistijd', f'Auto_{srtbr}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
+                        GGRskim = datasource.read_csv('ervarenreistijd', f'Auto_{srtbr}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
                         Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
-                        datasource.write_csv(Gewichten, 'Gewichten', 'Auto_vk', ds, vk=vk, ink=ink, srtbr=srtbr, regime=regime, mot=mot)
+                        datasource.write_csv(Gewichten, 'gewichten', 'Auto_vk', ds, vk=vk, ink=ink, srtbr=srtbr, regime=regime, mot=mot)
 
             soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
             voorkeurengeenauto = ['Neutraal', 'OV', 'Fiets']
             for sga in soortgeenauto:
                 for vk in voorkeurengeenauto:
                     for ink in inkomen:
-                        GGRskim = datasource.read_csv('Ervarenreistijd', f'{sga}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
+                        GGRskim = datasource.read_csv('ervarenreistijd', f'{sga}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
                         Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
-                        datasource.write_csv(Gewichten, 'Gewichten', f'{sga}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                        datasource.write_csv(Gewichten, 'gewichten', f'{sga}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
 
             modaliteitenOV = ['OV']
             for modOV in modaliteitenOV:
                 for ink in inkomen:
                     for vk in voorkeuren:
-                        GGRskim = datasource.read_csv('Ervarenreistijd', f'{modOV}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
+                        GGRskim = datasource.read_csv('ervarenreistijd', f'{modOV}', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
                         Gewichten = gewichtenberekenen(GGRskim, modOV, vk, mot)
-                        datasource.write_csv(Gewichten, 'Gewichten', f'{modOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
+                        datasource.write_csv(Gewichten, 'gewichten', f'{modOV}_vk', ds, vk=vk, ink=ink, regime=regime, mot=mot)
 
             for ink in inkomen:
-                GGRskim = datasource.read_csv('Ervarenreistijd', 'GratisAuto', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
+                GGRskim = datasource.read_csv('ervarenreistijd', 'GratisAuto', ds, ink=ink, type_caster=int, regime=regime, mot=mot)
                 Gewichten = gewichtenberekenen(GGRskim, 'Auto', 'Auto', mot)
                 specialauto = ['Neutraal', 'Auto']
                 for vks in specialauto:
-                    datasource.write_csv(Gewichten, 'Gewichten', 'GratisAuto_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot)
+                    datasource.write_csv(Gewichten, 'gewichten', 'GratisAuto_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot)
 
-                GGRskim = datasource.read_csv('Ervarenreistijd', 'GratisOV', ds, type_caster=int, regime=regime, mot=mot)
+                GGRskim = datasource.read_csv('ervarenreistijd', 'GratisOV', ds, type_caster=int, regime=regime, mot=mot)
                 Gewichten = gewichtenberekenen(GGRskim, 'OV', 'OV', mot)
                 specialOV = ['Neutraal', 'OV']
                 for vks in specialOV:
-                    datasource.write_csv(Gewichten, 'Gewichten', 'GratisOV_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot)
+                    datasource.write_csv(Gewichten, 'gewichten', 'GratisOV_vk', ds, vk=vks, ink=ink, regime=regime, mot=mot)

@@ -6,11 +6,6 @@ import shutil
 import pandas as pd
 import logging
 
-
-logger = logging.getLogger(__name__)
-
-import logging
-
 logger = logging.getLogger(__name__)
 
 
@@ -61,8 +56,11 @@ def same_directory(dcmp: filecmp.dircmp) -> bool:
 
     # File is only present in one of the directory trees.
     if dcmp.left_only or dcmp.right_only:
-        msg = "Mismatch reference and result files.\nResult: %s. Reference: %s"
-        logger.warning(msg, dcmp.left_only, dcmp.right_only)
+        msg = (
+            "Result and reference directories contain different files:"
+            f"{dcmp.left_only}, {dcmp.right_only}"
+        )
+        logger.warning(msg)
         return False
 
     for filepath in dcmp.diff_files:
@@ -96,7 +94,7 @@ def test_end_to_end(case):
     project_dir = test_dir.joinpath(case).resolve()
     project = project_dir.joinpath(f"{case}.json")
 
-    suffixes = ["Resultaten", "Basis", "Tussenresultaten"]
+    suffixes = ["resultaten", "basis", "tussenresultaten"]
     compare_dirs = [project_dir / case / s for s in suffixes]
 
     # Delete old results if still present
