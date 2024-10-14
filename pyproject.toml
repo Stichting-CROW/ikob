@@ -8,6 +8,10 @@ version = "0.0.1"
 description = "IKOB"
 readme = "README.md"
 requires-python = ">= 3.12"
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+]
 dependencies = [
     "numpy",
     "openpyxl",
