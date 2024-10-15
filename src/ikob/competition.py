@@ -1,5 +1,5 @@
 import logging
-import ikob.Routines as Routines
+import ikob.utils as utils
 import numpy as np
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 
@@ -10,7 +10,7 @@ def get_gewichten_matrix(gewichten_enkel: DataSource,
                          gewichten_combi: DataSource,
                          gr, mod, mot, regime, ds, ink, inkgr,
                          ratio_electric: float):
-    vk = Routines.vindvoorkeur(gr, mod)
+    vk = utils.vindvoorkeur(gr, mod)
 
     if mod == 'Fiets' or mod == 'EFiets':
         vkfiets = 'Fiets' if vk == 'Fiets' else ''
@@ -21,8 +21,8 @@ def get_gewichten_matrix(gewichten_enkel: DataSource,
                       voorkeur=vkfiets)
         return gewichten_enkel.get(key)
 
-    enkele_groep = Routines.enkelegroep(mod, gr)
-    combi_groep = Routines.combigroep(mod, gr)
+    enkele_groep = utils.enkelegroep(mod, gr)
+    combi_groep = utils.combigroep(mod, gr)
 
     if mod == 'Auto' and 'WelAuto' in gr or combi_groep[0] == 'A':
         subtopic = '' if mod == 'Auto' else 'combinaties'
@@ -184,7 +184,7 @@ def concurrentie(config,
                             verdeling = Verdelingsmatrix[:, i_gr]
                             inkomens_verdeling = Inkomensverdeling[:, i_inkgr]
 
-                            ink = Routines.inkomensgroepbepalen(gr)
+                            ink = utils.inkomensgroepbepalen(gr)
                             if inkgr == ink or inkgr == 'alle':
                                 K = percentageelektrisch.get(inkgr)/100
                                 Matrix = get_gewichten_matrix(gewichten_enkel, gewichten_combi, gr, mod, mot, regime, ds, ink, inkgr, K)
@@ -201,7 +201,7 @@ def concurrentie(config,
                         concurrenties.set(key, concurrentie_totaal.copy())
 
                         Generaaltotaal_potenties.append(concurrenties.get(key))
-                        Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
+                        Generaaltotaaltrans = utils.transponeren(Generaaltotaal_potenties)
                         key = DataKey(id='Ontpl_conc',
                                       dagsoort=ds,
                                       subtopic=subtopic_concurrentie,
@@ -222,7 +222,7 @@ def concurrentie(config,
                                       inkomen=inkgr,
                                       subtopic=subtopic_concurrentie)
                         Generaalmatrix.append(concurrenties.get(key))
-                        Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
+                        Generaaltotaaltrans = utils.transponeren(Generaalmatrix)
 
                     for i in range(len(Inwonersperklasse)):
                         Generaalmatrixproduct.append([])

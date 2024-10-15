@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 from ikob.datasource import read_parkeerzoektijden
 from ikob.ikobconfig import getConfigFromArgs
-from ikob.Routines import csvintlezen
-from ikob.stedelijkheidsgraad_to_parkeerzoektijden import (
+from ikob.utils import csvintlezen
+from ikob.urbanisation_grade_to_parking_times import (
     stedelijkheid_to_parkeerzoektijd
 )
 
