@@ -6,108 +6,105 @@ from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 logger = logging.getLogger(__name__)
 
 
-def get_weight_matrix(gewichten_enkel: DataSource,
-                         gewichten_combi: DataSource,
-                         gr, mod, mot, regime, ds, ink, inkgr,
+def get_weight_matrix(single_weights: DataSource,
+                         combined_weights: DataSource,
+                         group, modality, motive, regime, part_of_day, income, income_group,
                          ratio_electric: float):
-    vk = utils.find_preference(gr, mod)
+    preference = utils.find_preference(group, modality)
 
-    if mod == 'Fiets' or mod == 'EFiets':
-        vkfiets = 'Fiets' if vk == 'Fiets' else ''
-        key = DataKey(f"{mod}_vk",
-                      part_of_day=ds,
+    if modality == 'Fiets' or modality == 'EFiets':
+        preference_bike = 'Fiets' if preference == 'Fiets' else ''
+        key = DataKey(f"{modality}_vk",
+                      part_of_day=part_of_day,
                       regime=regime,
-                      motive=mot,
-                      preference=vkfiets)
-        return gewichten_enkel.get(key)
+                      motive=motive,
+                      preference=preference_bike)
+        return single_weights.get(key)
 
-    enkele_groep = utils.single_group(mod, gr)
-    combi_groep = utils.combined_group(mod, gr)
+    single_group = utils.single_group(modality, group)
+    combined_group = utils.combined_group(modality, group)
 
-    if mod == 'Auto' and 'WelAuto' in gr or combi_groep[0] == 'A':
-        subtopic = '' if mod == 'Auto' else 'combinaties'
-        gewichten = gewichten_enkel if mod == 'Auto' else gewichten_combi
-        string = enkele_groep if mod == 'Auto' else combi_groep
+    if modality == 'Auto' and 'WelAuto' in group or combined_group[0] == 'A':
+        subtopic = '' if modality == 'Auto' else 'combinaties'
+        weights = single_weights if modality == 'Auto' else combined_weights
+        string = single_group if modality == 'Auto' else combined_group
         key = DataKey(f"{string}_vk",
-                      part_of_day=ds,
+                      part_of_day=part_of_day,
                       regime=regime,
-                      motive=mot,
-                      preference=vk,
-                      income=ink,
+                      motive=motive,
+                      preference=preference,
+                      income=income,
                       subtopic=subtopic,
                       fuel_kind="fossiel")
-        Matrix_fossiel = gewichten.get(key)
+        matrix_fossil = weights.get(key)
 
         key = DataKey(f"{string}_vk",
-                      part_of_day=ds,
+                      part_of_day=part_of_day,
                       regime=regime,
-                      motive=mot,
-                      preference=vk,
-                      income=ink,
+                      motive=motive,
+                      preference=preference,
+                      income=income,
                       subtopic=subtopic,
                       fuel_kind="elektrisch")
-        Matrix_elektrisch = gewichten.get(key)
-        return ratio_electric * Matrix_elektrisch + (1 - ratio_electric) * Matrix_fossiel
+        matrix_electric = weights.get(key)
+        return ratio_electric * matrix_electric + (1 - ratio_electric) * matrix_fossil
 
-    if mod == 'Auto' or mod == 'OV':
-        key = DataKey(f"{enkele_groep}_vk",
-                      part_of_day=ds,
+    if modality == 'Auto' or modality == 'OV':
+        key = DataKey(f"{single_group}_vk",
+                      part_of_day=part_of_day,
                       regime=regime,
-                      motive=mot,
-                      preference=vk,
-                      income=ink)
-        return gewichten_enkel.get(key)
+                      motive=motive,
+                      preference=preference,
+                      income=income)
+        return single_weights.get(key)
 
-    key = DataKey(f"{combi_groep}_vk",
-                  part_of_day=ds,
+    key = DataKey(f"{combined_group}_vk",
+                  part_of_day=part_of_day,
                   regime=regime,
-                  motive=mot,
-                  preference=vk,
-                  income=ink,
+                  motive=motive,
+                  preference=preference,
+                  income=income,
                   subtopic="combinaties")
-    return gewichten_combi.get(key)
+    return combined_weights.get(key)
 
 
 def competition_on_jobs(config,
-                                    gewichten_enkel: DataSource,
-                                    gewichten_combi: DataSource,
-                                    herkomsten: DataSource) -> DataSource:
-    return concurrentie(config, gewichten_enkel, gewichten_combi, herkomsten, inwoners=False)
+                        single_weights: DataSource,
+                        combined_weights: DataSource,
+                        origins: DataSource) -> DataSource:
+    return competition(config, single_weights, combined_weights, origins, citizens=False)
 
 
 def competition_on_citizens(config,
-                             gewichten_enkel: DataSource,
-                             gewichten_combi: DataSource,
-                             herkomsten: DataSource) -> DataSource:
-    return concurrentie(config, gewichten_enkel, gewichten_combi, herkomsten, inwoners=True)
+                            single_weights: DataSource,
+                            combined_weights: DataSource,
+                            origins: DataSource) -> DataSource:
+    return competition(config, single_weights, combined_weights, origins, citizens=True)
 
 
-def concurrentie(config,
-                 gewichten_enkel: DataSource,
-                 gewichten_combi: DataSource,
-                 herkomsten: DataSource,
-                 inwoners: bool = True) -> DataSource:
-    if inwoners:
-        msg = "Concurrentiepositie voor bedrijven qua bereikbaarheid"
+def competition(config,
+                single_weights: DataSource,
+                combined_weights: DataSource,
+                origins: DataSource,
+                citizens: bool = True) -> DataSource:
+    if citizens:
+        msg = "Competition for companies and accessiblity."
     else:
-        msg = "Concurrentiepositie voor bereik arbeidsplaatsen"
+        msg = "Competition for places of employment."
     logger.info(msg)
 
     project_config = config['project']
     skims_config = config['skims']
-    verdeling_config = config['verdeling']
-    dagsoort = skims_config['dagsoort']
+    distribution_config = config['verdeling']
+    part_of_days = skims_config['dagsoort']
 
-    # Ophalen van instellingen
     scenario = project_config['verstedelijkingsscenario']
-    regime = project_config['beprijzingsregime']
-    motieven = project_config['motieven']
-    autobezitgroepen = project_config['welke_groepen']
-    percentageelektrisch = verdeling_config['Percelektrisch']
-    logger.debug("percentageelektrisch: %s", percentageelektrisch)
+    regimes = project_config['beprijzingsregime']
+    motives = project_config['motieven']
+    car_possession_groups = project_config['welke_groepen']
+    electric_percentage = distribution_config['Percelektrisch']
 
-    # Vaste intellingen
-    Groepen = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag', 'WelAuto_GratisOV_laag', 'WelAuto_vkAuto_laag',
+    groups = ['GratisAuto_laag', 'GratisAuto_GratisOV_laag', 'WelAuto_GratisOV_laag', 'WelAuto_vkAuto_laag',
                'WelAuto_vkNeutraal_laag', 'WelAuto_vkFiets_laag', 'WelAuto_vkOV_laag', 'GeenAuto_GratisOV_laag',
                'GeenAuto_vkNeutraal_laag', 'GeenAuto_vkFiets_laag', 'GeenAuto_vkOV_laag', 'GeenRijbewijs_GratisOV_laag',
                'GeenRijbewijs_vkNeutraal_laag', 'GeenRijbewijs_vkFiets_laag', 'GeenRijbewijs_vkOV_laag',
@@ -126,124 +123,123 @@ def concurrentie(config,
                'GeenAuto_vkNeutraal_hoog', 'GeenAuto_vkFiets_hoog', 'GeenAuto_vkOV_hoog', 'GeenRijbewijs_GratisOV_hoog',
                'GeenRijbewijs_vkNeutraal_hoog', 'GeenRijbewijs_vkFiets_hoog', 'GeenRijbewijs_vkOV_hoog']
 
-    modaliteiten = ['Fiets',  'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets',  'Auto_OV', 'Auto_OV_Fiets']
-    inkgroepen = ['laag', 'middellaag', 'middelhoog', 'hoog']
+    modalities = ['Fiets',  'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets',  'Auto_OV', 'Auto_OV_Fiets']
+    income_groups = ['laag', 'middellaag', 'middelhoog', 'hoog']
     headstring = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
     headstringExcel = ['Zone', 'Fiets', 'Auto', 'OV', 'Auto-Fiets' 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
 
     segs_source = SegsSource(config)
 
-    if 'winkelnietdagelijksonderwijs' in motieven:
-        Inwonersperklasse = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
+    if 'winkelnietdagelijksonderwijs' in motives:
+        citizens_per_class = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
+        places_of_employment = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
     else:
-        Inwonersperklasse = segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
+        citizens_per_class = segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
+        places_of_employment = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
 
-    Inwonerstotalen = [sum(ipk) for ipk in Inwonersperklasse]
+    citizens_totals = [sum(ipk) for ipk in citizens_per_class]
 
-    Inkomensverdeling = np.zeros((len(Inwonersperklasse), len(Inwonersperklasse[0])))
-    for i in range(len(Inwonersperklasse)):
-        for j in range(len(Inwonersperklasse[0])):
-            if Inwonerstotalen[i] > 0:
-                Inkomensverdeling[i][j] = Inwonersperklasse[i][j]/Inwonerstotalen[i]
+    income_distributions = np.zeros((len(citizens_per_class), len(citizens_per_class[0])))
+    for i in range(len(citizens_per_class)):
+        for j in range(len(citizens_per_class[0])):
+            if citizens_totals[i] > 0:
+                income_distributions[i][j] = citizens_per_class[i][j]/citizens_totals[i]
 
-    subtopic_concurrentie = "inwoners" if inwoners else "arbeidsplaatsen"
+    subtopic_competition = "inwoners" if citizens else "arbeidsplaatsen"
+    competitions = DataSource(config, DataType.COMPETITION)
 
-    concurrenties = DataSource(config, DataType.COMPETITION)
-
-    for abg in autobezitgroepen:
-        for mot in motieven:
-            if mot == 'werk':
-                Doelgroep = 'Beroepsbevolking'
-            elif mot == 'winkelnietdagelijksonderwijs':
-                Doelgroep = 'Leerlingen'
+    for car_possession_group in car_possession_groups:
+        for motive in motives:
+            if motive == 'werk':
+                target_group = 'Beroepsbevolking'
+            elif motive == 'winkelnietdagelijksonderwijs':
+                target_group = 'Leerlingen'
             else:
-                Doelgroep = 'Inwoners'
+                target_group = 'Inwoners'
 
-            Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
+            distribution_matrix = segs_source.read(f"Verdeling_over_groepen_{target_group}", scenario=scenario, type_caster=float)
 
-            for ds in dagsoort:
-                for i_inkgr, inkgr in enumerate(inkgroepen):
-                    Generaaltotaal_potenties = []
-                    for mod in modaliteiten:
+            for part_of_day in part_of_days:
+                for i_income_group, income_group in enumerate(income_groups):
+                    general_possibility_totals = []
+                    for modality in modalities:
                         key = DataKey("Totaal",
-                                      part_of_day=ds,
-                                      motive=mot,
-                                      modality=mod,
-                                      income=inkgr,
-                                      group=abg)
-                        Bereik = herkomsten.get(key)
+                                      part_of_day=part_of_day,
+                                      motive=motive,
+                                      modality=modality,
+                                      income=income_group,
+                                      group=car_possession_group)
+                        reach = origins.get(key)
 
-                        concurrentie_totaal = np.zeros(len(Arbeidsplaatsen))
-                        for i_gr, gr in enumerate(Groepen):
-                            if inwoners:
-                                inwoners_of_arbeidsplaatsen = Inwonersperklasse.T[i_inkgr]
+                        competition_total = np.zeros(len(places_of_employment))
+                        for i_group, group in enumerate(groups):
+                            if citizens:
+                                citizens_or_places_of_employment = citizens_per_class.T[i_income_group]
                             else:
-                                inwoners_of_arbeidsplaatsen = Arbeidsplaatsen.T[i_inkgr]
-                            verdeling = Verdelingsmatrix[:, i_gr]
-                            inkomens_verdeling = Inkomensverdeling[:, i_inkgr]
+                                citizens_or_places_of_employment = places_of_employment.T[i_income_group]
+                            distribution = distribution_matrix[:, i_group]
+                            income_distribution = income_distributions[:, i_income_group]
 
-                            ink = utils.group_income_level(gr)
-                            if inkgr == ink or inkgr == 'alle':
-                                K = percentageelektrisch.get(inkgr)/100
-                                Matrix = get_weight_matrix(gewichten_enkel, gewichten_combi, gr, mod, mot, regime, ds, ink, inkgr, K)
+                            income = utils.group_income_level(group)
+                            if income_group == income or income_group == 'alle':
+                                K = electric_percentage.get(income_group)/100
+                                matrix = get_weight_matrix(single_weights, combined_weights, group, modality, motive, regimes, part_of_day, income, income_group, K)
 
-                                concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
-                                concurrentie_totaal += concurrentie * verdeling / np.where(inkomens_verdeling > 0, inkomens_verdeling, 1)
+                                competition = matrix @ (citizens_or_places_of_employment / np.where(reach > 0, reach, 1.0))
+                                competition_total += competition * distribution / np.where(income_distribution > 0, income_distribution, 1)
 
                         key = DataKey(id='Totaal',
-                                      part_of_day=ds,
-                                      subtopic=subtopic_concurrentie,
-                                      income=inkgr,
-                                      motive=mot,
-                                      modality=mod)
-                        concurrenties.set(key, concurrentie_totaal.copy())
+                                      part_of_day=part_of_day,
+                                      subtopic=subtopic_competition,
+                                      income=income_group,
+                                      motive=motive,
+                                      modality=modality)
+                        competitions.set(key, competition_total.copy())
 
-                        Generaaltotaal_potenties.append(concurrenties.get(key))
-                        Generaaltotaaltrans = utils.transpose(Generaaltotaal_potenties)
+                        general_possibility_totals.append(competitions.get(key))
+                        general_totals_transpose = utils.transpose(general_possibility_totals)
                         key = DataKey(id='Ontpl_conc',
-                                      part_of_day=ds,
-                                      subtopic=subtopic_concurrentie,
-                                      income=inkgr,
-                                      motive=mot)
-                        concurrenties.write_csv(Generaaltotaaltrans, key, header=headstring)
-                        concurrenties.write_xlsx(Generaaltotaaltrans, key, header=headstringExcel)
+                                      part_of_day=part_of_day,
+                                      subtopic=subtopic_competition,
+                                      income=income_group,
+                                      motive=motive)
+                        competitions.write_csv(general_totals_transpose, key, header=headstring)
+                        competitions.write_xlsx(general_totals_transpose, key, header=headstringExcel)
 
                 header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
-                for mod in modaliteiten:
-                    Generaalmatrixproduct = []
-                    Generaalmatrix = []
-                    for inkgr in inkgroepen:
+                for modality in modalities:
+                    general_matrix_product = []
+                    general_matrix = []
+                    for income_group in income_groups:
                         key = DataKey("Totaal",
-                                      part_of_day=ds,
-                                      motive=mot,
-                                      modality=mod,
-                                      income=inkgr,
-                                      subtopic=subtopic_concurrentie)
-                        Generaalmatrix.append(concurrenties.get(key))
-                        Generaaltotaaltrans = utils.transpose(Generaalmatrix)
+                                      part_of_day=part_of_day,
+                                      motive=motive,
+                                      modality=modality,
+                                      income=income_group,
+                                      subtopic=subtopic_competition)
+                        general_matrix.append(competitions.get(key))
+                        general_totals_transpose = utils.transpose(general_matrix)
 
-                    for i in range(len(Inwonersperklasse)):
-                        Generaalmatrixproduct.append([])
-                        for j in range(len(Inwonersperklasse[0])):
-                            if Inwonersperklasse[i][j] > 0:
-                                Generaalmatrixproduct[i].append(round(Generaaltotaaltrans[i][j]*Inwonersperklasse[i][j]))
+                    for i in range(len(citizens_per_class)):
+                        general_matrix_product.append([])
+                        for j in range(len(citizens_per_class[0])):
+                            if citizens_per_class[i][j] > 0:
+                                general_matrix_product[i].append(round(general_totals_transpose[i][j]*citizens_per_class[i][j]))
                             else:
-                                Generaalmatrixproduct[i].append(0)
+                                general_matrix_product[i].append(0)
 
                     key = DataKey(id='Ontpl_conc',
-                                  part_of_day=ds,
-                                  subtopic=subtopic_concurrentie,
-                                  motive=mot,
-                                  modality=mod)
-                    concurrenties.write_xlsx(Generaaltotaaltrans, key, header=header)
+                                  part_of_day=part_of_day,
+                                  subtopic=subtopic_competition,
+                                  motive=motive,
+                                  modality=modality)
+                    competitions.write_xlsx(general_totals_transpose, key, header=header)
 
                     key = DataKey(id='Ontpl_concproduct',
-                                  part_of_day=ds,
-                                  subtopic=subtopic_concurrentie,
-                                  motive=mot,
-                                  modality=mod)
-                    concurrenties.write_xlsx(Generaalmatrixproduct, key, header=header)
+                                  part_of_day=part_of_day,
+                                  subtopic=subtopic_competition,
+                                  motive=motive,
+                                  modality=modality)
+                    competitions.write_xlsx(general_matrix_product, key, header=header)
 
-    return concurrenties
+    return competitions
