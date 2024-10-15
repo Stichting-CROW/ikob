@@ -1,20 +1,17 @@
 import logging
-from tkinter import Tk, Frame, BooleanVar, StringVar
-from tkinter import Button
-from tkinter import filedialog, messagebox
+from tkinter import (BooleanVar, Button, Frame, StringVar, Tk, filedialog,
+                     messagebox)
+
+from ikob.combined_weights import calculate_combined_weights
+from ikob.competition import competition_on_citizens, competition_on_jobs
 from ikob.config import widgets
-
-from ikob.ikobconfig import loadConfig, getConfigFromArgs
-from ikob.datasource import DataType, DataSource
-
+from ikob.datasource import DataSource, DataType
+from ikob.deployment_opportunities import deployment_opportunities
 from ikob.generalised_travel_time import generalised_travel_time
 from ikob.group_distribution import distribute_over_groups
-from ikob.single_weights import calculate_single_weights
-from ikob.combined_weights import calculate_combined_weights
-from ikob.deployment_opportunities import deployment_opportunities
+from ikob.ikobconfig import getConfigFromArgs, loadConfig
 from ikob.possible_companies import possible_companies
-from ikob.competition import competition_on_jobs
-from ikob.competition import competition_on_citizens
+from ikob.single_weights import calculate_single_weights
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +47,10 @@ def run_scripts(project_file, skip_steps=None):
         combined_weights = DataSource(config, DataType.WEIGHTS)
 
     if not skip_steps[4]:
-        possiblities = deployment_opportunities(config, single_weights, combined_weights)
+        possibilities = deployment_opportunities(
+            config, single_weights, combined_weights)
     else:
-        possiblities = DataSource(config, DataType.DESTINATIONS)
+        possibilities = DataSource(config, DataType.DESTINATIONS)
 
     if not skip_steps[5]:
         origins = possible_companies(config, single_weights, combined_weights)
@@ -60,18 +58,28 @@ def run_scripts(project_file, skip_steps=None):
         origins = DataSource(config, DataType.ORIGINS)
 
     if not skip_steps[6]:
-        competition_jobs = competition_on_jobs(config, single_weights, combined_weights, origins)
+        competition_jobs = competition_on_jobs(
+            config, single_weights, combined_weights, origins)
     else:
         competition_jobs = DataSource(config, DataType.COMPETITION)
 
     if not skip_steps[7]:
-        competition_citizens = competition_on_citizens(config, single_weights, combined_weights, possiblities)
+        competition_citizens = competition_on_citizens(
+            config, single_weights, combined_weights, possibilities)
     else:
         competition_citizens = DataSource(config, DataType.COMPETITION)
 
     # TODO: For now all files are written to disk to assert their contents in
-    # end-to-end testing. Ultimately only files that are essential outputs should persist.
-    for container in [travel_time, single_weights, combined_weights, possiblities, origins, competition_citizens, competition_jobs]:
+    # end-to-end testing. Ultimately only files that are essential outputs
+    # should persist.
+    for container in [
+            travel_time,
+            single_weights,
+            combined_weights,
+            possibilities,
+            origins,
+            competition_citizens,
+            competition_jobs]:
         container.store()
 
 
@@ -83,14 +91,14 @@ class ConfigApp(Tk):
     IPAD = {"ipadx": 5, "ipady": 5}
 
     stappen = (
-            "Gegeneraliseerde reistijd berekenen uit tijd en kosten",
-            "Verdeling van de groepen over de buurten of zones",
-            "Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart",
-            "Maximum gewichten van meerdere modaliteiten",
-            "Bereikbaarheid arbeidsplaatsen voor inwoners",
-            "Potentie bereikbaarheid voor bedrijven en instellingen",
-            "Concurrentiepositie voor bereik arbeidsplaatsen",
-            "Concurrentiepositie voor bedrijven qua bereikbaarheid")
+        "Gegeneraliseerde reistijd berekenen uit tijd en kosten",
+        "Verdeling van de groepen over de buurten of zones",
+        "Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart",
+        "Maximum gewichten van meerdere modaliteiten",
+        "Bereikbaarheid arbeidsplaatsen voor inwoners",
+        "Potentie bereikbaarheid voor bedrijven en instellingen",
+        "Concurrentiepositie voor bereik arbeidsplaatsen",
+        "Concurrentiepositie voor bedrijven qua bereikbaarheid")
 
     def __init__(self):
         super().__init__()
@@ -147,8 +155,7 @@ class ConfigApp(Tk):
                 )
             except IOError:
                 messagebox.showerror(
-                    title="Fout", message="Het bestand kan niet worden geladen."
-                )
+                    title="Fout", message="Het bestand kan niet worden geladen.")
 
 
 def main():

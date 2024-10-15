@@ -37,10 +37,11 @@ Running tests with direct logging:
 python -m pytest -o log_cli=true -o log_file_level=info
 ```
 
-Reformatting source code using `ruff`:
+Reformatting source code using `autopep8` and `isort`:
 
 ```sh
-ruff format path/to/source.py
+isort src/ikob/*.py tests/*.py
+autopep8 --in-place --aggressive --aggressive src/ikob/*.py tests/*.py
 ```
 
 ## Deployment

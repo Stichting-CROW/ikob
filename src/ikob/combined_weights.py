@@ -1,6 +1,8 @@
 import logging
+
 import numpy as np
-from ikob.datasource import DataSource, DataKey, DataType
+
+from ikob.datasource import DataKey, DataSource, DataType
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +36,8 @@ def has_preference(kind_car, kind_pt, preference):
         return True
 
 
-def calculate_combined_weights(config, single_weights: DataSource) -> DataSource:
+def calculate_combined_weights(config,
+                               single_weights: DataSource) -> DataSource:
     logger.info("Maximum weights by multiple modalities.")
 
     project_config = config['project']
@@ -111,15 +114,17 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                                   fuel_kind=fuel_kind)
                                     car_matrix = single_weights.get(key)
 
-                                    max = np.maximum.reduce((bike_matrix, car_matrix))
-                                    key = DataKey(f"{car_kind}_{modality_bike}_vk",
-                                                  part_of_day=part_of_day,
-                                                  income=income,
-                                                  regime=regimes,
-                                                  motive=motive,
-                                                  preference=preference,
-                                                  subtopic='combinaties',
-                                                  fuel_kind=fuel_kind)
+                                    max = np.maximum.reduce(
+                                        (bike_matrix, car_matrix))
+                                    key = DataKey(
+                                        f"{car_kind}_{modality_bike}_vk",
+                                        part_of_day=part_of_day,
+                                        income=income,
+                                        regime=regimes,
+                                        motive=motive,
+                                        preference=preference,
+                                        subtopic='combinaties',
+                                        fuel_kind=fuel_kind)
                                     combined_weigths.set(key, max.copy())
                             else:
                                 key = DataKey(f'{car_kind}_vk',
@@ -130,7 +135,8 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                               motive=motive)
                                 car_matrix = single_weights.get(key)
 
-                                max = np.maximum.reduce((bike_matrix, car_matrix))
+                                max = np.maximum.reduce(
+                                    (bike_matrix, car_matrix))
                                 key = DataKey(f"{car_kind}_{modality_bike}_vk",
                                               part_of_day=part_of_day,
                                               income=income,
@@ -142,7 +148,8 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
 
                     for pt_kind in pt_kinds:
                         for car_kind in car_kinds:
-                            if not has_preference(car_kind, pt_kind, preference):
+                            if not has_preference(
+                                    car_kind, pt_kind, preference):
                                 continue
 
                             key = DataKey(f'{pt_kind}_vk',
@@ -163,7 +170,8 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                                   motive=motive,
                                                   fuel_kind=fuel_kind)
                                     car_matrix = single_weights.get(key)
-                                    max = np.maximum.reduce((pt_matrix, car_matrix))
+                                    max = np.maximum.reduce(
+                                        (pt_matrix, car_matrix))
                                     key = DataKey(f"{car_kind}_{pt_kind}_vk",
                                                   part_of_day=part_of_day,
                                                   income=income,
@@ -182,7 +190,8 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                               motive=motive)
                                 car_matrix = single_weights.get(key)
 
-                                max = np.maximum.reduce((pt_matrix, car_matrix))
+                                max = np.maximum.reduce(
+                                    (pt_matrix, car_matrix))
                                 key = DataKey(f"{car_kind}_{pt_kind}_vk",
                                               part_of_day=part_of_day,
                                               income=income,
@@ -195,7 +204,8 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                     for modality_bike in modalities_bike:
                         for pt_kind in pt_kinds:
                             for car_kind in car_kinds:
-                                if not has_preference(car_kind, pt_kind, preference):
+                                if not has_preference(
+                                        car_kind, pt_kind, preference):
                                     continue
 
                                 preference_bike = 'Fiets' if preference == 'Fiets' else ''
@@ -225,15 +235,17 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                                       fuel_kind=fuel_kind)
                                         car_matrix = single_weights.get(key)
 
-                                        max = np.maximum.reduce((car_matrix, bike_matrix, pt_matrix))
-                                        key = DataKey(f"{car_kind}_{pt_kind}_{modality_bike}_vk",
-                                                      part_of_day=part_of_day,
-                                                      income=income,
-                                                      regime=regimes,
-                                                      motive=motive,
-                                                      preference=preference,
-                                                      subtopic='combinaties',
-                                                      fuel_kind=fuel_kind)
+                                        max = np.maximum.reduce(
+                                            (car_matrix, bike_matrix, pt_matrix))
+                                        key = DataKey(
+                                            f"{car_kind}_{pt_kind}_{modality_bike}_vk",
+                                            part_of_day=part_of_day,
+                                            income=income,
+                                            regime=regimes,
+                                            motive=motive,
+                                            preference=preference,
+                                            subtopic='combinaties',
+                                            fuel_kind=fuel_kind)
                                         combined_weigths.set(key, max.copy())
                                 else:
                                     key = DataKey(f'{car_kind}_vk',
@@ -244,14 +256,16 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                                   motive=motive)
                                     car_matrix = single_weights.get(key)
 
-                                    max = np.maximum.reduce((car_matrix, bike_matrix, pt_matrix))
-                                    key = DataKey(f"{car_kind}_{pt_kind}_{modality_bike}_vk",
-                                                  part_of_day=part_of_day,
-                                                  income=income,
-                                                  regime=regimes,
-                                                  motive=motive,
-                                                  preference=preference,
-                                                  subtopic='combinaties')
+                                    max = np.maximum.reduce(
+                                        (car_matrix, bike_matrix, pt_matrix))
+                                    key = DataKey(
+                                        f"{car_kind}_{pt_kind}_{modality_bike}_vk",
+                                        part_of_day=part_of_day,
+                                        income=income,
+                                        regime=regimes,
+                                        motive=motive,
+                                        preference=preference,
+                                        subtopic='combinaties')
                                     combined_weigths.set(key, max.copy())
 
     return combined_weigths

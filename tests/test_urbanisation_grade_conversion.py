@@ -1,13 +1,13 @@
 import pathlib
-import numpy as np
 
+import numpy as np
 import pytest
+
 from ikob.datasource import read_parking_times
 from ikob.ikobconfig import getConfigFromArgs
-from ikob.utils import read_csv_int
-from ikob.urbanisation_grade_to_parking_times import (
+from ikob.urbanisation_grade_to_parking_times import \
     urbanisation_grade_to_parking_times
-)
+from ikob.utils import read_csv_int
 
 
 def test_stedelijkheid_converter():

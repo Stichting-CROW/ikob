@@ -1,12 +1,15 @@
-import ikob.utils as utils
+import enum
 import logging
 import os
 import pathlib
-import enum
-from typing import Optional
-from numpy.typing import NDArray
 from dataclasses import dataclass
-from ikob.urbanisation_grade_to_parking_times import urbanisation_grade_to_parking_times
+from typing import Optional
+
+from numpy.typing import NDArray
+
+import ikob.utils as utils
+from ikob.urbanisation_grade_to_parking_times import \
+    urbanisation_grade_to_parking_times
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +90,8 @@ class SegsSource:
     """A data provider for SEGS files."""
 
     def __init__(self, config):
-        self.segs_dir = pathlib.Path(config['project']['paden']['segs_directory'])
+        self.segs_dir = pathlib.Path(
+            config['project']['paden']['segs_directory'])
         self.tmp_dir = get_temporary_directory(config)
 
     def _segs_input_dir(self, id, jaar, scenario):
@@ -127,12 +131,30 @@ class SegsSource:
         path = path.with_suffix(".csv")
         return utils.read_csv(path, type_caster=type_caster)
 
-    def write_csv(self, data, id, header, group="", jaar="", modifier="", scenario=""):
-        path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".csv")
+    def write_csv(
+            self,
+            data,
+            id,
+            header,
+            group="",
+            jaar="",
+            modifier="",
+            scenario=""):
+        path = self._segs_output_dir(
+            id, jaar, scenario, group, modifier).with_suffix(".csv")
         return utils.write_csv(data, path, header=header)
 
-    def write_xlsx(self, data, id, header, group="", jaar="", modifier="", scenario=""):
-        path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".xlsx")
+    def write_xlsx(
+            self,
+            data,
+            id,
+            header,
+            group="",
+            jaar="",
+            modifier="",
+            scenario=""):
+        path = self._segs_output_dir(
+            id, jaar, scenario, group, modifier).with_suffix(".xlsx")
         return utils.write_xls(data, path, header)
 
 
@@ -189,7 +211,8 @@ class DataSource:
         id_with_suffix = self._add_id_suffix(key)
         dagsoort = key.part_of_day.lower()
         regime = key.regime.lower()
-        path = self.project_dir / base / regime / key.motive / key.group / self.datatype.value / key.subtopic / dagsoort / key.fuel_kind
+        path = self.project_dir / base / regime / key.motive / key.group / \
+            self.datatype.value / key.subtopic / dagsoort / key.fuel_kind
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
 
