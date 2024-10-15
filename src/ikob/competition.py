@@ -6,7 +6,7 @@ from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 logger = logging.getLogger(__name__)
 
 
-def get_gewichten_matrix(gewichten_enkel: DataSource,
+def get_weight_matrix(gewichten_enkel: DataSource,
                          gewichten_combi: DataSource,
                          gr, mod, mot, regime, ds, ink, inkgr,
                          ratio_electric: float):
@@ -187,7 +187,7 @@ def concurrentie(config,
                             ink = utils.group_income_level(gr)
                             if inkgr == ink or inkgr == 'alle':
                                 K = percentageelektrisch.get(inkgr)/100
-                                Matrix = get_gewichten_matrix(gewichten_enkel, gewichten_combi, gr, mod, mot, regime, ds, ink, inkgr, K)
+                                Matrix = get_weight_matrix(gewichten_enkel, gewichten_combi, gr, mod, mot, regime, ds, ink, inkgr, K)
 
                                 concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
                                 concurrentie_totaal += concurrentie * verdeling / np.where(inkomens_verdeling > 0, inkomens_verdeling, 1)

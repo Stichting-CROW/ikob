@@ -2,175 +2,173 @@ import logging
 import ikob.utils as utils
 import numpy as np
 
-from ikob.competition import get_gewichten_matrix
+from ikob.competition import get_weight_matrix
 from ikob.datasource import DataKey, DataType, DataSource, SegsSource
 
 logger = logging.getLogger(__name__)
 
 
 def deployment_opportunities(config,
-                                            gewichten_enkel: DataSource,
-                                            gewichten_combi: DataSource) -> DataSource:
-    logger.info("Bereikbaarheid arbeidsplaatsen voor inwoners")
+                             single_weights: DataSource,
+                             combined_weights: DataSource) -> DataSource:
+    logger.info("Deployment opportunities for citizens.")
 
     project_config = config['project']
     skims_config = config['skims']
-    verdeling_config = config['verdeling']
-    dagsoort = skims_config['dagsoort']
+    distribution_config = config['verdeling']
+    part_of_days = skims_config['dagsoort']
 
-    # Ophalen van instellingen
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
-    motieven = project_config['motieven']
-    autobezitgroepen = project_config['welke_groepen']
-    inkgroepen = project_config['welke_inkomensgroepen']
-    percentageelektrisch = verdeling_config['Percelektrisch']
+    motives = project_config['motieven']
+    car_possession_groups = project_config['welke_groepen']
+    income_groups = project_config['welke_inkomensgroepen']
+    electric_percentage = distribution_config['Percelektrisch']
 
-    if 'alle groepen' in autobezitgroepen:
-        Basisgroepen = ['GratisAuto', 'GratisAuto_GratisOV', 'WelAuto_GratisOV', 'WelAuto_vkAuto',
+    if 'alle groepen' in car_possession_groups:
+        base_groups = ['GratisAuto', 'GratisAuto_GratisOV', 'WelAuto_GratisOV', 'WelAuto_vkAuto',
                         'WelAuto_vkNeutraal', 'WelAuto_vkFiets', 'WelAuto_vkOV', 'GeenAuto_GratisOV',
                         'GeenAuto_vkNeutraal', 'GeenAuto_vkFiets', 'GeenAuto_vkOV', 'GeenRijbewijs_GratisOV',
                         'GeenRijbewijs_vkNeutraal', 'GeenRijbewijs_vkFiets', 'GeenRijbewijs_vkOV']
     else:
-        Basisgroepen = ['GratisAuto', 'GratisAuto_GratisOV', 'WelAuto_GratisOV', 'WelAuto_vkAuto',
+        base_groups = ['GratisAuto', 'GratisAuto_GratisOV', 'WelAuto_GratisOV', 'WelAuto_vkAuto',
                         'WelAuto_vkNeutraal', 'WelAuto_vkFiets', 'WelAuto_vkOV']
 
-    Groepen = []
-    for inkgr in inkgroepen:
-        for bg in Basisgroepen:
-            Groepen.append(f'{bg}_{inkgr}')
+    groups = []
+    for income_group in income_groups:
+        for base_group in base_groups:
+            groups.append(f'{base_group}_{income_group}')
 
-    modaliteiten = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
+    modalities = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
     headstring = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
     headstringExcel = ['Zone', 'Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
-    soortbrandstof = ['fossiel', 'elektrisch']
 
     segs_source = SegsSource(config)
 
-    if 'winkelnietdagelijksonderwijs' in motieven:
-        Beroepsbevolkingperklasse = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
-        Arbeidsplaats = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = utils.transpose(Arbeidsplaats)
+    if 'winkelnietdagelijksonderwijs' in motives:
+        working_population_per_class = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
+        employment_segs = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
+        place_of_employments = utils.transpose(employment_segs)
     else:
-        Beroepsbevolkingperklasse = segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
-        Arbeidsplaats = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = utils.transpose(Arbeidsplaats)
+        working_population_per_class = segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
+        employment_segs = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
+        place_of_employments = utils.transpose(employment_segs)
 
-    Beroepsbevolkingtotalen = [sum(bbpk) for bbpk in Beroepsbevolkingperklasse]
+    working_population_totals = [sum(bbpk) for bbpk in working_population_per_class]
 
-    if 'sociaal-recreatief' in motieven:
+    if 'sociaal-recreatief' in motives:
         id = "L65plus_inkomensklasse" if '65+' in regime else "Inwoners_inkomensklasse"
-        Inwonersperklasse = segs_source.read(id, scenario=scenario, type_caster=float)
-        Inwonerstotalen = [sum(ipk) for ipk in Inwonersperklasse]
+        citizens_per_class = segs_source.read(id, scenario=scenario, type_caster=float)
+        citizen_totals = [sum(ipk) for ipk in citizens_per_class]
 
-    Inkomensverdeling = np.zeros((len(Beroepsbevolkingperklasse), len(Beroepsbevolkingperklasse[0])))
-    for i in range(len(Beroepsbevolkingperklasse)):
-        for j in range(len(Beroepsbevolkingperklasse[0])):
-            if Beroepsbevolkingtotalen[i] > 0:
-                Inkomensverdeling[i][j] = Beroepsbevolkingperklasse[i][j]/Beroepsbevolkingtotalen[i]
+    income_distributions = np.zeros((len(working_population_per_class), len(working_population_per_class[0])))
+    for i in range(len(working_population_per_class)):
+        for j in range(len(working_population_per_class[0])):
+            if working_population_totals[i] > 0:
+                income_distributions[i][j] = working_population_per_class[i][j]/working_population_totals[i]
 
-    Inkomenstransverdeling = utils.transpose(Inkomensverdeling)
+    income_distributions_transposed = utils.transpose(income_distributions)
 
-    potenties = DataSource(config, DataType.DESTINATIONS)
+    potencies = DataSource(config, DataType.DESTINATIONS)
 
-    for abg in autobezitgroepen:
-        for mot in motieven:
-            if mot == 'werk':
-                Doelgroep = 'Beroepsbevolking'
-            elif mot == 'winkelnietdagelijksonderwijs':
-                Doelgroep = 'Leerlingen'
+    for car_possession_group in car_possession_groups:
+        for motive in motives:
+            if motive == 'werk':
+                target_group = 'Beroepsbevolking'
+            elif motive == 'winkelnietdagelijksonderwijs':
+                target_group = 'Leerlingen'
             else:
-                Doelgroep = 'Inwoners'
+                target_group = 'Inwoners'
 
-            if abg == 'alle groepen':
-                Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
+            if car_possession_group == 'alle groepen':
+                distribution_matrix = segs_source.read(f"Verdeling_over_groepen_{target_group}", type_caster=float, scenario=scenario)
             else:
-                Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", type_caster=float, scenario=scenario)
+                distribution_matrix = segs_source.read(f"Verdeling_over_groepen_{target_group}_alleen_autobezit", type_caster=float, scenario=scenario)
 
-            Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
-            Verdelingstransmatrix = utils.transpose(Verdelingsmatrix)
+            distribution_matrix = segs_source.read(f"Verdeling_over_groepen_{target_group}", type_caster=float, scenario=scenario)
+            distribution_matrix_transpose = utils.transpose(distribution_matrix)
 
-            for ds in dagsoort:
-                for i_inkgr, inkgr in enumerate(inkgroepen):
-                    if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                        arbeidsplaats = np.array(Arbeidsplaatsen[i_inkgr])
+            for part_of_day in part_of_days:
+                for i_income_group, income_group in enumerate(income_groups):
+                    if motive == 'werk' or motive == 'winkelnietdagelijksonderwijs':
+                        place_of_employment = np.array(place_of_employments[i_income_group])
                     else:
-                        arbeidsplaats = Inwonerstotalen
+                        place_of_employment = citizen_totals
 
-                    inkomens = np.array(Inkomenstransverdeling[i_inkgr])
-                    Generaaltotaal_potenties = []
+                    incomes = np.array(income_distributions_transposed[i_income_group])
+                    general_possibility_totals = []
 
-                    for mod in modaliteiten:
-                        potentie_sum = np.zeros(len(Arbeidsplaats), dtype=int)
+                    for modality in modalities:
+                        possiblity_sum = np.zeros(len(employment_segs), dtype=int)
 
-                        for igr, gr in enumerate(Groepen):
-                            if mot == 'werk' or mot == 'winkelnietdagelijksonderwijs':
-                                verdeling = np.array(Verdelingstransmatrix[igr])
+                        for i_group, group in enumerate(groups):
+                            if motive == 'werk' or motive == 'winkelnietdagelijksonderwijs':
+                                distribution = np.array(distribution_matrix_transpose[i_group])
                             else:
-                                verdeling = Verdelingstransmatrix
+                                distribution = distribution_matrix_transpose
 
-                            ink = utils.group_income_level(gr)
-                            if inkgr == ink or inkgr == 'alle':
-                                K = percentageelektrisch.get(inkgr)/100
-                                Matrix = get_gewichten_matrix(gewichten_enkel, gewichten_combi, gr, mod, mot, regime, ds, ink, inkgr, K)
-                                potentie = Matrix @ arbeidsplaats * verdeling
-                                potentie = np.where(inkomens > 0, potentie / inkomens, 0)
-                                potentie_sum += potentie.astype(int)
+                            income = utils.group_income_level(group)
+                            if income_group == income or income_group == 'alle':
+                                K = electric_percentage.get(income_group)/100
+                                matrix = get_weight_matrix(single_weights, combined_weights, group, modality, motive, regime, part_of_day, income, income_group, K)
+                                possiblity = matrix @ place_of_employment * distribution
+                                possiblity = np.where(incomes > 0, possiblity / incomes, 0)
+                                possiblity_sum += possiblity.astype(int)
 
                         key = DataKey('Totaal',
-                                      part_of_day=ds,
-                                      income=inkgr,
-                                      group=abg,
-                                      motive=mot,
-                                      modality=mod)
-                        potenties.set(key, potentie_sum.copy())
-                        Generaaltotaal_potenties.append(potenties.get(key))
+                                      part_of_day=part_of_day,
+                                      income=income_group,
+                                      group=car_possession_group,
+                                      motive=motive,
+                                      modality=modality)
+                        potencies.set(key, possiblity_sum.copy())
+                        general_possibility_totals.append(potencies.get(key))
 
-                    Generaaltotaaltrans = utils.transpose(Generaaltotaal_potenties)
+                    general_possibility_totals_transposed = utils.transpose(general_possibility_totals)
                     key = DataKey('Ontpl_totaal',
-                                  part_of_day=ds,
-                                  group=abg,
-                                  income=inkgr,
-                                  motive=mot)
-                    potenties.write_csv(Generaaltotaaltrans, key, header=headstring)
-                    potenties.write_xlsx(Generaaltotaaltrans, key, header=headstringExcel)
+                                  part_of_day=part_of_day,
+                                  group=car_possession_group,
+                                  income=income_group,
+                                  motive=motive)
+                    potencies.write_csv(general_possibility_totals_transposed, key, header=headstring)
+                    potencies.write_xlsx(general_possibility_totals_transposed, key, header=headstringExcel)
 
                 header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
-                for mod in modaliteiten:
-                    Generaalmatrixproduct = []
-                    Generaalmatrix = []
-                    for inkgr in inkgroepen:
+                for modality in modalities:
+                    general_matrix_product = []
+                    general_matrix = []
+                    for income_group in income_groups:
                         key = DataKey('Totaal',
-                                      part_of_day=ds,
-                                      income=inkgr,
-                                      group=abg,
-                                      motive=mot,
-                                      modality=mod)
-                        Totaalrij = potenties.get(key)
-                        Generaalmatrix.append(Totaalrij)
-                    if len(inkgroepen)>1:
-                        Generaaltotaaltrans = utils.transpose(Generaalmatrix)
+                                      part_of_day=part_of_day,
+                                      income=income_group,
+                                      group=car_possession_group,
+                                      motive=motive,
+                                      modality=modality)
+                        totals_row = potencies.get(key)
+                        general_matrix.append(totals_row)
+                    if len(income_groups) > 1:
+                        general_possibility_totals_transposed = utils.transpose(general_matrix)
                     else:
-                        Generaaltotaaltrans = Generaalmatrix
-                    for i in range(len(Beroepsbevolkingperklasse)):
-                        Generaalmatrixproduct.append([])
-                        for j in range(len(Beroepsbevolkingperklasse[0])):
-                            if Beroepsbevolkingperklasse[i][j] > 0:
-                                Generaalmatrixproduct[i].append(int(Generaaltotaaltrans[i][j]*Beroepsbevolkingperklasse[i][j]))
+                        general_possibility_totals_transposed = general_matrix
+                    for i in range(len(working_population_per_class)):
+                        general_matrix_product.append([])
+                        for j in range(len(working_population_per_class[0])):
+                            if working_population_per_class[i][j] > 0:
+                                general_matrix_product[i].append(int(general_possibility_totals_transposed[i][j]*working_population_per_class[i][j]))
                             else:
-                                Generaalmatrixproduct[i].append(0)
+                                general_matrix_product[i].append(0)
 
                     key = DataKey('Ontpl_totaal',
-                                  part_of_day=ds,
-                                  group=abg,
-                                  motive=mot,
-                                  modality=mod)
-                    potenties.write_xlsx(Generaaltotaaltrans, key, header=header)
+                                  part_of_day=part_of_day,
+                                  group=car_possession_group,
+                                  motive=motive,
+                                  modality=modality)
+                    potencies.write_xlsx(general_possibility_totals_transposed, key, header=header)
                     key = DataKey('Ontpl_totaalproduct',
-                                  part_of_day=ds,
-                                  group=abg,
-                                  motive=mot,
-                                  modality=mod)
-                    potenties.write_xlsx(Generaalmatrixproduct, key, header=header)
+                                  part_of_day=part_of_day,
+                                  group=car_possession_group,
+                                  motive=motive,
+                                  modality=modality)
+                    potencies.write_xlsx(general_matrix_product, key, header=header)
 
-    return potenties
+    return potencies
