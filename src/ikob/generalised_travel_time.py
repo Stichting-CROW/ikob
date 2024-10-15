@@ -2,282 +2,274 @@ import ikob.utils as utils
 import numpy as np
 import logging
 from ikob.datasource import DataKey, DataSource, DataType, SkimsSource, SegsSource
-from ikob.datasource import read_parkeerzoektijden, read_csv_from_config
+from ikob.datasource import read_parking_times, read_csv_from_config
 
 logger = logging.getLogger(__name__)
 
 
-def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
-    afstand = np.where(afstand < 0, 0, afstand)
-    afstand = starttarief + afstand * OVkmtarief
+def costs_public_transport(distance, pt_km_price, starting_rate, pricecap, pricecap_value):
+    distance = np.where(distance < 0, 0, distance)
+    distance = starting_rate + distance * pt_km_price
 
-    if Pricecap:
-        np.clip(afstand, None, Pricecapgetal, out=afstand)
+    if pricecap:
+        np.clip(distance, None, pricecap_value, out=distance)
 
-    return afstand
+    return distance
 
 
 def generalised_travel_time(config) -> DataSource:
-    logger.info("Gegeneraliseerde reistijd berekenen uit tijd en kosten.")
+    logger.info("Compute generalised travel time from time and costs.")
 
-    # Haal (voor het gemak) onderdelen voor dit script er uit.
     project_config = config['project']
     skims_config = config['skims']
     tvom_config = config['TVOM']
-    verdeling_config = config['verdeling']
+    distribution_config = config['verdeling']
 
-    # Ophalen van instellingen
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
-    scenario = project_config['verstedelijkingsscenario']
-    motieven = project_config['motieven']
-    Ketens = project_config['ketens']['gebruiken']
-    Hubnaam = project_config['ketens']['naam hub']
-    OV_Kostenbestand = skims_config ['OV kostenbestand']['gebruiken']
-    TVOMwerk = tvom_config['werk']
-    TVOMoverig = tvom_config['overig']
-    varfossiel = skims_config['Kosten auto fossiele brandstof']['variabele kosten']
-    kmheffingfossiel = skims_config['Kosten auto fossiele brandstof']['kmheffing']
-    varelektrisch = skims_config['Kosten elektrische auto']['variabele kosten']
-    kmheffingelelektrisch = skims_config['Kosten elektrische auto']['kmheffing']
-    varkostenga = skims_config['varkostenga']
-    tijdkostenga = skims_config['tijdkostenga']
-    dagsoort = skims_config['dagsoort']
-    soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
-    OVkmtarief = skims_config['OV kosten']['kmkosten']
-    starttarief = skims_config['OV kosten']['starttarief']
-    Additionele_kosten = verdeling_config['additionele_kosten']['gebruiken']
-    Parkeerkosten = verdeling_config['parkeerkosten']['gebruiken']
-    Parkeerkostenfile = verdeling_config['parkeerkosten']['bestand']
-    Pricecap = skims_config['pricecap']['gebruiken']
-    Pricecapgetal = skims_config['pricecap']['getal']
+    motives = project_config['motieven']
+    chains = project_config['ketens']['gebruiken']
+    hub_name = project_config['ketens']['naam hub']
+    pt_cost_file = skims_config ['OV kostenbestand']['gebruiken']
+    tvom_work = tvom_config['werk']
+    tvom_other = tvom_config['overig']
+    var_fossil = skims_config['Kosten auto fossiele brandstof']['variabele kosten']
+    road_pricing_fossil = skims_config['Kosten auto fossiele brandstof']['kmheffing']
+    var_electric = skims_config['Kosten elektrische auto']['variabele kosten']
+    road_pricing_electric = skims_config['Kosten elektrische auto']['kmheffing']
+    costs_no_car = skims_config['varkostenga']
+    time_costs_no_car = skims_config['tijdkostenga']
+    part_of_day = skims_config['dagsoort']
+    kind_no_car = ['GeenAuto', 'GeenRijbewijs']
+    pt_km_price = skims_config['OV kosten']['kmkosten']
+    starting_rate = skims_config['OV kosten']['starttarief']
+    additional_costs = distribution_config['additionele_kosten']['gebruiken']
+    parking_costs = distribution_config['parkeerkosten']['gebruiken']
+    parking_costs_file = distribution_config['parkeerkosten']['bestand']
+    pricecap = skims_config['pricecap']['gebruiken']
+    pricecap_value = skims_config['pricecap']['getal']
 
-    if Additionele_kosten:
-        Additionele_kostenmatrix = read_csv_from_config(config, key='skims', id='additionele_kosten')
+    if additional_costs:
+        additional_cost_matrix = read_csv_from_config(config, key='skims', id='additionele_kosten')
 
-    # Vaste waarden
-    inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
-
-    OVkmtarief = OVkmtarief/100
-    starttarief = starttarief/100
-    varfossiel = varfossiel/100
-    varelektrisch = varelektrisch/100
-    kmheffingfossiel = kmheffingfossiel/100
-    kmheffingelektrisch = kmheffingelelektrisch/100
-
-    Parkeertijdlijst = read_parkeerzoektijden(config)
-
-    soortbrandstof = ['fossiel', 'elektrisch']
+    income_levels = ['laag', 'middellaag', 'middelhoog', 'hoog']
+    pt_km_price = pt_km_price/100
+    starting_rate = starting_rate/100
+    var_fossil = var_fossil/100
+    var_electric = var_electric/100
+    road_pricing_fossil = road_pricing_fossil/100
+    road_pricing_electric = road_pricing_electric/100
+    fuel_kinds = ['fossiel', 'elektrisch']
+    parking_times = read_parking_times(config)
 
     segs_source = SegsSource(config)
 
     if 'orrectie' in regime:
-        motief = motieven[0]
+        motive = motives[0]
         if '65+' in regime:
-            Correctiefactoren = segs_source.read(f"Correctiefactoren_{motief}_65plus", scenario=scenario)
+            correction_factors = segs_source.read(f"Correctiefactoren_{motive}_65plus", scenario=scenario)
         else:
-            Correctiefactoren = segs_source.read(f"Correctiefactoren_{motief}", scenario=scenario)
+            correction_factors = segs_source.read(f"Correctiefactoren_{motive}", scenario=scenario)
     else:
-        Correctiefactoren = []
-        for i in range(len(Parkeertijdlijst)):
-            Correctiefactoren.append([1, 1, 1, 1])
+        correction_factors = []
+        for i in range(len(parking_times)):
+            correction_factors.append([1, 1, 1, 1])
 
     skims_dir = config['project']['paden']['skims_directory']
     skims_reader = SkimsSource(skims_dir)
 
-    ervaren_reistijd = DataSource(config, DataType.GENERALISED_TRAVEL_TIME)
+    generalised_travel_time = DataSource(config, DataType.GENERALISED_TRAVEL_TIME)
 
-    for mot in motieven:
-        TVOM = TVOMwerk if mot == 'werk' else TVOMoverig
-        for ds in dagsoort:
-            Autotijdmatrix = skims_reader.read('Auto_Tijd', ds)
-            Autoafstandmatrix = skims_reader.read('Auto_Afstand', ds)
-            Fietstijdmatrix = skims_reader.read('Fiets_Tijd', ds)
-            OVtijdmatrix = skims_reader.read('OV_Tijd', ds)
-            OVafstandmatrix = skims_reader.read('OV_Afstand', ds)
-            if Parkeerkosten:
+    for motive in motives:
+        tvom = tvom_work if motive == 'werk' else tvom_other
+        for pod in part_of_day:
+            car_time_matrix = skims_reader.read('Auto_Tijd', pod)
+            car_distance_matrix = skims_reader.read('Auto_Afstand', pod)
+            bike_time_matrix = skims_reader.read('Fiets_Tijd', pod)
+            pt_time_matrix = skims_reader.read('OV_Tijd', pod)
+            pt_distance_matrix = skims_reader.read('OV_Afstand', pod)
+            if parking_costs:
                 raise NotImplementedError("Needs to be replaced with datasource reading...")
-                Parkeerkostenfile = Parkeerkostenfile.replace('.csv', '')
-                Parkeerkostenlijst = utils.read_csv_int(Parkeerkostenfile, aantal_lege_regels=0)
+                parking_costs_file = parking_costs_file.replace('.csv', '')
+                parking_costs = utils.read_csv_int(parking_costs_file, aantal_lege_regels=0)
             else:
-                Parkeerkostenlijst = utils.zeros(len(OVafstandmatrix))
+                parking_costs = utils.zeros(len(pt_distance_matrix))
 
-            if Ketens:
-                Pplusfietstijdmatrix = skims_reader.read(f'Pplusfiets_{Hubnaam}_Tijd', ds)
-                Pplusfietsafstandmatrix = skims_reader.read(f'Pplusfiets_{Hubnaam}_Afstand_Auto', ds)
-                PplusRbestemmingstijdmatrix = skims_reader.read(f'PplusR_{Hubnaam}_bestemmings_Tijd', ds)
-                PplusRherkomsttijdmatrix = skims_reader.read(f'PplusR_{Hubnaam}_herkomst_Tijd', ds)
-                PplusRbestemmingsOVafstandmatrix = skims_reader.read(f'PplusR_{Hubnaam}_bestemmings_Afstand_OV', ds)
-                PplusRbestemmingsautoafstandmatrix = skims_reader.read(f'PplusR_{Hubnaam}_bestemmings_Afstand_Auto', ds)
-                PplusRherkomstOVafstandmatrix = skims_reader.read(f'PplusR_{Hubnaam}_herkomst_Afstand_OV', ds)
-                PplusRherkomstautoafstandmatrix = skims_reader.read(f'PplusR_{Hubnaam}_herkomst_Afstand_Auto', ds)
+            if chains:
+                park_and_bike_time_matrix = skims_reader.read(f'Pplusfiets_{hub_name}_Tijd', pod)
+                park_and_bike_distance_matrix = skims_reader.read(f'Pplusfiets_{hub_name}_Afstand_Auto', pod)
+                park_and_destination_time_matrix = skims_reader.read(f'PplusR_{hub_name}_bestemmings_Tijd', pod)
+                park_origin_time_matrix = skims_reader.read(f'PplusR_{hub_name}_herkomst_Tijd', pod)
+                park_destination_pt_distance_matrix = skims_reader.read(f'PplusR_{hub_name}_bestemmings_Afstand_OV', pod)
+                park_destination_car_distance_matrix = skims_reader.read(f'PplusR_{hub_name}_bestemmings_Afstand_Auto', pod)
+                park_origin_pt_distance_matrix = skims_reader.read(f'PplusR_{hub_name}_herkomst_Afstand_OV', pod)
+                park_origin_car_distance_matrix = skims_reader.read(f'PplusR_{hub_name}_herkomst_Afstand_Auto', pod)
 
-            aantal_zones_tijd = len(Autotijdmatrix)
-            aantal_zones_afstand = len(Autoafstandmatrix)
+            num_zones_time = len(car_time_matrix)
+            num_zones_distance = len(car_distance_matrix)
             msg = (
                 "Number of zones in time and distance have to match: "
-                f"{aantal_zones_afstand} == {aantal_zones_tijd}"
+                f"{num_zones_distance} == {num_zones_time}"
             )
-            assert aantal_zones_afstand == aantal_zones_tijd, msg
-            aantal_zones = aantal_zones_tijd
+            assert num_zones_distance == num_zones_time, msg
+            num_zones = num_zones_time
 
-            afmeting = len(OVafstandmatrix)
-
-            # kostenmatrix
-            if OV_Kostenbestand:
-                KostenmatrixOV = skims_reader.read("OV_Kosten", ds)
+            if pt_cost_file:
+                pt_cost_matrix = skims_reader.read("OV_Kosten", pod)
             else:
-                KostenmatrixOV = np.zeros((afmeting, afmeting))
-                KostenmatrixOV = KostenOV(OVafstandmatrix, OVkmtarief, starttarief, Pricecap, Pricecapgetal)
+                n = len(pt_distance_matrix)
+                pt_cost_matrix = np.zeros((n, n))
+                pt_cost_matrix = costs_public_transport(pt_distance_matrix, pt_km_price, starting_rate, pricecap, pricecap_value)
 
-            if Ketens:
-                KostenbestemmingsPplusROV = np.zeros((afmeting, afmeting))
-                KostenherkomstPplusROV = np.zeros((afmeting, afmeting))
-                KostenbestemmingsPplusROV = KostenOV(PplusRbestemmingsOVafstandmatrix, OVkmtarief, starttarief, Pricecap, Pricecapgetal)
-                KostenherkomstPplusROV = KostenOV(PplusRherkomstOVafstandmatrix, OVkmtarief, starttarief, Pricecap, Pricecapgetal)
+            if chains:
+                n = len(pt_distance_matrix)
+                cost_destination_park_and_ov = np.zeros((n, n))
+                cost_origin_park_and_ov = np.zeros((n, n))
+                cost_destination_park_and_ov = costs_public_transport(park_destination_pt_distance_matrix, pt_km_price, starting_rate, pricecap, pricecap_value)
+                cost_origin_park_and_ov = costs_public_transport(park_origin_pt_distance_matrix, pt_km_price, starting_rate, pricecap, pricecap_value)
 
             # Eerst de fiets:
-            GGRskim = np.where(Fietstijdmatrix < 180, Fietstijdmatrix, 9999).astype(int)
+            ggr_skim = np.where(bike_time_matrix < 180, bike_time_matrix, 9999).astype(int)
 
             key = DataKey(id='Fiets',
-                          part_of_day=ds,
+                          part_of_day=pod,
                           regime=regime,
-                          motive=mot)
-            ervaren_reistijd.set(key, GGRskim.copy())
+                          motive=motive)
+            generalised_travel_time.set(key, ggr_skim.copy())
 
-            GGRskim = np.zeros((aantal_zones, aantal_zones), dtype=int)
-            for ink in inkomens:
-                factor = TVOM.get(ink)
+            ggr_skim = np.zeros((num_zones, num_zones), dtype=int)
+            for income_level in income_levels:
+                factor = tvom.get(income_level)
 
-                for srtbr in soortbrandstof:
-                    if srtbr == 'fossiel':
-                        varautotarief = varfossiel
-                        kmheffing = kmheffingfossiel
+                for fuel_kind in fuel_kinds:
+                    if fuel_kind == 'fossiel':
+                        var_car_rate = var_fossil
+                        road_pricing = road_pricing_fossil
                     else:
-                        varautotarief = varelektrisch
-                        kmheffing = kmheffingelektrisch
-                    for i in range(aantal_zones):
-                        for j in range(aantal_zones):
-                            totaleTijd = Autotijdmatrix[i][j] + round(Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2])
-                            if Additionele_kosten:
-                                GGRskim[i][j] = int(totaleTijd + factor * (Autoafstandmatrix[i][j] *
-                                                    (varautotarief + kmheffing) + Additionele_kostenmatrix[i][j]/100) +
-                                                    Parkeerkostenlijst[j]/100)
+                        var_car_rate = var_electric
+                        road_pricing = road_pricing_electric
+                    for i in range(num_zones):
+                        for j in range(num_zones):
+                            total_time = car_time_matrix[i][j] + round(parking_times[i][1] + parking_times[j][2])
+                            if additional_costs:
+                                ggr_skim[i][j] = int(total_time + factor * (car_distance_matrix[i][j] *
+                                                    (var_car_rate + road_pricing) + additional_cost_matrix[i][j]/100) +
+                                                    parking_costs[j]/100)
                             else:
-                                GGRskim[i][j] = int(totaleTijd + factor * (Autoafstandmatrix [i][j] *
-                                                    Correctiefactoren[i][inkomens.index(ink)] *
-                                                    (varautotarief+kmheffing) + Parkeerkostenlijst[j]/100))
+                                ggr_skim[i][j] = int(total_time + factor * (car_distance_matrix [i][j] *
+                                                    correction_factors[i][income_levels.index(income_level)] *
+                                                    (var_car_rate+road_pricing) + parking_costs[j]/100))
 
-                    key = DataKey(id=f"Auto_{srtbr}",
-                                  part_of_day=ds,
-                                  income=ink,
+                    key = DataKey(id=f"Auto_{fuel_kind}",
+                                  part_of_day=pod,
+                                  income=income_level,
                                   regime=regime,
-                                  motive=mot)
-                    ervaren_reistijd.set(key, GGRskim.copy())
+                                  motive=motive)
+                    generalised_travel_time.set(key, ggr_skim.copy())
 
                 # Dan het OV
-                factor = TVOM.get(ink)
-                GGRskim = np.where(OVtijdmatrix > 0.5, OVtijdmatrix + factor * KostenmatrixOV, 9999).astype(int)
+                factor = tvom.get(income_level)
+                ggr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix + factor * pt_cost_matrix, 9999).astype(int)
                 key = DataKey(id='OV',
-                              part_of_day=ds,
-                              income=ink,
-                              motive=mot,
+                              part_of_day=pod,
+                              income=income_level,
+                              motive=motive,
                               regime=regime)
-                ervaren_reistijd.set(key, GGRskim.copy())
+                generalised_travel_time.set(key, ggr_skim.copy())
 
                 # Dan geen auto (rijbewijs)
-                for sga in soortgeenauto:
-                    GGRskim.fill(99999)
-                    factor = TVOM.get(ink)
-                    for i in range(aantal_zones):
-                        for j in range(aantal_zones):
-                            if Autotijdmatrix[i][j] >= 7:
-                                totaleTijd = Autotijdmatrix[i][j] + round(Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2])
-                                totaleKosten = Autotijdmatrix[i][j] * tijdkostenga.get(sga) + Correctiefactoren[i][inkomens.index(ink)] * Autoafstandmatrix[i][j] * (varkostenga.get(sga) + kmheffing)
-                                GGRskim[i][j] = int(totaleTijd + factor * totaleKosten)
+                for kind in kind_no_car:
+                    ggr_skim.fill(99999)
+                    factor = tvom.get(income_level)
+                    for i in range(num_zones):
+                        for j in range(num_zones):
+                            if car_time_matrix[i][j] >= 7:
+                                total_time = car_time_matrix[i][j] + round(parking_times[i][1] + parking_times[j][2])
+                                total_cost = car_time_matrix[i][j] * time_costs_no_car.get(kind) + correction_factors[i][income_levels.index(income_level)] * car_distance_matrix[i][j] * (costs_no_car.get(kind) + road_pricing)
+                                ggr_skim[i][j] = int(total_time + factor * total_cost)
 
-                    key = DataKey(id=f'{sga}',
-                                  part_of_day=ds,
-                                  income=ink,
-                                  motive=mot,
+                    key = DataKey(id=f'{kind}',
+                                  part_of_day=pod,
+                                  income=income_level,
+                                  motive=motive,
                                   regime=regime)
-                    ervaren_reistijd.set(key, GGRskim.copy())
+                    generalised_travel_time.set(key, ggr_skim.copy())
 
                 # GratisAuto
-                for ink in inkomens:
-                    GGRskim.fill(0)
-                    factor = TVOM.get(ink)
-                    for i in range(aantal_zones):
-                        for j in range(aantal_zones):
-                            totaleTijd = Autotijdmatrix[i][j] + round(Parkeertijdlijst[i][1] + Parkeertijdlijst[j][2])
-                            if Additionele_kosten:
-                                GGRskim[i][j] = int(totaleTijd + factor * Autoafstandmatrix[i][j] *
-                                                    kmheffing + Additionele_kostenmatrix[i][j]/100 +
-                                                    Parkeerkostenlijst[j]/100)
+                for income_level in income_levels:
+                    ggr_skim.fill(0)
+                    factor = tvom.get(income_level)
+                    for i in range(num_zones):
+                        for j in range(num_zones):
+                            total_time = car_time_matrix[i][j] + round(parking_times[i][1] + parking_times[j][2])
+                            if additional_costs:
+                                ggr_skim[i][j] = int(total_time + factor * car_distance_matrix[i][j] *
+                                                    road_pricing + additional_cost_matrix[i][j]/100 +
+                                                    parking_costs[j]/100)
                             else:
-                                GGRskim[i][j] = int(totaleTijd + Correctiefactoren[i][inkomens.index(ink)] *
-                                                    factor * Autoafstandmatrix[i][j] *
-                                                    kmheffing + Parkeerkostenlijst[j]/100)
+                                ggr_skim[i][j] = int(total_time + correction_factors[i][income_levels.index(income_level)] *
+                                                    factor * car_distance_matrix[i][j] *
+                                                    road_pricing + parking_costs[j]/100)
                     key = DataKey(id='GratisAuto',
-                                  part_of_day=ds,
-                                  income=ink,
-                                  motive=mot,
+                                  part_of_day=pod,
+                                  income=income_level,
+                                  motive=motive,
                                   regime=regime)
-                    ervaren_reistijd.set(key, GGRskim.copy())
+                    generalised_travel_time.set(key, ggr_skim.copy())
 
                 # GratisOV
-                GGRskim = np.where(OVtijdmatrix > 0.5, OVtijdmatrix, 9999).astype(int)
+                ggr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix, 9999).astype(int)
                 key = DataKey(id='GratisOV',
-                              part_of_day=ds,
-                              motive=mot,
+                              part_of_day=pod,
+                              motive=motive,
                               regime=regime)
-                ervaren_reistijd.set(key, GGRskim.copy())
+                generalised_travel_time.set(key, ggr_skim.copy())
 
-                if Ketens:
+                if chains:
                     # P+Fiets
-                    for ink in inkomens:
-                        GGRskim.fill(0)
-                        kosten = Pplusfietsafstandmatrix * (varautotarief + kmheffing)
-                        if Additionele_kosten:
-                            kosten += Additionele_kostenmatrix/100
+                    for income_level in income_levels:
+                        ggr_skim.fill(0)
+                        costs = park_and_bike_distance_matrix * (var_car_rate + road_pricing)
+                        if additional_costs:
+                            costs += additional_cost_matrix/100
 
-                        factor = TVOM.get(ink)
-                        GGRskim = Pplusfietstijdmatrix + factor * kosten
+                        factor = tvom.get(income_level)
+                        ggr_skim = park_and_bike_time_matrix + factor * costs
                         key = DataKey(id='Pplusfiets',
-                                      part_of_day=ds,
-                                      income=ink,
-                                      hub_name=Hubnaam,
-                                      motive=mot,
+                                      part_of_day=pod,
+                                      income=income_level,
+                                      hub_name=hub_name,
+                                      motive=motive,
                                       regime=regime)
-                        ervaren_reistijd.set(key, GGRskim.copy())
+                        generalised_travel_time.set(key, ggr_skim.copy())
 
                         # P+R
-                        GGRskim.fill(0)
-                        kosten = PplusRbestemmingsautoafstandmatrix * (varautotarief + kmheffing) + KostenbestemmingsPplusROV
-                        if Additionele_kosten:
-                            kosten += Additionele_kostenmatrix / 100
+                        ggr_skim.fill(0)
+                        costs = park_destination_car_distance_matrix * (var_car_rate + road_pricing) + cost_destination_park_and_ov
+                        if additional_costs:
+                            costs += additional_cost_matrix / 100
 
-                        GGRskim = PplusRbestemmingstijdmatrix + factor * kosten
+                        ggr_skim = park_and_destination_time_matrix + factor * costs
                         key = DataKey(id='PplusRbestemmings',
-                                      part_of_day=ds,
-                                      income=ink,
-                                      hub_name=Hubnaam,
-                                      motive=mot,
+                                      part_of_day=pod,
+                                      income=income_level,
+                                      hub_name=hub_name,
+                                      motive=motive,
                                       regime=regime)
-                        ervaren_reistijd.set(key, GGRskim.copy())
+                        generalised_travel_time.set(key, ggr_skim.copy())
 
-                        GGRskim.fill(0)
-                        kosten = (PplusRherkomstautoafstandmatrix * (varautotarief + kmheffing) + KostenherkomstPplusROV)
-                        if Additionele_kosten:
-                            kosten += Additionele_kostenmatrix / 100
+                        ggr_skim.fill(0)
+                        costs = (park_origin_car_distance_matrix * (var_car_rate + road_pricing) + cost_origin_park_and_ov)
+                        if additional_costs:
+                            costs += additional_cost_matrix / 100
 
-                        GGRskim = PplusRherkomsttijdmatrix + factor * kosten
+                        ggr_skim = park_origin_time_matrix + factor * costs
                         key = DataKey(id='PplusRherkomst',
-                                      part_of_day=ds,
-                                      income=ink,
-                                      hub_name=Hubnaam,
-                                      motive=mot,
+                                      part_of_day=pod,
+                                      income=income_level,
+                                      hub_name=hub_name,
+                                      motive=motive,
                                       regime=regime)
-                        ervaren_reistijd.set(key, GGRskim.copy())
+                        generalised_travel_time.set(key, ggr_skim.copy())
 
-    return ervaren_reistijd
+    return generalised_travel_time

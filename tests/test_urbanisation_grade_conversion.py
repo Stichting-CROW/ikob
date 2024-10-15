@@ -2,7 +2,7 @@ import pathlib
 import numpy as np
 
 import pytest
-from ikob.datasource import read_parkeerzoektijden
+from ikob.datasource import read_parking_times
 from ikob.ikobconfig import getConfigFromArgs
 from ikob.utils import read_csv_int
 from ikob.urbanisation_grade_to_parking_times import (
@@ -26,15 +26,15 @@ def test_generate_parkeerzoektijden():
 
     # Read test file on disk given in configurationf file.
     config = getConfigFromArgs(project_file)
-    assert np.all(reference == read_parkeerzoektijden(config))
+    assert np.all(reference == read_parking_times(config))
 
     # Remove path from config and fall back to expected location.
     del config["skims"]["parkeerzoektijden_bestand"]
-    assert np.all(reference == read_parkeerzoektijden(config))
+    assert np.all(reference == read_parking_times(config))
 
     # Set config to unkown path, trigger conversion on the fly.
     config["skims"]["parkeerzoektijden_bestand"] = "unset"
-    assert np.all(reference == read_parkeerzoektijden(config))
+    assert np.all(reference == read_parking_times(config))
 
 
 def test_assert_failed_parkeerzoektijden_conversion():
@@ -49,4 +49,4 @@ def test_assert_failed_parkeerzoektijden_conversion():
     config["project"]["paden"]["segs_directory"] = "unset"
 
     with pytest.raises(AssertionError):
-        _ = read_parkeerzoektijden(config)
+        _ = read_parking_times(config)

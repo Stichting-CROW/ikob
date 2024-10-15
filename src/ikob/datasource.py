@@ -36,7 +36,7 @@ def read_csv_from_config(config, key: str, id: str, type_caster=float):
     return utils.read_csv(csv_path, type_caster)
 
 
-def read_parkeerzoektijden(config):
+def read_parking_times(config):
     """Read parkeerzoektijden from disk.
 
     When the parkeerzoektijden file is not present, it is attempted
