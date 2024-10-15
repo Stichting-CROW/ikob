@@ -1,4 +1,4 @@
-import ikob.Routines as Routines
+import ikob.utils as utils
 import logging
 import os
 import pathlib
@@ -6,7 +6,7 @@ import enum
 from typing import Optional
 from numpy.typing import NDArray
 from dataclasses import dataclass
-from ikob.stedelijkheidsgraad_to_parkeerzoektijden import stedelijkheid_to_parkeerzoektijd
+from ikob.urbanisation_grade_to_parking_times import stedelijkheid_to_parkeerzoektijd
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def read_csv_from_config(config, key: str, id: str, type_caster=float):
         csv_path = csv_path["bestand"]
 
     csv_path = pathlib.Path(csv_path)
-    return Routines.csvlezen(csv_path, type_caster)
+    return utils.csvlezen(csv_path, type_caster)
 
 
 def read_parkeerzoektijden(config):
@@ -53,7 +53,7 @@ def read_parkeerzoektijden(config):
 
     if parkeertijden_path.exists():
         logging.info("Reading parkeerzoektijden: '%s'", parkeertijden_path)
-        return Routines.csvintlezen(parkeertijden_path)
+        return utils.csvintlezen(parkeertijden_path)
 
     stedelijkheid_path = segs_dir / "Stedelijkheidsgraad.csv"
     assert stedelijkheid_path.exists(), (
@@ -63,7 +63,7 @@ def read_parkeerzoektijden(config):
 
     msg = "Generating parkeerzoektijden from '%s'"
     logger.info(msg, stedelijkheid_path)
-    stedelijkheidsgraad = Routines.csvintlezen(stedelijkheid_path)
+    stedelijkheidsgraad = utils.csvintlezen(stedelijkheid_path)
     return stedelijkheid_to_parkeerzoektijd(stedelijkheidsgraad)
 
 
@@ -80,7 +80,7 @@ class SkimsSource:
         The ``type_caster`` allows to cast the data to a desired type.
         """
         path = (self.skims_dir / dagsoort / id).with_suffix(".csv")
-        return Routines.csvlezen(path, type_caster=type_caster)
+        return utils.csvlezen(path, type_caster=type_caster)
 
 
 class SegsSource:
@@ -125,15 +125,15 @@ class SegsSource:
             path = self._segs_input_dir(id, jaar, scenario)
 
         path = path.with_suffix(".csv")
-        return Routines.csvlezen(path, type_caster=type_caster)
+        return utils.csvlezen(path, type_caster=type_caster)
 
     def write_csv(self, data, id, header, group="", jaar="", modifier="", scenario=""):
         path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".csv")
-        return Routines.csvwegschrijven(data, path, header=header)
+        return utils.csvwegschrijven(data, path, header=header)
 
     def write_xlsx(self, data, id, header, group="", jaar="", modifier="", scenario=""):
         path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".xlsx")
-        return Routines.xlswegschrijven(data, path, header)
+        return utils.xlswegschrijven(data, path, header)
 
 
 class DataType(enum.Enum):
@@ -218,13 +218,13 @@ class DataSource:
 
     def read_csv(self, key: DataKey, type_caster=float) -> NDArray:
         path = self._make_file_path(key).with_suffix(".csv")
-        return Routines.csvlezen(path, type_caster=type_caster)
+        return utils.csvlezen(path, type_caster=type_caster)
 
     def write_csv(self, data, key: DataKey, header=[]):
         assert isinstance(key, DataKey)
         path = self._make_file_path(key).with_suffix(".csv")
-        return Routines.csvwegschrijven(data, path, header=header)
+        return utils.csvwegschrijven(data, path, header=header)
 
     def write_xlsx(self, data, key: DataKey, header=[]):
         path = self._make_file_path(key).with_suffix(".xlsx")
-        return Routines.xlswegschrijven(data, path, header)
+        return utils.xlswegschrijven(data, path, header)

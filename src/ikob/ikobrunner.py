@@ -4,19 +4,17 @@ from tkinter import Button
 from tkinter import filedialog, messagebox
 from ikob.config import widgets
 
-# from ConfiguratieDefinitie import *
 from ikob.ikobconfig import loadConfig, getConfigFromArgs
-
 from ikob.datasource import DataType, DataSource
 
-from ikob.Ervarenreistijdberekenen import ervaren_reistijd_berekenen
-from ikob.Verdelingovergroepen import verdeling_over_groepen
-from ikob.Gewichtenberekenenenkelscenarios import gewichten_berekenen_enkel_scenarios
-from ikob.Gewichtenberekenencombis import gewichten_berekenen_combis
-from ikob.Ontplooiingsmogelijkhedenechteinwoners import ontplooingsmogelijkheden_echte_inwoners
-from ikob.Potentiebedrijven import potentie_bedrijven
-from ikob.concurrentie import concurrentie_om_arbeidsplaatsen
-from ikob.concurrentie import concurrentie_om_inwoners
+from ikob.generalised_travel_time import ervaren_reistijd_berekenen
+from ikob.group_distribution import verdeling_over_groepen
+from ikob.single_weights import gewichten_berekenen_enkel_scenarios
+from ikob.combined_weights import gewichten_berekenen_combis
+from ikob.deployment_opportunities import ontplooingsmogelijkheden_echte_inwoners
+from ikob.possible_companies import potentie_bedrijven
+from ikob.competition import concurrentie_om_arbeidsplaatsen
+from ikob.competition import concurrentie_om_inwoners
 
 logger = logging.getLogger(__name__)
 

@@ -5,9 +5,9 @@ import re
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from ikob.config import validate, build
-from ikob.ConfiguratieDefinitie import StandaardConfiguratie
-from ikob.ConfiguratieDefinitie import StandaardConfiguratieDefinitie
-from ikob.ConfiguratieDefinitie import valideerConfiguratie, projectNaam
+from ikob.configuration_definition import StandaardConfiguratie
+from ikob.configuration_definition import StandaardConfiguratieDefinitie
+from ikob.configuration_definition import valideerConfiguratie, projectNaam
 
 # Interface: load/save config files.
 

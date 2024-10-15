@@ -1,9 +1,9 @@
-import ikob.Routines as Routines
+import ikob.utils as utils
 
 
 def concurrentie(Matrix, Beroepsbevolking, Bereik, inkgr, inkgroepen):
     Dezegroeplijst = []
-    Beroepsbevolkingtrans = Routines.transponeren(Beroepsbevolking)
+    Beroepsbevolkingtrans = utils.transponeren(Beroepsbevolking)
     for i in range(len(Matrix)):
         Gewogenmatrix = []
         for Getal1, Getal2, Getal3 in zip(Matrix[i], Bereik, Beroepsbevolkingtrans[inkgroepen.index(inkgr)]):

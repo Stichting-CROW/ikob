@@ -1,6 +1,6 @@
-import ikob.Routines as Routines
-import ikob.Berekeningen as Berekeningen
-import ikob.Constantengenerator as Constantengenerator
+import ikob.utils as utils
+import ikob.calculations as Berekeningen
+import ikob.constants as Constantengenerator
 from tkinter import filedialog
 from tkinter import *
 import os
@@ -19,12 +19,12 @@ Jaar=config['project']['jaar']
 
 Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
 Inwonersaantalfilenaam = os.path.join (SEGSdirectory, f'Beroepsbevolking{Jaar}')
-Inkomensverdeling = Routines.csvintlezen(Inkomensverdelingsfilenaam,aantal_lege_regels=1)
-Inwoners = Routines.csvintlezen(Inwonersaantalfilenaam)
+Inkomensverdeling = utils.csvintlezen(Inkomensverdelingsfilenaam,aantal_lege_regels=1)
+Inwoners = utils.csvintlezen(Inwonersaantalfilenaam)
 Inwonersperzone = []
 for i in range (len(Inwoners)):
     Inwonersperzone.append([])
     for j in range (len(Inkomensverdeling[0])):
         Inwonersperzone[i].append(int(Inwoners[i]*Inkomensverdeling[i][j]/100))
 Echteinwoners_zone_klassefile = os.path.join (SEGSdirectory, f'Inwoners_per_klasse{Jaar}')
-Routines.csvwegschrijven(Inwonersperzone,Echteinwoners_zone_klassefile)
+utils.csvwegschrijven(Inwonersperzone,Echteinwoners_zone_klassefile)

@@ -1,8 +1,8 @@
 import logging
-import ikob.Routines as Routines
+import ikob.utils as utils
 import numpy as np
 
-from ikob.concurrentie import get_gewichten_matrix
+from ikob.competition import get_gewichten_matrix
 from ikob.datasource import DataKey, DataType, DataSource, SegsSource
 
 logger = logging.getLogger(__name__)
@@ -50,11 +50,11 @@ def ontplooingsmogelijkheden_echte_inwoners(config,
     if 'winkelnietdagelijksonderwijs' in motieven:
         Beroepsbevolkingperklasse = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
         Arbeidsplaats = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
+        Arbeidsplaatsen = utils.transponeren(Arbeidsplaats)
     else:
         Beroepsbevolkingperklasse = segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
         Arbeidsplaats = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = Routines.transponeren(Arbeidsplaats)
+        Arbeidsplaatsen = utils.transponeren(Arbeidsplaats)
 
     Beroepsbevolkingtotalen = [sum(bbpk) for bbpk in Beroepsbevolkingperklasse]
 
@@ -69,7 +69,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config,
             if Beroepsbevolkingtotalen[i] > 0:
                 Inkomensverdeling[i][j] = Beroepsbevolkingperklasse[i][j]/Beroepsbevolkingtotalen[i]
 
-    Inkomenstransverdeling = Routines.transponeren(Inkomensverdeling)
+    Inkomenstransverdeling = utils.transponeren(Inkomensverdeling)
 
     potenties = DataSource(config, DataType.BESTEMMINGEN)
 
@@ -88,7 +88,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config,
                 Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", type_caster=float, scenario=scenario)
 
             Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
-            Verdelingstransmatrix = Routines.transponeren(Verdelingsmatrix)
+            Verdelingstransmatrix = utils.transponeren(Verdelingsmatrix)
 
             for ds in dagsoort:
                 for i_inkgr, inkgr in enumerate(inkgroepen):
@@ -109,7 +109,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config,
                             else:
                                 verdeling = Verdelingstransmatrix
 
-                            ink = Routines.inkomensgroepbepalen(gr)
+                            ink = utils.inkomensgroepbepalen(gr)
                             if inkgr == ink or inkgr == 'alle':
                                 K = percentageelektrisch.get(inkgr)/100
                                 Matrix = get_gewichten_matrix(gewichten_enkel, gewichten_combi, gr, mod, mot, regime, ds, ink, inkgr, K)
@@ -126,7 +126,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config,
                         potenties.set(key, potentie_sum.copy())
                         Generaaltotaal_potenties.append(potenties.get(key))
 
-                    Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
+                    Generaaltotaaltrans = utils.transponeren(Generaaltotaal_potenties)
                     key = DataKey('Ontpl_totaal',
                                   dagsoort=ds,
                                   groep=abg,
@@ -149,7 +149,7 @@ def ontplooingsmogelijkheden_echte_inwoners(config,
                         Totaalrij = potenties.get(key)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
-                        Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
+                        Generaaltotaaltrans = utils.transponeren(Generaalmatrix)
                     else:
                         Generaaltotaaltrans = Generaalmatrix
                     for i in range(len(Beroepsbevolkingperklasse)):

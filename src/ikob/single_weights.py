@@ -1,6 +1,6 @@
 import logging
 import math
-import ikob.Constantengenerator as Constantengenerator
+import ikob.constants as Constantengenerator
 import numpy as np
 from ikob.datasource import DataSource, DataKey, DataType
 

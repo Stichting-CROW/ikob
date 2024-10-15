@@ -1,4 +1,4 @@
-import ikob.Routines as Routines
+import ikob.utils as utils
 import numpy as np
 import logging
 from ikob.datasource import DataKey, DataSource, DataType, SkimsSource, SegsSource
@@ -98,9 +98,9 @@ def ervaren_reistijd_berekenen(config) -> DataSource:
             if Parkeerkosten:
                 raise NotImplementedError("Needs to be replaced with datasource reading...")
                 Parkeerkostenfile = Parkeerkostenfile.replace('.csv', '')
-                Parkeerkostenlijst = Routines.csvintlezen(Parkeerkostenfile, aantal_lege_regels=0)
+                Parkeerkostenlijst = utils.csvintlezen(Parkeerkostenfile, aantal_lege_regels=0)
             else:
-                Parkeerkostenlijst = Routines.lijstvolnullen(len(OVafstandmatrix))
+                Parkeerkostenlijst = utils.lijstvolnullen(len(OVafstandmatrix))
 
             if Ketens:
                 Pplusfietstijdmatrix = skims_reader.read(f'Pplusfiets_{Hubnaam}_Tijd', ds)
