@@ -10,7 +10,7 @@ def get_gewichten_matrix(gewichten_enkel: DataSource,
                          gewichten_combi: DataSource,
                          gr, mod, mot, regime, ds, ink, inkgr,
                          ratio_electric: float):
-    vk = utils.vindvoorkeur(gr, mod)
+    vk = utils.find_preference(gr, mod)
 
     if mod == 'Fiets' or mod == 'EFiets':
         vkfiets = 'Fiets' if vk == 'Fiets' else ''
@@ -21,8 +21,8 @@ def get_gewichten_matrix(gewichten_enkel: DataSource,
                       voorkeur=vkfiets)
         return gewichten_enkel.get(key)
 
-    enkele_groep = utils.enkelegroep(mod, gr)
-    combi_groep = utils.combigroep(mod, gr)
+    enkele_groep = utils.single_group(mod, gr)
+    combi_groep = utils.combined_group(mod, gr)
 
     if mod == 'Auto' and 'WelAuto' in gr or combi_groep[0] == 'A':
         subtopic = '' if mod == 'Auto' else 'combinaties'
@@ -184,7 +184,7 @@ def concurrentie(config,
                             verdeling = Verdelingsmatrix[:, i_gr]
                             inkomens_verdeling = Inkomensverdeling[:, i_inkgr]
 
-                            ink = utils.inkomensgroepbepalen(gr)
+                            ink = utils.group_income_level(gr)
                             if inkgr == ink or inkgr == 'alle':
                                 K = percentageelektrisch.get(inkgr)/100
                                 Matrix = get_gewichten_matrix(gewichten_enkel, gewichten_combi, gr, mod, mot, regime, ds, ink, inkgr, K)
@@ -201,7 +201,7 @@ def concurrentie(config,
                         concurrenties.set(key, concurrentie_totaal.copy())
 
                         Generaaltotaal_potenties.append(concurrenties.get(key))
-                        Generaaltotaaltrans = utils.transponeren(Generaaltotaal_potenties)
+                        Generaaltotaaltrans = utils.transpose(Generaaltotaal_potenties)
                         key = DataKey(id='Ontpl_conc',
                                       dagsoort=ds,
                                       subtopic=subtopic_concurrentie,
@@ -222,7 +222,7 @@ def concurrentie(config,
                                       inkomen=inkgr,
                                       subtopic=subtopic_concurrentie)
                         Generaalmatrix.append(concurrenties.get(key))
-                        Generaaltotaaltrans = utils.transponeren(Generaalmatrix)
+                        Generaaltotaaltrans = utils.transpose(Generaalmatrix)
 
                     for i in range(len(Inwonersperklasse)):
                         Generaalmatrixproduct.append([])

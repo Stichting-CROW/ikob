@@ -3,7 +3,7 @@ import ikob.utils as utils
 
 def concurrentie(Matrix, Beroepsbevolking, Bereik, inkgr, inkgroepen):
     Dezegroeplijst = []
-    Beroepsbevolkingtrans = utils.transponeren(Beroepsbevolking)
+    Beroepsbevolkingtrans = utils.transpose(Beroepsbevolking)
     for i in range(len(Matrix)):
         Gewogenmatrix = []
         for Getal1, Getal2, Getal3 in zip(Matrix[i], Bereik, Beroepsbevolkingtrans[inkgroepen.index(inkgr)]):

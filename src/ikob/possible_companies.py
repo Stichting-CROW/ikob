@@ -82,11 +82,11 @@ def possible_companies(config,
     for i in range (len(Beroepsbevolking_inkomensklasse)):
         Beroepsbevolking.append(sum(Beroepsbevolking_inkomensklasse[i]))
     #Volwassenenfilenaam = os.path.join(SEGSdirectory, f'Beroepsbevolking{scenario}')
-    #Volwassenen = utils.csvintlezen (Volwassenenfilenaam)
+    #Volwassenen = utils.read_csv_int (Volwassenenfilenaam)
     logger.debug('Lengte inwoners is %d', len(Beroepsbevolking))
 
     Inwoners = inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking)
-    Inwonerstransmatrix = utils.transponeren(Inwoners)
+    Inwonerstransmatrix = utils.transpose(Inwoners)
 
     herkomsten = DataSource(config, DataType.HERKOMSTEN)
 
@@ -108,11 +108,11 @@ def possible_companies(config,
                 for inkgr in inkgroepen:
                     Generaaltotaal_potenties = []
                     for mod in modaliteiten:
-                        Bijhoudlijst = utils.lijstvolnullen(len(Beroepsbevolking))
+                        Bijhoudlijst = utils.zeros(len(Beroepsbevolking))
                         for gr in Groepen:
-                            ink = utils.inkomensgroepbepalen ( gr )
+                            ink = utils.group_income_level ( gr )
                             if inkgr == ink or inkgr == 'alle':
-                                vk = utils.vindvoorkeur (gr, mod)
+                                vk = utils.find_preference (gr, mod)
                                 if mod == 'Fiets' or mod == 'EFiets':
                                     if vk == 'Fiets':
                                         vkklad = 'Fiets'
@@ -130,7 +130,7 @@ def possible_companies(config,
                                     for i in range(0, len(Fietsmatrix) ):
                                         Bijhoudlijst[i]+= round(Dezegroeplijst[i])
                                 elif mod == 'Auto':
-                                    String = utils.enkelegroep(mod, gr)
+                                    String = utils.single_group(mod, gr)
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
                                             key = DataKey(f'{String}_vk',
@@ -170,7 +170,7 @@ def possible_companies(config,
                                         logger.debug('Bijhoudlijst niet fossiel is: %s', Bijhoudlijst)
 
                                 elif mod == 'OV':
-                                    String = utils.enkelegroep (mod,gr)
+                                    String = utils.single_group (mod,gr)
                                     key = DataKey(f'{String}_vk',
                                                   dagsoort=ds,
                                                   voorkeur=vk,
@@ -183,7 +183,7 @@ def possible_companies(config,
                                     for i in range(0, len(Matrix) ):
                                         Bijhoudlijst[i]+= round(Dezegroeplijst[i])
                                 else:
-                                    String = utils.combigroep(mod, gr)
+                                    String = utils.combined_group(mod, gr)
                                     logger.debug('de gr is %s', gr)
                                     logger.debug('de string is %s', String)
                                     if String[0] == 'A':
@@ -239,7 +239,7 @@ def possible_companies(config,
                                   inkomen=inkgr,
                                   motief=mot)
 
-                    herkomsten_totaal = utils.transponeren(Generaaltotaal_potenties)
+                    herkomsten_totaal = utils.transpose(Generaaltotaal_potenties)
                     herkomsten.write_csv(herkomsten_totaal, key, header=headstring)
                     herkomsten.write_xlsx(herkomsten_totaal, key, header=headstringExcel)
 
@@ -258,7 +258,7 @@ def possible_companies(config,
                         Totaalrij = herkomsten.get(key)
 
                         Generaalmatrix.append(Totaalrij)
-                    Generaaltotaaltrans = utils.transponeren(Generaalmatrix)
+                    Generaaltotaaltrans = utils.transpose(Generaalmatrix)
                     for i in range (len(Arbeidsplaatsenperklasse)):
                         Generaalmatrixproduct.append([])
                         for j in range (len(Arbeidsplaatsenperklasse[0])):

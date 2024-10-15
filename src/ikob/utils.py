@@ -3,15 +3,15 @@ import pathlib
 import numpy as np
 
 
-def lijstvolnullen(lengte):
+def zeros(lengte):
     return np.zeros(lengte)
 
 
-def transponeren(matrix):
+def transpose(matrix):
     return np.array(matrix).T
 
 
-def xlswegschrijven(matrix, filenaam, header):
+def write_xls(matrix, filenaam, header):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
@@ -24,25 +24,7 @@ def xlswegschrijven(matrix, filenaam, header):
     workbook.close()
 
 
-def xlswegschrijven_totalen(matrix, header, getallenlijst, filenaam, aantal_zones=1425):
-    if not isinstance(filenaam, pathlib.Path):
-        filenaam = pathlib.Path(filenaam)
-
-    transmatrix = transponeren(matrix)
-    workbook = xlsxwriter.Workbook(filenaam)
-    worksheet = workbook.add_worksheet()
-    worksheet.write_row(0, 0, header)
-    worksheet.write_column(1, 0, getallenlijst)
-    for r in range(0, 1425):
-        worksheet.write_row(r + 1, 1, transmatrix[r])
-    workbook.close()
-
-
-def getallenlijst_maken(aantal_getallen):
-    return list(range(1, aantal_getallen + 1))
-
-
-def csvlezen(filenaam, type_caster=float):
+def read_csv(filenaam, type_caster=float):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
@@ -60,15 +42,15 @@ def csvlezen(filenaam, type_caster=float):
     return matrix
 
 
-def csvintlezen(filenaam):
-    return csvlezen(filenaam, type_caster=int)
+def read_csv_int(filenaam):
+    return read_csv(filenaam, type_caster=int)
 
 
-def csvfloatlezen(filenaam):
-    return csvlezen(filenaam, type_caster=float)
+def read_csv_float(filenaam):
+    return read_csv(filenaam, type_caster=float)
 
 
-def csvwegschrijven(matrix, filenaam, header=[]):
+def write_csv(matrix, filenaam, header=[]):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
@@ -91,7 +73,7 @@ def csvwegschrijven(matrix, filenaam, header=[]):
                comments='')
 
 
-def inkomensgroepbepalen(naam):
+def group_income_level(naam):
     if naam[-4:] == 'hoog':
         if naam[-10:] == 'middelhoog':
             return 'middelhoog'
@@ -106,7 +88,7 @@ def inkomensgroepbepalen(naam):
         return ''
 
 
-def vindvoorkeur(naam, mod):
+def find_preference(naam, mod):
     if 'vk' in naam:
         Beginvk = naam.find('vk')
         if naam[Beginvk + 2] == "A":
@@ -133,7 +115,7 @@ def vindvoorkeur(naam, mod):
         return ''
 
 
-def enkelegroep(mod, gr):
+def single_group(mod, gr):
     if mod == 'Auto':
         if 'GratisAuto' in gr:
             return 'GratisAuto'
@@ -150,7 +132,7 @@ def enkelegroep(mod, gr):
             return 'OV'
 
 
-def combigroep(mod, gr):
+def combined_group(mod, gr):
     string = ''
     if 'Auto' in mod:
         if 'GratisAuto' in gr:

@@ -98,9 +98,9 @@ def generalised_travel_time(config) -> DataSource:
             if Parkeerkosten:
                 raise NotImplementedError("Needs to be replaced with datasource reading...")
                 Parkeerkostenfile = Parkeerkostenfile.replace('.csv', '')
-                Parkeerkostenlijst = utils.csvintlezen(Parkeerkostenfile, aantal_lege_regels=0)
+                Parkeerkostenlijst = utils.read_csv_int(Parkeerkostenfile, aantal_lege_regels=0)
             else:
-                Parkeerkostenlijst = utils.lijstvolnullen(len(OVafstandmatrix))
+                Parkeerkostenlijst = utils.zeros(len(OVafstandmatrix))
 
             if Ketens:
                 Pplusfietstijdmatrix = skims_reader.read(f'Pplusfiets_{Hubnaam}_Tijd', ds)

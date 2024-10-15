@@ -44,7 +44,7 @@ Parkeerkostenfile = skims_config['parkeerkosten']['bestand']
 
 if Additionele_kosten:
     Additionele_kostenfile=Additionele_kostenfile.replace('.csv','')
-    Additionele_kostenmatrix = utils.csvintlezen(Additionele_kostenfile , aantal_lege_regels=0)
+    Additionele_kostenmatrix = utils.read_csv_int(Additionele_kostenfile , aantal_lege_regels=0)
 
 # Vaste waarden
 inkomens =  ['laag', 'middellaag', 'middelhoog', 'hoog']
@@ -53,7 +53,7 @@ OVkmtarief = float(OVkmtarief)/100
 starttarief = float(starttarief)/100
 varautotarief = float(varautotarief)/100
 Parkeerzoektijdfile=Parkeerzoektijdfile.replace('.csv','')
-Parkeertijdlijst = utils.csvlezen (Parkeerzoektijdfile, aantal_lege_regels=1)
+Parkeertijdlijst = utils.read_csv (Parkeerzoektijdfile, aantal_lege_regels=1)
 print (Projectbestandsnaam)
 Projectdirectory = os.path.join (Basisdirectory, Projectbestandsnaam)
 print (Projectdirectory)
@@ -80,39 +80,39 @@ for ds in dagsoort:
     os.makedirs(Uitvoerdirectory, exist_ok=True)
     print (Uitvoerdirectory)
     Autotijdfilenaam = os.path.join(Invoerdirectory, f'Auto_Tijd')
-    Autotijdmatrix = utils.csvfloatlezen(Autotijdfilenaam, aantal_lege_regels=0)
+    Autotijdmatrix = utils.read_csv_float(Autotijdfilenaam, aantal_lege_regels=0)
     Autoafstandfilenaam = os.path.join(Invoerdirectory, f'Auto_Afstand')
-    Autoafstandmatrix = utils.csvfloatlezen(Autoafstandfilenaam, aantal_lege_regels=0)
+    Autoafstandmatrix = utils.read_csv_float(Autoafstandfilenaam, aantal_lege_regels=0)
     Fietstijdfilenaam = os.path.join(Invoerdirectory, f'Fiets_Tijd')
-    Fietstijdmatrix = utils.csvfloatlezen (Fietstijdfilenaam, aantal_lege_regels=0)
+    Fietstijdmatrix = utils.read_csv_float (Fietstijdfilenaam, aantal_lege_regels=0)
     OVtijdfilenaam = os.path.join(Invoerdirectory, f'OV_Tijd')
-    OVtijdmatrix = utils.csvfloatlezen(OVtijdfilenaam, aantal_lege_regels=0)
+    OVtijdmatrix = utils.read_csv_float(OVtijdfilenaam, aantal_lege_regels=0)
     OVafstandfilenaam = os.path.join(Invoerdirectory, f'OV_Afstand')
-    OVafstandmatrix = utils.csvfloatlezen(OVafstandfilenaam, aantal_lege_regels=0)
+    OVafstandmatrix = utils.read_csv_float(OVafstandfilenaam, aantal_lege_regels=0)
     if Parkeerkosten:
         Parkeerkostenfile = Parkeerkostenfile.replace ( '.csv', '' )
-        Parkeerkostenlijst = utils.csvintlezen ( Parkeerkostenfile, aantal_lege_regels=0 )
+        Parkeerkostenlijst = utils.read_csv_int ( Parkeerkostenfile, aantal_lege_regels=0 )
     else:
-        Parkeerkostenlijst = utils.lijstvolnullen ( len ( OVafstandmatrix ) )
+        Parkeerkostenlijst = utils.zeros ( len ( OVafstandmatrix ) )
     print ( Parkeerkostenlijst )
 
     if Ketens :
         Pplusfietstijdfilenaam = os.path.join(Invoerdirectory, f'Pplusfiets_{Hubnaam}_Tijd')
-        Pplusfietstijdmatrix = utils.csvfloatlezen(Pplusfietstijdfilenaam, aantal_lege_regels=0)
+        Pplusfietstijdmatrix = utils.read_csv_float(Pplusfietstijdfilenaam, aantal_lege_regels=0)
         Pplusfietsafstandfilenaam = os.path.join(Invoerdirectory, f'Pplusfiets_{Hubnaam}_Afstand_Auto')
-        Pplusfietsafstandmatrix = utils.csvfloatlezen(Pplusfietsafstandfilenaam, aantal_lege_regels=0)
+        Pplusfietsafstandmatrix = utils.read_csv_float(Pplusfietsafstandfilenaam, aantal_lege_regels=0)
         PplusRbestemmingstijdfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_bestemmings_Tijd')
-        PplusRbestemmingstijdmatrix = utils.csvfloatlezen(PplusRbestemmingstijdfilenaam, aantal_lege_regels=0)
+        PplusRbestemmingstijdmatrix = utils.read_csv_float(PplusRbestemmingstijdfilenaam, aantal_lege_regels=0)
         PplusRherkomsttijdfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_herkomst_Tijd')
-        PplusRherkomsttijdmatrix = utils.csvfloatlezen(PplusRherkomsttijdfilenaam, aantal_lege_regels=0)
+        PplusRherkomsttijdmatrix = utils.read_csv_float(PplusRherkomsttijdfilenaam, aantal_lege_regels=0)
         PplusRbestemmingsOVafstandfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_bestemmings_Afstand_OV')
-        PplusRbestemmingsOVafstandmatrix = utils.csvfloatlezen(PplusRbestemmingsOVafstandfilenaam, aantal_lege_regels=0)
+        PplusRbestemmingsOVafstandmatrix = utils.read_csv_float(PplusRbestemmingsOVafstandfilenaam, aantal_lege_regels=0)
         PplusRbestemmingsautoafstandfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_bestemmings_Afstand_Auto')
-        PplusRbestemmingsautoafstandmatrix = utils.csvfloatlezen(PplusRbestemmingsautoafstandfilenaam, aantal_lege_regels=0)
+        PplusRbestemmingsautoafstandmatrix = utils.read_csv_float(PplusRbestemmingsautoafstandfilenaam, aantal_lege_regels=0)
         PplusRherkomstOVafstandfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_herkomst_Afstand_OV')
-        PplusRherkomstOVafstandmatrix = utils.csvfloatlezen(PplusRherkomstOVafstandfilenaam, aantal_lege_regels=0)
+        PplusRherkomstOVafstandmatrix = utils.read_csv_float(PplusRherkomstOVafstandfilenaam, aantal_lege_regels=0)
         PplusRherkomstautoafstandfilenaam = os.path.join(Invoerdirectory, f'PplusR_{Hubnaam}_herkomst_Afstand_Auto')
-        PplusRherkomstautoafstandmatrix = utils.csvfloatlezen(PplusRherkomstautoafstandfilenaam, aantal_lege_regels=0)
+        PplusRherkomstautoafstandmatrix = utils.read_csv_float(PplusRherkomstautoafstandfilenaam, aantal_lege_regels=0)
 
 
 
@@ -161,7 +161,7 @@ for ds in dagsoort:
 
 
     Uitvoerfilenaam = os.path.join(Uitvoerdirectory, 'Fiets')
-    utils.csvwegschrijven(GGRskim,Uitvoerfilenaam)
+    utils.write_csv(GGRskim,Uitvoerfilenaam)
 
     for ink in inkomens:
         GGRskim = []
@@ -179,7 +179,7 @@ for ds in dagsoort:
                                       (varautotarief+kmheffing) + Parkeerkostenlijst[j]/100)))
 
         Uitvoerfilenaam = os.path.join(Uitvoerdirectory, f'Auto_{ink}')
-        utils.csvwegschrijven(GGRskim, Uitvoerfilenaam)
+        utils.write_csv(GGRskim, Uitvoerfilenaam)
 
 
         #Dan het OV
@@ -196,7 +196,7 @@ for ds in dagsoort:
                     GGRskim[i].append(9999)
 
         Uitvoerfilenaam = os.path.join(Uitvoerdirectory, f'OV_{ink}')
-        utils.csvwegschrijven(GGRskim,Uitvoerfilenaam)
+        utils.write_csv(GGRskim,Uitvoerfilenaam)
 
         #Dan geen auto (rijbewijs)
         for sga in soortgeenauto :
@@ -214,7 +214,7 @@ for ds in dagsoort:
                         GGRskim[i].append(int(totaleTijd + Vermenigvuldigingsfactor * totaleKosten))
 
             Uitvoerfilenaam = os.path.join(Uitvoerdirectory, f'{sga}_{ink}')
-            utils.csvwegschrijven(GGRskim, Uitvoerfilenaam)
+            utils.write_csv(GGRskim, Uitvoerfilenaam)
 
         # Nu GratisAuto
         for ink in inkomens:
@@ -232,7 +232,7 @@ for ds in dagsoort:
                         GGRskim[i].append ( int ( totaleTijd + Vermenigvuldigingsfactor * Autoafstandmatrix[i][j] *
                                                 kmheffing + Parkeerkostenlijst[j]/100) )
             Uitvoerfilenaam = os.path.join ( Uitvoerdirectory, f'GratisAuto_{ink}' )
-            utils.csvwegschrijven ( GGRskim, Uitvoerfilenaam )
+            utils.write_csv ( GGRskim, Uitvoerfilenaam )
 
         #Nu GratisOV
         GGRskim = []
@@ -245,7 +245,7 @@ for ds in dagsoort:
                     GGRskim[i].append(9999)
 
         Uitvoerfilenaam = os.path.join(Uitvoerdirectory, 'GratisOV')
-        utils.csvwegschrijven(GGRskim,Uitvoerfilenaam)
+        utils.write_csv(GGRskim,Uitvoerfilenaam)
 
         #Nu de ketens
         #Eerst P+Fiets
@@ -265,7 +265,7 @@ for ds in dagsoort:
                                               varautotarief+kmheffing))
 
                 Uitvoerfilenaam = os.path.join(Uitvoerdirectory, f'Pplusfiets_{Hubnaam}_{ink}')
-                utils.csvwegschrijven(GGRskim, Uitvoerfilenaam)
+                utils.write_csv(GGRskim, Uitvoerfilenaam)
 
                 # Dan P+R
 
@@ -286,7 +286,7 @@ for ds in dagsoort:
                                     KostenbestemmingsPplusROV[i][j] )))
 
                 Uitvoerfilenaam = os.path.join ( Uitvoerdirectory, f'PplusRbestemmings_{Hubnaam}_{ink}' )
-                utils.csvwegschrijven ( GGRskim, Uitvoerfilenaam )
+                utils.write_csv ( GGRskim, Uitvoerfilenaam )
 
                 GGRskim = []
 
@@ -305,4 +305,4 @@ for ds in dagsoort:
                                     KostenherkomstPplusROV[i][j] )))
 
                 Uitvoerfilenaam = os.path.join ( Uitvoerdirectory, f'PplusRherkomst_{Hubnaam}_{ink}' )
-                utils.csvwegschrijven ( GGRskim, Uitvoerfilenaam )
+                utils.write_csv ( GGRskim, Uitvoerfilenaam )

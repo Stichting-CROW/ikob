@@ -50,11 +50,11 @@ def deployment_opportunities(config,
     if 'winkelnietdagelijksonderwijs' in motieven:
         Beroepsbevolkingperklasse = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
         Arbeidsplaats = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = utils.transponeren(Arbeidsplaats)
+        Arbeidsplaatsen = utils.transpose(Arbeidsplaats)
     else:
         Beroepsbevolkingperklasse = segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
         Arbeidsplaats = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = utils.transponeren(Arbeidsplaats)
+        Arbeidsplaatsen = utils.transpose(Arbeidsplaats)
 
     Beroepsbevolkingtotalen = [sum(bbpk) for bbpk in Beroepsbevolkingperklasse]
 
@@ -69,7 +69,7 @@ def deployment_opportunities(config,
             if Beroepsbevolkingtotalen[i] > 0:
                 Inkomensverdeling[i][j] = Beroepsbevolkingperklasse[i][j]/Beroepsbevolkingtotalen[i]
 
-    Inkomenstransverdeling = utils.transponeren(Inkomensverdeling)
+    Inkomenstransverdeling = utils.transpose(Inkomensverdeling)
 
     potenties = DataSource(config, DataType.BESTEMMINGEN)
 
@@ -88,7 +88,7 @@ def deployment_opportunities(config,
                 Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}_alleen_autobezit", type_caster=float, scenario=scenario)
 
             Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}", type_caster=float, scenario=scenario)
-            Verdelingstransmatrix = utils.transponeren(Verdelingsmatrix)
+            Verdelingstransmatrix = utils.transpose(Verdelingsmatrix)
 
             for ds in dagsoort:
                 for i_inkgr, inkgr in enumerate(inkgroepen):
@@ -109,7 +109,7 @@ def deployment_opportunities(config,
                             else:
                                 verdeling = Verdelingstransmatrix
 
-                            ink = utils.inkomensgroepbepalen(gr)
+                            ink = utils.group_income_level(gr)
                             if inkgr == ink or inkgr == 'alle':
                                 K = percentageelektrisch.get(inkgr)/100
                                 Matrix = get_gewichten_matrix(gewichten_enkel, gewichten_combi, gr, mod, mot, regime, ds, ink, inkgr, K)
@@ -126,7 +126,7 @@ def deployment_opportunities(config,
                         potenties.set(key, potentie_sum.copy())
                         Generaaltotaal_potenties.append(potenties.get(key))
 
-                    Generaaltotaaltrans = utils.transponeren(Generaaltotaal_potenties)
+                    Generaaltotaaltrans = utils.transpose(Generaaltotaal_potenties)
                     key = DataKey('Ontpl_totaal',
                                   dagsoort=ds,
                                   groep=abg,
@@ -149,7 +149,7 @@ def deployment_opportunities(config,
                         Totaalrij = potenties.get(key)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
-                        Generaaltotaaltrans = utils.transponeren(Generaalmatrix)
+                        Generaaltotaaltrans = utils.transpose(Generaalmatrix)
                     else:
                         Generaaltotaaltrans = Generaalmatrix
                     for i in range(len(Beroepsbevolkingperklasse)):

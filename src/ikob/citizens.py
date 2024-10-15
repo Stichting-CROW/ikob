@@ -19,12 +19,12 @@ Jaar=config['project']['jaar']
 
 Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
 Inwonersaantalfilenaam = os.path.join (SEGSdirectory, f'Beroepsbevolking{Jaar}')
-Inkomensverdeling = utils.csvintlezen(Inkomensverdelingsfilenaam,aantal_lege_regels=1)
-Inwoners = utils.csvintlezen(Inwonersaantalfilenaam)
+Inkomensverdeling = utils.read_csv_int(Inkomensverdelingsfilenaam,aantal_lege_regels=1)
+Inwoners = utils.read_csv_int(Inwonersaantalfilenaam)
 Inwonersperzone = []
 for i in range (len(Inwoners)):
     Inwonersperzone.append([])
     for j in range (len(Inkomensverdeling[0])):
         Inwonersperzone[i].append(int(Inwoners[i]*Inkomensverdeling[i][j]/100))
 Echteinwoners_zone_klassefile = os.path.join (SEGSdirectory, f'Inwoners_per_klasse{Jaar}')
-utils.csvwegschrijven(Inwonersperzone,Echteinwoners_zone_klassefile)
+utils.write_csv(Inwonersperzone,Echteinwoners_zone_klassefile)
