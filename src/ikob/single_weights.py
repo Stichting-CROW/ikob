@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def gewichtenberekenen(skim, mod, vk, mot):
-    alpha, omega, weging = Constantengenerator.alomwerk(mod, vk, mot)
+    alpha, omega, scaling = Constantengenerator.work_constants(mod, vk, mot)
     Gewichtenmatrix = np.zeros((len(skim), len(skim)))
 
     for r in range(0, len(skim)):
@@ -16,7 +16,7 @@ def gewichtenberekenen(skim, mod, vk, mot):
             ervaren_reistijd = skim[r][k]
 
             if ervaren_reistijd < 180:
-                reistijdwaarde = (1 / (1 + math.exp((-omega + ervaren_reistijd)*alpha)))*weging
+                reistijdwaarde = (1 / (1 + math.exp((-omega + ervaren_reistijd)*alpha)))*scaling
             else:
                 reistijdwaarde = 0
 

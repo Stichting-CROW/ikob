@@ -1,78 +1,78 @@
-def alomwerk(mod, voorkeur, motief):
-    motieven = ["werk", "sociaal-recreatief", "winkeldagelijks", "onderwijs"]
-    assert motief in motieven, f"Unknown motief: '{motief}'"
+def work_constants(modality, preference, motive):
+    motives = ["werk", "sociaal-recreatief", "winkeldagelijks", "onderwijs"]
+    assert motive in motives, f"Unknown motive: '{motive}'"
 
-    if motief == "werk" or motief == "sociaal-recreatief":
-        return _alomwerk(mod, voorkeur)
-    elif motief == "winkeldagelijks" or motief == "onderwijs":
-        return _alomwinkeldagelijkszorg(mod, voorkeur)
+    if motive == "werk" or motive == "sociaal-recreatief":
+        return _work_constants(modality, preference)
+    elif motive == "winkeldagelijks" or motive == "onderwijs":
+        return _daily_shopping_constants(modality, preference)
     else:
-        return _alomwinkelnietdagelijksonderwijs(mod, voorkeur)
+        return _non_daily_shopping_constants(modality, preference)
 
 
-def _alomwerk(mod, voorkeur):
+def _work_constants(modality, preference):
     alpha = 0.125
     omega = 45
-    weging = 1
-    if mod == 'Fiets':
+    scaling = 1
+    if modality == 'Fiets':
         alpha = 0.225
         omega = 25
-    elif mod == 'EFiets':
+    elif modality == 'EFiets':
         alpha = 0.175
         omega = 35
-    if voorkeur == 'Auto':
-        if mod == 'Auto':
+    if preference == 'Auto':
+        if modality == 'Auto':
             omega = 50
-        elif mod == 'OV':
+        elif modality == 'OV':
             omega = 30
-            weging = 0.95
-    elif voorkeur == 'OV':
-        if mod == 'Auto':
-            weging = 0.96
+            scaling = 0.95
+    elif preference == 'OV':
+        if modality == 'Auto':
+            scaling = 0.96
             alpha = 0.125
             omega = 45
-        elif mod == 'OV':
+        elif modality == 'OV':
             alpha = 0.12
             omega = 60
-    elif voorkeur == 'Fiets':
-        if mod == 'Auto':
-            weging = 0.75
-        elif mod == 'Fiets':
+    elif preference == 'Fiets':
+        if modality == 'Auto':
+            scaling = 0.75
+        elif modality == 'Fiets':
             alpha = 0.175
             omega = 35
-        elif mod == 'EFiets':
+        elif modality == 'EFiets':
             alpha = 0.125
             omega = 55
-    return alpha, omega, weging
+    return alpha, omega, scaling
 
 
-def _alomwinkeldagelijkszorg(mod, voorkeur):
+def _daily_shopping_constants(modality, preference):
     alpha = 0.225
     omega = 12.5
-    weging = 1
-    if mod == 'Fiets' or 'EFiets':
+    scaling = 1
+    if modality == 'Fiets' or 'EFiets':
         omega = 10
-        if voorkeur == 'Fiets':
+        if preference == 'Fiets':
             omega = 12.5
-    if mod == 'Auto' and voorkeur == 'Fiets':
-        weging = 0.75
-    if mod == 'OV' and voorkeur == 'OV':
+    if modality == 'Auto' and preference == 'Fiets':
+        scaling = 0.75
+    if modality == 'OV' and preference == 'OV':
         alpha = 0.175
 
-    return alpha, omega, weging
+    return alpha, omega, scaling
 
 
-def _alomwinkelnietdagelijksonderwijs(mod, voorkeur):
+def _non_daily_shopping_constants(modality, preference):
     alpha = 0.225
     omega = 20
-    weging = 1
-    if mod == 'Fiets' or 'EFiets':
+    scaling = 1
+    if modality == 'Fiets' or 'EFiets':
         omega = 15
-        if voorkeur == 'Fiets':
+        if preference == 'Fiets':
             omega = 20
-    if mod == 'Auto' and voorkeur == 'Fiets':
-        weging = 0.75
-    if mod == 'OV' and voorkeur == 'OV':
+    if modality == 'Auto' and preference == 'Fiets':
+        scaling = 0.75
+    if modality == 'OV' and preference == 'OV':
         alpha = 0.175
 
-    return alpha, omega, weging
+    return alpha, omega, scaling
