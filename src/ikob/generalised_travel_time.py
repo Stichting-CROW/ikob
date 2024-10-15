@@ -85,7 +85,7 @@ def generalised_travel_time(config) -> DataSource:
     skims_dir = config['project']['paden']['skims_directory']
     skims_reader = SkimsSource(skims_dir)
 
-    ervaren_reistijd = DataSource(config, DataType.ERVARENREISTIJD)
+    ervaren_reistijd = DataSource(config, DataType.GENERALISED_TRAVEL_TIME)
 
     for mot in motieven:
         TVOM = TVOMwerk if mot == 'werk' else TVOMoverig
@@ -140,9 +140,9 @@ def generalised_travel_time(config) -> DataSource:
             GGRskim = np.where(Fietstijdmatrix < 180, Fietstijdmatrix, 9999).astype(int)
 
             key = DataKey(id='Fiets',
-                          dagsoort=ds,
+                          part_of_day=ds,
                           regime=regime,
-                          motief=mot)
+                          motive=mot)
             ervaren_reistijd.set(key, GGRskim.copy())
 
             GGRskim = np.zeros((aantal_zones, aantal_zones), dtype=int)
@@ -169,19 +169,19 @@ def generalised_travel_time(config) -> DataSource:
                                                     (varautotarief+kmheffing) + Parkeerkostenlijst[j]/100))
 
                     key = DataKey(id=f"Auto_{srtbr}",
-                                  dagsoort=ds,
-                                  inkomen=ink,
+                                  part_of_day=ds,
+                                  income=ink,
                                   regime=regime,
-                                  motief=mot)
+                                  motive=mot)
                     ervaren_reistijd.set(key, GGRskim.copy())
 
                 # Dan het OV
                 factor = TVOM.get(ink)
                 GGRskim = np.where(OVtijdmatrix > 0.5, OVtijdmatrix + factor * KostenmatrixOV, 9999).astype(int)
                 key = DataKey(id='OV',
-                              dagsoort=ds,
-                              inkomen=ink,
-                              motief=mot,
+                              part_of_day=ds,
+                              income=ink,
+                              motive=mot,
                               regime=regime)
                 ervaren_reistijd.set(key, GGRskim.copy())
 
@@ -197,9 +197,9 @@ def generalised_travel_time(config) -> DataSource:
                                 GGRskim[i][j] = int(totaleTijd + factor * totaleKosten)
 
                     key = DataKey(id=f'{sga}',
-                                  dagsoort=ds,
-                                  inkomen=ink,
-                                  motief=mot,
+                                  part_of_day=ds,
+                                  income=ink,
+                                  motive=mot,
                                   regime=regime)
                     ervaren_reistijd.set(key, GGRskim.copy())
 
@@ -219,17 +219,17 @@ def generalised_travel_time(config) -> DataSource:
                                                     factor * Autoafstandmatrix[i][j] *
                                                     kmheffing + Parkeerkostenlijst[j]/100)
                     key = DataKey(id='GratisAuto',
-                                  dagsoort=ds,
-                                  inkomen=ink,
-                                  motief=mot,
+                                  part_of_day=ds,
+                                  income=ink,
+                                  motive=mot,
                                   regime=regime)
                     ervaren_reistijd.set(key, GGRskim.copy())
 
                 # GratisOV
                 GGRskim = np.where(OVtijdmatrix > 0.5, OVtijdmatrix, 9999).astype(int)
                 key = DataKey(id='GratisOV',
-                              dagsoort=ds,
-                              motief=mot,
+                              part_of_day=ds,
+                              motive=mot,
                               regime=regime)
                 ervaren_reistijd.set(key, GGRskim.copy())
 
@@ -244,10 +244,10 @@ def generalised_travel_time(config) -> DataSource:
                         factor = TVOM.get(ink)
                         GGRskim = Pplusfietstijdmatrix + factor * kosten
                         key = DataKey(id='Pplusfiets',
-                                      dagsoort=ds,
-                                      inkomen=ink,
-                                      hubnaam=Hubnaam,
-                                      motief=mot,
+                                      part_of_day=ds,
+                                      income=ink,
+                                      hub_name=Hubnaam,
+                                      motive=mot,
                                       regime=regime)
                         ervaren_reistijd.set(key, GGRskim.copy())
 
@@ -259,10 +259,10 @@ def generalised_travel_time(config) -> DataSource:
 
                         GGRskim = PplusRbestemmingstijdmatrix + factor * kosten
                         key = DataKey(id='PplusRbestemmings',
-                                      dagsoort=ds,
-                                      inkomen=ink,
-                                      hubnaam=Hubnaam,
-                                      motief=mot,
+                                      part_of_day=ds,
+                                      income=ink,
+                                      hub_name=Hubnaam,
+                                      motive=mot,
                                       regime=regime)
                         ervaren_reistijd.set(key, GGRskim.copy())
 
@@ -273,10 +273,10 @@ def generalised_travel_time(config) -> DataSource:
 
                         GGRskim = PplusRherkomsttijdmatrix + factor * kosten
                         key = DataKey(id='PplusRherkomst',
-                                      dagsoort=ds,
-                                      inkomen=ink,
-                                      hubnaam=Hubnaam,
-                                      motief=mot,
+                                      part_of_day=ds,
+                                      income=ink,
+                                      hub_name=Hubnaam,
+                                      motive=mot,
                                       regime=regime)
                         ervaren_reistijd.set(key, GGRskim.copy())
 

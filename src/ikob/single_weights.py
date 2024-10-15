@@ -44,7 +44,7 @@ def calculate_single_weights(config, ervaren_reistijd: DataSource) -> DataSource
     modaliteitenfiets = ['Fiets']
     soortbrandstof = ['fossiel', 'elektrisch']
 
-    gewichten = DataSource(config, DataType.GEWICHTEN)
+    gewichten = DataSource(config, DataType.WEIGHTS)
 
     for ds in dagsoort:
         for mot in motieven:
@@ -52,23 +52,23 @@ def calculate_single_weights(config, ervaren_reistijd: DataSource) -> DataSource
                 for vk in voorkeuren:
                     if vk == 'Auto' or vk == 'Fiets':
                         key = DataKey('Fiets',
-                                      dagsoort=ds,
+                                      part_of_day=ds,
                                       regime=regime,
-                                      motief=mot)
+                                      motive=mot)
                         GGRskim = ervaren_reistijd.get(key)
                         Gewichten = gewichtenberekenen(GGRskim, mod, vk, mot)
 
                         if vk == 'Auto':
                             key = DataKey(f'{mod}_vk',
-                                          dagsoort=ds,
+                                          part_of_day=ds,
                                           regime=regime,
-                                          motief=mot)
+                                          motive=mot)
                         else:
                             key = DataKey(f'{mod}_vk',
-                                          dagsoort=ds,
+                                          part_of_day=ds,
                                           regime=regime,
-                                          motief=mot,
-                                          voorkeur=vk)
+                                          motive=mot,
+                                          preference=vk)
 
                         gewichten.set(key, Gewichten.copy())
 
@@ -77,20 +77,20 @@ def calculate_single_weights(config, ervaren_reistijd: DataSource) -> DataSource
                 for vk in voorkeuren:
                     for srtbr in soortbrandstof:
                         key = DataKey(f'Auto_{srtbr}',
-                                      dagsoort=ds,
-                                      inkomen=ink,
+                                      part_of_day=ds,
+                                      income=ink,
                                       regime=regime,
-                                      motief=mot)
+                                      motive=mot)
                         GGRskim = ervaren_reistijd.get(key)
 
                         Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
                         key = DataKey('Auto_vk',
-                                      dagsoort=ds,
-                                      inkomen=ink,
+                                      part_of_day=ds,
+                                      income=ink,
                                       regime=regime,
-                                      motief=mot,
-                                      voorkeur=vk,
-                                      brandstof=srtbr)
+                                      motive=mot,
+                                      preference=vk,
+                                      fuel_kind=srtbr)
                         gewichten.set(key, Gewichten.copy())
 
             soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
@@ -99,19 +99,19 @@ def calculate_single_weights(config, ervaren_reistijd: DataSource) -> DataSource
                 for vk in voorkeurengeenauto:
                     for ink in inkomen:
                         key = DataKey(f'{sga}',
-                                      dagsoort=ds,
-                                      inkomen=ink,
+                                      part_of_day=ds,
+                                      income=ink,
                                       regime=regime,
-                                      motief=mot)
+                                      motive=mot)
                         GGRskim = ervaren_reistijd.get(key)
 
                         Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
                         key = DataKey(f'{sga}_vk',
-                                      dagsoort=ds,
-                                      inkomen=ink,
+                                      part_of_day=ds,
+                                      income=ink,
                                       regime=regime,
-                                      voorkeur=vk,
-                                      motief=mot)
+                                      preference=vk,
+                                      motive=mot)
                         gewichten.set(key, Gewichten.copy())
 
             modaliteitenOV = ['OV']
@@ -119,55 +119,55 @@ def calculate_single_weights(config, ervaren_reistijd: DataSource) -> DataSource
                 for ink in inkomen:
                     for vk in voorkeuren:
                         key = DataKey(f'{modOV}',
-                                      dagsoort=ds,
-                                      inkomen=ink,
+                                      part_of_day=ds,
+                                      income=ink,
                                       regime=regime,
-                                      motief=mot)
+                                      motive=mot)
                         GGRskim = ervaren_reistijd.get(key)
 
                         Gewichten = gewichtenberekenen(GGRskim, modOV, vk, mot)
                         key = DataKey(f'{modOV}_vk',
-                                      dagsoort=ds,
-                                      voorkeur=vk,
-                                      inkomen=ink,
+                                      part_of_day=ds,
+                                      preference=vk,
+                                      income=ink,
                                       regime=regime,
-                                      motief=mot)
+                                      motive=mot)
                         gewichten.set(key, Gewichten.copy())
 
             for ink in inkomen:
                 key = DataKey('GratisAuto',
-                              dagsoort=ds,
-                              inkomen=ink,
+                              part_of_day=ds,
+                              income=ink,
                               regime=regime,
-                              motief=mot)
+                              motive=mot)
                 GGRskim = ervaren_reistijd.get(key)
 
                 Gewichten = gewichtenberekenen(GGRskim, 'Auto', 'Auto', mot)
                 specialauto = ['Neutraal', 'Auto']
                 for vks in specialauto:
                     key = DataKey('GratisAuto_vk',
-                                  dagsoort=ds,
-                                  voorkeur=vks,
-                                  inkomen=ink,
+                                  part_of_day=ds,
+                                  preference=vks,
+                                  income=ink,
                                   regime=regime,
-                                  motief=mot)
+                                  motive=mot)
                     gewichten.set(key, Gewichten.copy())
 
                 key = DataKey('GratisOV',
-                              dagsoort=ds,
+                              part_of_day=ds,
                               regime=regime,
-                              motief=mot)
+                              motive=mot)
                 GGRskim = ervaren_reistijd.get(key)
 
                 Gewichten = gewichtenberekenen(GGRskim, 'OV', 'OV', mot)
                 specialOV = ['Neutraal', 'OV']
                 for vks in specialOV:
                     key = DataKey('GratisOV_vk',
-                                  dagsoort=ds,
-                                  voorkeur=vks,
-                                  inkomen=ink,
+                                  part_of_day=ds,
+                                  preference=vks,
+                                  income=ink,
                                   regime=regime,
-                                  motief=mot)
+                                  motive=mot)
                     gewichten.set(key, Gewichten.copy())
 
     return gewichten

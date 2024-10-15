@@ -6,7 +6,7 @@ from ikob.datasource import read_parkeerzoektijden
 from ikob.ikobconfig import getConfigFromArgs
 from ikob.utils import read_csv_int
 from ikob.urbanisation_grade_to_parking_times import (
-    stedelijkheid_to_parkeerzoektijd
+    urbanisation_grade_to_parking_times
 )
 
 
@@ -14,7 +14,7 @@ def test_stedelijkheid_converter():
     segs_dir = pathlib.Path("tests/vlaanderen/SEGS")
     reference = read_csv_int(segs_dir / "Parkeerzoektijd.csv")
     stedelijkheid = read_csv_int(segs_dir / "Stedelijkheidsgraad.csv")
-    parkeerzoektijden = stedelijkheid_to_parkeerzoektijd(stedelijkheid)
+    parkeerzoektijden = urbanisation_grade_to_parking_times(stedelijkheid)
     assert np.all(parkeerzoektijden == reference)
 
 

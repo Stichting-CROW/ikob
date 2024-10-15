@@ -6,7 +6,7 @@ import enum
 from typing import Optional
 from numpy.typing import NDArray
 from dataclasses import dataclass
-from ikob.urbanisation_grade_to_parking_times import stedelijkheid_to_parkeerzoektijd
+from ikob.urbanisation_grade_to_parking_times import urbanisation_grade_to_parking_times
 
 logger = logging.getLogger(__name__)
 
@@ -46,25 +46,25 @@ def read_parkeerzoektijden(config):
     config_skims = config["skims"]
     segs_dir = pathlib.Path(config['project']['paden']['segs_directory'])
 
-    parkeertijden_path = pathlib.Path(config_skims.get(
+    parking_time_path = pathlib.Path(config_skims.get(
         "parkeerzoektijden_bestand",
         segs_dir / "Parkeerzoektijd.csv"
     ))
 
-    if parkeertijden_path.exists():
-        logging.info("Reading parkeerzoektijden: '%s'", parkeertijden_path)
-        return utils.read_csv_int(parkeertijden_path)
+    if parking_time_path.exists():
+        logging.info("Reading parking times: '%s'", parking_time_path)
+        return utils.read_csv_int(parking_time_path)
 
-    stedelijkheid_path = segs_dir / "Stedelijkheidsgraad.csv"
-    assert stedelijkheid_path.exists(), (
+    urbanisation_path = segs_dir / "Stedelijkheidsgraad.csv"
+    assert urbanisation_path.exists(), (
         "Missing both Parkeerzoektijden, Stedelijkheidsgraad files."
         "Parkeerzoektijden file cannot be generated."
     )
 
-    msg = "Generating parkeerzoektijden from '%s'"
-    logger.info(msg, stedelijkheid_path)
-    stedelijkheidsgraad = utils.read_csv_int(stedelijkheid_path)
-    return stedelijkheid_to_parkeerzoektijd(stedelijkheidsgraad)
+    msg = "Generating parking times from '%s'"
+    logger.info(msg, urbanisation_path)
+    urbanisation_grade = utils.read_csv_int(urbanisation_path)
+    return urbanisation_grade_to_parking_times(urbanisation_grade)
 
 
 class SkimsSource:
@@ -137,12 +137,12 @@ class SegsSource:
 
 
 class DataType(enum.Enum):
-    BESTEMMINGEN = "bestemmingen"
-    CONCURRENTIE = "concurrentie"
-    ERVARENREISTIJD = "ervarenreistijd"
-    GEWICHTEN = "gewichten"
-    HERKOMSTEN = "herkomsten"
-    POTENTIES = "potenties"
+    DESTINATIONS = "bestemmingen"
+    COMPETITION = "concurrentie"
+    GENERALISED_TRAVEL_TIME = "ervarenreistijd"
+    WEIGHTS = "gewichten"
+    ORIGINS = "herkomsten"
+    POTENCY = "potenties"
 
 
 @dataclass(eq=True, frozen=True)
@@ -154,16 +154,16 @@ class DataKey:
     the desired data.
     """
     id: str
-    dagsoort: str
+    part_of_day: str
     regime: Optional[str] = ""
     subtopic: Optional[str] = ""
-    voorkeur: Optional[str] = ""
-    inkomen: Optional[str] = ""
-    hubnaam: Optional[str] = ""
-    motief: Optional[str] = ""
-    groep: Optional[str] = ""
-    modaliteit: Optional[str] = ""
-    brandstof: Optional[str] = ""
+    preference: Optional[str] = ""
+    income: Optional[str] = ""
+    hub_name: Optional[str] = ""
+    motive: Optional[str] = ""
+    group: Optional[str] = ""
+    modality: Optional[str] = ""
+    fuel_kind: Optional[str] = ""
 
 
 class DataSource:
@@ -178,8 +178,8 @@ class DataSource:
         # - Support multi-lingual directory names.
 
     def _add_id_suffix(self, key: DataKey) -> str:
-        id = key.id + key.voorkeur
-        for suffix in [key.modaliteit, key.hubnaam, key.inkomen]:
+        id = key.id + key.preference
+        for suffix in [key.modality, key.hub_name, key.income]:
             if suffix:
                 id += f"_{suffix}"
         return id
@@ -187,14 +187,14 @@ class DataSource:
     def _make_file_path(self, key: DataKey) -> pathlib.Path:
         base = self._get_base_dir(key)
         id_with_suffix = self._add_id_suffix(key)
-        dagsoort = key.dagsoort.lower()
+        dagsoort = key.part_of_day.lower()
         regime = key.regime.lower()
-        path = self.project_dir / base / regime / key.motief / key.groep / self.datatype.value / key.subtopic / dagsoort / key.brandstof
+        path = self.project_dir / base / regime / key.motive / key.group / self.datatype.value / key.subtopic / dagsoort / key.fuel_kind
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
 
     def _get_base_dir(self, key: DataKey) -> str:
-        if self.datatype in [DataType.CONCURRENTIE, DataType.HERKOMSTEN]:
+        if self.datatype in [DataType.COMPETITION, DataType.ORIGINS]:
             return "resultaten"
         if "totaal" in key.id.lower():
             # Totaal, Ontpl_totaal, Ontpl_totaalproduct

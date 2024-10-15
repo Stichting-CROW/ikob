@@ -33,7 +33,7 @@ def run_scripts(project_file, skip_steps=None):
     if not skip_steps[0]:
         travel_time = generalised_travel_time(config)
     else:
-        travel_time = DataSource(config, DataType.ERVARENREISTIJD)
+        travel_time = DataSource(config, DataType.GENERALISED_TRAVEL_TIME)
 
     if not skip_steps[1]:
         # TODO: Pass temporary SEGS output as arguments too.
@@ -42,32 +42,32 @@ def run_scripts(project_file, skip_steps=None):
     if not skip_steps[2]:
         single_weights = calculate_single_weights(config, travel_time)
     else:
-        single_weights = DataSource(config, DataType.GEWICHTEN)
+        single_weights = DataSource(config, DataType.WEIGHTS)
 
     if not skip_steps[3]:
         combined_weights = calculate_combined_weights(config, single_weights)
     else:
-        combined_weights = DataSource(config, DataType.GEWICHTEN)
+        combined_weights = DataSource(config, DataType.WEIGHTS)
 
     if not skip_steps[4]:
         possiblities = deployment_opportunities(config, single_weights, combined_weights)
     else:
-        possiblities = DataSource(config, DataType.BESTEMMINGEN)
+        possiblities = DataSource(config, DataType.DESTINATIONS)
 
     if not skip_steps[5]:
         origins = possible_companies(config, single_weights, combined_weights)
     else:
-        origins = DataSource(config, DataType.HERKOMSTEN)
+        origins = DataSource(config, DataType.ORIGINS)
 
     if not skip_steps[6]:
         competition_jobs = competition_on_jobs(config, single_weights, combined_weights, origins)
     else:
-        competition_jobs = DataSource(config, DataType.CONCURRENTIE)
+        competition_jobs = DataSource(config, DataType.COMPETITION)
 
     if not skip_steps[7]:
         competition_citizens = competition_on_citizens(config, single_weights, combined_weights, possiblities)
     else:
-        competition_citizens = DataSource(config, DataType.CONCURRENTIE)
+        competition_citizens = DataSource(config, DataType.COMPETITION)
 
     # TODO: For now all files are written to disk to assert their contents in
     # end-to-end testing. Ultimately only files that are essential outputs should persist.

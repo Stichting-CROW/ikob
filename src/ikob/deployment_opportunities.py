@@ -71,7 +71,7 @@ def deployment_opportunities(config,
 
     Inkomenstransverdeling = utils.transpose(Inkomensverdeling)
 
-    potenties = DataSource(config, DataType.BESTEMMINGEN)
+    potenties = DataSource(config, DataType.DESTINATIONS)
 
     for abg in autobezitgroepen:
         for mot in motieven:
@@ -118,20 +118,20 @@ def deployment_opportunities(config,
                                 potentie_sum += potentie.astype(int)
 
                         key = DataKey('Totaal',
-                                      dagsoort=ds,
-                                      inkomen=inkgr,
-                                      groep=abg,
-                                      motief=mot,
-                                      modaliteit=mod)
+                                      part_of_day=ds,
+                                      income=inkgr,
+                                      group=abg,
+                                      motive=mot,
+                                      modality=mod)
                         potenties.set(key, potentie_sum.copy())
                         Generaaltotaal_potenties.append(potenties.get(key))
 
                     Generaaltotaaltrans = utils.transpose(Generaaltotaal_potenties)
                     key = DataKey('Ontpl_totaal',
-                                  dagsoort=ds,
-                                  groep=abg,
-                                  inkomen=inkgr,
-                                  motief=mot)
+                                  part_of_day=ds,
+                                  group=abg,
+                                  income=inkgr,
+                                  motive=mot)
                     potenties.write_csv(Generaaltotaaltrans, key, header=headstring)
                     potenties.write_xlsx(Generaaltotaaltrans, key, header=headstringExcel)
 
@@ -141,11 +141,11 @@ def deployment_opportunities(config,
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
                         key = DataKey('Totaal',
-                                      dagsoort=ds,
-                                      inkomen=inkgr,
-                                      groep=abg,
-                                      motief=mot,
-                                      modaliteit=mod)
+                                      part_of_day=ds,
+                                      income=inkgr,
+                                      group=abg,
+                                      motive=mot,
+                                      modality=mod)
                         Totaalrij = potenties.get(key)
                         Generaalmatrix.append(Totaalrij)
                     if len(inkgroepen)>1:
@@ -161,16 +161,16 @@ def deployment_opportunities(config,
                                 Generaalmatrixproduct[i].append(0)
 
                     key = DataKey('Ontpl_totaal',
-                                  dagsoort=ds,
-                                  groep=abg,
-                                  motief=mot,
-                                  modaliteit=mod)
+                                  part_of_day=ds,
+                                  group=abg,
+                                  motive=mot,
+                                  modality=mod)
                     potenties.write_xlsx(Generaaltotaaltrans, key, header=header)
                     key = DataKey('Ontpl_totaalproduct',
-                                  dagsoort=ds,
-                                  groep=abg,
-                                  motief=mot,
-                                  modaliteit=mod)
+                                  part_of_day=ds,
+                                  group=abg,
+                                  motive=mot,
+                                  modality=mod)
                     potenties.write_xlsx(Generaalmatrixproduct, key, header=header)
 
     return potenties

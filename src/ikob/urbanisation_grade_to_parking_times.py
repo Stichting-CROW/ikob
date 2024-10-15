@@ -1,4 +1,4 @@
-def stedelijkheid_to_parkeerzoektijd(stedelijkheidsgraad: [int]) -> [[int]]:
+def urbanisation_grade_to_parking_times(stedelijkheidsgraad: [int]) -> [[int]]:
     # TODO: This conversion is missing documentation. Why these values?
     omzetting = {1: 12, 2: 8, 3: 4, 4: 0, 5: 0}
 

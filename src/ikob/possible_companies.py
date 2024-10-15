@@ -97,7 +97,7 @@ def possible_companies(config,
     Inwoners = inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking)
     Inwonerstransmatrix = utils.transpose(Inwoners)
 
-    herkomsten = DataSource(config, DataType.HERKOMSTEN)
+    herkomsten = DataSource(config, DataType.ORIGINS)
 
     for abg in autobezitgroepen:
         for mot in motieven:
@@ -129,10 +129,10 @@ def possible_companies(config,
                                         vkklad = ''
 
                                     key = DataKey(f'{mod}_vk',
-                                                  dagsoort=ds,
-                                                  voorkeur=vkklad,
+                                                  part_of_day=ds,
+                                                  preference=vkklad,
                                                   regime=regime,
-                                                  motief=mot)
+                                                  motive=mot)
                                     Fietsmatrix = gewichten_enkel.get(key)
                                     Dezegroeplijst = potenties (Fietsmatrix, Inwonerstransmatrix, gr, Groepen)
 
@@ -143,12 +143,12 @@ def possible_companies(config,
                                     if 'WelAuto' in gr:
                                         for srtbr in soortbrandstof:
                                             key = DataKey(f'{String}_vk',
-                                                          dagsoort=ds,
-                                                          voorkeur=vk,
-                                                          inkomen=ink,
+                                                          part_of_day=ds,
+                                                          preference=vk,
+                                                          income=ink,
                                                           regime=regime,
-                                                          motief=mot,
-                                                          brandstof=srtbr)
+                                                          motive=mot,
+                                                          fuel_kind=srtbr)
                                             Matrix = gewichten_enkel.get(key)
 
                                             Dezegroeplijst1 = potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
@@ -166,11 +166,11 @@ def possible_companies(config,
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                     else:
                                         key = DataKey(f'{String}_vk',
-                                                      dagsoort=ds,
-                                                      voorkeur=vk,
-                                                      inkomen=ink,
+                                                      part_of_day=ds,
+                                                      preference=vk,
+                                                      income=ink,
                                                       regime=regime,
-                                                      motief=mot)
+                                                      motive=mot)
                                         Matrix = gewichten_enkel.get(key)
 
                                         Dezegroeplijst = potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
@@ -181,11 +181,11 @@ def possible_companies(config,
                                 elif mod == 'OV':
                                     String = utils.single_group (mod,gr)
                                     key = DataKey(f'{String}_vk',
-                                                  dagsoort=ds,
-                                                  voorkeur=vk,
-                                                  inkomen=ink,
+                                                  part_of_day=ds,
+                                                  preference=vk,
+                                                  income=ink,
                                                   regime=regime,
-                                                  motief=mot)
+                                                  motive=mot)
                                     Matrix = gewichten_enkel.get(key)
 
                                     Dezegroeplijst = potenties ( Matrix, Inwonerstransmatrix, gr, Groepen)
@@ -198,13 +198,13 @@ def possible_companies(config,
                                     if String[0] == 'A':
                                         for srtbr in soortbrandstof:
                                             key = DataKey(f'{String}_vk',
-                                                          dagsoort=ds,
-                                                          voorkeur=vk,
-                                                          inkomen=ink,
+                                                          part_of_day=ds,
+                                                          preference=vk,
+                                                          income=ink,
                                                           regime=regime,
-                                                          motief=mot,
+                                                          motive=mot,
                                                           subtopic='combinaties',
-                                                          brandstof=srtbr)
+                                                          fuel_kind=srtbr)
                                             Matrix = gewichten_combi.get(key)
 
                                             Dezegroeplijst1 = potenties(Matrix, Inwonerstransmatrix, gr, Groepen)
@@ -221,11 +221,11 @@ def possible_companies(config,
                                             Bijhoudlijst[i] += int(Dezegroeplijst[i])
                                     else:
                                         key = DataKey(f'{String}_vk',
-                                                      dagsoort=ds,
-                                                      voorkeur=vk,
-                                                      inkomen=ink,
+                                                      part_of_day=ds,
+                                                      preference=vk,
+                                                      income=ink,
                                                       regime=regime,
-                                                      motief=mot,
+                                                      motive=mot,
                                                       subtopic='combinaties')
                                         Matrix = gewichten_combi.get(key)
 
@@ -234,19 +234,19 @@ def possible_companies(config,
                                             Bijhoudlijst[i] += round ( Dezegroeplijst[i])
 
                         key = DataKey(id='Totaal',
-                                      dagsoort=ds,
-                                      groep=abg,
-                                      inkomen=inkgr,
-                                      motief=mot,
-                                      modaliteit=mod)
+                                      part_of_day=ds,
+                                      group=abg,
+                                      income=inkgr,
+                                      motive=mot,
+                                      modality=mod)
                         herkomsten.set(key, Bijhoudlijst)
                         Generaaltotaal_potenties.append(herkomsten.get(key))
 
                     key = DataKey(id='Pot_totaal',
-                                  dagsoort=ds,
-                                  groep=abg,
-                                  inkomen=inkgr,
-                                  motief=mot)
+                                  part_of_day=ds,
+                                  group=abg,
+                                  income=inkgr,
+                                  motive=mot)
 
                     herkomsten_totaal = utils.transpose(Generaaltotaal_potenties)
                     herkomsten.write_csv(herkomsten_totaal, key, header=headstring)
@@ -258,11 +258,11 @@ def possible_companies(config,
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
                         key = DataKey('Totaal',
-                                      dagsoort=ds,
-                                      inkomen=inkgr,
-                                      motief=mot,
-                                      groep=abg,
-                                      modaliteit=mod,
+                                      part_of_day=ds,
+                                      income=inkgr,
+                                      motive=mot,
+                                      group=abg,
+                                      modality=mod,
                                       subtopic='')
                         Totaalrij = herkomsten.get(key)
 
@@ -277,17 +277,17 @@ def possible_companies(config,
                                 Generaalmatrixproduct[i].append(0)
 
                     key = DataKey(id='Pot_totaal',
-                                  dagsoort=ds,
-                                  groep=abg,
-                                  motief=mot,
-                                  modaliteit=mod)
+                                  part_of_day=ds,
+                                  group=abg,
+                                  motive=mot,
+                                  modality=mod)
                     herkomsten.write_xlsx(Generaaltotaaltrans, key, header=header)
 
                     key = DataKey(id='Pot_totaalproduct',
-                                  dagsoort=ds,
-                                  groep=abg,
-                                  motief=mot,
-                                  modaliteit=mod)
+                                  part_of_day=ds,
+                                  group=abg,
+                                  motive=mot,
+                                  modality=mod)
                     herkomsten.write_xlsx(Generaalmatrixproduct, key, header=header)
 
     return herkomsten
