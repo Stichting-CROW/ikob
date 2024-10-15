@@ -8,7 +8,7 @@ from ikob.datasource import DataKey, DataType, DataSource, SegsSource
 logger = logging.getLogger(__name__)
 
 
-def ontplooingsmogelijkheden_echte_inwoners(config,
+def deployment_opportunities(config,
                                             gewichten_enkel: DataSource,
                                             gewichten_combi: DataSource) -> DataSource:
     logger.info("Bereikbaarheid arbeidsplaatsen voor inwoners")

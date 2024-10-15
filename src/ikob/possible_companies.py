@@ -15,7 +15,7 @@ def inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking):
     return Inwonersfile
 
 
-def potentie_bedrijven(config,
+def possible_companies(config,
                        gewichten_enkel: DataSource,
                        gewichten_combi: DataSource) -> DataSource:
     logger.info("Potentie bereikbaarheid voor bedrijven en instellingen")

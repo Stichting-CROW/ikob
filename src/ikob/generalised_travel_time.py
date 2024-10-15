@@ -17,7 +17,7 @@ def KostenOV(afstand, OVkmtarief, starttarief, Pricecap, Pricecapgetal):
     return afstand
 
 
-def ervaren_reistijd_berekenen(config) -> DataSource:
+def generalised_travel_time(config) -> DataSource:
     logger.info("Gegeneraliseerde reistijd berekenen uit tijd en kosten.")
 
     # Haal (voor het gemak) onderdelen voor dit script er uit.

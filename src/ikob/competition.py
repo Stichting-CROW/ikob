@@ -68,14 +68,14 @@ def get_gewichten_matrix(gewichten_enkel: DataSource,
     return gewichten_combi.get(key)
 
 
-def concurrentie_om_arbeidsplaatsen(config,
+def competition_on_jobs(config,
                                     gewichten_enkel: DataSource,
                                     gewichten_combi: DataSource,
                                     herkomsten: DataSource) -> DataSource:
     return concurrentie(config, gewichten_enkel, gewichten_combi, herkomsten, inwoners=False)
 
 
-def concurrentie_om_inwoners(config,
+def competition_on_citizens(config,
                              gewichten_enkel: DataSource,
                              gewichten_combi: DataSource,
                              herkomsten: DataSource) -> DataSource:

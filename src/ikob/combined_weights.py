@@ -34,7 +34,7 @@ def kanvoorkeur(soortauto, soortOV, voorkeur):
         return True
 
 
-def gewichten_berekenen_combis(config, gewichten_enkel: DataSource) -> DataSource:
+def calculate_combined_weights(config, gewichten_enkel: DataSource) -> DataSource:
     logger.info("Maximum gewichten van meerdere modaliteiten")
 
     project_config = config['project']

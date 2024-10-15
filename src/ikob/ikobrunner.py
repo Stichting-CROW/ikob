@@ -7,14 +7,14 @@ from ikob.config import widgets
 from ikob.ikobconfig import loadConfig, getConfigFromArgs
 from ikob.datasource import DataType, DataSource
 
-from ikob.generalised_travel_time import ervaren_reistijd_berekenen
-from ikob.group_distribution import verdeling_over_groepen
-from ikob.single_weights import gewichten_berekenen_enkel_scenarios
-from ikob.combined_weights import gewichten_berekenen_combis
-from ikob.deployment_opportunities import ontplooingsmogelijkheden_echte_inwoners
-from ikob.possible_companies import potentie_bedrijven
-from ikob.competition import concurrentie_om_arbeidsplaatsen
-from ikob.competition import concurrentie_om_inwoners
+from ikob.generalised_travel_time import generalised_travel_time
+from ikob.group_distribution import distribute_over_groups
+from ikob.single_weights import calculate_single_weights
+from ikob.combined_weights import calculate_combined_weights
+from ikob.deployment_opportunities import deployment_opportunities
+from ikob.possible_companies import possible_companies
+from ikob.competition import competition_on_jobs
+from ikob.competition import competition_on_citizens
 
 logger = logging.getLogger(__name__)
 
@@ -31,47 +31,47 @@ def run_scripts(project_file, skip_steps=None):
         skip_steps = [False] * 8
 
     if not skip_steps[0]:
-        ervaren_reistijd = ervaren_reistijd_berekenen(config)
+        travel_time = generalised_travel_time(config)
     else:
-        ervaren_reistijd = DataSource(config, DataType.ERVARENREISTIJD)
+        travel_time = DataSource(config, DataType.ERVARENREISTIJD)
 
     if not skip_steps[1]:
         # TODO: Pass temporary SEGS output as arguments too.
-        verdeling_over_groepen(config)
+        distribute_over_groups(config)
 
     if not skip_steps[2]:
-        gewichten_enkel = gewichten_berekenen_enkel_scenarios(config, ervaren_reistijd)
+        single_weights = calculate_single_weights(config, travel_time)
     else:
-        gewichten_enkel = DataSource(config, DataType.GEWICHTEN)
+        single_weights = DataSource(config, DataType.GEWICHTEN)
 
     if not skip_steps[3]:
-        gewichten_combi = gewichten_berekenen_combis(config, gewichten_enkel)
+        combined_weights = calculate_combined_weights(config, single_weights)
     else:
-        gewichten_combi = DataSource(config, DataType.GEWICHTEN)
+        combined_weights = DataSource(config, DataType.GEWICHTEN)
 
     if not skip_steps[4]:
-        potenties = ontplooingsmogelijkheden_echte_inwoners(config, gewichten_enkel, gewichten_combi)
+        possiblities = deployment_opportunities(config, single_weights, combined_weights)
     else:
-        potenties = DataSource(config, DataType.BESTEMMINGEN)
+        possiblities = DataSource(config, DataType.BESTEMMINGEN)
 
     if not skip_steps[5]:
-        herkomsten = potentie_bedrijven(config, gewichten_enkel, gewichten_combi)
+        origins = possible_companies(config, single_weights, combined_weights)
     else:
-        herkomsten = DataSource(config, DataType.HERKOMSTEN)
+        origins = DataSource(config, DataType.HERKOMSTEN)
 
     if not skip_steps[6]:
-        concurrentie_arbeid = concurrentie_om_arbeidsplaatsen(config, gewichten_enkel, gewichten_combi, herkomsten)
+        competition_jobs = competition_on_jobs(config, single_weights, combined_weights, origins)
     else:
-        concurrentie_arbeid = DataSource(config, DataType.CONCURRENTIE)
+        competition_jobs = DataSource(config, DataType.CONCURRENTIE)
 
     if not skip_steps[7]:
-        concurrentie_inwoners = concurrentie_om_inwoners(config, gewichten_enkel, gewichten_combi, potenties)
+        competition_citizens = competition_on_citizens(config, single_weights, combined_weights, possiblities)
     else:
-        concurrentie_inwoners = DataSource(config, DataType.CONCURRENTIE)
+        competition_citizens = DataSource(config, DataType.CONCURRENTIE)
 
     # TODO: For now all files are written to disk to assert their contents in
     # end-to-end testing. Ultimately only files that are essential outputs should persist.
-    for container in [ervaren_reistijd, gewichten_enkel, gewichten_combi, potenties, herkomsten, concurrentie_inwoners, concurrentie_arbeid]:
+    for container in [travel_time, single_weights, combined_weights, possiblities, origins, competition_citizens, competition_jobs]:
         container.store()
 
 

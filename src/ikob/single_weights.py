@@ -27,7 +27,7 @@ def gewichtenberekenen(skim, mod, vk, mot):
     return Gewichtenmatrix
 
 
-def gewichten_berekenen_enkel_scenarios(config, ervaren_reistijd: DataSource) -> DataSource:
+def calculate_single_weights(config, ervaren_reistijd: DataSource) -> DataSource:
     logger.info("Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart.")
 
     project_config = config['project']
