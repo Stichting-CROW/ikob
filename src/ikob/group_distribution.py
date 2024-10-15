@@ -1,4 +1,4 @@
-from ikob.datasource import DataSource, SegsSource, read_csv_from_config
+from ikob.datasource import SegsSource, read_csv_from_config
 import itertools
 import logging
 import numpy as np
@@ -14,155 +14,155 @@ def distribute_over_groups(config):
 
     # Ophalen van instellingen
     scenario = project_config['verstedelijkingsscenario']
-    Kunst = verdeling_config['kunstmab']['gebruiken']
-    GratisOVpercentage = verdeling_config['GratisOVpercentage']
+    artificial = verdeling_config['kunstmab']['gebruiken']
+    free_pt_percentage = verdeling_config['GratisOVpercentage']
     motieven = project_config['motieven']
 
     # Vaste waarden
-    inkomens = ['laag', 'middellaag', 'middelhoog', 'hoog']
-    voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
-    voorkeurengeenauto = ['Neutraal', 'Fiets', 'OV']
-    soorten = ['GratisAuto', 'WelAuto', 'GeenAuto', 'GeenRijbewijs']
+    income_levels = ['laag', 'middellaag', 'middelhoog', 'hoog']
+    preferences = ['Auto', 'Neutraal', 'Fiets', 'OV']
+    preferences_no_car = ['Neutraal', 'Fiets', 'OV']
+    kinds = ['GratisAuto', 'WelAuto', 'GeenAuto', 'GeenRijbewijs']
 
     segs_source = SegsSource(config)
 
-    CBSAutobezitegevens = segs_source.read('CBS_autos_per_huishouden')
-    Stedelijkheidsgraadgegevens = segs_source.read('Stedelijkheidsgraad')
+    car_possessions_per_household_segs = segs_source.read('CBS_autos_per_huishouden')
+    urbanisation_grade_segs = segs_source.read('Stedelijkheidsgraad')
     # Decrement one to account for zero-based indexing later on.
-    Sted = [int(sgg) - 1 for sgg in Stedelijkheidsgraadgegevens]
+    urbanisation = [int(sgg) - 1 for sgg in urbanisation_grade_segs]
 
-    Gratisautonaarinkomens = [0, 0.02, 0.175, 0.275]
-    Minimumautobezit = CBSAutobezitegevens
+    free_car_per_income = [0, 0.02, 0.175, 0.275]
+    min_car_possession = car_possessions_per_household_segs
 
-    if Kunst:
-        Kunstmatigautobezit = read_csv_from_config(config, key='verdeling', id='kunstmab', type_caster=int)
-        Minimumautobezit = list(itertools.starmap(min, zip(CBSAutobezitegevens, Kunstmatigautobezit)))
+    if artificial:
+        artifical_car_possession_segs = read_csv_from_config(config, key='verdeling', id='kunstmab', type_caster=int)
+        min_car_possession = list(itertools.starmap(min, zip(car_possessions_per_household_segs, artifical_car_possession_segs)))
 
     # Read SEGS input files.
-    GRijbewijs = segs_source.read('GeenRijbewijs')
-    GAuto = segs_source.read('GeenAuto')
-    WAuto = segs_source.read('WelAuto')
-    Voorkeuren = segs_source.read('Voorkeuren')
-    VoorkeurenGeenAuto = segs_source.read('VoorkeurenGeenAuto')
+    no_license_segs = segs_source.read('GeenRijbewijs')
+    no_car_segs = segs_source.read('GeenAuto')
+    with_car_segs = segs_source.read('WelAuto')
+    preferences_segs = segs_source.read('Voorkeuren')
+    preferences_no_car_segs = segs_source.read('VoorkeurenGeenAuto')
 
-    Header = []
-    for ink in inkomens:
-        for srt in soorten:
+    header = []
+    for ink in income_levels:
+        for srt in kinds:
             if srt == 'GratisAuto':
-                Header.append(f'{srt}_{ink}')
-                Header.append(f'{srt}_GratisOV_{ink}')
+                header.append(f'{srt}_{ink}')
+                header.append(f'{srt}_GratisOV_{ink}')
             elif srt == 'WelAuto':
-                Header.append(f'{srt}_GratisOV_{ink}')
-                for vk in voorkeuren:
-                    Header.append(f'{srt}_vk{vk}_{ink}')
+                header.append(f'{srt}_GratisOV_{ink}')
+                for vk in preferences:
+                    header.append(f'{srt}_vk{vk}_{ink}')
             else:
-                Header.append(f'{srt}_GratisOV_{ink}')
-                for vkg in voorkeurengeenauto:
-                    Header.append(f'{srt}_vk{vkg}_{ink}')
+                header.append(f'{srt}_GratisOV_{ink}')
+                for vkg in preferences_no_car:
+                    header.append(f'{srt}_vk{vkg}_{ink}')
 
-    Totaaloverzicht = []
-    Overzichttotaalautobezit = []
-    GratisAuto = []
-    NietGratisAuto = []
-    GeenAutoWelRijbewijs = []
+    total_survey = []
+    total_car_possession_survey = []
+    free_car = []
+    no_free_car = []
+    no_car_with_license = []
 
     for mot in motieven:
         if mot == 'werk':
-            Bevolkingsdeel = 'Beroepsbevolking'
-            Inwonersperklasse = segs_source.read(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
+            population_share = 'Beroepsbevolking'
+            citizens_per_class = segs_source.read(f'{population_share}_inkomensklasse', scenario=scenario)
         elif mot == 'winkelnietdagelijksonderwijs':
-            Bevolkingsdeel = 'Leerlingen'
-            Inwonersperklasse = segs_source.read(f'{Bevolkingsdeel}', scenario=scenario)
+            population_share = 'Leerlingen'
+            citizens_per_class = segs_source.read(f'{population_share}', scenario=scenario)
         else:
-            Bevolkingsdeel = 'Inwoners'
-            Inwonersperklasse = segs_source.read(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
+            population_share = 'Inwoners'
+            citizens_per_class = segs_source.read(f'{population_share}_inkomensklasse', scenario=scenario)
 
-        Inwonerstotalen = np.sum(Inwonersperklasse, axis=1)
-        Inkomensverdeling = Inwonersperklasse / Inwonerstotalen[:, None]
+        citizens_totals = np.sum(citizens_per_class, axis=1)
+        income_distributions = citizens_per_class / citizens_totals[:, None]
         # Replace inf (result of divide by zero) with zero entries.
-        Inkomensverdeling = np.where(np.isinf(Inkomensverdeling), 0, Inkomensverdeling)
+        income_distributions = np.where(np.isinf(income_distributions), 0, income_distributions)
 
-        # Eerst "theoretosch auto- en rijbewijsbezit" vaststellen
-        for i, inkomen_verdeling in enumerate(Inkomensverdeling):
-            Totaaloverzicht.append([])
-            Overzichttotaalautobezit.append([])
+        # First determine theoretical car and possessions.
+        for i, income_distribution in enumerate(income_distributions):
+            total_survey.append([])
+            total_car_possession_survey.append([])
 
-            Autobezitpercentage = []
-            for Getal1, Getal2 in zip(inkomen_verdeling, WAuto[Sted[i]]):
-                Autobezitpercentage.append(Getal1 * Getal2/100)
-            Autobezitpercentages = sum(Autobezitpercentage)
+            car_possession_share = []
+            for id, wc in zip(income_distribution, with_car_segs[urbanisation[i]]):
+                car_possession_share.append(id * wc/100)
+            car_possession_shares = sum(car_possession_share)
 
-            # Kijken of het werkelijke autobezit lager is:
-            Autobezitcorrectiefactor = 1
-            if Minimumautobezit[i] > 0 and Minimumautobezit[i]/100 < Autobezitpercentages:
-                Autobezitcorrectiefactor = (Minimumautobezit[i]/100) / Autobezitpercentages
-                Autobezitpercentages = Minimumautobezit[i]/100
+            # Determine if car possessions are lower.
+            car_possession_correction = 1
+            if min_car_possession[i] > 0 and min_car_possession[i]/100 < car_possession_shares:
+                car_possession_correction = (min_car_possession[i]/100) / car_possession_shares
+                car_possession_shares = min_car_possession[i]/100
 
-            # Nu autobezit, rijbewijsbezit per inkomensklasse bepalen
-            for i_ink in range(len(inkomens)):
-                WAutoaandeeltheor = WAuto[Sted[i]][i_ink]/100
-                WelAuto = WAutoaandeeltheor * Autobezitcorrectiefactor
+            # Car possessions, license possessions, income classes.
+            for i_income in range(len(income_levels)):
+                with_car_share_theoretical = with_car_segs[urbanisation[i]][i_income]/100
+                with_car = with_car_share_theoretical * car_possession_correction
 
-                if Autobezitcorrectiefactor != 1:
-                    Geenautobezitcorrectiefactor = (1 - WelAuto)/(1-WAutoaandeeltheor)
+                if car_possession_correction != 1:
+                    no_car_correction = (1 - with_car)/(1-with_car_share_theoretical)
                 else:
-                    Geenautobezitcorrectiefactor = 1
+                    no_car_correction = 1
 
-                GeenAutoWelRijbewijs = GAuto[Sted[i]][i_ink]/100 * Geenautobezitcorrectiefactor
-                GeenRijbewijs = GRijbewijs[Sted[i]][i_ink]/100 * Geenautobezitcorrectiefactor
+                no_car_with_license = no_car_segs[urbanisation[i]][i_income]/100 * no_car_correction
+                no_license = no_license_segs[urbanisation[i]][i_income]/100 * no_car_correction
 
                 # Van de auto's de gratisauto's en gratisauto en OV-bepalen en de rest overhouden
-                Overzichtperinkomensgroep = []
-                Inkomensaandeel = inkomen_verdeling[i_ink]
+                survey_per_income_class = []
+                income_share = income_distribution[i_income]
 
-                GratisAuto = WelAuto * Gratisautonaarinkomens[i_ink]
-                NietGratisAuto = WelAuto - GratisAuto
-                GratisAutoaandeel = round(GratisAuto * (1 - GratisOVpercentage) * Inkomensaandeel, 4)
-                Totaaloverzicht[i].append(GratisAutoaandeel)
-                Overzichtperinkomensgroep.append(GratisAutoaandeel)
+                free_car = with_car * free_car_per_income[i_income]
+                no_free_car = with_car - free_car
+                free_car_share = round(free_car * (1 - free_pt_percentage) * income_share, 4)
+                total_survey[i].append(free_car_share)
+                survey_per_income_class.append(free_car_share)
 
-                GratisAutoenOVaandeel = round(GratisAuto * GratisOVpercentage * Inkomensaandeel, 4)
-                Totaaloverzicht[i].append(GratisAutoenOVaandeel)
-                Overzichtperinkomensgroep.append(GratisAutoenOVaandeel)
+                free_car_and_pt_share = round(free_car * free_pt_percentage * income_share, 4)
+                total_survey[i].append(free_car_and_pt_share)
+                survey_per_income_class.append(free_car_and_pt_share)
 
-                GratisOVaandeel = round(NietGratisAuto * GratisOVpercentage * Inkomensaandeel, 4)
-                Totaaloverzicht[i].append(GratisOVaandeel)
-                Overzichtperinkomensgroep.append(GratisOVaandeel)
+                free_pt_share = round(no_free_car * free_pt_percentage * income_share, 4)
+                total_survey[i].append(free_pt_share)
+                survey_per_income_class.append(free_pt_share)
 
-                for i_vk in range(len(voorkeuren)):
-                    Aandeelvk = NietGratisAuto * (1-GratisOVpercentage) * Voorkeuren[Sted[i]][i_vk] / 100
-                    Voorkeursaandeel = round(Aandeelvk * Inkomensaandeel, 4)
-                    Totaaloverzicht[i].append(Voorkeursaandeel)
-                    Overzichtperinkomensgroep.append(Voorkeursaandeel)
+                for i_preference in range(len(preferences)):
+                    share_perference = no_free_car * (1-free_pt_percentage) * preferences_segs[urbanisation[i]][i_preference] / 100
+                    preference_share = round(share_perference * income_share, 4)
+                    total_survey[i].append(preference_share)
+                    survey_per_income_class.append(preference_share)
 
-                GeenAutoGratisOVaandeel = round(GeenAutoWelRijbewijs * GratisOVpercentage * Inkomensaandeel, 4)
-                Totaaloverzicht[i].append(GeenAutoGratisOVaandeel)
-                Overzichtperinkomensgroep.append(0)
+                no_car_free_pt_share = round(no_car_with_license * free_pt_percentage * income_share, 4)
+                total_survey[i].append(no_car_free_pt_share)
+                survey_per_income_class.append(0)
 
-                for i_vk in range(len(voorkeurengeenauto)):
-                    Aandeelvk = GeenAutoWelRijbewijs * (1 - GratisOVpercentage) * VoorkeurenGeenAuto[Sted[i]][i_vk] / 100
-                    Voorkeursaandeel = round(Aandeelvk * Inkomensaandeel, 4)
-                    Totaaloverzicht[i].append(Voorkeursaandeel)
-                    Overzichtperinkomensgroep.append(0)
+                for i_preference in range(len(preferences_no_car)):
+                    share_perference = no_car_with_license * (1 - free_pt_percentage) * preferences_no_car_segs[urbanisation[i]][i_preference] / 100
+                    preference_share = round(share_perference * income_share, 4)
+                    total_survey[i].append(preference_share)
+                    survey_per_income_class.append(0)
 
-                GeenRBGratisOVaandeel = round(GeenRijbewijs * GratisOVpercentage * Inkomensaandeel, 4)
-                Totaaloverzicht[i].append(GeenRBGratisOVaandeel)
-                Overzichtperinkomensgroep.append(0)
+                no_license_free_pt_share = round(no_license * free_pt_percentage * income_share, 4)
+                total_survey[i].append(no_license_free_pt_share)
+                survey_per_income_class.append(0)
 
-                for i_vk in range(len(voorkeurengeenauto)):
-                    Aandeelvk = GeenRijbewijs * (1 - GratisOVpercentage) * VoorkeurenGeenAuto[Sted[i]][i_vk] / 100
-                    Voorkeursaandeel = round(Aandeelvk * Inkomensaandeel, 4)
-                    Totaaloverzicht[i].append(Voorkeursaandeel)
-                    Overzichtperinkomensgroep.append(0)
+                for i_preference in range(len(preferences_no_car)):
+                    share_perference = no_license * (1 - free_pt_percentage) * preferences_no_car_segs[urbanisation[i]][i_preference] / 100
+                    preference_share = round(share_perference * income_share, 4)
+                    total_survey[i].append(preference_share)
+                    survey_per_income_class.append(0)
 
-                for i_oig in range(len(Overzichtperinkomensgroep)):
-                    if sum(Overzichtperinkomensgroep) > 0:
-                        Overzichttotaalautobezit[i].append(round(Overzichtperinkomensgroep[i_oig]/sum(Overzichtperinkomensgroep) * Inkomensaandeel, 4))
+                for i_survey in range(len(survey_per_income_class)):
+                    if sum(survey_per_income_class) > 0:
+                        total_car_possession_survey[i].append(round(survey_per_income_class[i_survey]/sum(survey_per_income_class) * income_share, 4))
                     else:
-                        Overzichttotaalautobezit[i].append(0)
+                        total_car_possession_survey[i].append(0)
 
-        logger.debug("Overzichttotaalautobezit: %s", Overzichttotaalautobezit)
-        segs_source.write_csv(Totaaloverzicht, f'Verdeling_over_groepen', group=Bevolkingsdeel, scenario=scenario, header=Header)
-        segs_source.write_csv(Overzichttotaalautobezit, f'Verdeling_over_groepen', group=Bevolkingsdeel, modifier="alleen_autobezit", scenario=scenario, header=Header)
-        segs_source.write_xlsx(Totaaloverzicht, f'Verdeling_over_groepen', group=Bevolkingsdeel, scenario=scenario, header=['Zone', *Header])
-        segs_source.write_xlsx(Overzichttotaalautobezit, f'Verdeling_over_groepen', group=Bevolkingsdeel, modifier="alleen_autobezit", scenario=scenario, header=['Zone', *Header])
+        logger.debug("Total car posessions: %s", total_car_possession_survey)
+        segs_source.write_csv(total_survey, 'Verdeling_over_groepen', group=population_share, scenario=scenario, header=header)
+        segs_source.write_csv(total_car_possession_survey, 'Verdeling_over_groepen', group=population_share, modifier="alleen_autobezit", scenario=scenario, header=header)
+        segs_source.write_xlsx(total_survey, 'Verdeling_over_groepen', group=population_share, scenario=scenario, header=['Zone', *header])
+        segs_source.write_xlsx(total_car_possession_survey, 'Verdeling_over_groepen', group=population_share, modifier="alleen_autobezit", scenario=scenario, header=['Zone', *header])
