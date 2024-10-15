@@ -1,6 +1,4 @@
 import ikob.utils as utils
-import ikob.constants as Constantengenerator
-from tkinter import filedialog
 from tkinter import *
 import os
 from ikobconfig import getConfigFromArgs
@@ -12,18 +10,18 @@ config = getConfigFromArgs()
 paden_config = config['project']['paden']
 
 # Ophalen van instellingen
-Skimsdirectory = paden_config['skims_directory']
-SEGSdirectory = paden_config['segs_directory']
-Jaar=config['project']['jaar']
+skims_directory = paden_config['skims_directory']
+segs_directory = paden_config['segs_directory']
+year=config['project']['jaar']
 
-Inkomensverdelingsfilenaam = os.path.join (SEGSdirectory, 'Inkomensverdeling_per_zone')
-Inwonersaantalfilenaam = os.path.join (SEGSdirectory, f'Beroepsbevolking{Jaar}')
-Inkomensverdeling = utils.read_csv_int(Inkomensverdelingsfilenaam,aantal_lege_regels=1)
-Inwoners = utils.read_csv_int(Inwonersaantalfilenaam)
-Inwonersperzone = []
-for i in range (len(Inwoners)):
-    Inwonersperzone.append([])
-    for j in range (len(Inkomensverdeling[0])):
-        Inwonersperzone[i].append(int(Inwoners[i]*Inkomensverdeling[i][j]/100))
-Echteinwoners_zone_klassefile = os.path.join (SEGSdirectory, f'Inwoners_per_klasse{Jaar}')
-utils.write_csv(Inwonersperzone,Echteinwoners_zone_klassefile)
+income_distribution_path = os.path.join (segs_directory, 'Inkomensverdeling_per_zone')
+citizens_count_path = os.path.join (segs_directory, f'Beroepsbevolking{year}')
+incomde_distribution = utils.read_csv_int(income_distribution_path,aantal_lege_regels=1)
+citizens = utils.read_csv_int(citizens_count_path)
+citizens_per_zone = []
+for i in range (len(citizens)):
+    citizens_per_zone.append([])
+    for j in range (len(incomde_distribution[0])):
+        citizens_per_zone[i].append(int(citizens[i]*incomde_distribution[i][j]/100))
+citizens_class_zone_file = os.path.join (segs_directory, f'Inwoners_per_klasse{year}')
+utils.write_csv(citizens_per_zone,citizens_class_zone_file)
