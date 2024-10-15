@@ -1,173 +1,172 @@
 import logging
 import math
-import ikob.constants as Constantengenerator
+from ikob.constants import work_constants
 import numpy as np
 from ikob.datasource import DataSource, DataKey, DataType
 
 logger = logging.getLogger(__name__)
 
 
-def gewichtenberekenen(skim, mod, vk, mot):
-    alpha, omega, scaling = Constantengenerator.work_constants(mod, vk, mot)
-    Gewichtenmatrix = np.zeros((len(skim), len(skim)))
+def calculate_weights(generalised_travel_time, modality, preference, motive):
+    alpha, omega, scaling = work_constants(modality, preference, motive)
+    n = len(generalised_travel_time)
+    weight_matrix = np.zeros((n, n))
 
-    for r in range(0, len(skim)):
-        for k in range(0, len(skim)):
-            ervaren_reistijd = skim[r][k]
-
-            if ervaren_reistijd < 180:
-                reistijdwaarde = (1 / (1 + math.exp((-omega + ervaren_reistijd)*alpha)))*scaling
+    for r in range(len(generalised_travel_time)):
+        for k in range(len(generalised_travel_time)):
+            if generalised_travel_time[r][k] < 180:
+                travel_time = (1 / (1 + math.exp((-omega + generalised_travel_time[r][k])*alpha)))*scaling
             else:
-                reistijdwaarde = 0
+                travel_time = 0
 
-            if reistijdwaarde < 0.001:
-                reistijdwaarde = 0
+            if travel_time < 0.001:
+                travel_time = 0
 
-            Gewichtenmatrix[r][k] = round(reistijdwaarde, 4)
-    return Gewichtenmatrix
+            weight_matrix[r][k] = round(travel_time, 4)
+    return weight_matrix
 
 
-def calculate_single_weights(config, ervaren_reistijd: DataSource) -> DataSource:
-    logger.info("Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart.")
+def calculate_single_weights(config, generalised_travel_time: DataSource) -> DataSource:
+    logger.info("Weights (travel time decay curves) for car, PT, bike, and E-bike.")
 
     project_config = config['project']
     skims_config = config['skims']
 
     # Ophalen van instellingen
-    dagsoort = skims_config['dagsoort']
-    motieven = project_config['motieven']
-    regime = project_config['beprijzingsregime']
+    part_of_days = skims_config['dagsoort']
+    motives = project_config['motieven']
+    regimes = project_config['beprijzingsregime']
 
     # Vaste waarden
-    inkomen = ['hoog', 'middelhoog', 'middellaag', 'laag']
-    voorkeuren = ['Auto', 'Neutraal', 'Fiets', 'OV']
-    modaliteitenfiets = ['Fiets']
-    soortbrandstof = ['fossiel', 'elektrisch']
+    incomes = ['hoog', 'middelhoog', 'middellaag', 'laag']
+    preferences = ['Auto', 'Neutraal', 'Fiets', 'OV']
+    modalities_bike = ['Fiets']
+    fuel_kinds = ['fossiel', 'elektrisch']
 
-    gewichten = DataSource(config, DataType.WEIGHTS)
+    weights = DataSource(config, DataType.WEIGHTS)
 
-    for ds in dagsoort:
-        for mot in motieven:
-            for mod in modaliteitenfiets:
-                for vk in voorkeuren:
-                    if vk == 'Auto' or vk == 'Fiets':
+    for part_of_day in part_of_days:
+        for motive in motives:
+            for modality in modalities_bike:
+                for preference in preferences:
+                    if preference == 'Auto' or preference == 'Fiets':
                         key = DataKey('Fiets',
-                                      part_of_day=ds,
-                                      regime=regime,
-                                      motive=mot)
-                        GGRskim = ervaren_reistijd.get(key)
-                        Gewichten = gewichtenberekenen(GGRskim, mod, vk, mot)
+                                      part_of_day=part_of_day,
+                                      regime=regimes,
+                                      motive=motive)
+                        ggr_skim = generalised_travel_time.get(key)
+                        weight_matrix = calculate_weights(ggr_skim, modality, preference, motive)
 
-                        if vk == 'Auto':
-                            key = DataKey(f'{mod}_vk',
-                                          part_of_day=ds,
-                                          regime=regime,
-                                          motive=mot)
+                        if preference == 'Auto':
+                            key = DataKey(f'{modality}_vk',
+                                          part_of_day=part_of_day,
+                                          regime=regimes,
+                                          motive=motive)
                         else:
-                            key = DataKey(f'{mod}_vk',
-                                          part_of_day=ds,
-                                          regime=regime,
-                                          motive=mot,
-                                          preference=vk)
+                            key = DataKey(f'{modality}_vk',
+                                          part_of_day=part_of_day,
+                                          regime=regimes,
+                                          motive=motive,
+                                          preference=preference)
 
-                        gewichten.set(key, Gewichten.copy())
+                        weights.set(key, weight_matrix.copy())
 
-            # Nu Auto
-            for ink in inkomen:
-                for vk in voorkeuren:
-                    for srtbr in soortbrandstof:
-                        key = DataKey(f'Auto_{srtbr}',
-                                      part_of_day=ds,
-                                      income=ink,
-                                      regime=regime,
-                                      motive=mot)
-                        GGRskim = ervaren_reistijd.get(key)
+            # Car.
+            for income in incomes:
+                for preference in preferences:
+                    for fuel_kind in fuel_kinds:
+                        key = DataKey(f'Auto_{fuel_kind}',
+                                      part_of_day=part_of_day,
+                                      income=income,
+                                      regime=regimes,
+                                      motive=motive)
+                        ggr_skim = generalised_travel_time.get(key)
 
-                        Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
+                        weight_matrix = calculate_weights(ggr_skim, 'Auto', preference, motive)
                         key = DataKey('Auto_vk',
-                                      part_of_day=ds,
-                                      income=ink,
-                                      regime=regime,
-                                      motive=mot,
-                                      preference=vk,
-                                      fuel_kind=srtbr)
-                        gewichten.set(key, Gewichten.copy())
+                                      part_of_day=part_of_day,
+                                      income=income,
+                                      regime=regimes,
+                                      motive=motive,
+                                      preference=preference,
+                                      fuel_kind=fuel_kind)
+                        weights.set(key, weight_matrix.copy())
 
-            soortgeenauto = ['GeenAuto', 'GeenRijbewijs']
-            voorkeurengeenauto = ['Neutraal', 'OV', 'Fiets']
-            for sga in soortgeenauto:
-                for vk in voorkeurengeenauto:
-                    for ink in inkomen:
-                        key = DataKey(f'{sga}',
-                                      part_of_day=ds,
-                                      income=ink,
-                                      regime=regime,
-                                      motive=mot)
-                        GGRskim = ervaren_reistijd.get(key)
+            no_car_kinds = ['GeenAuto', 'GeenRijbewijs']
+            no_car_preferences = ['Neutraal', 'OV', 'Fiets']
+            for no_car_kind in no_car_kinds:
+                for preference in no_car_preferences:
+                    for income in incomes:
+                        key = DataKey(f'{no_car_kind}',
+                                      part_of_day=part_of_day,
+                                      income=income,
+                                      regime=regimes,
+                                      motive=motive)
+                        ggr_skim = generalised_travel_time.get(key)
 
-                        Gewichten = gewichtenberekenen(GGRskim, 'Auto', vk, mot)
-                        key = DataKey(f'{sga}_vk',
-                                      part_of_day=ds,
-                                      income=ink,
-                                      regime=regime,
-                                      preference=vk,
-                                      motive=mot)
-                        gewichten.set(key, Gewichten.copy())
+                        weight_matrix = calculate_weights(ggr_skim, 'Auto', preference, motive)
+                        key = DataKey(f'{no_car_kind}_vk',
+                                      part_of_day=part_of_day,
+                                      income=income,
+                                      regime=regimes,
+                                      preference=preference,
+                                      motive=motive)
+                        weights.set(key, weight_matrix.copy())
 
-            modaliteitenOV = ['OV']
-            for modOV in modaliteitenOV:
-                for ink in inkomen:
-                    for vk in voorkeuren:
-                        key = DataKey(f'{modOV}',
-                                      part_of_day=ds,
-                                      income=ink,
-                                      regime=regime,
-                                      motive=mot)
-                        GGRskim = ervaren_reistijd.get(key)
+            modalities_pt = ['OV']
+            for modality in modalities_pt:
+                for income in incomes:
+                    for preference in preferences:
+                        key = DataKey(f'{modality}',
+                                      part_of_day=part_of_day,
+                                      income=income,
+                                      regime=regimes,
+                                      motive=motive)
+                        ggr_skim = generalised_travel_time.get(key)
 
-                        Gewichten = gewichtenberekenen(GGRskim, modOV, vk, mot)
-                        key = DataKey(f'{modOV}_vk',
-                                      part_of_day=ds,
-                                      preference=vk,
-                                      income=ink,
-                                      regime=regime,
-                                      motive=mot)
-                        gewichten.set(key, Gewichten.copy())
+                        weight_matrix = calculate_weights(ggr_skim, modality, preference, motive)
+                        key = DataKey(f'{modality}_vk',
+                                      part_of_day=part_of_day,
+                                      preference=preference,
+                                      income=income,
+                                      regime=regimes,
+                                      motive=motive)
+                        weights.set(key, weight_matrix.copy())
 
-            for ink in inkomen:
+            for income in incomes:
                 key = DataKey('GratisAuto',
-                              part_of_day=ds,
-                              income=ink,
-                              regime=regime,
-                              motive=mot)
-                GGRskim = ervaren_reistijd.get(key)
+                              part_of_day=part_of_day,
+                              income=income,
+                              regime=regimes,
+                              motive=motive)
+                ggr_skim = generalised_travel_time.get(key)
 
-                Gewichten = gewichtenberekenen(GGRskim, 'Auto', 'Auto', mot)
-                specialauto = ['Neutraal', 'Auto']
-                for vks in specialauto:
+                weight_matrix = calculate_weights(ggr_skim, 'Auto', 'Auto', motive)
+                special_car_kinds = ['Neutraal', 'Auto']
+                for special_car_kind in special_car_kinds:
                     key = DataKey('GratisAuto_vk',
-                                  part_of_day=ds,
-                                  preference=vks,
-                                  income=ink,
-                                  regime=regime,
-                                  motive=mot)
-                    gewichten.set(key, Gewichten.copy())
+                                  part_of_day=part_of_day,
+                                  preference=special_car_kind,
+                                  income=income,
+                                  regime=regimes,
+                                  motive=motive)
+                    weights.set(key, weight_matrix.copy())
 
                 key = DataKey('GratisOV',
-                              part_of_day=ds,
-                              regime=regime,
-                              motive=mot)
-                GGRskim = ervaren_reistijd.get(key)
+                              part_of_day=part_of_day,
+                              regime=regimes,
+                              motive=motive)
+                ggr_skim = generalised_travel_time.get(key)
 
-                Gewichten = gewichtenberekenen(GGRskim, 'OV', 'OV', mot)
-                specialOV = ['Neutraal', 'OV']
-                for vks in specialOV:
+                weight_matrix = calculate_weights(ggr_skim, 'OV', 'OV', motive)
+                special_pt_kinds = ['Neutraal', 'OV']
+                for special_pt_kind in special_pt_kinds:
                     key = DataKey('GratisOV_vk',
-                                  part_of_day=ds,
-                                  preference=vks,
-                                  income=ink,
-                                  regime=regime,
-                                  motive=mot)
-                    gewichten.set(key, Gewichten.copy())
+                                  part_of_day=part_of_day,
+                                  preference=special_pt_kind,
+                                  income=income,
+                                  regime=regimes,
+                                  motive=motive)
+                    weights.set(key, weight_matrix.copy())
 
-    return gewichten
+    return weights
