@@ -1,9 +1,18 @@
 import logging
 import ikob.utils as utils
-from ikob.calculations import potenties
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 
 logger = logging.getLogger(__name__)
+
+
+def potenties(Matrix, Inwonerstrans, gr, Groepen):
+    Dezegroeplijst = []
+    for i in range(len(Matrix)):
+        Gewogenmatrix = []
+        for Getal1, Getal2 in zip(Matrix[i], Inwonerstrans[Groepen.index(gr)]):
+            Gewogenmatrix.append(Getal1 * Getal2)
+        Dezegroeplijst.append(sum(Gewogenmatrix))
+    return Dezegroeplijst
 
 
 def inwonersfile_maken (Verdelingsmatrix, Beroepsbevolking):

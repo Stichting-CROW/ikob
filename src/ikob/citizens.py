@@ -1,5 +1,4 @@
 import ikob.utils as utils
-import ikob.calculations as Berekeningen
 import ikob.constants as Constantengenerator
 from tkinter import filedialog
 from tkinter import *
