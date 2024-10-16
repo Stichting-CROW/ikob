@@ -7,6 +7,8 @@ from ikob.config import widgets
 # from ConfiguratieDefinitie import *
 from ikob.ikobconfig import loadConfig, getConfigFromArgs
 
+from ikob.datasource import DataType, DataSource
+
 from ikob.Ervarenreistijdberekenen import ervaren_reistijd_berekenen
 from ikob.Verdelingovergroepen import verdeling_over_groepen
 from ikob.Gewichtenberekenenenkelscenarios import gewichten_berekenen_enkel_scenarios
@@ -32,6 +34,8 @@ def run_scripts(project_file, skip_steps=None):
 
     if not skip_steps[0]:
         ervaren_reistijd = ervaren_reistijd_berekenen(config)
+    else:
+        ervaren_reistijd = DataSource(config, DataType.ERVARENREISTIJD)
 
     if not skip_steps[1]:
         # TODO: Pass temporary SEGS output as arguments too.
@@ -39,21 +43,33 @@ def run_scripts(project_file, skip_steps=None):
 
     if not skip_steps[2]:
         gewichten_enkel = gewichten_berekenen_enkel_scenarios(config, ervaren_reistijd)
+    else:
+        gewichten_enkel = DataSource(config, DataType.GEWICHTEN)
 
     if not skip_steps[3]:
         gewichten_combi = gewichten_berekenen_combis(config, gewichten_enkel)
+    else:
+        gewichten_combi = DataSource(config, DataType.GEWICHTEN)
 
     if not skip_steps[4]:
         potenties = ontplooingsmogelijkheden_echte_inwoners(config, gewichten_enkel, gewichten_combi)
+    else:
+        potenties = DataSource(config, DataType.BESTEMMINGEN)
 
     if not skip_steps[5]:
         herkomsten = potentie_bedrijven(config, gewichten_enkel, gewichten_combi)
+    else:
+        herkomsten = DataSource(config, DataType.HERKOMSTEN)
 
     if not skip_steps[6]:
         concurrentie_arbeid = concurrentie_om_arbeidsplaatsen(config, gewichten_enkel, gewichten_combi, herkomsten)
+    else:
+        concurrentie_arbeid = DataSource(config, DataType.CONCURRENTIE)
 
     if not skip_steps[7]:
         concurrentie_inwoners = concurrentie_om_inwoners(config, gewichten_enkel, gewichten_combi, potenties)
+    else:
+        concurrentie_inwoners = DataSource(config, DataType.CONCURRENTIE)
 
     # TODO: For now all files are written to disk to assert their contents in
     # end-to-end testing. Ultimately only files that are essential outputs should persist.
