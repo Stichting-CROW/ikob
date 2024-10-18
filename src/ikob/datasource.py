@@ -227,11 +227,11 @@ class DataSource:
     def set(self, key: DataKey, data: NDArray):
         self.cache[key] = data
 
-    def get(self, key: DataKey, type_caster=float) -> NDArray:
+    def get(self, key: DataKey) -> NDArray:
         if key in self.cache:
             return self.cache[key]
 
-        data = self.read_csv(key, type_caster=type_caster)
+        data = self.read_csv(key)
         self.set(key, data)
         return data
 
@@ -239,9 +239,9 @@ class DataSource:
         for key, data in self.cache.items():
             self.write_csv(data, key)
 
-    def read_csv(self, key: DataKey, type_caster=float) -> NDArray:
+    def read_csv(self, key: DataKey) -> NDArray:
         path = self._make_file_path(key).with_suffix(".csv")
-        return utils.read_csv(path, type_caster=type_caster)
+        return utils.read_csv(path)
 
     def write_csv(self, data, key: DataKey, header=[]):
         assert isinstance(key, DataKey)

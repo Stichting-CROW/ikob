@@ -22,9 +22,8 @@ def create_citizens_file(distribution_matrix, working_population):
         citizens_file.append([])
         for j in range(len(distribution_matrix[0])):
             citizens_file[i].append(
-                round(
-                    working_population[i] *
-                    distribution_matrix[i][j]))
+                working_population[i] *
+                distribution_matrix[i][j])
     return citizens_file
 
 
@@ -218,8 +217,7 @@ def possible_companies(config,
                                         bike_matrix, citizens_transpose, group, groups)
 
                                     for i in range(0, len(bike_matrix)):
-                                        working_population_list[i] += round(
-                                            group_list[i])
+                                        working_population_list[i] += group_list[i]
 
                                 elif modality == 'Auto':
                                     string = utils.single_group(
@@ -258,8 +256,7 @@ def possible_companies(config,
                                                 group_list_f[i]
 
                                         for i in range(0, len(matrix)):
-                                            working_population_list[i] += int(
-                                                group_list[i])
+                                            working_population_list[i] += group_list[i]
 
                                     else:
                                         key = DataKey(f'{string}_vk',
@@ -273,8 +270,7 @@ def possible_companies(config,
                                         group_list = get_potencies(
                                             matrix, citizens_transpose, group, groups)
                                         for i in range(0, len(matrix)):
-                                            working_population_list[i] += int(
-                                                group_list[i])
+                                            working_population_list[i] += group_list[i]
 
                                 elif modality == 'OV':
                                     string = utils.single_group(
@@ -291,8 +287,7 @@ def possible_companies(config,
                                         matrix, citizens_transpose, group, groups)
 
                                     for i in range(0, len(matrix)):
-                                        working_population_list[i] += round(
-                                            group_list[i])
+                                        working_population_list[i] += group_list[i]
                                 else:
                                     string = utils.combined_group(
                                         modality, group)
@@ -330,8 +325,7 @@ def possible_companies(config,
                                                 group_list_f[i]
 
                                         for i in range(0, len(matrix)):
-                                            working_population_list[i] += int(
-                                                group_list[i])
+                                            working_population_list[i] += group_list[i]
 
                                     else:
                                         key = DataKey(f'{string}_vk',
@@ -346,8 +340,7 @@ def possible_companies(config,
                                         group_list = get_potencies(
                                             matrix, citizens_transpose, group, groups)
                                         for i in range(0, len(matrix)):
-                                            working_population_list[i] += round(
-                                                group_list[i])
+                                            working_population_list[i] += group_list[i]
 
                         key = DataKey(id='Totaal',
                                       part_of_day=part_of_day,
@@ -390,7 +383,7 @@ def possible_companies(config,
                         for j in range(len(place_of_employment_class[0])):
                             if place_of_employment_class[i][j] > 0:
                                 general_matrix_product[i].append(
-                                    int(general_total_transpose[i][j] * place_of_employment_class[i][j]))
+                                    general_total_transpose[i][j] * place_of_employment_class[i][j])
                             else:
                                 general_matrix_product[i].append(0)
 

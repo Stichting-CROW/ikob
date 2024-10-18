@@ -18,14 +18,14 @@ def calculate_weights(generalised_travel_time, modality, preference, motive):
         for k in range(len(generalised_travel_time)):
             if generalised_travel_time[r][k] < 180:
                 travel_time = (
-                    1 / (1 + math.exp((-omega + generalised_travel_time[r][k]) * alpha))) * scaling
+                    1.0 / (1 + math.exp((-omega + generalised_travel_time[r][k]) * alpha))) * scaling
             else:
-                travel_time = 0
+                travel_time = 0.0
 
             if travel_time < 0.001:
-                travel_time = 0
+                travel_time = 0.0
 
-            weight_matrix[r][k] = round(travel_time, 4)
+            weight_matrix[r][k] = travel_time
     return weight_matrix
 
 
