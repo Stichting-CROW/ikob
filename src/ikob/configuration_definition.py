@@ -50,29 +50,8 @@ def config_item(label: str,
     return dictionary
 
 
-def default_configuration_definition():
-    """
-    The default configuration definition for IKOB.
-
-    The configuration contains the label attribute:
-      - label: The label text for an input field, tab, or frame.
-
-    For each leaf in the configuration additional attributes are defined:
-      - type (required): the kind of input:
-          text
-          number
-          directory
-          file
-          checkbox
-          checklist
-          choice
-      - unit: a label after the input field for ``text`` and ``number``
-      - default: the default input value
-      - items: a list of items to choose from
-      - range: the minimum and maximum allowed values for type ``number``
-    """
-
-    project_tab = {
+def default_project_tab():
+    return {
         'label': 'Project',
         'naam': config_item(
             'Project naam',
@@ -147,7 +126,9 @@ def default_configuration_definition():
         }
     }
 
-    skims_tab = {
+
+def default_skims_tab():
+    return {
         'label': 'Gegeneraliseerde Reistijd Berekenen',
         'dagsoort': config_item(
             'Dagsoorten',
@@ -256,7 +237,9 @@ def default_configuration_definition():
         }
     }
 
-    tovm_tab = {
+
+def default_tovm_tab():
+    return {
         'label': 'Waarde van tijd',
 
         'werk': {
@@ -315,7 +298,9 @@ def default_configuration_definition():
         },
     }
 
-    verdeling_tab = {
+
+def default_verdeling_tab():
+    return {
         'label': 'Verdeling Over Groepen',
         'Percelektrisch': {
             'label': 'Percentage elektrische autos per inkomensgroep',
@@ -382,6 +367,34 @@ def default_configuration_definition():
             ),
         },
     }
+
+
+def default_configuration_definition():
+    """
+    The default configuration definition for IKOB.
+
+    The configuration contains the label attribute:
+      - label: The label text for an input field, tab, or frame.
+
+    For each leaf in the configuration additional attributes are defined:
+      - type (required): the kind of input:
+          text
+          number
+          directory
+          file
+          checkbox
+          checklist
+          choice
+      - unit: a label after the input field for ``text`` and ``number``
+      - default: the default input value
+      - items: a list of items to choose from
+      - range: the minimum and maximum allowed values for type ``number``
+    """
+
+    project_tab = default_project_tab()
+    skims_tab = default_skims_tab()
+    tovm_tab = default_tovm_tab()
+    verdeling_tab = default_verdeling_tab()
 
     return {
         'project': project_tab,
