@@ -34,10 +34,6 @@
     "motieven": [
       "werk"
     ],
-    "ketens": {
-      "gebruiken": false,
-      "naam hub": ""
-    },
     "welke_inkomensgroepen": [
       "laag",
       "middellaag",
@@ -99,6 +95,12 @@
     "parkeerkosten": {
       "bestand": "",
       "gebruiken": false
+    }
+  },
+  "ketens": {
+    "ketens": {
+      "gebruiken": false,
+      "naam hub": ""
     }
   }
 }

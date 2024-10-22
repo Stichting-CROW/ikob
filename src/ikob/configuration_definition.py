@@ -113,17 +113,6 @@ def default_project_tab():
             default='concurrentie',
             items=['concurrentie', 'afstand'],
         ),
-        'ketens': {
-            'label': 'Wordt er ook gewerkt met ketenverplaatsingen (hubs?',
-            'gebruiken': config_item(
-                'Wel ketens en hubs',
-                DataType.CHECKBOX,
-            ),
-            'naam hub': config_item(
-                'Wat is de naam van de verzameling hubs?',
-                DataType.TEXT,
-            )
-        }
     }
 
 
@@ -337,6 +326,23 @@ def default_advanced_tab():
     }
 
 
+def default_chains_and_hubs_tab():
+    return {
+        'label': 'Ketens',
+
+        'ketens': {
+            'gebruiken': config_item(
+                'Wel ketens en hubs',
+                DataType.CHECKBOX,
+            ),
+            'naam hub': config_item(
+                'Wat is de naam van de verzameling hubs?',
+                DataType.TEXT,
+            )
+        }
+    }
+
+
 def default_configuration_definition():
     """
     The default configuration definition for IKOB.
@@ -363,6 +369,7 @@ def default_configuration_definition():
     skims_tab = default_skims_tab()
     tovm_tab = default_tovm_tab()
     verdeling_tab = default_verdeling_tab()
+    chains_and_hubs_tab = default_chains_and_hubs_tab()
     advanced_tab = default_advanced_tab()
 
     return {
@@ -370,6 +377,7 @@ def default_configuration_definition():
         'skims': skims_tab,
         'TVOM': tovm_tab,
         'verdeling': verdeling_tab,
+        'ketens': chains_and_hubs_tab,
         'geavanceerd': advanced_tab,
     }
 

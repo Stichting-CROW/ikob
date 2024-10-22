@@ -59,10 +59,6 @@
     "conc_afstand": [
       "concurrentie"
     ],
-    "ketens": {
-      "naam hub": "",
-      "gebruiken": false
-    },
     "welke_groepen": [
       "alle groepen"
     ],
@@ -99,6 +95,12 @@
     "parkeerkosten": {
       "bestand": "",
       "gebruiken": false
+    }
+  },
+  "ketens": {
+    "ketens": {
+      "gebruiken": false,
+      "naam hub": ""
     }
   }
 }
