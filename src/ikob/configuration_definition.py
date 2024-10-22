@@ -239,92 +239,47 @@ def default_skims_tab():
 
 
 def default_tovm_tab():
+    levels = ["Hoog", "Middelhoog", "Middellaag", "Laag"]
+    werk_values = [4, 6, 9, 12]
+
+    werk_levels = {
+        level.lower(): config_item(
+            level, DataType.NUMBER, default=value, unit="Minuten/Euro"
+        )
+        for level, value in zip(levels, werk_values)
+    }
+
+    overig_values = [4.8, 7.25, 10.9, 15.5]
+    overig_levels = {
+        level.lower(): config_item(
+            level, DataType.NUMBER, default=value, unit="Minuten/Euro"
+        )
+        for level, value in zip(levels, overig_values)
+    }
+
     return {
         'label': 'Waarde van tijd',
-
         'werk': {
             'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief werk',
-            'hoog': config_item(
-                'Hoog',
-                DataType.NUMBER,
-                default=4,
-                unit='Minuten/Euro',
-            ),
-            'middelhoog': config_item(
-                'Middelhoog',
-                DataType.NUMBER,
-                default=6,
-                unit='Minuten/Euro',
-            ),
-            'middellaag': config_item(
-                'Middellaag',
-                DataType.NUMBER,
-                default=9,
-                unit='Minuten/Euro',
-            ),
-            'laag': config_item(
-                'Laag',
-                DataType.NUMBER,
-                default=12,
-                unit='Minuten/Euro',
-            )
+            **werk_levels,
         },
         'overig': {
             'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief overig',
-            'hoog': config_item(
-                'Hoog',
-                DataType.NUMBER,
-                default=4.8,
-                unit='Minuten/Euro',
-            ),
-            'middelhoog': config_item(
-                'Middelhoog',
-                DataType.NUMBER,
-                default=7.25,
-                unit='Minuten/Euro',
-            ),
-            'middellaag': config_item(
-                'Middellaag',
-                DataType.NUMBER,
-                default=10.9,
-                unit='Minuten/Euro',
-            ),
-            'laag': config_item(
-                'Laag',
-                DataType.NUMBER,
-                default=15.5,
-                unit='Minuten/Euro',
-            )
+            **overig_levels,
         },
     }
 
 
 def default_verdeling_tab():
+    levels = ["Laag", "Middellaag", "Middelhoog", "Hoog"]
+
+    electric_share = {
+        level.lower(): config_item(level, DataType.NUMBER, unit="%") for level in levels
+    }
+
     return {
         'label': 'Verdeling Over Groepen',
-        'Percelektrisch': {
-            'label': 'Percentage elektrische autos per inkomensgroep',
-            'laag': config_item(
-                'Laag',
-                DataType.NUMBER,
-                unit='%',
-            ),
-            'middellaag': config_item(
-                'Middellaag',
-                DataType.NUMBER,
-                unit='%',
-            ),
-            'middelhoog': config_item(
-                'Middelhoog',
-                DataType.NUMBER,
-                unit='%',
-            ),
-            'hoog': config_item(
-                'hoog',
-                DataType.NUMBER,
-                unit='%',
-            )
-        },
+        'Percelektrisch': electric_share,
 
         'kunstmab': {
             'label': 'Kunstmatig autobezit (afgedwongen lager autobezit bv door strenge parkeernormen)',
