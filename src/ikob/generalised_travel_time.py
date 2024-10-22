@@ -31,7 +31,7 @@ def generalised_travel_time(config) -> DataSource:
     project_config = config['project']
     skims_config = config['skims']
     tvom_config = config['TVOM']
-    distribution_config = config['verdeling']
+    advanced_config = config['geavanceerd']
 
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
@@ -51,9 +51,9 @@ def generalised_travel_time(config) -> DataSource:
     kind_no_car = ['GeenAuto', 'GeenRijbewijs']
     pt_km_price = skims_config['OV kosten']['kmkosten']
     starting_rate = skims_config['OV kosten']['starttarief']
-    additional_costs = distribution_config['additionele_kosten']['gebruiken']
-    parking_costs = distribution_config['parkeerkosten']['gebruiken']
-    parking_costs_file = distribution_config['parkeerkosten']['bestand']
+    additional_costs = advanced_config['additionele_kosten']['gebruiken']
+    parking_costs = advanced_config['parkeerkosten']['gebruiken']
+    parking_costs_file = advanced_config['parkeerkosten']['bestand']
     pricecap = skims_config['pricecap']['gebruiken']
     pricecap_value = skims_config['pricecap']['getal']
 

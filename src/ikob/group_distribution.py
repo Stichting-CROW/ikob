@@ -13,10 +13,11 @@ def distribute_over_groups(config):
 
     project_config = config['project']
     verdeling_config = config['verdeling']
+    advanced_config = config['geavanceerd']
 
     # Ophalen van instellingen
     scenario = project_config['verstedelijkingsscenario']
-    artificial = verdeling_config['kunstmab']['gebruiken']
+    artificial = advanced_config['kunstmab']['gebruiken']
     free_pt_percentage = verdeling_config['GratisOVpercentage']
     motieven = project_config['motieven']
 
@@ -39,7 +40,7 @@ def distribute_over_groups(config):
 
     if artificial:
         artifical_car_possession_segs = read_csv_from_config(
-            config, key='verdeling', id='kunstmab', type_caster=int)
+            config, key='geavanceerd', id='kunstmab', type_caster=int)
         min_car_possession = list(
             itertools.starmap(
                 min, zip(

@@ -281,6 +281,24 @@ def default_verdeling_tab():
         'label': 'Verdeling Over Groepen',
         'Percelektrisch': electric_share,
 
+        'GratisOVpercentage': config_item(
+            'Gratis OV',
+            DataType.NUMBER,
+            default=0.03,
+            bounds=[0, 100],
+            unit='(fractie)',
+        ),
+    }
+
+
+def default_advanced_tab():
+    additionele_kosten_label = (
+        'Additionele kosten, dit zijn extra kosten die gemaakt worden bij bijvoorbeeld een cordonheffing, waarbij voor sommige verplaatsingen wel extra kosten gelden en voor andere verplaatsingen niet (bedragen in eurocenten).'
+    )
+
+    return {
+        'label': 'Geavanceerd',
+
         'kunstmab': {
             'label': 'Kunstmatig autobezit (afgedwongen lager autobezit bv door strenge parkeernormen)',
             'gebruiken': config_item(
@@ -292,13 +310,7 @@ def default_verdeling_tab():
                 DataType.FILE,
             ),
         },
-        'GratisOVpercentage': config_item(
-            'Gratis OV',
-            DataType.NUMBER,
-            default=0.03,
-            bounds=[0, 100],
-            unit='(fractie)',
-        ),
+
         'parkeerkosten': {
             'label': 'Is er een bestand met parkeerkosten per zone?',
             'gebruiken': config_item(
@@ -310,8 +322,9 @@ def default_verdeling_tab():
                 DataType.FILE,
             ),
         },
+
         'additionele_kosten': {
-            'label': 'Is er een bestand met additionele kosten (bedragen zijn in euros?',
+            'label': additionele_kosten_label,
             'gebruiken': config_item(
                 'Additionele kosten',
                 DataType.CHECKBOX,
@@ -350,12 +363,14 @@ def default_configuration_definition():
     skims_tab = default_skims_tab()
     tovm_tab = default_tovm_tab()
     verdeling_tab = default_verdeling_tab()
+    advanced_tab = default_advanced_tab()
 
     return {
         'project': project_tab,
         'skims': skims_tab,
         'TVOM': tovm_tab,
         'verdeling': verdeling_tab,
+        'geavanceerd': advanced_tab,
     }
 
 
