@@ -30,11 +30,6 @@ def StandaardConfiguratieDefinitie():
                 'type': 'text',
                 'default': 'Project 1'
             },
-            # 'scenario': {
-            # 'label': 'Welk scenario gaat het om',
-            # 'type': 'text',
-            # 'default': 'normaal'
-            # },
             'verstedelijkingsscenario': {
                 'label': 'Welk verstedelijkingsscenario wordt gebruikt',
                 'type': 'text',
@@ -129,13 +124,6 @@ def StandaardConfiguratieDefinitie():
                     'unit': 'Eurocent/km',
                     'default': 12
                 }
-
-                # ,
-                # 'Uit bestand': {
-                #  'label': 'OV kosten bestand',
-                #  'type': 'file',
-                #  'default': ''
-                # }
             },
             'OV kostenbestand': {
                 'label': 'Bestaat er een apart OV-kostenbestand?',
@@ -144,12 +132,6 @@ def StandaardConfiguratieDefinitie():
                     'type': 'checkbox',
                     'default': False
                 },
-                #                'naam kostenbestand': {
-                #                    'label': 'Wat is de naam van het OV kostenbestand?',
-                #                    'type': 'text',
-                #                    'default': ''
-                #                }
-
             },
             'pricecap': {
                 'label': 'Is er een maximum OV-prijs (price cap)?',
@@ -193,31 +175,11 @@ def StandaardConfiguratieDefinitie():
                     'default': 0
                 }
             },
-
             'parkeerzoektijden_bestand': {
                 'label': 'Parkeerzoektijden bestand',
                 'type': 'file',
                 'default': ''
             },
-            #           'parkeerkosten': {
-            #                'label': 'Is er een bestand met parkeerkosten of additionele kosten per zone?',
-            #                'gebruiken': {
-            #                    'label': 'Parkeerkosten',
-            #                    'type': 'checkbox',
-            #                    'items': ['Parkeerkosten', 'Additionele kosten'],
-            #                    'default': ['']
-            #                },
-            #                'bestand': {
-            #                    'label': 'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
-            #                    'type': 'file',
-            #                    'default': ''
-            #                },
-            #                'bestand': {
-            #                    'label': 'Additionele kosten bestand',
-            #                    'type': 'file',
-            #                    'default': ''
-            #                },
-            #            },
             'varkostenga': {
                 'label': 'Variabele kosten geen auto',
                 'GeenAuto': {
@@ -354,37 +316,6 @@ def StandaardConfiguratieDefinitie():
                     'default': ''
                 },
             },
-            # 'Gratisautopercentage': {
-            #  'label': 'Gratis Auto',
-            #  'laag': {
-            #    'label': 'Laag',
-            #    'type': 'number',
-            #    'unit': '(fractie)',
-            #    'range': [ 0, 100 ],
-            #    'default': 0
-            #  },
-            #  'middellaag': {
-            #    'label': 'Middellaag',
-            #    'type': 'number',
-            #    'unit': '(fractie)',
-            #    'range': [ 0, 100 ],
-            #    'default': 0.1
-            #  },
-            #  'middelhoog': {
-            #    'label': 'Middelhoog',
-            #    'type': 'number',
-            #    'unit': '(fractie)',
-            #    'range': [ 0, 100 ],
-            #    'default': 0.35
-            #  },
-            #  'hoog': {
-            #    'label': 'Hoog',
-            #    'type': 'number',
-            #    'unit': '(fractie)',
-            #    'range': [ 0, 100 ],
-            #    'default': 0.55
-            #  }
-            # },
             'GratisOVpercentage': {
                 'label': 'Gratis OV',
                 'type': 'number',
@@ -419,49 +350,6 @@ def StandaardConfiguratieDefinitie():
                 },
             },
         },
-
-        # 'ontplooiing': {
-        # 'label': 'Ontplooiing',
-        # 'verdeling_file': {
-        # 'label': 'Verdeling over groepen bestand',
-        # 'type': 'file',
-        # 'default': ''
-        # },
-        # 'uitvoerdirectorynaam': {
-        # 'label': 'Naam van uitvoerdirectory',
-        # 'type': 'text',
-        # 'default': 'ontplooiing_echte_inwoners'
-        # }
-        # },
-        # 'bedrijven': {
-        # 'label': 'Bedrijven',
-        # 'verdeling_file': {
-        # 'label': 'Verdeling over groepen bestand',
-        # 'type': 'file',
-        # 'default': ''
-        # },
-        # 'arbeid': {
-        # 'label': 'Concurrentie om arbeidsplaatsen',
-        # 'herkomsten_directory': {
-        # 'label': 'Herkomsten directory',
-        # 'type': 'directory',
-        # 'default': 'herkomsten'
-        # }
-        # },
-        # 'inwoners': {
-        # 'label': 'Concurrentie om inwoners',
-        # 'bestemmingen_directory': {
-        # 'label': 'Bestemmingen directory',
-        # 'type': 'directory',
-        # 'default': 'bestemmingen'
-        # }
-        # },
-        # 'uitvoer_directory_naam': {
-        # 'label': 'Naam van uitvoer directory',
-        # 'type': 'text',
-        # 'default': 'uitvoer'
-        # }
-        # }
     }
 
 
