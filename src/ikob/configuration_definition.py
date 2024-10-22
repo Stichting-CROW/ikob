@@ -1,27 +1,28 @@
 from ikob.config import build, validate
 
 
-def StandaardConfiguratieDefinitie():
+def default_configuration_definition():
     """
-  Dit is de standaard configuratie definitie zoals gebruikt door IKOB
-  De definitie bevat (mogelijk) de volgende velden:
-  - Overal:
-    - label: De tekst voor een label voor invoer veld, tab, of frame.
-  - Alleen in 'bladen' (het diepste niveau) van de definitie:
-    - type (verplicht): (soort invoer)
-        text,
-        number,
-        directory,
-        file,
-        checkbox,
-        checklist,
-        choice.
-      ('file' en 'directory' krijgen een 'browse' knop achter het veld)
-    - unit: label achter het invoerveld: (alleen text en number)
-    - default: De standaard invoerwaarde
-    - items: De lijst van dingen waaruit je kan kiezen (alleen voor type 'checklist' en 'choice')
-    - range: De minimum en maximum toegestane waarde (alleen voor type 'number')
-  """
+    The default configuration definition for IKOB.
+
+    The configuration contains the label attribute:
+      - label: The label text for an input field, tab, or frame.
+
+    For each leaf in the configuration additional attributes are defined:
+      - type (required): the kind of input:
+          text
+          number
+          directory
+          file
+          checkbox
+          checklist
+          choice
+      - unit: a label after the input field for ``text`` and ``number``
+      - default: the default input value
+      - items: a list of items to choose from
+      - range: the minimum and maximum allowed values for type ``number``
+    """
+
     return {
         'project': {
             'label': 'Project',
@@ -353,25 +354,19 @@ def StandaardConfiguratieDefinitie():
     }
 
 
-def projectNaam(config):
-    """
-  Geeft de inhoud van het veld terug waarin de projeect naam is opgeslagen.
-  """
+def project_name(config):
+    """Extract the project name from the project configuration."""
     return config['project']['naam']
 
 
-def valideerConfiguratie(config, strict=True):
-    """
-  Valideer een configuratie dictionary.
-  """
+def validate_config(config, strict=True):
+    """Validate a config dictionary."""
     return validate.validateConfigWithTemplate(
-        config, StandaardConfiguratieDefinitie(), strict=strict)
+        config, default_configuration_definition(), strict=strict)
 
 
-def StandaardConfiguratie():
-    """
-  Geeft de standaard configuratie terug zoals gedefinieerd in het bovenstaande sjabloon.
-  """
-    template = StandaardConfiguratieDefinitie()
+def default_config():
+    """Provide the configuration using the default config definition."""
+    template = default_configuration_definition()
     config = build.buildConfigDict(template)
     return config
