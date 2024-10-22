@@ -48,8 +48,8 @@ def loadConfig(filename):
     try:
         with open(filename) as json_file:
             config = json.load(json_file)
-    except BaseException:
-        raise IOError(f"Kan niet lezen uit: {filename}.")
+    except BaseException as e:
+        raise IOError(f"Kan niet lezen uit: '{filename}' with error:\n'{e}'.")
     if config:
         if not validate_config(config):
             raise ValueError("Configuratie heeft een incompatibel formaat.")
