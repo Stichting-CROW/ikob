@@ -1,4 +1,5 @@
 from enum import Enum
+
 from ikob.config import build, validate
 
 
@@ -63,9 +64,9 @@ def default_project_tab():
             DataType.TEXT,
         ),
         'beprijzingsregime': config_item(
-             'Wat is de naam van het beprijzingsregime',
-             DataType.TEXT,
-             default='Basis',
+            'Wat is de naam van het beprijzingsregime',
+            DataType.TEXT,
+            default='Basis',
         ),
         'paden': {
             'label': 'Paden',
@@ -150,8 +151,8 @@ def default_skims_tab():
         'pricecap': {
             'label': 'Is er een maximum OV-prijs (price cap)?',
             'gebruiken': config_item(
-                 'pricecap',
-                 DataType.CHECKBOX,
+                'pricecap',
+                DataType.CHECKBOX,
             ),
             'getal': config_item(
                 'Wat is de pricecap in Euros',
@@ -263,8 +264,10 @@ def default_verdeling_tab():
     levels = ["Laag", "Middellaag", "Middelhoog", "Hoog"]
 
     electric_share = {
-        level.lower(): config_item(level, DataType.NUMBER, unit="%") for level in levels
-    }
+        level.lower(): config_item(
+            level,
+            DataType.NUMBER,
+            unit="%") for level in levels}
 
     return {
         'label': 'Verdeling Over Groepen',
