@@ -1,25 +1,34 @@
+from enum import Enum
 from ikob.config import build, validate
 
 
+class DataType(Enum):
+    CHECKBOX = "checkbox"
+    CHECKLIST = "checklist"
+    CHOICE = "choice"
+    DIRECTORY = "directory"
+    FILE = "file"
+    NUMBER = "number"
+    TEXT = "text"
+
+
 def config_item(label: str,
-                data_type: str,
+                data_type: DataType,
                 default: str = '',
                 items: list[str] = [],
                 bounds: list[str] = [],
                 unit: str = ''):
-    allowed_data_types = ["text",
-                          "number",
-                          "directory",
-                          "file",
-                          "checkbox",
-                          "checklist",
-                          "choice"]
-    assert data_type in allowed_data_types
 
-    if data_type == "checkbox":
-        default = False if not default else default
-    elif data_type == "number":
-        default = 0 if not default else default
+    msg = "Invalid GUI data type provided."
+    assert data_type in DataType, msg
+
+    default_values = {
+        DataType.CHECKBOX: False,
+        DataType.NUMBER: 0
+    }
+
+    if not default:
+        default = default_values.get(data_type, default)
 
     # The default value is expected as list when more items are present.
     if items and isinstance(default, str):
@@ -27,7 +36,7 @@ def config_item(label: str,
 
     dictionary = {
         'label': label,
-        'type': data_type,
+        'type': data_type.value,
         'default': default
     }
 
@@ -67,61 +76,61 @@ def default_configuration_definition():
         'label': 'Project',
         'naam': config_item(
             'Project naam',
-            'text',
+            DataType.TEXT,
             default='Project 1'
         ),
         'verstedelijkingsscenario': config_item(
             'Welk verstedelijkingsscenario wordt gebruikt',
-            'text',
+            DataType.TEXT,
         ),
         'beprijzingsregime': config_item(
              'Wat is de naam van het beprijzingsregime',
-             'text',
+             DataType.TEXT,
              default='Basis',
         ),
         'paden': {
             'label': 'Paden',
             'skims_directory': config_item(
                 'Basis directory',
-                'directory',
+                DataType.DIRECTORY,
             ),
             'segs_directory': config_item(
                 'SEGS directory',
-                'directory',
+                DataType.DIRECTORY,
                 default='SEGS'
             ),
             'output_directory': config_item(
                 'Output directory',
-                'directory',
+                DataType.DIRECTORY,
                 default='output'
             )
         },
         'motieven': config_item(
-            'Motieven', 'checklist', default='werk',
+            'Motieven', DataType.CHECKLIST, default='werk',
             items=['werk', 'winkeldagelijkszorg',
                    'winkelnietdagelijksonderwijs', 'sociaal-recreatief']
         ),
         'welke_groepen': config_item(
             'Welke groepen moeten worden meegenomen qua autobezit',
-            'checklist',
+            DataType.CHECKLIST,
             default='alle groepen',
             items=['alle groepen', 'alleen autobezitters'],
         ),
         'schatten_of_bekend': config_item(
             'Is het percentage autobezit bekend of moet het uit CBS-gegevens geschat worden?',
-            'checklist',
+            DataType.CHECKLIST,
             default='geschat',
             items=['bekend', 'geschat'],
         ),
         'welke_inkomensgroepen': config_item(
             'Welke inkomensgroepen moeten worden meegenomen',
-            'checklist',
+            DataType.CHECKLIST,
             default=['laag', 'middellaag', 'middelhoog', 'hoog'],
             items=['laag', 'middellaag', 'middelhoog', 'hoog'],
         ),
         'conc_afstand': config_item(
             'Moet in stap 8 alleen concurrentie of ook afstand worden berekend',
-            'checklist',
+            DataType.CHECKLIST,
             default='concurrentie',
             items=['concurrentie', 'afstand'],
         ),
@@ -129,11 +138,11 @@ def default_configuration_definition():
             'label': 'Wordt er ook gewerkt met ketenverplaatsingen (hubs?',
             'gebruiken': config_item(
                 'Wel ketens en hubs',
-                'checkbox',
+                DataType.CHECKBOX,
             ),
             'naam hub': config_item(
                 'Wat is de naam van de verzameling hubs?',
-                'text',
+                DataType.TEXT,
             )
         }
     }
@@ -142,7 +151,7 @@ def default_configuration_definition():
         'label': 'Gegeneraliseerde Reistijd Berekenen',
         'dagsoort': config_item(
             'Dagsoorten',
-            'checklist',
+            DataType.CHECKLIST,
             default='Restdag',
             items=['Ochtendspits', 'Restdag', 'Avondspits'],
         ),
@@ -150,13 +159,13 @@ def default_configuration_definition():
         'OV kosten': {
             'starttarief': config_item(
                 'Starttarief',
-                'number',
+                DataType.NUMBER,
                 default=75,
                 unit='Eurocent',
             ),
             'kmkosten': config_item(
                 'Variabele kosten',
-                'number',
+                DataType.NUMBER,
                 default=12,
                 unit='Eurocent/km',
             )
@@ -165,18 +174,18 @@ def default_configuration_definition():
             'label': 'Bestaat er een apart OV-kostenbestand?',
             'gebruiken': config_item(
                 'Er is een apart OV-kostenbestand',
-                'checkbox',
+                DataType.CHECKBOX,
             ),
         },
         'pricecap': {
             'label': 'Is er een maximum OV-prijs (price cap)?',
             'gebruiken': config_item(
                  'pricecap',
-                 'checkbox',
+                 DataType.CHECKBOX,
             ),
             'getal': config_item(
                 'Wat is de pricecap in Euros',
-                'number',
+                DataType.NUMBER,
                 default=9999.0
             ),
         },
@@ -184,45 +193,45 @@ def default_configuration_definition():
         'Kosten auto fossiele brandstof': {
             'variabele kosten': config_item(
                 'variabele kosten',
-                'number',
+                DataType.NUMBER,
                 default=16,
                 unit='Eurocent/km',
             ),
             'kmheffing': config_item(
                 'Kilometerheffing',
-                'number',
+                DataType.NUMBER,
                 unit='Eurocent/km',
             ),
         },
         'Kosten elektrische auto': {
             'variabele kosten': config_item(
                 'variabele kosten',
-                'number',
+                DataType.NUMBER,
                 default=5,
                 unit='Eurocent/km'
             ),
             'kmheffing': config_item(
                 'Kilometerheffing',
-                'number',
+                DataType.NUMBER,
                 unit='Eurocent/km',
             )
         },
         'parkeerzoektijden_bestand': config_item(
             'Parkeerzoektijden bestand',
-            'file',
+            DataType.FILE,
         ),
         'varkostenga': {
             'label': 'Variabele kosten geen auto',
             'GeenAuto': config_item(
                 'Deelauto (bezit geen auto, wel rijbewijs)',
-                'number',
+                DataType.NUMBER,
                 default=0.33,
                 bounds=[0, 9999],
                 unit='Euro/km',
             ),
             'GeenRijbewijs': config_item(
                 'Taxi (bezit geen rijbewijs)',
-                'number',
+                DataType.NUMBER,
                 default=2.40,
                 bounds=[0, 9999],
                 unit='Euro/km',
@@ -232,14 +241,14 @@ def default_configuration_definition():
             'label': 'Tijd kosten geen auto',
             'GeenAuto': config_item(
                 'Deelauto (bezit geen auto, wel rijbewijs)',
-                'number',
+                DataType.NUMBER,
                 default=0.05,
                 bounds=[0, 9999],
                 unit='Euro/Minuut',
             ),
             'GeenRijbewijs': config_item(
                 'Taxi (bezit geen rijbewijs)',
-                'number',
+                DataType.NUMBER,
                 default=0.40,
                 bounds=[0, 9999],
                 unit='Euro/Minuut',
@@ -254,25 +263,25 @@ def default_configuration_definition():
             'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief werk',
             'hoog': config_item(
                 'Hoog',
-                'number',
+                DataType.NUMBER,
                 default=4,
                 unit='Minuten/Euro',
             ),
             'middelhoog': config_item(
                 'Middelhoog',
-                'number',
+                DataType.NUMBER,
                 default=6,
                 unit='Minuten/Euro',
             ),
             'middellaag': config_item(
                 'Middellaag',
-                'number',
+                DataType.NUMBER,
                 default=9,
                 unit='Minuten/Euro',
             ),
             'laag': config_item(
                 'Laag',
-                'number',
+                DataType.NUMBER,
                 default=12,
                 unit='Minuten/Euro',
             )
@@ -281,25 +290,25 @@ def default_configuration_definition():
             'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief overig',
             'hoog': config_item(
                 'Hoog',
-                'number',
+                DataType.NUMBER,
                 default=4.8,
                 unit='Minuten/Euro',
             ),
             'middelhoog': config_item(
                 'Middelhoog',
-                'number',
+                DataType.NUMBER,
                 default=7.25,
                 unit='Minuten/Euro',
             ),
             'middellaag': config_item(
                 'Middellaag',
-                'number',
+                DataType.NUMBER,
                 default=10.9,
                 unit='Minuten/Euro',
             ),
             'laag': config_item(
                 'Laag',
-                'number',
+                DataType.NUMBER,
                 default=15.5,
                 unit='Minuten/Euro',
             )
@@ -312,22 +321,22 @@ def default_configuration_definition():
             'label': 'Percentage elektrische autos per inkomensgroep',
             'laag': config_item(
                 'Laag',
-                'number',
+                DataType.NUMBER,
                 unit='%',
             ),
             'middellaag': config_item(
                 'Middellaag',
-                'number',
+                DataType.NUMBER,
                 unit='%',
             ),
             'middelhoog': config_item(
                 'Middelhoog',
-                'number',
+                DataType.NUMBER,
                 unit='%',
             ),
             'hoog': config_item(
                 'hoog',
-                'number',
+                DataType.NUMBER,
                 unit='%',
             )
         },
@@ -336,16 +345,16 @@ def default_configuration_definition():
             'label': 'Kunstmatig autobezit (afgedwongen lager autobezit bv door strenge parkeernormen)',
             'gebruiken': config_item(
                 'Gebruik kunstmatig autobezit',
-                'checkbox',
+                DataType.CHECKBOX,
             ),
             'bestand': config_item(
                 'Kunstmatig autobezit bestand',
-                'file',
+                DataType.FILE,
             ),
         },
         'GratisOVpercentage': config_item(
             'Gratis OV',
-            'number',
+            DataType.NUMBER,
             default=0.03,
             bounds=[0, 100],
             unit='(fractie)',
@@ -354,22 +363,22 @@ def default_configuration_definition():
             'label': 'Is er een bestand met parkeerkosten per zone?',
             'gebruiken': config_item(
                 'Parkeerkosten',
-                'checkbox',
+                DataType.CHECKBOX,
             ),
             'bestand': config_item(
                 'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
-                'file',
+                DataType.FILE,
             ),
         },
         'additionele_kosten': {
             'label': 'Is er een bestand met additionele kosten (bedragen zijn in euros?',
             'gebruiken': config_item(
                 'Additionele kosten',
-                'checkbox',
+                DataType.CHECKBOX,
             ),
             'bestand': config_item(
                 'Additionele kosten bestand',
-                'file',
+                DataType.FILE,
             ),
         },
     }
