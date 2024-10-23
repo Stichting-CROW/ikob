@@ -1,4 +1,5 @@
-import Routines
+from ikob.utils import read_csv, write_csv
+
 from tkinter import filedialog
 from tkinter import *
 import os
@@ -8,16 +9,16 @@ skims.label = ("Voer de directory waar de pure reistijdskims en afstandskims in 
 skims.directory =  filedialog.askdirectory (initialdir = os.getcwd(),title = "Selecteer de directory skimsdirectory",)
 skims.destroy()
 Skimsdirectory = skims.directory + '/'
-Autotijdfilenaam = os.path.join ( Skimsdirectory, f'Auto_Tijd' )
-Autotijdmatrix = Routines.csvlezen ( Autotijdfilenaam, aantal_lege_regels=0 )
-Fietstijdfilenaam = os.path.join ( Skimsdirectory, f'Fiets_Tijd' )
-Fietstijdmatrix = Routines.csvlezen ( Fietstijdfilenaam, aantal_lege_regels=0 )
-OVtijdfilenaam = os.path.join ( Skimsdirectory, f'OV_Tijd' )
-OVtijdmatrix = Routines.csvlezen ( OVtijdfilenaam, aantal_lege_regels=0 )
-Autoafstandfilenaam = os.path.join ( Skimsdirectory, f'Auto_Afstand' )
-Autoafstandmatrix = Routines.csvlezen ( Autoafstandfilenaam, aantal_lege_regels=0 )
-OVafstandfilenaam = os.path.join ( Skimsdirectory, f'OV_Afstand' )
-OVafstandmatrix = Routines.csvlezen ( OVafstandfilenaam, aantal_lege_regels=0 )
+Autotijdfilenaam = os.path.join(Skimsdirectory, 'Auto_Tijd.csv')
+Autotijdmatrix = read_csv(Autotijdfilenaam)
+Fietstijdfilenaam = os.path.join(Skimsdirectory, 'Fiets_Tijd.csv')
+Fietstijdmatrix = read_csv(Fietstijdfilenaam)
+OVtijdfilenaam = os.path.join(Skimsdirectory, 'OV_Tijd.csv')
+OVtijdmatrix = read_csv(OVtijdfilenaam)
+Autoafstandfilenaam = os.path.join(Skimsdirectory, 'Auto_Afstand.csv')
+Autoafstandmatrix = read_csv(Autoafstandfilenaam)
+OVafstandfilenaam = os.path.join(Skimsdirectory, 'OV_Afstand.csv')
+OVafstandmatrix = read_csv(OVafstandfilenaam)
 
 Hub = 0
 Hubset = []
@@ -151,24 +152,24 @@ for i in range (len(Autotijdmatrix)) :
             minimum = min ( minimum, PplusFietsautoafstandmatrix[h][i][j])
         PplusFietsautoafstandtotaal[i].append ( minimum )
 
-PplusRbestemmingstijdfilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_bestemmings_Tijd')
-Routines.csvwegschrijven(PplusRbestemmingstijdtotaal,PplusRbestemmingstijdfilenaam)
-PplusRbestemmingsafstandautofilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_bestemmings_Afstand_Auto')
-Routines.csvwegschrijven(PplusRbestemmingsafstandautototaal,PplusRbestemmingsafstandautofilenaam)
-PplusRbestemmingsafstandOVfilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_bestemmings_Afstand_OV')
-Routines.csvwegschrijven(PplusRbestemmingsafstandOVtotaal,PplusRbestemmingsafstandOVfilenaam)
-PplusRherkomsttijdfilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_herkomst_Tijd')
-Routines.csvwegschrijven(PplusRherkomsttijdtotaal,PplusRherkomsttijdfilenaam)
-PplusRherkomstafstandautofilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_herkomst_Afstand_Auto')
-Routines.csvwegschrijven(PplusRherkomstafstandautototaal,PplusRherkomstafstandautofilenaam)
-PplusRherkomstafstandOVfilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_herkomst_Afstand_OV')
-Routines.csvwegschrijven(PplusRherkomstafstandOVtotaal,PplusRherkomstafstandOVfilenaam)
-Pplusfietstijdfilenaam = os.path.join(Skimsdirectory,f'Pplusfiets_{Hubsetnaam}_Tijd')
-Routines.csvwegschrijven(PplusFietstijdtotaal,Pplusfietstijdfilenaam)
-Pplusfietsautoafstandfilenaam = os.path.join(Skimsdirectory,f'Pplusfiets_{Hubsetnaam}_Afstand_Auto')
-Routines.csvwegschrijven(PplusFietsautoafstandtotaal,Pplusfietsautoafstandfilenaam)
-Pplusfietshubplekfilenaam = os.path.join(Skimsdirectory,f'Pplusfiets_{Hubsetnaam}_bestehubs')
-Routines.csvwegschrijven(Pplusfietshubplek,Pplusfietshubplekfilenaam)
-PplusRhubplekfilenaam = os.path.join(Skimsdirectory,f'PplusR_{Hubsetnaam}_bestehubs')
-Routines.csvwegschrijven(PplusRhubplek,PplusRhubplekfilenaam)
+PplusRbestemmingstijdfilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_bestemmings_Tijd.csv')
+write_csv(PplusRbestemmingstijdtotaal, PplusRbestemmingstijdfilenaam)
+PplusRbestemmingsafstandautofilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_bestemmings_Afstand_Auto.csv')
+write_csv(PplusRbestemmingsafstandautototaal, PplusRbestemmingsafstandautofilenaam)
+PplusRbestemmingsafstandOVfilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_bestemmings_Afstand_OV.csv')
+write_csv(PplusRbestemmingsafstandOVtotaal, PplusRbestemmingsafstandOVfilenaam)
+PplusRherkomsttijdfilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_herkomst_Tijd.csv')
+write_csv(PplusRherkomsttijdtotaal, PplusRherkomsttijdfilenaam)
+PplusRherkomstafstandautofilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_herkomst_Afstand_Auto.csv')
+write_csv(PplusRherkomstafstandautototaal, PplusRherkomstafstandautofilenaam)
+PplusRherkomstafstandOVfilenaam = os.path.join(Skimsdirectory, f'PplusR_{Hubsetnaam}_herkomst_Afstand_OV.csv')
+write_csv(PplusRherkomstafstandOVtotaal, PplusRherkomstafstandOVfilenaam)
+Pplusfietstijdfilenaam = os.path.join(Skimsdirectory,f'Pplusfiets_{Hubsetnaam}_Tijd.csv')
+write_csv(PplusFietstijdtotaal, Pplusfietstijdfilenaam)
+Pplusfietsautoafstandfilenaam = os.path.join(Skimsdirectory,f'Pplusfiets_{Hubsetnaam}_Afstand_Auto.csv')
+write_csv(PplusFietsautoafstandtotaal, Pplusfietsautoafstandfilenaam)
+Pplusfietshubplekfilenaam = os.path.join(Skimsdirectory,f'Pplusfiets_{Hubsetnaam}_bestehubs.csv')
+write_csv(Pplusfietshubplek, Pplusfietshubplekfilenaam)
+PplusRhubplekfilenaam = os.path.join(Skimsdirectory,f'PplusR_{Hubsetnaam}_bestehubs.csv')
+write_csv(PplusRhubplek, PplusRhubplekfilenaam)
 
