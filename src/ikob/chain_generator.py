@@ -85,38 +85,66 @@ def chain_generator(skims_directory: pathlib.Path,
     PplusRbestemmingsafstandautomatrix = np.zeros((n_car_times, n_car_times, n_hubs))
     PplusFietsautoafstandmatrix = np.zeros((n_car_times, n_car_times, n_hubs))
 
-    for i in range(n_car_times):
-        for j in range(n_car_times):
-            for h, hub in enumerate(hubs):
-                if OVtijdmatrix[i, hub] <= Autotijdmatrix[hub, j]:
-                    PplusRbestemmingstijdmatrix[i, j, h] = OVtijdmatrix[i, hub] + Autotijdmatrix[hub, j]
-                    PplusRbestemmingsafstandautomatrix[i, j, h] = Autoafstandmatrix[hub, j]
-                    PplusRbestemmingsafstandOVmatrix[i, j, h] = OVafstandmatrix[i, hub]
-                    PplusRherkomsttijdmatrix[i, j, h] = Autotijdmatrix[i, hub] + OVtijdmatrix[hub, j]
-                    PplusRherkomstafstandautomatrix[i, j, h] = Autoafstandmatrix[i, hub]
-                    PplusRherkomstafstandOVmatrix[i, j, h] = OVafstandmatrix[hub, j]
-                else:
-                    PplusRbestemmingstijdmatrix[i, j, h] = Autotijdmatrix[i, hub] + OVtijdmatrix[hub, j]
-                    PplusRbestemmingsafstandautomatrix[i, j, h] = Autoafstandmatrix[i, hub]
-                    PplusRbestemmingsafstandOVmatrix[i, j, h] = OVafstandmatrix[hub, j]
-                    PplusRherkomsttijdmatrix[i, j, h] = OVtijdmatrix[i, hub] + Autotijdmatrix[hub, j]
-                    PplusRherkomstafstandautomatrix[i, j, h] = Autoafstandmatrix[hub, j]
-                    PplusRherkomstafstandOVmatrix[i, j, h] = OVafstandmatrix[i, hub]
+    for (i, j) in np.ndindex(n_car_times, n_car_times):
+        mask = OVtijdmatrix[i, hubs] <= Autotijdmatrix[hubs, j]
 
-    for i in range(n_car_times):
-        for j in range(n_car_times):
-            PplusFietstijdmatrix[i, j, :] = np.where(Fietstijdmatrix[i, hubs] <= Fietstijdmatrix[hubs, j],
-                                                     Fietstijdmatrix[i, hubs] + Autotijdmatrix[hubs, j],
-                                                     Fietstijdmatrix[j, hubs] + Autotijdmatrix[hubs, i])
+        PplusRbestemmingstijdmatrix[i, j, :] = np.where(
+            mask,
+            OVtijdmatrix[i, hubs] + Autotijdmatrix[hubs, j],
+            Autotijdmatrix[i, hubs] + OVtijdmatrix[hubs, j],
+        )
 
-            PplusFietsautoafstandmatrix[i, j, :] = np.where(Fietstijdmatrix[i, hubs] <= Fietstijdmatrix[hubs, j],
-                                                            Autoafstandmatrix[hubs, j],
-                                                            Autoafstandmatrix[hubs, i])
+        PplusRherkomsttijdmatrix[i, j, :] = np.where(
+            mask,
+            Autotijdmatrix[i, hubs] + OVtijdmatrix[hubs, j],
+            OVtijdmatrix[i, hubs] + Autotijdmatrix[hubs, j],
+        )
 
+        PplusRbestemmingsafstandautomatrix[i, j, :] = np.where(
+            mask,
+            Autoafstandmatrix[hubs, j],
+            Autoafstandmatrix[i, hubs],
+        )
+
+        PplusRbestemmingsafstandOVmatrix[i, j, :] = np.where(
+            mask,
+            OVafstandmatrix[i, hubs],
+            OVafstandmatrix[hubs, j],
+        )
+
+        PplusRherkomstafstandautomatrix[i, j, :] = np.where(
+            mask,
+            Autoafstandmatrix[i, hubs],
+            Autoafstandmatrix[hubs, j],
+        )
+
+        PplusRherkomstafstandOVmatrix[i, j, :] = np.where(
+            mask,
+            OVafstandmatrix[hubs, j],
+            OVafstandmatrix[i, hubs],
+        )
+
+    for (i, j) in np.ndindex(n_car_times, n_car_times):
+        mask = Fietstijdmatrix[i, hubs] <= Fietstijdmatrix[hubs, j]
+
+        PplusFietstijdmatrix[i, j, :] = np.where(
+            mask,
+            Fietstijdmatrix[i, hubs] + Autotijdmatrix[hubs, j],
+            Fietstijdmatrix[j, hubs] + Autotijdmatrix[hubs, i],
+        )
+
+        PplusFietsautoafstandmatrix[i, j, :] = np.where(
+            mask,
+            Autoafstandmatrix[hubs, j],
+            Autoafstandmatrix[hubs, i],
+        )
+
+    # Add additional transfer times.
     PplusRbestemmingstijdmatrix += transfer_time_pt
     PplusRherkomsttijdmatrix += transfer_time_pt
     PplusFietstijdmatrix += transfer_time_bike
 
+    # Apply rouding to all arrays.
     arrays = [
         PplusRherkomsttijdmatrix,
         PplusRbestemmingstijdmatrix,
@@ -129,6 +157,8 @@ def chain_generator(skims_directory: pathlib.Path,
     ]
     for array in arrays:
         array[:] = np.round(array)
+
+    # Compute minimum distance, time values.
 
     # FIXME: The original implementation computed the minimum value by looping
     # over the arrays with an starting value of 9999. This initial value needs
