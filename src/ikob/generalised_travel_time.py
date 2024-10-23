@@ -165,7 +165,7 @@ def generalised_travel_time(config) -> DataSource:
             ggr_skim = np.where(
                 bike_time_matrix < 180,
                 bike_time_matrix,
-                9999).astype(int)
+                9999)
 
             key = DataKey(id='Fiets',
                           part_of_day=pod,
@@ -173,7 +173,7 @@ def generalised_travel_time(config) -> DataSource:
                           motive=motive)
             generalised_travel_time.set(key, ggr_skim.copy())
 
-            ggr_skim = np.zeros((num_zones, num_zones), dtype=int)
+            ggr_skim = np.zeros((num_zones, num_zones))
             for income_level in income_levels:
                 factor = tvom.get(income_level)
 
@@ -186,27 +186,14 @@ def generalised_travel_time(config) -> DataSource:
                         road_pricing = road_pricing_electric
                     for i in range(num_zones):
                         for j in range(num_zones):
-                            total_time = car_time_matrix[i][j] + round(
-                                parking_times[i][1] + parking_times[j][2])
+                            total_time = car_time_matrix[i][j] + \
+                                parking_times[i][1] + parking_times[j][2]
                             if additional_costs:
-                                ggr_skim[i][j] = int(total_time +
-                                                     factor *
-                                                     (car_distance_matrix[i][j] *
-                                                      (var_car_rate +
-                                                       road_pricing) +
-                                                         additional_cost_matrix[i][j] /
-                                                         100) +
-                                                     parking_costs[j] /
-                                                     100)
+                                ggr_skim[i][j] = total_time + factor * (car_distance_matrix[i][j] * (
+                                    var_car_rate + road_pricing) + additional_cost_matrix[i][j] / 100) + parking_costs[j] / 100
                             else:
-                                ggr_skim[i][j] = int(total_time +
-                                                     factor *
-                                                     (car_distance_matrix[i][j] *
-                                                      correction_factors[i][income_levels.index(income_level)] *
-                                                         (var_car_rate +
-                                                          road_pricing) +
-                                                         parking_costs[j] /
-                                                         100))
+                                ggr_skim[i][j] = total_time + factor * (car_distance_matrix[i][j] * correction_factors[i][income_levels.index(
+                                    income_level)] * (var_car_rate + road_pricing) + parking_costs[j] / 100)
 
                     key = DataKey(id=f"Auto_{fuel_kind}",
                                   part_of_day=pod,
@@ -222,7 +209,7 @@ def generalised_travel_time(config) -> DataSource:
                     pt_time_matrix +
                     factor *
                     pt_cost_matrix,
-                    9999).astype(int)
+                    9999)
                 key = DataKey(id='OV',
                               part_of_day=pod,
                               income=income_level,
@@ -237,12 +224,12 @@ def generalised_travel_time(config) -> DataSource:
                     for i in range(num_zones):
                         for j in range(num_zones):
                             if car_time_matrix[i][j] >= 7:
-                                total_time = car_time_matrix[i][j] + round(
-                                    parking_times[i][1] + parking_times[j][2])
+                                total_time = car_time_matrix[i][j] + \
+                                    parking_times[i][1] + parking_times[j][2]
                                 total_cost = car_time_matrix[i][j] * time_costs_no_car.get(kind) + correction_factors[i][income_levels.index(
                                     income_level)] * car_distance_matrix[i][j] * (costs_no_car.get(kind) + road_pricing)
-                                ggr_skim[i][j] = int(
-                                    total_time + factor * total_cost)
+                                ggr_skim[i][j] = total_time + \
+                                    factor * total_cost
 
                     key = DataKey(id=f'{kind}',
                                   part_of_day=pod,
@@ -257,26 +244,14 @@ def generalised_travel_time(config) -> DataSource:
                     factor = tvom.get(income_level)
                     for i in range(num_zones):
                         for j in range(num_zones):
-                            total_time = car_time_matrix[i][j] + round(
-                                parking_times[i][1] + parking_times[j][2])
+                            total_time = car_time_matrix[i][j] + \
+                                parking_times[i][1] + parking_times[j][2]
                             if additional_costs:
-                                ggr_skim[i][j] = int(
-                                    total_time +
-                                    factor *
-                                    car_distance_matrix[i][j] *
-                                    road_pricing +
-                                    additional_cost_matrix[i][j] /
-                                    100 +
-                                    parking_costs[j] /
-                                    100)
+                                ggr_skim[i][j] = total_time + factor * car_distance_matrix[i][j] * \
+                                    road_pricing + additional_cost_matrix[i][j] / 100 + parking_costs[j] / 100
                             else:
-                                ggr_skim[i][j] = int(total_time +
-                                                     correction_factors[i][income_levels.index(income_level)] *
-                                                     factor *
-                                                     car_distance_matrix[i][j] *
-                                                     road_pricing +
-                                                     parking_costs[j] /
-                                                     100)
+                                ggr_skim[i][j] = total_time + correction_factors[i][income_levels.index(
+                                    income_level)] * factor * car_distance_matrix[i][j] * road_pricing + parking_costs[j] / 100
                     key = DataKey(id='GratisAuto',
                                   part_of_day=pod,
                                   income=income_level,
@@ -288,7 +263,7 @@ def generalised_travel_time(config) -> DataSource:
                 ggr_skim = np.where(
                     pt_time_matrix > 0.5,
                     pt_time_matrix,
-                    9999).astype(int)
+                    9999)
                 key = DataKey(id='GratisOV',
                               part_of_day=pod,
                               motive=motive,

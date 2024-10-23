@@ -5,7 +5,7 @@ def urbanisation_grade_to_parking_times(urbanisation_grades: [int]) -> [[int]]:
     parking_times = []
     for i, urbanisation_grade in enumerate(urbanisation_grades):
         arrival = urbanisation_to_parking[urbanisation_grade]
-        departure = round(urbanisation_to_parking[urbanisation_grade] / 4)
+        departure = urbanisation_to_parking[urbanisation_grade] / 4
         parking_times.append([i + 1, arrival, departure])
 
     return parking_times

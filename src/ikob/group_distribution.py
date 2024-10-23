@@ -136,63 +136,54 @@ def distribute_over_groups(config):
 
                 free_car = with_car * free_car_per_income[i_income]
                 no_free_car = with_car - free_car
-                free_car_share = round(
-                    free_car * (1 - free_pt_percentage) * income_share, 4)
+                free_car_share = free_car * \
+                    (1 - free_pt_percentage) * income_share
                 total_survey[i].append(free_car_share)
                 survey_per_income_class.append(free_car_share)
 
-                free_car_and_pt_share = round(
-                    free_car * free_pt_percentage * income_share, 4)
+                free_car_and_pt_share = free_car * free_pt_percentage * income_share
                 total_survey[i].append(free_car_and_pt_share)
                 survey_per_income_class.append(free_car_and_pt_share)
 
-                free_pt_share = round(
-                    no_free_car * free_pt_percentage * income_share, 4)
+                free_pt_share = no_free_car * free_pt_percentage * income_share
                 total_survey[i].append(free_pt_share)
                 survey_per_income_class.append(free_pt_share)
 
                 for i_preference in range(len(preferences)):
                     share_perference = no_free_car * \
                         (1 - free_pt_percentage) * preferences_segs[urbanisation[i]][i_preference] / 100
-                    preference_share = round(
-                        share_perference * income_share, 4)
+                    preference_share = share_perference * income_share
                     total_survey[i].append(preference_share)
                     survey_per_income_class.append(preference_share)
 
-                no_car_free_pt_share = round(
-                    no_car_with_license * free_pt_percentage * income_share, 4)
+                no_car_free_pt_share = no_car_with_license * free_pt_percentage * income_share
                 total_survey[i].append(no_car_free_pt_share)
                 survey_per_income_class.append(0)
 
                 for i_preference in range(len(preferences_no_car)):
                     share_perference = no_car_with_license * \
                         (1 - free_pt_percentage) * preferences_no_car_segs[urbanisation[i]][i_preference] / 100
-                    preference_share = round(
-                        share_perference * income_share, 4)
+                    preference_share = share_perference * income_share
                     total_survey[i].append(preference_share)
                     survey_per_income_class.append(0)
 
-                no_license_free_pt_share = round(
-                    no_license * free_pt_percentage * income_share, 4)
+                no_license_free_pt_share = no_license * free_pt_percentage * income_share
                 total_survey[i].append(no_license_free_pt_share)
                 survey_per_income_class.append(0)
 
                 for i_preference in range(len(preferences_no_car)):
                     share_perference = no_license * \
                         (1 - free_pt_percentage) * preferences_no_car_segs[urbanisation[i]][i_preference] / 100
-                    preference_share = round(
-                        share_perference * income_share, 4)
+                    preference_share = share_perference * income_share
                     total_survey[i].append(preference_share)
                     survey_per_income_class.append(0)
 
                 for i_survey in range(len(survey_per_income_class)):
                     if sum(survey_per_income_class) > 0:
                         total_car_possession_survey[i].append(
-                            round(
-                                survey_per_income_class[i_survey] /
-                                sum(survey_per_income_class) *
-                                income_share,
-                                4))
+                            survey_per_income_class[i_survey] /
+                            sum(survey_per_income_class) *
+                            income_share)
                     else:
                         total_car_possession_survey[i].append(0)
 

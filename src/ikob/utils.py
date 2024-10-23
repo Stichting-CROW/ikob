@@ -61,14 +61,10 @@ def write_csv(matrix, filenaam, header=[]):
         # np.savetxt writes this by default as one column.
         matrix = matrix.reshape(1, matrix.shape[0])
 
-    # Explicitly format integers as integers.
-    fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.16f"
     delim = ","
     header = delim.join(header)
-
     np.savetxt(filenaam,
                matrix,
-               fmt=fmt,
                delimiter=delim,
                header=header,
                comments='')

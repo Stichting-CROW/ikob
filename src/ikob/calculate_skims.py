@@ -200,8 +200,8 @@ for ds in dagsoort:
         for i in range(0, aantal_zones):
             GGRskim.append([])
             for j in range(0, aantal_zones):
-                totaleTijd = Autotijdmatrix[i][j] + round(
-                    float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
+                totaleTijd = Autotijdmatrix[i][j] + float(
+                    Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2])
                 if Additionele_kosten:
                     GGRskim[i].append(int(totaleTijd +
                                           Vermenigvuldigingsfactor *
@@ -251,8 +251,8 @@ for ds in dagsoort:
                     if Autotijdmatrix[i][j] < 7:
                         GGRskim[i].append(99999)
                     else:
-                        totaleTijd = Autotijdmatrix[i][j] + round(
-                            float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
+                        totaleTijd = Autotijdmatrix[i][j] + float(
+                            Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2])
                         totaleKosten = Autotijdmatrix[i][j] * tijdkostenga.get(sga) + \
                             Autoafstandmatrix[i][j] * (varkostenga.get(sga) + kmheffing)
                         GGRskim[i].append(
@@ -268,8 +268,8 @@ for ds in dagsoort:
             for i in range(0, aantal_zones):
                 GGRskim.append([])
                 for j in range(0, aantal_zones):
-                    totaleTijd = Autotijdmatrix[i][j] + round(
-                        float(Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2]))
+                    totaleTijd = Autotijdmatrix[i][j] + float(
+                        Parkeertijdlijst[i][1]) + float(Parkeertijdlijst[j][2])
                     if Additionele_kosten:
                         GGRskim[i].append(int(totaleTijd +
                                               Vermenigvuldigingsfactor *

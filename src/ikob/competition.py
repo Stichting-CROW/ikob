@@ -346,7 +346,7 @@ def competition(config,
                         for j in range(len(citizens_per_class[0])):
                             if citizens_per_class[i][j] > 0:
                                 general_matrix_product[i].append(
-                                    round(general_totals_transpose[i][j] * citizens_per_class[i][j]))
+                                    general_totals_transpose[i][j] * citizens_per_class[i][j])
                             else:
                                 general_matrix_product[i].append(0)
 

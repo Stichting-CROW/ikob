@@ -163,8 +163,7 @@ def deployment_opportunities(config,
                     general_possibility_totals = []
 
                     for modality in modalities:
-                        possibility_sum = np.zeros(
-                            len(employment_segs), dtype=int)
+                        possibility_sum = np.zeros(len(employment_segs))
 
                         for i_group, group in enumerate(groups):
                             if motive == 'werk' or motive == 'winkelnietdagelijksonderwijs':
@@ -190,7 +189,7 @@ def deployment_opportunities(config,
                                 possibility = matrix @ place_of_employment * distribution
                                 possibility = np.where(
                                     incomes > 0, possibility / incomes, 0)
-                                possibility_sum += possibility.astype(int)
+                                possibility_sum += possibility
 
                         key = DataKey('Totaal',
                                       part_of_day=part_of_day,
@@ -237,8 +236,9 @@ def deployment_opportunities(config,
                         general_matrix_product.append([])
                         for j in range(len(working_population_per_class[0])):
                             if working_population_per_class[i][j] > 0:
-                                general_matrix_product[i].append(int(
-                                    general_possibility_totals_transposed[i][j] * working_population_per_class[i][j]))
+                                general_matrix_product[i].append(
+                                    general_possibility_totals_transposed[i][j] *
+                                    working_population_per_class[i][j])
                             else:
                                 general_matrix_product[i].append(0)
 
