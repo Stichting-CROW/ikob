@@ -1,3 +1,4 @@
+import numpy as np
 import pathlib
 from ikob.utils import read_csv, write_csv
 
@@ -72,63 +73,44 @@ def chain_generator(skims_directory: pathlib.Path,
     Autoafstandmatrix = read_csv(skims_directory / 'Auto_Afstand.csv')
     OVafstandmatrix = read_csv(skims_directory / 'OV_Afstand.csv')
 
-    PplusRherkomsttijdmatrix = []
-    PplusRbestemmingstijdmatrix = []
-    PplusFietstijdmatrix = []
-    PplusRherkomstafstandOVmatrix = []
-    PplusRherkomstafstandautomatrix = []
-    PplusRbestemmingsafstandOVmatrix = []
-    PplusRbestemmingsafstandautomatrix = []
-    PplusFietsautoafstandmatrix = []
+    n_hubs = len(hubs)
+    n_car_times = len(Autotijdmatrix)
+
+    PplusRherkomsttijdmatrix = np.zeros((n_hubs, n_car_times, n_car_times))
+    PplusRbestemmingstijdmatrix = np.zeros((n_hubs, n_car_times, n_car_times))
+    PplusFietstijdmatrix = np.zeros((n_hubs, n_car_times, n_car_times))
+    PplusRherkomstafstandOVmatrix = np.zeros((n_hubs, n_car_times, n_car_times))
+    PplusRherkomstafstandautomatrix = np.zeros((n_hubs, n_car_times, n_car_times))
+    PplusRbestemmingsafstandOVmatrix = np.zeros((n_hubs, n_car_times, n_car_times))
+    PplusRbestemmingsafstandautomatrix = np.zeros((n_hubs, n_car_times, n_car_times))
+    PplusFietsautoafstandmatrix = np.zeros((n_hubs, n_car_times, n_car_times))
+
+    for h in range(n_hubs):
+        for i in range(n_car_times):
+            for j in range(n_car_times):
+                if OVtijdmatrix[i][hubs[h]] <= Autotijdmatrix[hubs[h]][j]:
+                    PplusRbestemmingstijdmatrix[h, i, j] = round(OVtijdmatrix[i][hubs[h]] + Autotijdmatrix[hubs[h]][j] + transfer_time_pt)
+                    PplusRbestemmingsafstandautomatrix[h, i, j] = round(Autoafstandmatrix[hubs[h]][j])
+                    PplusRbestemmingsafstandOVmatrix[h, i, j] = round(OVafstandmatrix[i][hubs[h]])
+                    PplusRherkomsttijdmatrix[h, i, j] = round(Autotijdmatrix[i][hubs[h]] + OVtijdmatrix[hubs[h]][j] + transfer_time_pt)
+                    PplusRherkomstafstandautomatrix[h, i, j] = round(Autoafstandmatrix[i][hubs[h]])
+                    PplusRherkomstafstandOVmatrix[h, i, j] = round(OVafstandmatrix[hubs[h]][j])
+                else:
+                    PplusRbestemmingstijdmatrix[h, i, j] = round(Autotijdmatrix[i][hubs[h]] + OVtijdmatrix[hubs[h]][j] + transfer_time_pt)
+                    PplusRbestemmingsafstandautomatrix[h, i, j] = round(Autoafstandmatrix[i][hubs[h]])
+                    PplusRbestemmingsafstandOVmatrix[h, i, j] = round(OVafstandmatrix[hubs[h]][j])
+                    PplusRherkomsttijdmatrix[h, i, j] = round(OVtijdmatrix[i][hubs[h]] + Autotijdmatrix[hubs[h]][j] + transfer_time_pt)
+                    PplusRherkomstafstandautomatrix[h, i, j] = round(Autoafstandmatrix[hubs[h]][j])
+                    PplusRherkomstafstandOVmatrix[h, i, j] = round(OVafstandmatrix[i][hubs[h]])
+                if Fietstijdmatrix[i][hubs[h]] <= Fietstijdmatrix[hubs[h]][j]:
+                    PplusFietstijdmatrix[h, i, j] = round(Fietstijdmatrix[i][hubs[h]] + Autotijdmatrix[hubs[h]][j] + transfer_time_bike)
+                    PplusFietsautoafstandmatrix[h, i, j] = round(Autoafstandmatrix[hubs[h]][j])
+                else:
+                    PplusFietstijdmatrix[h, i, j] = round(Fietstijdmatrix[j][hubs[h]] + Autotijdmatrix[hubs[h]][i] + transfer_time_bike)
+                    PplusFietsautoafstandmatrix[h, i, j] = round(Autoafstandmatrix[hubs[h]][i])
+
     Pplusfietshubplek = []
     PplusRhubplek = []
-
-    for h in range (len(hubs)) :
-        PplusRherkomsttijdmatrix.append([])
-        PplusRbestemmingstijdmatrix.append([])
-        PplusFietstijdmatrix.append([])
-        PplusRherkomstafstandOVmatrix.append([])
-        PplusRherkomstafstandautomatrix.append([])
-        PplusRbestemmingsafstandOVmatrix.append([])
-        PplusRbestemmingsafstandautomatrix.append([])
-        PplusFietsautoafstandmatrix.append([])
-        for i in range (len(Autotijdmatrix)) :
-            PplusRbestemmingstijdmatrix[h].append([])
-            PplusRherkomsttijdmatrix[h].append([])
-            PplusFietstijdmatrix[h].append([])
-            PplusFietsautoafstandmatrix[h].append ([])
-            PplusRherkomstafstandOVmatrix[h].append([])
-            PplusRherkomstafstandautomatrix[h].append([])
-            PplusRbestemmingsafstandOVmatrix[h].append([])
-            PplusRbestemmingsafstandautomatrix[h].append([])
-            for j in range (len(Autotijdmatrix)) :
-                if OVtijdmatrix [i][hubs[h]] <= Autotijdmatrix [hubs[h]][j]:
-                    PplusRbestemmingstijdmatrix[h][i].append(round(OVtijdmatrix[i][hubs[h]] + Autotijdmatrix[hubs[h]][j]
-                                                                   + transfer_time_pt))
-                    PplusRbestemmingsafstandautomatrix[h][i].append(round(Autoafstandmatrix [hubs[h]][j]))
-                    PplusRbestemmingsafstandOVmatrix[h][i].append(round(OVafstandmatrix [i][hubs[h]]))
-                    PplusRherkomsttijdmatrix[h][i].append (round(Autotijdmatrix[i][hubs[h]] + OVtijdmatrix[hubs[h]][j]
-                                                                 + transfer_time_pt))
-                    PplusRherkomstafstandautomatrix[h][i].append(round(Autoafstandmatrix [i][hubs[h]]))
-                    PplusRherkomstafstandOVmatrix[h][i].append(round(OVafstandmatrix [hubs[h]][j]))
-                else:
-                    PplusRbestemmingstijdmatrix[h][i].append(round(Autotijdmatrix[i][hubs[h]] + OVtijdmatrix[hubs[h]][j]
-                                                                   + transfer_time_pt))
-                    PplusRbestemmingsafstandautomatrix[h][i].append(round(Autoafstandmatrix [i][hubs[h]]))
-                    PplusRbestemmingsafstandOVmatrix[h][i].append(round(OVafstandmatrix [hubs[h]][j]))
-                    PplusRherkomsttijdmatrix[h][i].append (round(OVtijdmatrix[i][hubs[h]] + Autotijdmatrix[hubs[h]][j]
-                                                                 + transfer_time_pt))
-                    PplusRherkomstafstandautomatrix[h][i].append(round(Autoafstandmatrix [hubs[h]][j]))
-                    PplusRherkomstafstandOVmatrix[h][i].append(round(OVafstandmatrix [i][hubs[h]]))
-                if Fietstijdmatrix [i][hubs[h]] <= Fietstijdmatrix [hubs[h]][j]:
-                    PplusFietstijdmatrix[h][i].append (round( Fietstijdmatrix[i][hubs[h]] + Autotijdmatrix[hubs[h]][j]
-                                                              + transfer_time_bike))
-                    PplusFietsautoafstandmatrix[h][i].append(round( Autoafstandmatrix[hubs[h]][j]))
-                else:
-                    PplusFietstijdmatrix[h][i].append (round( Fietstijdmatrix[j][hubs[h]] + Autotijdmatrix[hubs[h]][i]
-                                                              + transfer_time_bike))
-                    PplusFietsautoafstandmatrix[h][i].append(round( Autoafstandmatrix[hubs[h]][i]))
-
     PplusRherkomsttijdtotaal = []
     PplusRbestemmingstijdtotaal = []
     PplusFietstijdtotaal = []
@@ -151,12 +133,12 @@ def chain_generator(skims_directory: pathlib.Path,
         for j in range (len(Autotijdmatrix)):
             minimum = 9999
             for h in range (len(hubs)):
-                minimum = min (minimum,PplusRherkomsttijdmatrix[h][i][j])
+                minimum = min (minimum,PplusRherkomsttijdmatrix[h, i, j])
             PplusRherkomsttijdtotaal[i].append (minimum)
             minimum = 9999
             minimumoud = 9999
             for h in range ( len ( hubs ) ):
-                minimum = min ( minimum, PplusRbestemmingstijdmatrix[h][i][j])
+                minimum = min ( minimum, PplusRbestemmingstijdmatrix[h, i, j])
                 if minimum < minimumoud :
                     hbewaar = h
                     minimumoud = minimum
@@ -164,12 +146,12 @@ def chain_generator(skims_directory: pathlib.Path,
             PplusRbestemmingstijdtotaal[i].append ( minimum )
             minimum = 9999
             for h in range ( len ( hubs ) ):
-                minimum = min ( minimum, PplusFietstijdmatrix[h][i][j])
+                minimum = min ( minimum, PplusFietstijdmatrix[h, i, j])
             PplusFietstijdtotaal[i].append ( minimum )
             minimum = 9999
             minimoud = 9999
             for h in range ( len ( hubs ) ):
-                minimum = min ( minimum, PplusRherkomstafstandautomatrix[h][i][j])
+                minimum = min ( minimum, PplusRherkomstafstandautomatrix[h, i, j])
                 if minimum < minimumoud :
                     hbewaar = h
                     minimumoud = minimum
@@ -177,19 +159,19 @@ def chain_generator(skims_directory: pathlib.Path,
             PplusRherkomstafstandautototaal[i].append ( minimum )
             minimum = 9999
             for h in range ( len ( hubs ) ):
-                minimum = min ( minimum, PplusRherkomstafstandOVmatrix[h][i][j])
+                minimum = min ( minimum, PplusRherkomstafstandOVmatrix[h, i, j])
             PplusRherkomstafstandOVtotaal[i].append ( minimum )
             minimum = 9999
             for h in range ( len ( hubs ) ):
-                minimum = min ( minimum, PplusRbestemmingsafstandautomatrix[h][i][j])
+                minimum = min ( minimum, PplusRbestemmingsafstandautomatrix[h, i, j])
             PplusRbestemmingsafstandautototaal[i].append ( minimum )
             minimum = 9999
             for h in range ( len ( hubs ) ):
-                minimum = min ( minimum, PplusRbestemmingsafstandOVmatrix[h][i][j])
+                minimum = min ( minimum, PplusRbestemmingsafstandOVmatrix[h, i, j])
             PplusRbestemmingsafstandOVtotaal[i].append ( minimum )
             minimum = 9999
             for h in range ( len ( hubs ) ):
-                minimum = min ( minimum, PplusFietsautoafstandmatrix[h][i][j])
+                minimum = min ( minimum, PplusFietsautoafstandmatrix[h, i, j])
             PplusFietsautoafstandtotaal[i].append ( minimum )
 
     filename_and_data = [
