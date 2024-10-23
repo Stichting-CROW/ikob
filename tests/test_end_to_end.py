@@ -1,4 +1,4 @@
-from ikob.ikobrunner import stappen, run_scripts
+from ikob.ikobrunner import run_scripts
 import pathlib
 import pytest
 import filecmp
@@ -102,9 +102,7 @@ def test_end_to_end(case):
         remove_directory(result_dir)
 
     # End-to-end test should not skip any steps: all scripts should pass.
-    skip_tests = [False for _ in stappen]
-    for step, result in run_scripts(project, skip_tests):
-        assert result is None, f"Step {step} should pass."
+    run_scripts(project)
 
     for result_dir in compare_dirs:
         reference_dir = project_dir / "reference" / result_dir.stem

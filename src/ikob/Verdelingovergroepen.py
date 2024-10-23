@@ -1,4 +1,4 @@
-from ikob.datasource import DataSource
+from ikob.datasource import DataSource, SegsSource, read_csv_from_config
 import itertools
 import logging
 import numpy as np
@@ -6,7 +6,9 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 
-def verdeling_over_groepen(config, datasource: DataSource):
+def verdeling_over_groepen(config):
+    logger.info("Verdeling van de groepen over de buurten of zones")
+
     project_config = config['project']
     verdeling_config = config['verdeling']
 
@@ -22,8 +24,10 @@ def verdeling_over_groepen(config, datasource: DataSource):
     voorkeurengeenauto = ['Neutraal', 'Fiets', 'OV']
     soorten = ['GratisAuto', 'WelAuto', 'GeenAuto', 'GeenRijbewijs']
 
-    CBSAutobezitegevens = datasource.read_segs('CBS_autos_per_huishouden')
-    Stedelijkheidsgraadgegevens = datasource.read_segs('Stedelijkheidsgraad')
+    segs_source = SegsSource(config)
+
+    CBSAutobezitegevens = segs_source.read('CBS_autos_per_huishouden')
+    Stedelijkheidsgraadgegevens = segs_source.read('Stedelijkheidsgraad')
     # Decrement one to account for zero-based indexing later on.
     Sted = [int(sgg) - 1 for sgg in Stedelijkheidsgraadgegevens]
 
@@ -31,15 +35,15 @@ def verdeling_over_groepen(config, datasource: DataSource):
     Minimumautobezit = CBSAutobezitegevens
 
     if Kunst:
-        Kunstmatigautobezit = datasource.read_config('verdeling', 'kunstmab', 'int')
+        Kunstmatigautobezit = read_csv_from_config(config, key='verdeling', id='kunstmab', type_caster=int)
         Minimumautobezit = list(itertools.starmap(min, zip(CBSAutobezitegevens, Kunstmatigautobezit)))
 
     # Read SEGS input files.
-    GRijbewijs = datasource.read_segs('GeenRijbewijs')
-    GAuto = datasource.read_segs('GeenAuto')
-    WAuto = datasource.read_segs('WelAuto')
-    Voorkeuren = datasource.read_segs('Voorkeuren')
-    VoorkeurenGeenAuto = datasource.read_segs('VoorkeurenGeenAuto')
+    GRijbewijs = segs_source.read('GeenRijbewijs')
+    GAuto = segs_source.read('GeenAuto')
+    WAuto = segs_source.read('WelAuto')
+    Voorkeuren = segs_source.read('Voorkeuren')
+    VoorkeurenGeenAuto = segs_source.read('VoorkeurenGeenAuto')
 
     Header = []
     for ink in inkomens:
@@ -65,13 +69,13 @@ def verdeling_over_groepen(config, datasource: DataSource):
     for mot in motieven:
         if mot == 'werk':
             Bevolkingsdeel = 'Beroepsbevolking'
-            Inwonersperklasse = datasource.read_segs(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
+            Inwonersperklasse = segs_source.read(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
         elif mot == 'winkelnietdagelijksonderwijs':
             Bevolkingsdeel = 'Leerlingen'
-            Inwonersperklasse = datasource.read_segs(f'{Bevolkingsdeel}', scenario=scenario)
+            Inwonersperklasse = segs_source.read(f'{Bevolkingsdeel}', scenario=scenario)
         else:
             Bevolkingsdeel = 'Inwoners'
-            Inwonersperklasse = datasource.read_segs(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
+            Inwonersperklasse = segs_source.read(f'{Bevolkingsdeel}_inkomensklasse', scenario=scenario)
 
         Inwonerstotalen = np.sum(Inwonersperklasse, axis=1)
         Inkomensverdeling = Inwonersperklasse / Inwonerstotalen[:, None]
@@ -158,7 +162,7 @@ def verdeling_over_groepen(config, datasource: DataSource):
                         Overzichttotaalautobezit[i].append(0)
 
         logger.debug("Overzichttotaalautobezit: %s", Overzichttotaalautobezit)
-        datasource.write_segs_csv(Totaaloverzicht, f'Verdeling_over_groepen', group=Bevolkingsdeel, scenario=scenario, header=Header)
-        datasource.write_segs_csv(Overzichttotaalautobezit, f'Verdeling_over_groepen', group=Bevolkingsdeel, modifier="alleen_autobezit", scenario=scenario, header=Header)
-        datasource.write_segs_xlsx(Totaaloverzicht, f'Verdeling_over_groepen', group=Bevolkingsdeel, scenario=scenario, header=['Zone', *Header])
-        datasource.write_segs_xlsx(Overzichttotaalautobezit, f'Verdeling_over_groepen', group=Bevolkingsdeel, modifier="alleen_autobezit", scenario=scenario, header=['Zone', *Header])
+        segs_source.write_csv(Totaaloverzicht, f'Verdeling_over_groepen', group=Bevolkingsdeel, scenario=scenario, header=Header)
+        segs_source.write_csv(Overzichttotaalautobezit, f'Verdeling_over_groepen', group=Bevolkingsdeel, modifier="alleen_autobezit", scenario=scenario, header=Header)
+        segs_source.write_xlsx(Totaaloverzicht, f'Verdeling_over_groepen', group=Bevolkingsdeel, scenario=scenario, header=['Zone', *Header])
+        segs_source.write_xlsx(Overzichttotaalautobezit, f'Verdeling_over_groepen', group=Bevolkingsdeel, modifier="alleen_autobezit", scenario=scenario, header=['Zone', *Header])

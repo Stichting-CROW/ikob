@@ -2,7 +2,7 @@ import pathlib
 import numpy as np
 
 import pytest
-from ikob.datasource import DataSource
+from ikob.datasource import read_parkeerzoektijden
 from ikob.ikobconfig import getConfigFromArgs
 from ikob.Routines import csvintlezen
 from ikob.stedelijkheidsgraad_to_parkeerzoektijden import (
@@ -18,7 +18,7 @@ def test_stedelijkheid_converter():
     assert np.all(parkeerzoektijden == reference)
 
 
-def test_generate_parkeerzoektijden_datasource():
+def test_generate_parkeerzoektijden():
     case = "vlaanderen"
     project_dir = pathlib.Path("tests") / case
     project_file = project_dir.joinpath(f"{case}.json")
@@ -26,18 +26,15 @@ def test_generate_parkeerzoektijden_datasource():
 
     # Read test file on disk given in configurationf file.
     config = getConfigFromArgs(project_file)
-    datasource = DataSource(config, config["__filename__"])
-    assert np.all(reference == datasource.read_parkeerzoektijden())
+    assert np.all(reference == read_parkeerzoektijden(config))
 
     # Remove path from config and fall back to expected location.
     del config["skims"]["parkeerzoektijden_bestand"]
-    datasource = DataSource(config, config["__filename__"])
-    assert np.all(reference == datasource.read_parkeerzoektijden())
+    assert np.all(reference == read_parkeerzoektijden(config))
 
     # Set config to unkown path, trigger conversion on the fly.
     config["skims"]["parkeerzoektijden_bestand"] = "unset"
-    datasource = DataSource(config, config["__filename__"])
-    assert np.all(reference == datasource.read_parkeerzoektijden())
+    assert np.all(reference == read_parkeerzoektijden(config))
 
 
 def test_assert_failed_parkeerzoektijden_conversion():
@@ -51,6 +48,5 @@ def test_assert_failed_parkeerzoektijden_conversion():
     config["skims"]["parkeerzoektijden_bestand"] = "unset"
     config["project"]["paden"]["segs_directory"] = "unset"
 
-    datasource = DataSource(config, config["__filename__"])
     with pytest.raises(AssertionError):
-        _ = datasource.read_parkeerzoektijden()
+        _ = read_parkeerzoektijden(config)

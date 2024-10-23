@@ -1,43 +1,98 @@
 import logging
 import ikob.Routines as Routines
 import numpy as np
-from ikob.datasource import DataSource
+from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 
 logger = logging.getLogger(__name__)
 
 
-def get_gewichten_matrix(datasource: DataSource, gr, mod, mot, regime, ds, ink, inkgr, ratio_electric):
+def get_gewichten_matrix(gewichten_enkel: DataSource,
+                         gewichten_combi: DataSource,
+                         gr, mod, mot, regime, ds, ink, inkgr,
+                         ratio_electric: float):
     vk = Routines.vindvoorkeur(gr, mod)
 
     if mod == 'Fiets' or mod == 'EFiets':
         vkfiets = 'Fiets' if vk == 'Fiets' else ''
-        return datasource.read_csv('gewichten', f'{mod}_vk', ds, vk=vkfiets, regime=regime, mot=mot)
+        key = DataKey(f"{mod}_vk",
+                      dagsoort=ds,
+                      regime=regime,
+                      motief=mot,
+                      voorkeur=vkfiets)
+        return gewichten_enkel.get(key)
 
     enkele_groep = Routines.enkelegroep(mod, gr)
     combi_groep = Routines.combigroep(mod, gr)
 
     if mod == 'Auto' and 'WelAuto' in gr or combi_groep[0] == 'A':
         subtopic = '' if mod == 'Auto' else 'combinaties'
+        gewichten = gewichten_enkel if mod == 'Auto' else gewichten_combi
         string = enkele_groep if mod == 'Auto' else combi_groep
-        Matrix_fossiel = datasource.read_csv('gewichten', f"{string}_vk", ds, subtopic=subtopic, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="fossiel")
-        Matrix_elektrisch = datasource.read_csv('gewichten', f"{string}_vk", ds, subtopic=subtopic, vk=vk, ink=ink, regime=regime, mot=mot, srtbr="elektrisch")
+        key = DataKey(f"{string}_vk",
+                      dagsoort=ds,
+                      regime=regime,
+                      motief=mot,
+                      voorkeur=vk,
+                      inkomen=ink,
+                      subtopic=subtopic,
+                      brandstof="fossiel")
+        Matrix_fossiel = gewichten.get(key)
+
+        key = DataKey(f"{string}_vk",
+                      dagsoort=ds,
+                      regime=regime,
+                      motief=mot,
+                      voorkeur=vk,
+                      inkomen=ink,
+                      subtopic=subtopic,
+                      brandstof="elektrisch")
+        Matrix_elektrisch = gewichten.get(key)
         return ratio_electric * Matrix_elektrisch + (1 - ratio_electric) * Matrix_fossiel
 
     if mod == 'Auto' or mod == 'OV':
-        return datasource.read_csv('gewichten', f"{enkele_groep}_vk", ds, vk=vk, ink=ink, regime=regime, mot=mot)
+        key = DataKey(f"{enkele_groep}_vk",
+                      dagsoort=ds,
+                      regime=regime,
+                      motief=mot,
+                      voorkeur=vk,
+                      inkomen=ink)
+        return gewichten_enkel.get(key)
 
-    return datasource.read_csv('gewichten', f'{combi_groep}_vk', ds, subtopic='combinaties', vk=vk, ink=ink, regime=regime, mot=mot)
+    key = DataKey(f"{combi_groep}_vk",
+                  dagsoort=ds,
+                  regime=regime,
+                  motief=mot,
+                  voorkeur=vk,
+                  inkomen=ink,
+                  subtopic="combinaties")
+    return gewichten_combi.get(key)
 
 
-def concurrentie_om_arbeidsplaatsen(config, datasource: DataSource):
-    return concurrentie(config, datasource, inwoners=False)
+def concurrentie_om_arbeidsplaatsen(config,
+                                    gewichten_enkel: DataSource,
+                                    gewichten_combi: DataSource,
+                                    herkomsten: DataSource) -> DataSource:
+    return concurrentie(config, gewichten_enkel, gewichten_combi, herkomsten, inwoners=False)
 
 
-def concurrentie_om_inwoners(config, datasource: DataSource):
-    return concurrentie(config, datasource, inwoners=True)
+def concurrentie_om_inwoners(config,
+                             gewichten_enkel: DataSource,
+                             gewichten_combi: DataSource,
+                             herkomsten: DataSource) -> DataSource:
+    return concurrentie(config, gewichten_enkel, gewichten_combi, herkomsten, inwoners=True)
 
 
-def concurrentie(config, datasource: DataSource, inwoners: bool = True):
+def concurrentie(config,
+                 gewichten_enkel: DataSource,
+                 gewichten_combi: DataSource,
+                 herkomsten: DataSource,
+                 inwoners: bool = True) -> DataSource:
+    if inwoners:
+        msg = "Concurrentiepositie voor bedrijven qua bereikbaarheid"
+    else:
+        msg = "Concurrentiepositie voor bereik arbeidsplaatsen"
+    logger.info(msg)
+
     project_config = config['project']
     skims_config = config['skims']
     verdeling_config = config['verdeling']
@@ -76,12 +131,14 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
     headstring = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
     headstringExcel = ['Zone', 'Fiets', 'Auto', 'OV', 'Auto-Fiets' 'OV_Fiets', 'Auto_OV', 'Auto_OV_Fiets']
 
+    segs_source = SegsSource(config)
+
     if 'winkelnietdagelijksonderwijs' in motieven:
-        Inwonersperklasse = datasource.read_segs("Leerlingen", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = datasource.read_segs("Leerlingenplaatsen", scenario=scenario, type_caster=float)
+        Inwonersperklasse = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
+        Arbeidsplaatsen = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
     else:
-        Inwonersperklasse = datasource.read_segs("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
-        Arbeidsplaatsen = datasource.read_segs("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
+        Inwonersperklasse = segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
+        Arbeidsplaatsen = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
 
     Inwonerstotalen = [sum(ipk) for ipk in Inwonersperklasse]
 
@@ -92,7 +149,8 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
                 Inkomensverdeling[i][j] = Inwonersperklasse[i][j]/Inwonerstotalen[i]
 
     subtopic_concurrentie = "inwoners" if inwoners else "arbeidsplaatsen"
-    subtopic_gewichten = "bestemmingen" if inwoners else "herkomsten"
+
+    concurrenties = DataSource(config, DataType.CONCURRENTIE)
 
     for abg in autobezitgroepen:
         for mot in motieven:
@@ -103,12 +161,20 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
             else:
                 Doelgroep = 'Inwoners'
 
-            Verdelingsmatrix = datasource.read_segs(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
+            Verdelingsmatrix = segs_source.read(f"Verdeling_over_groepen_{Doelgroep}", scenario=scenario, type_caster=float)
 
             for ds in dagsoort:
                 for i_inkgr, inkgr in enumerate(inkgroepen):
+                    Generaaltotaal_potenties = []
                     for mod in modaliteiten:
-                        Bereik = datasource.read_csv(abg, "Totaal", ds, mot=mot, mod=mod, ink=inkgr, subtopic=subtopic_gewichten)
+                        key = DataKey("Totaal",
+                                      dagsoort=ds,
+                                      motief=mot,
+                                      modaliteit=mod,
+                                      inkomen=inkgr,
+                                      groep=abg)
+                        Bereik = herkomsten.get(key)
+
                         concurrentie_totaal = np.zeros(len(Arbeidsplaatsen))
                         for i_gr, gr in enumerate(Groepen):
                             if inwoners:
@@ -121,29 +187,41 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
                             ink = Routines.inkomensgroepbepalen(gr)
                             if inkgr == ink or inkgr == 'alle':
                                 K = percentageelektrisch.get(inkgr)/100
-                                Matrix = get_gewichten_matrix(datasource, gr, mod, mot, regime, ds, ink, inkgr, K)
+                                Matrix = get_gewichten_matrix(gewichten_enkel, gewichten_combi, gr, mod, mot, regime, ds, ink, inkgr, K)
 
                                 concurrentie = Matrix @ (inwoners_of_arbeidsplaatsen / np.where(Bereik > 0, Bereik, 1.0))
                                 concurrentie_totaal += concurrentie * verdeling / np.where(inkomens_verdeling > 0, inkomens_verdeling, 1)
 
-                        datasource.write_csv(concurrentie_totaal, 'concurrentie', 'Totaal', ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, ink=inkgr)
+                        key = DataKey(id='Totaal',
+                                      dagsoort=ds,
+                                      subtopic=subtopic_concurrentie,
+                                      inkomen=inkgr,
+                                      motief=mot,
+                                      modaliteit=mod)
+                        concurrenties.set(key, concurrentie_totaal.copy())
 
-                    # En tot slot alles bij elkaar harken:
-                    Generaaltotaal_potenties = []
-                    for mod in modaliteiten:
-                        Totaalrij = datasource.read_csv('concurrentie', "Totaal", ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, ink=inkgr)
-                        Generaaltotaal_potenties.append(Totaalrij)
+                        Generaaltotaal_potenties.append(concurrenties.get(key))
                         Generaaltotaaltrans = Routines.transponeren(Generaaltotaal_potenties)
-                        datasource.write_csv(Generaaltotaaltrans, 'concurrentie', 'Ontpl_conc', ds, subtopic=subtopic_concurrentie, mot=mot, ink=inkgr, header=headstring)
-                        datasource.write_xlsx(Generaaltotaaltrans, 'concurrentie', 'Ontpl_conc', ds, subtopic=subtopic_concurrentie, mot=mot, ink=inkgr, header=headstringExcel)
+                        key = DataKey(id='Ontpl_conc',
+                                      dagsoort=ds,
+                                      subtopic=subtopic_concurrentie,
+                                      inkomen=inkgr,
+                                      motief=mot)
+                        concurrenties.write_csv(Generaaltotaaltrans, key, header=headstring)
+                        concurrenties.write_xlsx(Generaaltotaaltrans, key, header=headstringExcel)
 
                 header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
                 for mod in modaliteiten:
                     Generaalmatrixproduct = []
                     Generaalmatrix = []
                     for inkgr in inkgroepen:
-                        Totaalrij = datasource.read_csv("concurrentie", "Totaal", ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, ink=inkgr)
-                        Generaalmatrix.append(Totaalrij)
+                        key = DataKey("Totaal",
+                                      dagsoort=ds,
+                                      motief=mot,
+                                      modaliteit=mod,
+                                      inkomen=inkgr,
+                                      subtopic=subtopic_concurrentie)
+                        Generaalmatrix.append(concurrenties.get(key))
                         Generaaltotaaltrans = Routines.transponeren(Generaalmatrix)
 
                     for i in range(len(Inwonersperklasse)):
@@ -154,5 +232,18 @@ def concurrentie(config, datasource: DataSource, inwoners: bool = True):
                             else:
                                 Generaalmatrixproduct[i].append(0)
 
-                    datasource.write_xlsx(Generaaltotaaltrans, 'concurrentie', 'Ontpl_conc', ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, header=header)
-                    datasource.write_xlsx(Generaalmatrixproduct, 'concurrentie', 'Ontpl_concproduct', ds, subtopic=subtopic_concurrentie, mot=mot, mod=mod, header=header)
+                    key = DataKey(id='Ontpl_conc',
+                                  dagsoort=ds,
+                                  subtopic=subtopic_concurrentie,
+                                  motief=mot,
+                                  modaliteit=mod)
+                    concurrenties.write_xlsx(Generaaltotaaltrans, key, header=header)
+
+                    key = DataKey(id='Ontpl_concproduct',
+                                  dagsoort=ds,
+                                  subtopic=subtopic_concurrentie,
+                                  motief=mot,
+                                  modaliteit=mod)
+                    concurrenties.write_xlsx(Generaalmatrixproduct, key, header=header)
+
+    return concurrenties
