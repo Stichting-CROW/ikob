@@ -1,23 +1,11 @@
 {
   "verdeling": {
     "GratisOVpercentage": 0.03,
-    "additionele_kosten": {
-      "bestand": "",
-      "gebruiken": false
-    },
     "Percelektrisch": {
       "middellaag": 0.0,
       "hoog": 0.0,
       "middelhoog": 0.0,
       "laag": 0.0
-    },
-    "kunstmab": {
-      "bestand": "",
-      "gebruiken": false
-    },
-    "parkeerkosten": {
-      "bestand": "",
-      "gebruiken": false
     }
   },
   "TVOM": {
@@ -71,10 +59,6 @@
     "conc_afstand": [
       "concurrentie"
     ],
-    "ketens": {
-      "naam hub": "",
-      "gebruiken": false
-    },
     "welke_groepen": [
       "alle groepen"
     ],
@@ -98,5 +82,25 @@
       "werk"
     ],
     "beprijzingsregime": "Basis"
+  },
+  "geavanceerd": {
+    "kunstmab": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "additionele_kosten": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "parkeerkosten": {
+      "bestand": "",
+      "gebruiken": false
+    }
+  },
+  "ketens": {
+    "ketens": {
+      "gebruiken": false,
+      "naam hub": ""
+    }
   }
 }

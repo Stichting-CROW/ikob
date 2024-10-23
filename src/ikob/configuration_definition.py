@@ -1,489 +1,403 @@
+from enum import Enum
+
 from ikob.config import build, validate
 
 
-def StandaardConfiguratieDefinitie():
-    """
-  Dit is de standaard configuratie definitie zoals gebruikt door IKOB
-  De definitie bevat (mogelijk) de volgende velden:
-  - Overal:
-    - label: De tekst voor een label voor invoer veld, tab, of frame.
-  - Alleen in 'bladen' (het diepste niveau) van de definitie:
-    - type (verplicht): (soort invoer)
-        text,
-        number,
-        directory,
-        file,
-        checkbox,
-        checklist,
-        choice.
-      ('file' en 'directory' krijgen een 'browse' knop achter het veld)
-    - unit: label achter het invoerveld: (alleen text en number)
-    - default: De standaard invoerwaarde
-    - items: De lijst van dingen waaruit je kan kiezen (alleen voor type 'checklist' en 'choice')
-    - range: De minimum en maximum toegestane waarde (alleen voor type 'number')
-  """
+class DataType(Enum):
+    CHECKBOX = "checkbox"
+    CHECKLIST = "checklist"
+    CHOICE = "choice"
+    DIRECTORY = "directory"
+    FILE = "file"
+    NUMBER = "number"
+    TEXT = "text"
+
+
+def config_item(label: str,
+                data_type: DataType,
+                default: str = '',
+                items: list[str] = [],
+                bounds: list[str] = [],
+                unit: str = ''):
+
+    msg = "Invalid GUI data type provided."
+    assert data_type in DataType, msg
+
+    default_values = {
+        DataType.CHECKBOX: False,
+        DataType.NUMBER: 0
+    }
+
+    if not default:
+        default = default_values.get(data_type, default)
+
+    # The default value is expected as list when more items are present.
+    if items and isinstance(default, str):
+        default = [default]
+
+    dictionary = {
+        'label': label,
+        'type': data_type.value,
+        'default': default
+    }
+
+    # Insert all optional values when present.
+    keys = ['items', 'unit', 'bounds']
+    optionals = [items, unit, bounds]
+    for key, optional in zip(keys, optionals):
+        if optional:
+            dictionary[key] = optional
+
+    return dictionary
+
+
+def default_project_tab():
     return {
-        'project': {
-            'label': 'Project',
-            'naam': {
-                'label': 'Project naam',
-                'type': 'text',
-                'default': 'Project 1'
-            },
-            # 'scenario': {
-            # 'label': 'Welk scenario gaat het om',
-            # 'type': 'text',
-            # 'default': 'normaal'
-            # },
-            'verstedelijkingsscenario': {
-                'label': 'Welk verstedelijkingsscenario wordt gebruikt',
-                'type': 'text',
-                'default': '',
-            },
-            'beprijzingsregime': {
-                'label': 'Wat is de naam van het beprijzingsregime',
-                'type': 'text',
-                'default': 'Basis',
-            },
-            'paden': {
-                'label': 'Paden',
-                'skims_directory': {
-                    'label': 'Basis directory',
-                    'type': 'directory',
-                    'default': ''
-                },
-                'segs_directory': {
-                    'label': 'SEGS directory',
-                    'type': 'directory',
-                    'default': 'SEGS'
-                },
-                'output_directory': {
-                    'label': 'Output directory',
-                    'type': 'directory',
-                    'default': 'output'
-                }
-            },
-            'motieven': {
-                'label': 'Motieven',
-                'type': 'checklist',
-                'items': ['werk', 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs', 'sociaal-recreatief'],
-                'default': ['werk']
-            },
-            'welke_groepen': {
-                'label': 'Welke groepen moeten worden meegenomen qua autobezit',
-                'type': 'checklist',
-                'items': ['alle groepen', 'alleen autobezitters'],
-                'default': ['alle groepen']
-            },
-            'schatten_of_bekend': {
-                'label': 'Is het percentage autobezit bekend of moet het uit CBS-gegevens geschat worden?',
-                'type': 'checklist',
-                'items': ['bekend', 'geschat'],
-                'default': ['geschat']
-            },
-            'welke_inkomensgroepen': {
-                'label': 'Welke inkomensgroepen moeten worden meegenomen',
-                'type': 'checklist',
-                'items': ['laag', 'middellaag', 'middelhoog', 'hoog'],
-                'default': ['laag', 'middellaag', 'middelhoog', 'hoog']
-            },
-            'conc_afstand': {
-                'label': 'Moet in stap 8 alleen concurrentie of ook afstand worden berekend',
-                'type': 'checklist',
-                'items': ['concurrentie', 'afstand'],
-                'default': ['concurrentie']
-            },
-            'ketens': {
-                'label': 'Wordt er ook gewerkt met ketenverplaatsingen (hubs?',
-                'gebruiken': {
-                    'label': 'Wel ketens en hubs',
-                    'type': 'checkbox',
-                    'default': False
-                },
-                'naam hub': {
-                    'label': 'Wat is de naam van de verzameling hubs?',
-                    'type': 'text',
-                    'default': ''
-                }
-            }
+        'label': 'Project',
+        'naam': config_item(
+            'Project naam',
+            DataType.TEXT,
+            default='Project 1'
+        ),
+        'verstedelijkingsscenario': config_item(
+            'Welk verstedelijkingsscenario wordt gebruikt',
+            DataType.TEXT,
+        ),
+        'beprijzingsregime': config_item(
+            'Wat is de naam van het beprijzingsregime',
+            DataType.TEXT,
+            default='Basis',
+        ),
+        'paden': {
+            'label': 'Paden',
+            'skims_directory': config_item(
+                'Basis directory',
+                DataType.DIRECTORY,
+            ),
+            'segs_directory': config_item(
+                'SEGS directory',
+                DataType.DIRECTORY,
+                default='SEGS'
+            ),
+            'output_directory': config_item(
+                'Output directory',
+                DataType.DIRECTORY,
+                default='output'
+            )
         },
-        'skims': {
-            'label': 'Gegeneraliseerde Reistijd Berekenen',
-            'dagsoort': {
-                'label': 'Dagsoorten',
-                'type': 'checklist',
-                'items': ['Ochtendspits', 'Restdag', 'Avondspits'],
-                'default': ['Restdag']
-            },
-
-            'OV kosten': {
-                'starttarief': {
-                    'label': 'Starttarief',
-                    'type': 'number',
-                    'unit': 'Eurocent',
-                    'default': 75
-                },
-                'kmkosten': {
-                    'label': 'Variabele kosten',
-                    'type': 'number',
-                    'unit': 'Eurocent/km',
-                    'default': 12
-                }
-
-                # ,
-                # 'Uit bestand': {
-                #  'label': 'OV kosten bestand',
-                #  'type': 'file',
-                #  'default': ''
-                # }
-            },
-            'OV kostenbestand': {
-                'label': 'Bestaat er een apart OV-kostenbestand?',
-                'gebruiken': {
-                    'label': 'Er is een apart OV-kostenbestand',
-                    'type': 'checkbox',
-                    'default': False
-                },
-                #                'naam kostenbestand': {
-                #                    'label': 'Wat is de naam van het OV kostenbestand?',
-                #                    'type': 'text',
-                #                    'default': ''
-                #                }
-
-            },
-            'pricecap': {
-                'label': 'Is er een maximum OV-prijs (price cap)?',
-                'gebruiken': {
-                    'label': 'pricecap',
-                    'type': 'checkbox',
-                    'default': False
-                },
-                'getal': {
-                    'label': 'Wat is de pricecap in Euros',
-                    'type': 'number',
-                    'default': 9999.0
-                },
-            },
-
-            'Kosten auto fossiele brandstof': {
-                'variabele kosten': {
-                    'label': 'variabele kosten',
-                    'type': 'number',
-                    'unit': 'Eurocent/km',
-                    'default': 16
-                },
-                'kmheffing': {
-                    'label': 'Kilometerheffing',
-                    'type': 'number',
-                    'unit': 'Eurocent/km',
-                    'default': 0
-                },
-            },
-            'Kosten elektrische auto': {
-                'variabele kosten': {
-                    'label': 'variabele kosten',
-                    'type': 'number',
-                    'unit': 'Eurocent/km',
-                    'default': 5
-                },
-                'kmheffing': {
-                    'label': 'Kilometerheffing',
-                    'type': 'number',
-                    'unit': 'Eurocent/km',
-                    'default': 0
-                }
-            },
-
-            'parkeerzoektijden_bestand': {
-                'label': 'Parkeerzoektijden bestand',
-                'type': 'file',
-                'default': ''
-            },
-            #           'parkeerkosten': {
-            #                'label': 'Is er een bestand met parkeerkosten of additionele kosten per zone?',
-            #                'gebruiken': {
-            #                    'label': 'Parkeerkosten',
-            #                    'type': 'checkbox',
-            #                    'items': ['Parkeerkosten', 'Additionele kosten'],
-            #                    'default': ['']
-            #                },
-            #                'bestand': {
-            #                    'label': 'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
-            #                    'type': 'file',
-            #                    'default': ''
-            #                },
-            #                'bestand': {
-            #                    'label': 'Additionele kosten bestand',
-            #                    'type': 'file',
-            #                    'default': ''
-            #                },
-            #            },
-            'varkostenga': {
-                'label': 'Variabele kosten geen auto',
-                'GeenAuto': {
-                    'label': 'Deelauto (bezit geen auto, wel rijbewijs)',
-                    'type': 'number',
-                    'unit': 'Euro/km',
-                    'range': [0, 9999],
-                    'default': 0.33
-                },
-                'GeenRijbewijs': {
-                    'label': 'Taxi (bezit geen rijbewijs)',
-                    'type': 'number',
-                    'unit': 'Euro/km',
-                    'range': [0, 9999],
-                    'default': 2.40
-                }
-            },
-            'tijdkostenga': {
-                'label': 'Tijd kosten geen auto',
-                'GeenAuto': {
-                    'label': 'Deelauto (bezit geen auto, wel rijbewijs)',
-                    'type': 'number',
-                    'unit': 'Euro/Minuut',
-                    'range': [0, 9999],
-                    'default': 0.05
-                },
-                'GeenRijbewijs': {
-                    'label': 'Taxi (bezit geen rijbewijs)',
-                    'type': 'number',
-                    'unit': 'Euro/Minuut',
-                    'range': [0, 9999],
-                    'default': 0.40
-                }
-            }
-        },
-        'TVOM': {
-            'label': 'Waarde van tijd',
-
-            'werk': {
-                'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief werk',
-                'hoog': {
-                    'label': 'Hoog',
-                    'type': 'number',
-                    'unit': 'Minuten/Euro',
-                    'default': 4
-                },
-                'middelhoog': {
-                    'label': 'Middelhoog',
-                    'type': 'number',
-                    'unit': 'Minuten/Euro',
-                    'default': 6
-                },
-                'middellaag': {
-                    'label': 'Middellaag',
-                    'type': 'number',
-                    'unit': 'Minuten/Euro',
-                    'default': 9
-                },
-                'laag': {
-                    'label': 'Laag',
-                    'type': 'number',
-                    'unit': 'Minuten/Euro',
-                    'default': 12
-                }
-            },
-            'overig': {
-                'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief overig',
-                'hoog': {
-                    'label': 'Hoog',
-                    'type': 'number',
-                    'unit': 'Minuten/Euro',
-                    'default': 4.8
-                },
-                'middelhoog': {
-                    'label': 'Middelhoog',
-                    'type': 'number',
-                    'unit': 'Minuten/Euro',
-                    'default': 7.25
-                },
-                'middellaag': {
-                    'label': 'Middellaag',
-                    'type': 'number',
-                    'unit': 'Minuten/Euro',
-                    'default': 10.9
-                },
-                'laag': {
-                    'label': 'Laag',
-                    'type': 'number',
-                    'unit': 'Minuten/Euro',
-                    'default': 15.5
-                }
-            },
-        },
-        'verdeling': {
-            'label': 'Verdeling Over Groepen',
-            'Percelektrisch': {
-                'label': 'Percentage elektrische autos per inkomensgroep',
-                'laag': {
-                    'label': 'Laag',
-                    'type': 'number',
-                    'unit': '%',
-                    'default': 0
-                },
-                'middellaag': {
-                    'label': 'Middellaag',
-                    'type': 'number',
-                    'unit': '%',
-                    'default': 0
-                },
-                'middelhoog': {
-                    'label': 'Middelhoog',
-                    'type': 'number',
-                    'unit': '%',
-                    'default': 0
-                },
-                'hoog': {
-                    'label': 'hoog',
-                    'type': 'number',
-                    'unit': '%',
-                    'default': 0
-                }
-            },
-
-            'kunstmab': {
-                'label': 'Kunstmatig autobezit (afgedwongen lager autobezit bv door strenge parkeernormen)',
-                'gebruiken': {
-                    'label': 'Gebruik kunstmatig autobezit',
-                    'type': 'checkbox',
-                    'default': False
-                },
-                'bestand': {
-                    'label': 'Kunstmatig autobezit bestand',
-                    'type': 'file',
-                    'default': ''
-                },
-            },
-            # 'Gratisautopercentage': {
-            #  'label': 'Gratis Auto',
-            #  'laag': {
-            #    'label': 'Laag',
-            #    'type': 'number',
-            #    'unit': '(fractie)',
-            #    'range': [ 0, 100 ],
-            #    'default': 0
-            #  },
-            #  'middellaag': {
-            #    'label': 'Middellaag',
-            #    'type': 'number',
-            #    'unit': '(fractie)',
-            #    'range': [ 0, 100 ],
-            #    'default': 0.1
-            #  },
-            #  'middelhoog': {
-            #    'label': 'Middelhoog',
-            #    'type': 'number',
-            #    'unit': '(fractie)',
-            #    'range': [ 0, 100 ],
-            #    'default': 0.35
-            #  },
-            #  'hoog': {
-            #    'label': 'Hoog',
-            #    'type': 'number',
-            #    'unit': '(fractie)',
-            #    'range': [ 0, 100 ],
-            #    'default': 0.55
-            #  }
-            # },
-            'GratisOVpercentage': {
-                'label': 'Gratis OV',
-                'type': 'number',
-                'unit': '(fractie)',
-                'range': [0, 100],
-                'default': 0.03
-            },
-            'parkeerkosten': {
-                'label': 'Is er een bestand met parkeerkosten per zone?',
-                'gebruiken': {
-                    'label': 'Parkeerkosten',
-                    'type': 'checkbox',
-                    'default': False
-                },
-                'bestand': {
-                    'label': 'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
-                    'type': 'file',
-                    'default': ''
-                },
-            },
-            'additionele_kosten': {
-                'label': 'Is er een bestand met additionele kosten (bedragen zijn in euros?',
-                'gebruiken': {
-                    'label': 'Additionele kosten',
-                    'type': 'checkbox',
-                    'default': False
-                },
-                'bestand': {
-                    'label': 'Additionele kosten bestand',
-                    'type': 'file',
-                    'default': ''
-                },
-            },
-        },
-
-        # 'ontplooiing': {
-        # 'label': 'Ontplooiing',
-        # 'verdeling_file': {
-        # 'label': 'Verdeling over groepen bestand',
-        # 'type': 'file',
-        # 'default': ''
-        # },
-        # 'uitvoerdirectorynaam': {
-        # 'label': 'Naam van uitvoerdirectory',
-        # 'type': 'text',
-        # 'default': 'ontplooiing_echte_inwoners'
-        # }
-        # },
-        # 'bedrijven': {
-        # 'label': 'Bedrijven',
-        # 'verdeling_file': {
-        # 'label': 'Verdeling over groepen bestand',
-        # 'type': 'file',
-        # 'default': ''
-        # },
-        # 'arbeid': {
-        # 'label': 'Concurrentie om arbeidsplaatsen',
-        # 'herkomsten_directory': {
-        # 'label': 'Herkomsten directory',
-        # 'type': 'directory',
-        # 'default': 'herkomsten'
-        # }
-        # },
-        # 'inwoners': {
-        # 'label': 'Concurrentie om inwoners',
-        # 'bestemmingen_directory': {
-        # 'label': 'Bestemmingen directory',
-        # 'type': 'directory',
-        # 'default': 'bestemmingen'
-        # }
-        # },
-        # 'uitvoer_directory_naam': {
-        # 'label': 'Naam van uitvoer directory',
-        # 'type': 'text',
-        # 'default': 'uitvoer'
-        # }
-        # }
+        'motieven': config_item(
+            'Motieven', DataType.CHECKLIST, default='werk',
+            items=['werk', 'winkeldagelijkszorg',
+                   'winkelnietdagelijksonderwijs', 'sociaal-recreatief']
+        ),
+        'welke_groepen': config_item(
+            'Welke groepen moeten worden meegenomen qua autobezit',
+            DataType.CHECKLIST,
+            default='alle groepen',
+            items=['alle groepen', 'alleen autobezitters'],
+        ),
+        'schatten_of_bekend': config_item(
+            'Is het percentage autobezit bekend of moet het uit CBS-gegevens geschat worden?',
+            DataType.CHECKLIST,
+            default='geschat',
+            items=['bekend', 'geschat'],
+        ),
+        'welke_inkomensgroepen': config_item(
+            'Welke inkomensgroepen moeten worden meegenomen',
+            DataType.CHECKLIST,
+            default=['laag', 'middellaag', 'middelhoog', 'hoog'],
+            items=['laag', 'middellaag', 'middelhoog', 'hoog'],
+        ),
+        'conc_afstand': config_item(
+            'Moet in stap 8 alleen concurrentie of ook afstand worden berekend',
+            DataType.CHECKLIST,
+            default='concurrentie',
+            items=['concurrentie', 'afstand'],
+        ),
     }
 
 
-def projectNaam(config):
+def default_skims_tab():
+    return {
+        'label': 'Gegeneraliseerde Reistijd Berekenen',
+        'dagsoort': config_item(
+            'Dagsoorten',
+            DataType.CHECKLIST,
+            default='Restdag',
+            items=['Ochtendspits', 'Restdag', 'Avondspits'],
+        ),
+
+        'OV kosten': {
+            'starttarief': config_item(
+                'Starttarief',
+                DataType.NUMBER,
+                default=75,
+                unit='Eurocent',
+            ),
+            'kmkosten': config_item(
+                'Variabele kosten',
+                DataType.NUMBER,
+                default=12,
+                unit='Eurocent/km',
+            )
+        },
+        'OV kostenbestand': {
+            'label': 'Bestaat er een apart OV-kostenbestand?',
+            'gebruiken': config_item(
+                'Er is een apart OV-kostenbestand',
+                DataType.CHECKBOX,
+            ),
+        },
+        'pricecap': {
+            'label': 'Is er een maximum OV-prijs (price cap)?',
+            'gebruiken': config_item(
+                'pricecap',
+                DataType.CHECKBOX,
+            ),
+            'getal': config_item(
+                'Wat is de pricecap in Euros',
+                DataType.NUMBER,
+                default=9999.0
+            ),
+        },
+
+        'Kosten auto fossiele brandstof': {
+            'variabele kosten': config_item(
+                'variabele kosten',
+                DataType.NUMBER,
+                default=16,
+                unit='Eurocent/km',
+            ),
+            'kmheffing': config_item(
+                'Kilometerheffing',
+                DataType.NUMBER,
+                unit='Eurocent/km',
+            ),
+        },
+        'Kosten elektrische auto': {
+            'variabele kosten': config_item(
+                'variabele kosten',
+                DataType.NUMBER,
+                default=5,
+                unit='Eurocent/km'
+            ),
+            'kmheffing': config_item(
+                'Kilometerheffing',
+                DataType.NUMBER,
+                unit='Eurocent/km',
+            )
+        },
+        'parkeerzoektijden_bestand': config_item(
+            'Parkeerzoektijden bestand',
+            DataType.FILE,
+        ),
+        'varkostenga': {
+            'label': 'Variabele kosten geen auto',
+            'GeenAuto': config_item(
+                'Deelauto (bezit geen auto, wel rijbewijs)',
+                DataType.NUMBER,
+                default=0.33,
+                bounds=[0, 9999],
+                unit='Euro/km',
+            ),
+            'GeenRijbewijs': config_item(
+                'Taxi (bezit geen rijbewijs)',
+                DataType.NUMBER,
+                default=2.40,
+                bounds=[0, 9999],
+                unit='Euro/km',
+            )
+        },
+        'tijdkostenga': {
+            'label': 'Tijd kosten geen auto',
+            'GeenAuto': config_item(
+                'Deelauto (bezit geen auto, wel rijbewijs)',
+                DataType.NUMBER,
+                default=0.05,
+                bounds=[0, 9999],
+                unit='Euro/Minuut',
+            ),
+            'GeenRijbewijs': config_item(
+                'Taxi (bezit geen rijbewijs)',
+                DataType.NUMBER,
+                default=0.40,
+                bounds=[0, 9999],
+                unit='Euro/Minuut',
+            )
+        }
+    }
+
+
+def default_tovm_tab():
+    levels = ["Hoog", "Middelhoog", "Middellaag", "Laag"]
+    werk_values = [4, 6, 9, 12]
+
+    werk_levels = {
+        level.lower(): config_item(
+            level, DataType.NUMBER, default=value, unit="Minuten/Euro"
+        )
+        for level, value in zip(levels, werk_values)
+    }
+
+    overig_values = [4.8, 7.25, 10.9, 15.5]
+    overig_levels = {
+        level.lower(): config_item(
+            level, DataType.NUMBER, default=value, unit="Minuten/Euro"
+        )
+        for level, value in zip(levels, overig_values)
+    }
+
+    return {
+        'label': 'Waarde van tijd',
+        'werk': {
+            'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief werk',
+            **werk_levels,
+        },
+        'overig': {
+            'label': 'Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief overig',
+            **overig_levels,
+        },
+    }
+
+
+def default_verdeling_tab():
+    levels = ["Laag", "Middellaag", "Middelhoog", "Hoog"]
+
+    electric_share = {
+        level.lower(): config_item(
+            level,
+            DataType.NUMBER,
+            unit="%") for level in levels}
+
+    return {
+        'label': 'Verdeling Over Groepen',
+        'Percelektrisch': electric_share,
+
+        'GratisOVpercentage': config_item(
+            'Gratis OV',
+            DataType.NUMBER,
+            default=0.03,
+            bounds=[0, 100],
+            unit='(fractie)',
+        ),
+    }
+
+
+def default_advanced_tab():
+    additionele_kosten_label = (
+        'Additionele kosten, dit zijn extra kosten die gemaakt worden bij bijvoorbeeld een cordonheffing, waarbij voor sommige verplaatsingen wel extra kosten gelden en voor andere verplaatsingen niet (bedragen in eurocenten).'
+    )
+
+    return {
+        'label': 'Geavanceerd',
+
+        'kunstmab': {
+            'label': 'Kunstmatig autobezit (afgedwongen lager autobezit bv door strenge parkeernormen)',
+            'gebruiken': config_item(
+                'Gebruik kunstmatig autobezit',
+                DataType.CHECKBOX,
+            ),
+            'bestand': config_item(
+                'Kunstmatig autobezit bestand',
+                DataType.FILE,
+            ),
+        },
+
+        'parkeerkosten': {
+            'label': 'Is er een bestand met parkeerkosten per zone?',
+            'gebruiken': config_item(
+                'Parkeerkosten',
+                DataType.CHECKBOX,
+            ),
+            'bestand': config_item(
+                'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
+                DataType.FILE,
+            ),
+        },
+
+        'additionele_kosten': {
+            'label': additionele_kosten_label,
+            'gebruiken': config_item(
+                'Additionele kosten',
+                DataType.CHECKBOX,
+            ),
+            'bestand': config_item(
+                'Additionele kosten bestand',
+                DataType.FILE,
+            ),
+        },
+    }
+
+
+def default_chains_and_hubs_tab():
+    return {
+        'label': 'Ketens',
+
+        'ketens': {
+            'gebruiken': config_item(
+                'Wel ketens en hubs',
+                DataType.CHECKBOX,
+            ),
+            'naam hub': config_item(
+                'Wat is de naam van de verzameling hubs?',
+                DataType.TEXT,
+            )
+        }
+    }
+
+
+def default_configuration_definition():
     """
-  Geeft de inhoud van het veld terug waarin de projeect naam is opgeslagen.
-  """
+    The default configuration definition for IKOB.
+
+    The configuration contains the label attribute:
+      - label: The label text for an input field, tab, or frame.
+
+    For each leaf in the configuration additional attributes are defined:
+      - type (required): the kind of input:
+          text
+          number
+          directory
+          file
+          checkbox
+          checklist
+          choice
+      - unit: a label after the input field for ``text`` and ``number``
+      - default: the default input value
+      - items: a list of items to choose from
+      - range: the minimum and maximum allowed values for type ``number``
+    """
+
+    project_tab = default_project_tab()
+    skims_tab = default_skims_tab()
+    tovm_tab = default_tovm_tab()
+    verdeling_tab = default_verdeling_tab()
+    chains_and_hubs_tab = default_chains_and_hubs_tab()
+    advanced_tab = default_advanced_tab()
+
+    return {
+        'project': project_tab,
+        'skims': skims_tab,
+        'TVOM': tovm_tab,
+        'verdeling': verdeling_tab,
+        'ketens': chains_and_hubs_tab,
+        'geavanceerd': advanced_tab,
+    }
+
+
+def project_name(config):
+    """Extract the project name from the project configuration."""
     return config['project']['naam']
 
 
-def valideerConfiguratie(config, strict=True):
-    """
-  Valideer een configuratie dictionary.
-  """
+def validate_config(config, strict=True):
+    """Validate a config dictionary."""
     return validate.validateConfigWithTemplate(
-        config, StandaardConfiguratieDefinitie(), strict=strict)
+        config, default_configuration_definition(), strict=strict)
 
 
-def StandaardConfiguratie():
-    """
-  Geeft de standaard configuratie terug zoals gedefinieerd in het bovenstaande sjabloon.
-  """
-    template = StandaardConfiguratieDefinitie()
+def default_config():
+    """Provide the configuration using the default config definition."""
+    template = default_configuration_definition()
     config = build.buildConfigDict(template)
     return config

@@ -16,6 +16,7 @@ project_config = config['project']
 paden_config = config['project']['paden']
 skims_config = config['skims']
 tvom_config = config['TVOM']
+ketens_config = config['ketens']
 
 # Ophalen van instellingen
 jaar = project_config['jaar']
@@ -23,8 +24,8 @@ Basisdirectory = paden_config['skims_directory']
 Skimsdirectory = os.path.join(Basisdirectory, 'skims')
 os.makedirs(Skimsdirectory, exist_ok=True)
 motieven = project_config['motieven']
-Ketens = project_config['ketens']['gebruiken']
-Hubnaam = project_config['ketens']['naam hub']
+Ketens = ketens_config['ketens']['gebruiken']
+Hubnaam = ketens_config['ketens']['naam hub']
 aspect = skims_config['aspect']
 TVOMwerk = tvom_config['werk']
 TVOMoverig = tvom_config['overig']

@@ -6,9 +6,9 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 from ikob.config import build, validate
-from ikob.configuration_definition import (StandaardConfiguratie,
-                                           StandaardConfiguratieDefinitie,
-                                           projectNaam, valideerConfiguratie)
+from ikob.configuration_definition import (default_config,
+                                           default_configuration_definition,
+                                           project_name, validate_config)
 
 # Interface: load/save config files.
 
@@ -48,10 +48,10 @@ def loadConfig(filename):
     try:
         with open(filename) as json_file:
             config = json.load(json_file)
-    except BaseException:
-        raise IOError(f"Kan niet lezen uit: {filename}.")
+    except BaseException as e:
+        raise IOError(f"Kan niet lezen uit: '{filename}' with error:\n'{e}'.")
     if config:
-        if not valideerConfiguratie(config):
+        if not validate_config(config):
             raise ValueError("Configuratie heeft een incompatibel formaat.")
         config["__filename__"] = os.path.splitext(
             os.path.basename(filename))[0]
@@ -78,7 +78,7 @@ class ConfigApp(tk.Tk):
         self.create_widgets()
 
     def add_variables(self):
-        self._template = StandaardConfiguratieDefinitie()
+        self._template = default_configuration_definition()
         build.addTkVarsTemplate(self._template)
 
     def create_widgets(self):
@@ -91,7 +91,7 @@ class ConfigApp(tk.Tk):
         )
 
     def cmdNieuwProject(self):
-        build.setTkVars(self._template, StandaardConfiguratie())
+        build.setTkVars(self._template, default_config())
 
     def cmdLaadProject(self):
         filename = filedialog.askopenfilename(
@@ -116,7 +116,7 @@ class ConfigApp(tk.Tk):
         config = build.buildConfigDict(self._template)
         filename = filedialog.asksaveasfilename(
             title="Kies een .json project bestand.",
-            initialfile=_projectFilename(projectNaam(config)),
+            initialfile=_projectFilename(project_name(config)),
             filetypes=[("project file", ".json")],
         )
         filename = _projectFilename(filename, make_safe=False)
@@ -133,7 +133,7 @@ class ConfigApp(tk.Tk):
 
 
 def main():
-    if not validate.validateTemplate(StandaardConfiguratieDefinitie()):
+    if not validate.validateTemplate(default_configuration_definition()):
         messagebox.showerror(
             title="Fout",
             message="De standaard configuratiedefinitie is niet geldig: Kijk in ConfiguratieDefinitie.py",

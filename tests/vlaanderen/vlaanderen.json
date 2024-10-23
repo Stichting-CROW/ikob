@@ -34,10 +34,6 @@
     "motieven": [
       "werk"
     ],
-    "ketens": {
-      "gebruiken": false,
-      "naam hub": ""
-    },
     "welke_inkomensgroepen": [
       "laag",
       "middellaag",
@@ -47,23 +43,11 @@
   },
   "verdeling": {
     "GratisOVpercentage": 0.03,
-    "kunstmab": {
-      "gebruiken": false,
-      "bestand": ""
-    },
-    "parkeerkosten": {
-      "gebruiken": false,
-      "bestand": ""
-    },
     "Percelektrisch": {
       "middellaag": 0.0,
       "laag": 0.0,
       "hoog": 0.0,
       "middelhoog": 0.0
-    },
-    "additionele_kosten": {
-      "gebruiken": false,
-      "bestand": ""
     }
   },
   "skims": {
@@ -97,6 +81,26 @@
     "tijdkostenga": {
       "GeenAuto": 0.05,
       "GeenRijbewijs": 0.4
+    }
+  },
+  "geavanceerd": {
+    "kunstmab": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "additionele_kosten": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "parkeerkosten": {
+      "bestand": "",
+      "gebruiken": false
+    }
+  },
+  "ketens": {
+    "ketens": {
+      "gebruiken": false,
+      "naam hub": ""
     }
   }
 }
