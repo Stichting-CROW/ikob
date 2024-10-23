@@ -4,10 +4,11 @@ import os
 import re
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from ikob.config import validate, build
-from ikob.ConfiguratieDefinitie import StandaardConfiguratie
-from ikob.ConfiguratieDefinitie import StandaardConfiguratieDefinitie
-from ikob.ConfiguratieDefinitie import valideerConfiguratie, projectNaam
+
+from ikob.config import build, validate
+from ikob.configuration_definition import (StandaardConfiguratie,
+                                           StandaardConfiguratieDefinitie,
+                                           projectNaam, valideerConfiguratie)
 
 # Interface: load/save config files.
 
@@ -47,12 +48,13 @@ def loadConfig(filename):
     try:
         with open(filename) as json_file:
             config = json.load(json_file)
-    except:
+    except BaseException:
         raise IOError(f"Kan niet lezen uit: {filename}.")
     if config:
         if not valideerConfiguratie(config):
             raise ValueError("Configuratie heeft een incompatibel formaat.")
-        config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
+        config["__filename__"] = os.path.splitext(
+            os.path.basename(filename))[0]
     return config
 
 
@@ -60,7 +62,7 @@ def saveConfig(filename, config):
     try:
         with open(filename, "w") as json_file:
             json.dump(config, json_file, indent=2)
-    except:
+    except BaseException:
         raise IOError(f"Kan configuratie niet wegschrijven naar: {filename}.")
     return True
 
@@ -106,8 +108,7 @@ class ConfigApp(tk.Tk):
                 )
             except IOError:
                 messagebox.showerror(
-                    title="Fout", message="Het bestand kan niet worden geladen."
-                )
+                    title="Fout", message="Het bestand kan niet worden geladen.")
             else:
                 build.setTkVars(self._template, read_config)
 
@@ -121,12 +122,14 @@ class ConfigApp(tk.Tk):
         filename = _projectFilename(filename, make_safe=False)
         try:
             saveConfig(filename, config)
-        except:
+        except BaseException:
             messagebox.showerror(
                 title="Fout", message="Het bestand kan niet worden opgeslagen."
             )
         else:
-            messagebox.showinfo(title="Opgeslagen", message="Configuratie opgeslagen.")
+            messagebox.showinfo(
+                title="Opgeslagen",
+                message="Configuratie opgeslagen.")
 
 
 def main():

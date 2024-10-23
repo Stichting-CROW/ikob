@@ -20,9 +20,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "autopep8",
+    "isort",
     "pandas",
     "pytest",
-    "ruff",
 ]
 
 deploy = [
@@ -37,8 +38,3 @@ ikobrunner = "ikob:ikobrunner.main"
 testpaths = [
     "tests",
 ]
-
-[tool.ruff]
-line-length = 88
-indent-width = 4
-target-version = "py312"

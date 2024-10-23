@@ -1,10 +1,12 @@
-from ikob.ikobrunner import run_scripts
-import pathlib
-import pytest
 import filecmp
-import shutil
-import pandas as pd
 import logging
+import pathlib
+import shutil
+
+import pandas as pd
+import pytest
+
+from ikob.ikobrunner import run_scripts
 
 logger = logging.getLogger(__name__)
 

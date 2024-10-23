@@ -1,4 +1,4 @@
-from ikob.config import validate, build
+from ikob.config import build, validate
 
 
 def StandaardConfiguratieDefinitie():
@@ -66,7 +66,7 @@ def StandaardConfiguratieDefinitie():
             'motieven': {
                 'label': 'Motieven',
                 'type': 'checklist',
-                'items': ['werk', 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs','sociaal-recreatief'],
+                'items': ['werk', 'winkeldagelijkszorg', 'winkelnietdagelijksonderwijs', 'sociaal-recreatief'],
                 'default': ['werk']
             },
             'welke_groepen': {
@@ -77,15 +77,15 @@ def StandaardConfiguratieDefinitie():
             },
             'schatten_of_bekend': {
                 'label': 'Is het percentage autobezit bekend of moet het uit CBS-gegevens geschat worden?',
-                'type' : 'checklist',
-                'items' : ['bekend', 'geschat'],
-                'default' : ['geschat']
+                'type': 'checklist',
+                'items': ['bekend', 'geschat'],
+                'default': ['geschat']
             },
             'welke_inkomensgroepen': {
                 'label': 'Welke inkomensgroepen moeten worden meegenomen',
                 'type': 'checklist',
-                'items': ['laag', 'middellaag','middelhoog','hoog'],
-                'default': ['laag', 'middellaag','middelhoog','hoog']
+                'items': ['laag', 'middellaag', 'middelhoog', 'hoog'],
+                'default': ['laag', 'middellaag', 'middelhoog', 'hoog']
             },
             'conc_afstand': {
                 'label': 'Moet in stap 8 alleen concurrentie of ook afstand worden berekend',
@@ -97,8 +97,8 @@ def StandaardConfiguratieDefinitie():
                 'label': 'Wordt er ook gewerkt met ketenverplaatsingen (hubs?',
                 'gebruiken': {
                     'label': 'Wel ketens en hubs',
-                        'type': 'checkbox',
-                        'default': False
+                    'type': 'checkbox',
+                    'default': False
                 },
                 'naam hub': {
                     'label': 'Wat is de naam van de verzameling hubs?',
@@ -137,18 +137,18 @@ def StandaardConfiguratieDefinitie():
                 #  'default': ''
                 # }
             },
-            'OV kostenbestand' : {
+            'OV kostenbestand': {
                 'label': 'Bestaat er een apart OV-kostenbestand?',
                 'gebruiken': {
                     'label': 'Er is een apart OV-kostenbestand',
                     'type': 'checkbox',
                     'default': False
                 },
-#                'naam kostenbestand': {
-#                    'label': 'Wat is de naam van het OV kostenbestand?',
-#                    'type': 'text',
-#                    'default': ''
-#                }
+                #                'naam kostenbestand': {
+                #                    'label': 'Wat is de naam van het OV kostenbestand?',
+                #                    'type': 'text',
+                #                    'default': ''
+                #                }
 
             },
             'pricecap': {
@@ -199,25 +199,25 @@ def StandaardConfiguratieDefinitie():
                 'type': 'file',
                 'default': ''
             },
-#           'parkeerkosten': {
-#                'label': 'Is er een bestand met parkeerkosten of additionele kosten per zone?',
-#                'gebruiken': {
-#                    'label': 'Parkeerkosten',
-#                    'type': 'checkbox',
-#                    'items': ['Parkeerkosten', 'Additionele kosten'],
-#                    'default': ['']
-#                },
-#                'bestand': {
-#                    'label': 'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
-#                    'type': 'file',
-#                    'default': ''
-#                },
-#                'bestand': {
-#                    'label': 'Additionele kosten bestand',
-#                    'type': 'file',
-#                    'default': ''
-#                },
-#            },
+            #           'parkeerkosten': {
+            #                'label': 'Is er een bestand met parkeerkosten of additionele kosten per zone?',
+            #                'gebruiken': {
+            #                    'label': 'Parkeerkosten',
+            #                    'type': 'checkbox',
+            #                    'items': ['Parkeerkosten', 'Additionele kosten'],
+            #                    'default': ['']
+            #                },
+            #                'bestand': {
+            #                    'label': 'Parkeerkosten bestand (bedragen zijn in eurocenten (dus €2,20 wordt weergegeven als 220)',
+            #                    'type': 'file',
+            #                    'default': ''
+            #                },
+            #                'bestand': {
+            #                    'label': 'Additionele kosten bestand',
+            #                    'type': 'file',
+            #                    'default': ''
+            #                },
+            #            },
             'varkostenga': {
                 'label': 'Variabele kosten geen auto',
                 'GeenAuto': {
@@ -476,13 +476,14 @@ def valideerConfiguratie(config, strict=True):
     """
   Valideer een configuratie dictionary.
   """
-    return validate.validateConfigWithTemplate ( config, StandaardConfiguratieDefinitie ( ), strict=strict )
+    return validate.validateConfigWithTemplate(
+        config, StandaardConfiguratieDefinitie(), strict=strict)
 
 
 def StandaardConfiguratie():
     """
   Geeft de standaard configuratie terug zoals gedefinieerd in het bovenstaande sjabloon.
   """
-    template = StandaardConfiguratieDefinitie ( )
-    config = build.buildConfigDict ( template )
+    template = StandaardConfiguratieDefinitie()
+    config = build.buildConfigDict(template)
     return config

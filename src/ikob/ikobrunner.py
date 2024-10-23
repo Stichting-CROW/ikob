@@ -1,22 +1,17 @@
 import logging
-from tkinter import Tk, Frame, BooleanVar, StringVar
-from tkinter import Button
-from tkinter import filedialog, messagebox
+from tkinter import (BooleanVar, Button, Frame, StringVar, Tk, filedialog,
+                     messagebox)
+
+from ikob.combined_weights import calculate_combined_weights
+from ikob.competition import competition_on_citizens, competition_on_jobs
 from ikob.config import widgets
-
-# from ConfiguratieDefinitie import *
-from ikob.ikobconfig import loadConfig, getConfigFromArgs
-
-from ikob.datasource import DataType, DataSource
-
-from ikob.Ervarenreistijdberekenen import ervaren_reistijd_berekenen
-from ikob.Verdelingovergroepen import verdeling_over_groepen
-from ikob.Gewichtenberekenenenkelscenarios import gewichten_berekenen_enkel_scenarios
-from ikob.Gewichtenberekenencombis import gewichten_berekenen_combis
-from ikob.Ontplooiingsmogelijkhedenechteinwoners import ontplooingsmogelijkheden_echte_inwoners
-from ikob.Potentiebedrijven import potentie_bedrijven
-from ikob.concurrentie import concurrentie_om_arbeidsplaatsen
-from ikob.concurrentie import concurrentie_om_inwoners
+from ikob.datasource import DataSource, DataType
+from ikob.deployment_opportunities import deployment_opportunities
+from ikob.generalised_travel_time import generalised_travel_time
+from ikob.group_distribution import distribute_over_groups
+from ikob.ikobconfig import getConfigFromArgs, loadConfig
+from ikob.possible_companies import possible_companies
+from ikob.single_weights import calculate_single_weights
 
 logger = logging.getLogger(__name__)
 
@@ -33,47 +28,58 @@ def run_scripts(project_file, skip_steps=None):
         skip_steps = [False] * 8
 
     if not skip_steps[0]:
-        ervaren_reistijd = ervaren_reistijd_berekenen(config)
+        travel_time = generalised_travel_time(config)
     else:
-        ervaren_reistijd = DataSource(config, DataType.ERVARENREISTIJD)
+        travel_time = DataSource(config, DataType.GENERALISED_TRAVEL_TIME)
 
     if not skip_steps[1]:
         # TODO: Pass temporary SEGS output as arguments too.
-        verdeling_over_groepen(config)
+        distribute_over_groups(config)
 
     if not skip_steps[2]:
-        gewichten_enkel = gewichten_berekenen_enkel_scenarios(config, ervaren_reistijd)
+        single_weights = calculate_single_weights(config, travel_time)
     else:
-        gewichten_enkel = DataSource(config, DataType.GEWICHTEN)
+        single_weights = DataSource(config, DataType.WEIGHTS)
 
     if not skip_steps[3]:
-        gewichten_combi = gewichten_berekenen_combis(config, gewichten_enkel)
+        combined_weights = calculate_combined_weights(config, single_weights)
     else:
-        gewichten_combi = DataSource(config, DataType.GEWICHTEN)
+        combined_weights = DataSource(config, DataType.WEIGHTS)
 
     if not skip_steps[4]:
-        potenties = ontplooingsmogelijkheden_echte_inwoners(config, gewichten_enkel, gewichten_combi)
+        possibilities = deployment_opportunities(
+            config, single_weights, combined_weights)
     else:
-        potenties = DataSource(config, DataType.BESTEMMINGEN)
+        possibilities = DataSource(config, DataType.DESTINATIONS)
 
     if not skip_steps[5]:
-        herkomsten = potentie_bedrijven(config, gewichten_enkel, gewichten_combi)
+        origins = possible_companies(config, single_weights, combined_weights)
     else:
-        herkomsten = DataSource(config, DataType.HERKOMSTEN)
+        origins = DataSource(config, DataType.ORIGINS)
 
     if not skip_steps[6]:
-        concurrentie_arbeid = concurrentie_om_arbeidsplaatsen(config, gewichten_enkel, gewichten_combi, herkomsten)
+        competition_jobs = competition_on_jobs(
+            config, single_weights, combined_weights, origins)
     else:
-        concurrentie_arbeid = DataSource(config, DataType.CONCURRENTIE)
+        competition_jobs = DataSource(config, DataType.COMPETITION)
 
     if not skip_steps[7]:
-        concurrentie_inwoners = concurrentie_om_inwoners(config, gewichten_enkel, gewichten_combi, potenties)
+        competition_citizens = competition_on_citizens(
+            config, single_weights, combined_weights, possibilities)
     else:
-        concurrentie_inwoners = DataSource(config, DataType.CONCURRENTIE)
+        competition_citizens = DataSource(config, DataType.COMPETITION)
 
     # TODO: For now all files are written to disk to assert their contents in
-    # end-to-end testing. Ultimately only files that are essential outputs should persist.
-    for container in [ervaren_reistijd, gewichten_enkel, gewichten_combi, potenties, herkomsten, concurrentie_inwoners, concurrentie_arbeid]:
+    # end-to-end testing. Ultimately only files that are essential outputs
+    # should persist.
+    for container in [
+            travel_time,
+            single_weights,
+            combined_weights,
+            possibilities,
+            origins,
+            competition_citizens,
+            competition_jobs]:
         container.store()
 
 
@@ -85,14 +91,14 @@ class ConfigApp(Tk):
     IPAD = {"ipadx": 5, "ipady": 5}
 
     stappen = (
-            "Gegeneraliseerde reistijd berekenen uit tijd en kosten",
-            "Verdeling van de groepen over de buurten of zones",
-            "Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart",
-            "Maximum gewichten van meerdere modaliteiten",
-            "Bereikbaarheid arbeidsplaatsen voor inwoners",
-            "Potentie bereikbaarheid voor bedrijven en instellingen",
-            "Concurrentiepositie voor bereik arbeidsplaatsen",
-            "Concurrentiepositie voor bedrijven qua bereikbaarheid")
+        "Gegeneraliseerde reistijd berekenen uit tijd en kosten",
+        "Verdeling van de groepen over de buurten of zones",
+        "Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart",
+        "Maximum gewichten van meerdere modaliteiten",
+        "Bereikbaarheid arbeidsplaatsen voor inwoners",
+        "Potentie bereikbaarheid voor bedrijven en instellingen",
+        "Concurrentiepositie voor bereik arbeidsplaatsen",
+        "Concurrentiepositie voor bedrijven qua bereikbaarheid")
 
     def __init__(self):
         super().__init__()
@@ -149,8 +155,7 @@ class ConfigApp(Tk):
                 )
             except IOError:
                 messagebox.showerror(
-                    title="Fout", message="Het bestand kan niet worden geladen."
-                )
+                    title="Fout", message="Het bestand kan niet worden geladen.")
 
 
 def main():
