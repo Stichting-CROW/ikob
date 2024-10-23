@@ -103,6 +103,9 @@ def chain_generator(skims_directory: pathlib.Path,
                     PplusRherkomstafstandautomatrix[h, i, j] = Autoafstandmatrix[hub, j]
                     PplusRherkomstafstandOVmatrix[h, i, j] = OVafstandmatrix[i, hub]
 
+    for h, hub in enumerate(hubs):
+        for i in range(n_car_times):
+            for j in range(n_car_times):
                 if Fietstijdmatrix[i, hub] <= Fietstijdmatrix[hub, j]:
                     PplusFietstijdmatrix[h, i, j] = Fietstijdmatrix[i, hub] + Autotijdmatrix[hub, j]
                     PplusFietsautoafstandmatrix[h, i, j] = Autoafstandmatrix[hub, j]
