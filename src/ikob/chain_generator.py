@@ -149,24 +149,15 @@ def chain_generator(skims_directory: pathlib.Path,
 
     for i in range(n_car_times):
         for j in range(n_car_times):
+            index = np.argmin(PplusRbestemmingstijdmatrix[:, i, j])
+            PplusRhubplek[i, j] = hubs[index]
 
-            minimum = 9999
-            minimumoud = 9999
-            for h in range(len(hubs)):
-                minimum = min(minimum, PplusRbestemmingstijdmatrix[h, i, j])
-                if minimum < minimumoud:
-                    hbewaar = h
-                    minimumoud = minimum
-            PplusRhubplek[i, j] = hubs[hbewaar] + 1
+            index = np.argmin(PplusRherkomstafstandautomatrix[:, i, j])
+            Pplusfietshubplek[i, j] = hubs[index]
 
-            minimum = 9999
-            minimumoud = 9999
-            for h in range(len(hubs)):
-                minimum = min(minimum, PplusRherkomstafstandautomatrix[h, i, j])
-                if minimum < minimumoud:
-                    hbewaar = h
-                    minimumoud = minimum
-            Pplusfietshubplek[i, j] = hubs[hbewaar] + 1
+    # Convert to one-base indexing before writing output.
+    PplusRhubplek += 1
+    Pplusfietshubplek += 1
 
     filename_and_data = [
         (f'PplusR_{name}_bestemmings_Tijd.csv', PplusRbestemmingstijdtotaal),
