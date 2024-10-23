@@ -85,30 +85,30 @@ def chain_generator(skims_directory: pathlib.Path,
     PplusRbestemmingsafstandautomatrix = np.zeros((n_hubs, n_car_times, n_car_times))
     PplusFietsautoafstandmatrix = np.zeros((n_hubs, n_car_times, n_car_times))
 
-    for h in range(n_hubs):
+    for h, hub in enumerate(hubs):
         for i in range(n_car_times):
             for j in range(n_car_times):
-                if OVtijdmatrix[i][hubs[h]] <= Autotijdmatrix[hubs[h]][j]:
-                    PplusRbestemmingstijdmatrix[h, i, j] = OVtijdmatrix[i][hubs[h]] + Autotijdmatrix[hubs[h]][j]
-                    PplusRbestemmingsafstandautomatrix[h, i, j] = Autoafstandmatrix[hubs[h]][j]
-                    PplusRbestemmingsafstandOVmatrix[h, i, j] = OVafstandmatrix[i][hubs[h]]
-                    PplusRherkomsttijdmatrix[h, i, j] = Autotijdmatrix[i][hubs[h]] + OVtijdmatrix[hubs[h]][j]
-                    PplusRherkomstafstandautomatrix[h, i, j] = Autoafstandmatrix[i][hubs[h]]
-                    PplusRherkomstafstandOVmatrix[h, i, j] = OVafstandmatrix[hubs[h]][j]
+                if OVtijdmatrix[i, hub] <= Autotijdmatrix[hub, j]:
+                    PplusRbestemmingstijdmatrix[h, i, j] = OVtijdmatrix[i, hub] + Autotijdmatrix[hub, j]
+                    PplusRbestemmingsafstandautomatrix[h, i, j] = Autoafstandmatrix[hub, j]
+                    PplusRbestemmingsafstandOVmatrix[h, i, j] = OVafstandmatrix[i, hub]
+                    PplusRherkomsttijdmatrix[h, i, j] = Autotijdmatrix[i, hub] + OVtijdmatrix[hub, j]
+                    PplusRherkomstafstandautomatrix[h, i, j] = Autoafstandmatrix[i, hub]
+                    PplusRherkomstafstandOVmatrix[h, i, j] = OVafstandmatrix[hub, j]
                 else:
-                    PplusRbestemmingstijdmatrix[h, i, j] = Autotijdmatrix[i][hubs[h]] + OVtijdmatrix[hubs[h]][j]
-                    PplusRbestemmingsafstandautomatrix[h, i, j] = Autoafstandmatrix[i][hubs[h]]
-                    PplusRbestemmingsafstandOVmatrix[h, i, j] = OVafstandmatrix[hubs[h]][j]
-                    PplusRherkomsttijdmatrix[h, i, j] = OVtijdmatrix[i][hubs[h]] + Autotijdmatrix[hubs[h]][j]
-                    PplusRherkomstafstandautomatrix[h, i, j] = Autoafstandmatrix[hubs[h]][j]
-                    PplusRherkomstafstandOVmatrix[h, i, j] = OVafstandmatrix[i][hubs[h]]
+                    PplusRbestemmingstijdmatrix[h, i, j] = Autotijdmatrix[i, hub] + OVtijdmatrix[hub, j]
+                    PplusRbestemmingsafstandautomatrix[h, i, j] = Autoafstandmatrix[i, hub]
+                    PplusRbestemmingsafstandOVmatrix[h, i, j] = OVafstandmatrix[hub, j]
+                    PplusRherkomsttijdmatrix[h, i, j] = OVtijdmatrix[i, hub] + Autotijdmatrix[hub, j]
+                    PplusRherkomstafstandautomatrix[h, i, j] = Autoafstandmatrix[hub, j]
+                    PplusRherkomstafstandOVmatrix[h, i, j] = OVafstandmatrix[i, hub]
 
-                if Fietstijdmatrix[i][hubs[h]] <= Fietstijdmatrix[hubs[h]][j]:
-                    PplusFietstijdmatrix[h, i, j] = Fietstijdmatrix[i][hubs[h]] + Autotijdmatrix[hubs[h]][j]
-                    PplusFietsautoafstandmatrix[h, i, j] = Autoafstandmatrix[hubs[h]][j]
+                if Fietstijdmatrix[i, hub] <= Fietstijdmatrix[hub, j]:
+                    PplusFietstijdmatrix[h, i, j] = Fietstijdmatrix[i, hub] + Autotijdmatrix[hub, j]
+                    PplusFietsautoafstandmatrix[h, i, j] = Autoafstandmatrix[hub, j]
                 else:
-                    PplusFietstijdmatrix[h, i, j] = Fietstijdmatrix[j][hubs[h]] + Autotijdmatrix[hubs[h]][i]
-                    PplusFietsautoafstandmatrix[h, i, j] = Autoafstandmatrix[hubs[h]][i]
+                    PplusFietstijdmatrix[h, i, j] = Fietstijdmatrix[j, hub] + Autotijdmatrix[hub, i]
+                    PplusFietsautoafstandmatrix[h, i, j] = Autoafstandmatrix[hub, i]
 
     PplusRbestemmingstijdmatrix += transfer_time_pt
     PplusRherkomsttijdmatrix += transfer_time_pt
