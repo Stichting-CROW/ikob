@@ -65,7 +65,7 @@ def chain_generator(skims_directory: pathlib.Path,
     Note: The hubs are internally converted for zero-base indexing.
     """
     # Correct for zero-base indexing.
-    hubs = [hub - 1 for hub in hubs]
+    hubs = np.array(hubs) - 1
 
     Autotijdmatrix = read_csv(skims_directory / 'Auto_Tijd.csv')
     Fietstijdmatrix = read_csv(skims_directory / 'Fiets_Tijd.csv')
@@ -144,18 +144,13 @@ def chain_generator(skims_directory: pathlib.Path,
     PplusRbestemmingstijdtotaal = np.min(PplusRbestemmingstijdmatrix, axis=0, initial=initial)
     PplusRherkomstafstandautototaal = np.min(PplusRherkomstafstandautomatrix, axis=0, initial=initial)
 
-    Pplusfietshubplek = np.zeros((n_car_times, n_car_times))
-    PplusRhubplek = np.zeros((n_car_times, n_car_times))
+    # Extract hubs at minimum values.
+    rmin = np.argmin(PplusRbestemmingstijdmatrix, axis=0)
+    fietsmin = np.argmin(PplusRherkomstafstandautomatrix, axis=0)
+    PplusRhubplek = hubs[rmin]
+    Pplusfietshubplek = hubs[fietsmin]
 
-    for i in range(n_car_times):
-        for j in range(n_car_times):
-            index = np.argmin(PplusRbestemmingstijdmatrix[:, i, j])
-            PplusRhubplek[i, j] = hubs[index]
-
-            index = np.argmin(PplusRherkomstafstandautomatrix[:, i, j])
-            Pplusfietshubplek[i, j] = hubs[index]
-
-    # Convert to one-base indexing before writing output.
+    # Convert hubs to one-base indexing before writing output.
     PplusRhubplek += 1
     Pplusfietshubplek += 1
 
