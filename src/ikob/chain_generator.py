@@ -67,93 +67,93 @@ def chain_generator(skims_directory: pathlib.Path,
     # Correct for zero-base indexing.
     hubs = np.array(hubs) - 1
 
-    Autotijdmatrix = read_csv(skims_directory / 'Auto_Tijd.csv')
-    Fietstijdmatrix = read_csv(skims_directory / 'Fiets_Tijd.csv')
-    OVtijdmatrix = read_csv(skims_directory / 'OV_Tijd.csv')
-    Autoafstandmatrix = read_csv(skims_directory / 'Auto_Afstand.csv')
-    OVafstandmatrix = read_csv(skims_directory / 'OV_Afstand.csv')
+    car_times = read_csv(skims_directory / 'Auto_Tijd.csv')
+    bike_times = read_csv(skims_directory / 'Fiets_Tijd.csv')
+    pt_times = read_csv(skims_directory / 'OV_Tijd.csv')
+    car_distances = read_csv(skims_directory / 'Auto_Afstand.csv')
+    pt_distances = read_csv(skims_directory / 'OV_Afstand.csv')
 
     n_hubs = len(hubs)
-    n_car_times = len(Autotijdmatrix)
+    n_car_times = len(car_times)
 
-    PplusRherkomsttijdmatrix = np.zeros((n_car_times, n_car_times, n_hubs))
-    PplusRbestemmingstijdmatrix = np.zeros((n_car_times, n_car_times, n_hubs))
-    PplusFietstijdmatrix = np.zeros((n_car_times, n_car_times, n_hubs))
-    PplusRherkomstafstandOVmatrix = np.zeros((n_car_times, n_car_times, n_hubs))
-    PplusRherkomstafstandautomatrix = np.zeros((n_car_times, n_car_times, n_hubs))
-    PplusRbestemmingsafstandOVmatrix = np.zeros((n_car_times, n_car_times, n_hubs))
-    PplusRbestemmingsafstandautomatrix = np.zeros((n_car_times, n_car_times, n_hubs))
-    PplusFietsautoafstandmatrix = np.zeros((n_car_times, n_car_times, n_hubs))
-
-    for (i, j) in np.ndindex(n_car_times, n_car_times):
-        mask = OVtijdmatrix[i, hubs] <= Autotijdmatrix[hubs, j]
-
-        PplusRbestemmingstijdmatrix[i, j, :] = np.where(
-            mask,
-            OVtijdmatrix[i, hubs] + Autotijdmatrix[hubs, j],
-            Autotijdmatrix[i, hubs] + OVtijdmatrix[hubs, j],
-        )
-
-        PplusRherkomsttijdmatrix[i, j, :] = np.where(
-            mask,
-            Autotijdmatrix[i, hubs] + OVtijdmatrix[hubs, j],
-            OVtijdmatrix[i, hubs] + Autotijdmatrix[hubs, j],
-        )
-
-        PplusRbestemmingsafstandautomatrix[i, j, :] = np.where(
-            mask,
-            Autoafstandmatrix[hubs, j],
-            Autoafstandmatrix[i, hubs],
-        )
-
-        PplusRbestemmingsafstandOVmatrix[i, j, :] = np.where(
-            mask,
-            OVafstandmatrix[i, hubs],
-            OVafstandmatrix[hubs, j],
-        )
-
-        PplusRherkomstafstandautomatrix[i, j, :] = np.where(
-            mask,
-            Autoafstandmatrix[i, hubs],
-            Autoafstandmatrix[hubs, j],
-        )
-
-        PplusRherkomstafstandOVmatrix[i, j, :] = np.where(
-            mask,
-            OVafstandmatrix[hubs, j],
-            OVafstandmatrix[i, hubs],
-        )
+    pr_origin_times = np.zeros((n_car_times, n_car_times, n_hubs))
+    pr_destination_times = np.zeros((n_car_times, n_car_times, n_hubs))
+    pr_bike_times = np.zeros((n_car_times, n_car_times, n_hubs))
+    pr_origin_pt_distances = np.zeros((n_car_times, n_car_times, n_hubs))
+    pr_origin_car_distances = np.zeros((n_car_times, n_car_times, n_hubs))
+    pr_destination_pt_distances = np.zeros((n_car_times, n_car_times, n_hubs))
+    pr_destination_car_distances = np.zeros((n_car_times, n_car_times, n_hubs))
+    pr_bike_car_distances = np.zeros((n_car_times, n_car_times, n_hubs))
 
     for (i, j) in np.ndindex(n_car_times, n_car_times):
-        mask = Fietstijdmatrix[i, hubs] <= Fietstijdmatrix[hubs, j]
+        mask = pt_times[i, hubs] <= car_times[hubs, j]
 
-        PplusFietstijdmatrix[i, j, :] = np.where(
+        pr_destination_times[i, j, :] = np.where(
             mask,
-            Fietstijdmatrix[i, hubs] + Autotijdmatrix[hubs, j],
-            Fietstijdmatrix[j, hubs] + Autotijdmatrix[hubs, i],
+            pt_times[i, hubs] + car_times[hubs, j],
+            car_times[i, hubs] + pt_times[hubs, j],
         )
 
-        PplusFietsautoafstandmatrix[i, j, :] = np.where(
+        pr_origin_times[i, j, :] = np.where(
             mask,
-            Autoafstandmatrix[hubs, j],
-            Autoafstandmatrix[hubs, i],
+            car_times[i, hubs] + pt_times[hubs, j],
+            pt_times[i, hubs] + car_times[hubs, j],
+        )
+
+        pr_destination_car_distances[i, j, :] = np.where(
+            mask,
+            car_distances[hubs, j],
+            car_distances[i, hubs],
+        )
+
+        pr_destination_pt_distances[i, j, :] = np.where(
+            mask,
+            pt_distances[i, hubs],
+            pt_distances[hubs, j],
+        )
+
+        pr_origin_car_distances[i, j, :] = np.where(
+            mask,
+            car_distances[i, hubs],
+            car_distances[hubs, j],
+        )
+
+        pr_origin_pt_distances[i, j, :] = np.where(
+            mask,
+            pt_distances[hubs, j],
+            pt_distances[i, hubs],
+        )
+
+    for (i, j) in np.ndindex(n_car_times, n_car_times):
+        mask = bike_times[i, hubs] <= bike_times[hubs, j]
+
+        pr_bike_times[i, j, :] = np.where(
+            mask,
+            bike_times[i, hubs] + car_times[hubs, j],
+            bike_times[j, hubs] + car_times[hubs, i],
+        )
+
+        pr_bike_car_distances[i, j, :] = np.where(
+            mask,
+            car_distances[hubs, j],
+            car_distances[hubs, i],
         )
 
     # Add additional transfer times.
-    PplusRbestemmingstijdmatrix += transfer_time_pt
-    PplusRherkomsttijdmatrix += transfer_time_pt
-    PplusFietstijdmatrix += transfer_time_bike
+    pr_destination_times += transfer_time_pt
+    pr_origin_times += transfer_time_pt
+    pr_bike_times += transfer_time_bike
 
     # Apply rouding to all arrays.
     arrays = [
-        PplusRherkomsttijdmatrix,
-        PplusRbestemmingstijdmatrix,
-        PplusFietstijdmatrix,
-        PplusRherkomstafstandOVmatrix,
-        PplusRherkomstafstandautomatrix,
-        PplusRbestemmingsafstandOVmatrix,
-        PplusRbestemmingsafstandautomatrix,
-        PplusFietsautoafstandmatrix,
+        pr_origin_times,
+        pr_destination_times,
+        pr_bike_times,
+        pr_origin_pt_distances,
+        pr_origin_car_distances,
+        pr_destination_pt_distances,
+        pr_destination_car_distances,
+        pr_bike_car_distances,
     ]
     for array in arrays:
         array[:] = np.round(array)
@@ -165,36 +165,36 @@ def chain_generator(skims_directory: pathlib.Path,
     # to be kept when using numpy arrays as the contents _do_ exceed this value
     # and this should be verified.
     initial = 9999
-    PplusRherkomsttijdtotaal = np.min(PplusRherkomsttijdmatrix, axis=2, initial=initial)
-    PplusFietstijdtotaal = np.min(PplusFietstijdmatrix, axis=2, initial=initial)
-    PplusRherkomstafstandOVtotaal = np.min(PplusRherkomstafstandOVmatrix, axis=2, initial=initial)
-    PplusRbestemmingsafstandautototaal = np.min(PplusRbestemmingsafstandautomatrix, axis=2, initial=initial)
-    PplusRbestemmingsafstandOVtotaal = np.min(PplusRbestemmingsafstandOVmatrix, axis=2, initial=initial)
-    PplusFietsautoafstandtotaal = np.min(PplusFietsautoafstandmatrix, axis=2, initial=initial)
-    PplusRbestemmingstijdtotaal = np.min(PplusRbestemmingstijdmatrix, axis=2, initial=initial)
-    PplusRherkomstafstandautototaal = np.min(PplusRherkomstafstandautomatrix, axis=2, initial=initial)
+    pr_origin_time = np.min(pr_origin_times, axis=2, initial=initial)
+    pr_bike_time = np.min(pr_bike_times, axis=2, initial=initial)
+    pr_origin_pt_distance = np.min(pr_origin_pt_distances, axis=2, initial=initial)
+    pr_destination_car_distance = np.min(pr_destination_car_distances, axis=2, initial=initial)
+    pr_destination_pt_distance = np.min(pr_destination_pt_distances, axis=2, initial=initial)
+    pr_bike_car_distance = np.min(pr_bike_car_distances, axis=2, initial=initial)
+    pr_destination_time = np.min(pr_destination_times, axis=2, initial=initial)
+    pr_origin_car_distance = np.min(pr_origin_car_distances, axis=2, initial=initial)
 
     # Extract hubs at minimum values.
-    rmin = np.argmin(PplusRbestemmingstijdmatrix, axis=2)
-    fietsmin = np.argmin(PplusRherkomstafstandautomatrix, axis=2)
-    PplusRhubplek = hubs[rmin]
-    Pplusfietshubplek = hubs[fietsmin]
+    rmin = np.argmin(pr_destination_times, axis=2)
+    fietsmin = np.argmin(pr_origin_car_distances, axis=2)
+    pr_min_hubs = hubs[rmin]
+    pr_min_hubs_bike = hubs[fietsmin]
 
     # Convert hubs to one-base indexing before writing output.
-    PplusRhubplek += 1
-    Pplusfietshubplek += 1
+    pr_min_hubs += 1
+    pr_min_hubs_bike += 1
 
     filename_and_data = [
-        (f'PplusR_{name}_bestemmings_Tijd.csv', PplusRbestemmingstijdtotaal),
-        (f'PplusR_{name}_bestemmings_Afstand_Auto.csv', PplusRbestemmingsafstandautototaal),
-        (f'PplusR_{name}_bestemmings_Afstand_OV.csv', PplusRbestemmingsafstandOVtotaal),
-        (f'PplusR_{name}_herkomst_Tijd.csv', PplusRherkomsttijdtotaal),
-        (f'PplusR_{name}_herkomst_Afstand_Auto.csv', PplusRherkomstafstandautototaal),
-        (f'PplusR_{name}_herkomst_Afstand_OV.csv', PplusRherkomstafstandOVtotaal),
-        (f'Pplusfiets_{name}_Tijd.csv', PplusFietstijdtotaal),
-        (f'Pplusfiets_{name}_Afstand_Auto.csv', PplusFietsautoafstandtotaal),
-        (f'Pplusfiets_{name}_bestehubs.csv', Pplusfietshubplek),
-        (f'PplusR_{name}_bestehubs.csv', PplusRhubplek),
+        (f'PplusR_{name}_bestemmings_Tijd.csv', pr_destination_time),
+        (f'PplusR_{name}_bestemmings_Afstand_Auto.csv', pr_destination_car_distance),
+        (f'PplusR_{name}_bestemmings_Afstand_OV.csv', pr_destination_pt_distance),
+        (f'PplusR_{name}_herkomst_Tijd.csv', pr_origin_time),
+        (f'PplusR_{name}_herkomst_Afstand_Auto.csv', pr_origin_car_distance),
+        (f'PplusR_{name}_herkomst_Afstand_OV.csv', pr_origin_pt_distance),
+        (f'Pplusfiets_{name}_Tijd.csv', pr_bike_time),
+        (f'Pplusfiets_{name}_Afstand_Auto.csv', pr_bike_car_distance),
+        (f'Pplusfiets_{name}_bestehubs.csv', pr_min_hubs_bike),
+        (f'PplusR_{name}_bestehubs.csv', pr_min_hubs),
     ]
     for filename, data in filename_and_data:
         write_csv(data, skims_directory / filename)
