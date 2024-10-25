@@ -1,8 +1,9 @@
-import numpy as np
-import pathlib
-from ikob.utils import read_csv, write_csv
-
 import os
+import pathlib
+
+import numpy as np
+
+from ikob.utils import read_csv, write_csv
 
 
 def ask_user_for_skims_directory():
@@ -167,12 +168,17 @@ def chain_generator(skims_directory: pathlib.Path,
     initial = 9999
     pr_origin_time = np.min(pr_origin_times, axis=2, initial=initial)
     pr_bike_time = np.min(pr_bike_times, axis=2, initial=initial)
-    pr_origin_pt_distance = np.min(pr_origin_pt_distances, axis=2, initial=initial)
-    pr_destination_car_distance = np.min(pr_destination_car_distances, axis=2, initial=initial)
-    pr_destination_pt_distance = np.min(pr_destination_pt_distances, axis=2, initial=initial)
-    pr_bike_car_distance = np.min(pr_bike_car_distances, axis=2, initial=initial)
+    pr_origin_pt_distance = np.min(
+        pr_origin_pt_distances, axis=2, initial=initial)
+    pr_destination_car_distance = np.min(
+        pr_destination_car_distances, axis=2, initial=initial)
+    pr_destination_pt_distance = np.min(
+        pr_destination_pt_distances, axis=2, initial=initial)
+    pr_bike_car_distance = np.min(
+        pr_bike_car_distances, axis=2, initial=initial)
     pr_destination_time = np.min(pr_destination_times, axis=2, initial=initial)
-    pr_origin_car_distance = np.min(pr_origin_car_distances, axis=2, initial=initial)
+    pr_origin_car_distance = np.min(
+        pr_origin_car_distances, axis=2, initial=initial)
 
     # Extract hubs at minimum values.
     rmin = np.argmin(pr_destination_times, axis=2)

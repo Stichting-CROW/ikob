@@ -1,8 +1,9 @@
-import shutil
 import pathlib
+import shutil
+
+from test_end_to_end import compare_directories
 
 from ikob.chain_generator import chain_generator
-from test_end_to_end import compare_directories
 
 
 def test_chain_generator(tmpdir):
