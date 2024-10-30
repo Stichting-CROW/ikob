@@ -1,4 +1,5 @@
 import logging
+import sys
 import threading
 from tkinter import (BooleanVar, Button, Frame, StringVar, Tk, filedialog,
                      messagebox)
@@ -173,6 +174,7 @@ class ConfigApp(Tk):
 
 
 def main():
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     App = ConfigApp()
     App.mainloop()
 
