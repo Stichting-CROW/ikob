@@ -1,7 +1,10 @@
 import logging
+import pathlib
 
-from ikob.ikobconfig import getConfigFromArgs
+from test_end_to_end import compare_directories
+
 from ikob.group_distribution import distribute_over_groups
+from ikob.ikobconfig import getConfigFromArgs
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +17,13 @@ def test_group_distribution():
     in other end-to-end tests. In specific, this example does show 0.0/0.0
     divisions resulting in ``nan`` rather than ``inf`` (which were covered).
     """
-    project_file = "tests/eb-eindhoven/eb-eindhoven.json"
-    logger.info("Reading project file: %s.", project_file)
-    config = getConfigFromArgs(project_file)
+    case = "eb-eindhoven"
+    project_dir = pathlib.Path(f"tests/{case}/")
+    config = getConfigFromArgs(project_dir / f"{case}.json")
+
     distribute_over_groups(config)
+
+    msg = "Result and reference directories are not equal."
+    result_dir = project_dir / case
+    reference_dir = project_dir / "reference"
+    assert compare_directories(result_dir, reference_dir), msg
