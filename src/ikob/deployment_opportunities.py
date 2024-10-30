@@ -187,8 +187,9 @@ def deployment_opportunities(config,
                                     income_group,
                                     K)
                                 possibility = matrix @ place_of_employment * distribution
-                                possibility = np.where(
-                                    incomes > 0, possibility / incomes, 0)
+                                possibility = np.divide(
+                                    possibility, incomes, where=incomes > 0)
+                                possibility[incomes <= 0] = 0
                                 possibility_sum += possibility
 
                         key = DataKey('Totaal',

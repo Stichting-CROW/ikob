@@ -89,10 +89,12 @@ def distribute_over_groups(config):
                 f'{population_share}_inkomensklasse', scenario=scenario)
 
         citizens_totals = np.sum(citizens_per_class, axis=1)
+
+        # Avoid division by zero by inserting ones. Afterwards, make
+        # sure to zero out entries that would have been divided by zero.
+        citizens_totals[citizens_totals == 0] = 1
         income_distributions = citizens_per_class / citizens_totals[:, None]
-        # Replace inf (result of divide by zero) with zero entries.
-        income_distributions = np.where(
-            np.isinf(income_distributions), 0, income_distributions)
+        income_distributions[citizens_totals == 0][:] = 0
 
         # First determine theoretical car and possessions.
         for i, income_distribution in enumerate(income_distributions):
