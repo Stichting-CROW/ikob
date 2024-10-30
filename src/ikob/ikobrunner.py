@@ -1,3 +1,4 @@
+import argparse
 import logging
 import sys
 import threading
@@ -173,11 +174,23 @@ class ConfigApp(Tk):
                     title="Fout", message="Het bestand kan niet worden geladen.")
 
 
-def main():
-    logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+def main(verbose=False):
+    if verbose:
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO)
     App = ConfigApp()
     App.mainloop()
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        prog="ikobrunner", description="Launch the IKOB runner GUI."
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Display logging messages over stdout.",
+    )
+    args = parser.parse_args()
+
+    main(args.verbose)
