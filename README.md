@@ -40,8 +40,8 @@ python -m pytest -o log_cli=true -o log_file_level=info
 Reformatting source code using `autopep8` and `isort`:
 
 ```sh
-isort src/ikob/*.py tests/*.py
-autopep8 --in-place --aggressive --aggressive src/ikob/*.py tests/*.py
+isort src/ikob/*.py tests/*.py preprocessing/*.py
+autopep8 --in-place --aggressive --aggressive src/ikob/*.py tests/*.py preprocessing/*.py
 ```
 
 ## Deployment
