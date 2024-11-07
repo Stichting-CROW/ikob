@@ -1,6 +1,9 @@
+import logging
 from enum import Enum
 
 from ikob.config import build, validate
+
+logger = logging.getLogger(__name__)
 
 
 class DataType(Enum):
@@ -392,8 +395,63 @@ def project_name(config):
 
 def validate_config(config, strict=True):
     """Validate a config dictionary."""
+
     return validate.validateConfigWithTemplate(
         config, default_configuration_definition(), strict=strict)
+
+
+def try_fix_incompatible_configuration(config):
+    """Attempt to recover from incompatible configuration files.
+
+    Some configuration changes can be automatically resolved to
+    maintain backward compatibility.
+    """
+    fixers = [transfer_to_advanced_tab, transfer_to_chains_tab]
+
+    for fixer in fixers:
+        config = fixer(config)
+        if validate_config(config):
+            return config
+
+    return config
+
+
+def transfer_to_advanced_tab(config):
+    """Try to recover from missing "geavanceerd" configuration.
+
+    Introduced in commit `6c6684c`.
+    """
+    if "geavanceerd" in config:
+        # Cannot fix: advanced already present.
+        return config
+
+    msg = "Trying to auto fix \"geavanceerd\" configuration entry."
+    logger.warning(msg)
+
+    config["geavanceerd"] = {}
+    for key in ["kunstmab", "parkeerkosten", "additionele_kosten"]:
+        config["geavanceerd"][key] = config["verdeling"].pop(key)
+
+    return config
+
+
+def transfer_to_chains_tab(config):
+    """Try to recover from missing "ketens" configuration.
+
+    Introduced in commit `9bf0d1a`.
+    """
+    if "ketens" in config:
+        # Cannot fix: ketens already present.
+        return config
+
+    msg = "Trying to auto fix \"ketens\" configuration entry."
+    logger.warning(msg)
+
+    config["ketens"] = {}
+    for key in ["ketens"]:
+        config["ketens"][key] = config["project"].pop(key)
+
+    return config
 
 
 def default_config():

@@ -10,7 +10,11 @@ from tkinter import filedialog, messagebox
 from ikob.config import build, validate
 from ikob.configuration_definition import (default_config,
                                            default_configuration_definition,
-                                           project_name, validate_config)
+                                           project_name,
+                                           try_fix_incompatible_configuration,
+                                           validate_config)
+
+logger = logging.getLogger(__name__)
 
 # Interface: load/save config files.
 
@@ -54,7 +58,19 @@ def loadConfig(filename):
         raise IOError(f"Kan niet lezen uit: '{filename}' with error:\n'{e}'.")
     if config:
         if not validate_config(config):
-            raise ValueError("Configuratie heeft een incompatibel formaat.")
+            msg = "Loaded config file: '%s' is incompatible with current IKOB."
+            logger.warning(msg, filename)
+
+            config = try_fix_incompatible_configuration(config)
+
+            if validate_config(config):
+                msg = "Automatically recovered from incompatible config file."
+                logger.info(msg)
+            else:
+                msg = "Configuration has inrecoverable incompatible format."
+                logger.error(msg)
+                raise ValueError(msg)
+
         config["__filename__"] = os.path.splitext(
             os.path.basename(filename))[0]
     return config
