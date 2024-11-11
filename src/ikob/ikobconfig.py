@@ -1,7 +1,9 @@
 import argparse
 import json
+import logging
 import os
 import re
+import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
@@ -137,7 +139,10 @@ class ConfigApp(tk.Tk):
                 message="Configuratie opgeslagen.")
 
 
-def main():
+def main(verbose=False):
+    if verbose:
+        logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
     if not validate.validateTemplate(default_configuration_definition()):
         messagebox.showerror(
             title="Fout",
@@ -149,4 +154,15 @@ def main():
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog="ikobconfig", description="Launch the IKOB config GUI."
+    )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Display logging messages over stdout.",
+    )
+    args = parser.parse_args()
+
     main()

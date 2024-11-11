@@ -13,7 +13,7 @@ if exist %venvdir% (
 )
 
 :: Launch the config GUI.
-python src\ikob\ikobrunner.py
+python src\ikob\ikobrunner.py --verbose
 goto :DONE
 
 :VIRTUALENV_NOT_PRESENT
