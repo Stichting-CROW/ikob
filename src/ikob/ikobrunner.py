@@ -1,4 +1,5 @@
 import logging
+import threading
 from tkinter import (BooleanVar, Button, Frame, StringVar, Tk, filedialog,
                      messagebox)
 
@@ -105,6 +106,7 @@ class ConfigApp(Tk):
         self.title("IKOB Runner")
         self._checks = [BooleanVar(value=True) for _ in self.stappen]
         self._configvar = StringVar()
+        self.run_button = None
         self.create_widgets()
 
     def create_widgets(self):
@@ -121,8 +123,13 @@ class ConfigApp(Tk):
                 F1, "Stappen", labels, self._checks, row=1, itemsperrow=1
             )
         )
-        B = Button(master=F1, text="Start", command=self.cmdRun)
+        B = Button(
+            master=F1,
+            text="Start",
+            command=lambda: threading.Thread(target=self.cmdRun).start()
+        )
         B.grid(row=2, column=2, sticky="ew", **self.PAD)
+        self.run_button = B
         self.widgets.append(B)
 
     def cmdRun(self):
@@ -130,6 +137,10 @@ class ConfigApp(Tk):
 
         # Skip the test when its _not_ selected.
         skip_steps = [not check.get() for check in self._checks]
+
+        # Disable the run button while the scripts are running
+        # to prevent users launching many run_scripts instances.
+        self.run_button.configure(state="disabled")
 
         try:
             run_scripts(project_file, skip_steps)
@@ -139,6 +150,9 @@ class ConfigApp(Tk):
         else:
             msg = "Alle stappen zijn succesvol uitegevoerd."
             messagebox.showinfo(title="Gereed", message=msg)
+
+        # After success/error the run button can be re-enabled.
+        self.run_button.configure(state="active")
 
     def cmdLaadProject(self):
         filename = filedialog.askopenfilename(
