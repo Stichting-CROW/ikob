@@ -119,6 +119,11 @@ class ConfigApp(tk.Tk):
             initialfile=_projectFilename(project_name(config)),
             filetypes=[("project file", ".json")],
         )
+
+        # The filename remains empty when the dialog is cancelled.
+        if filename == "":
+            return
+
         filename = _projectFilename(filename, make_safe=False)
         try:
             saveConfig(filename, config)
