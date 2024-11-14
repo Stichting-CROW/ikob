@@ -11,9 +11,14 @@ The first method relies on helper scripts provided in [`scripts`](scripts/),
 while the second method follows a manual installation approach. 
 
 > [!IMPORTANT]
-> Before proceeding make sure Python is installed and available on your system.
-> To install and run properly IKOB requires your system to have at least Python
-> version 3.12.
+> Before proceeding make sure [Python](https://www.python.org/) is installed
+> and available on your system. To install and run IKOB requires your system
+> to have at least Python 3.12.
+
+> [!WARNING]
+> There is a known issue when working with Python 3.13.0 (see
+> [#74](https://github.com/Stichting-CROW/ikob/issues/74)) and Python 3.12.x is
+> recommended for the meantime.
 
 ### Using helper scripts
 
