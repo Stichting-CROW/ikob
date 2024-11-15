@@ -102,11 +102,9 @@ def generalised_travel_time(config) -> DataSource:
             pt_time_matrix = skims_reader.read('OV_Tijd', pod)
             pt_distance_matrix = skims_reader.read('OV_Afstand', pod)
             if parking_costs:
-                raise NotImplementedError(
-                    "Needs to be replaced with datasource reading...")
-                parking_costs_file = parking_costs_file.replace('.csv', '')
-                parking_costs = utils.read_csv_int(
-                    parking_costs_file, aantal_lege_regels=0)
+                parking_costs = utils.read_csv(
+                    parking_costs_file, type_caster=int)
+                assert len(parking_costs) == len(pt_distance_matrix)
             else:
                 parking_costs = utils.zeros(len(pt_distance_matrix))
 
