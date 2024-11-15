@@ -248,6 +248,6 @@ class DataSource:
         path = self._make_file_path(key).with_suffix(".csv")
         return utils.write_csv(data, path, header=header)
 
-    def write_xlsx(self, data, key: DataKey, header=[]):
+    def write_xlsx(self, data, key: DataKey, header=[], with_rounding=False):
         path = self._make_file_path(key).with_suffix(".xlsx")
-        return utils.write_xls(data, path, header)
+        return utils.write_xls(data, path, header, with_rounding)

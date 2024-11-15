@@ -12,7 +12,7 @@ def transpose(matrix):
     return np.array(matrix).T
 
 
-def write_xls(matrix, filenaam, header):
+def write_xls(matrix, filenaam, header, with_rounding=False):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
@@ -22,6 +22,11 @@ def write_xls(matrix, filenaam, header):
     for r in range(0, len(matrix)):
         worksheet.write(r + 1, 0, r + 1)
         worksheet.write_row(r + 1, 1, matrix[r])
+
+    if with_rounding:
+        # TODO: Figure out the right formatting?
+        workbook.add_format({"num_format": '$#,##0.00'})
+
     workbook.close()
 
 

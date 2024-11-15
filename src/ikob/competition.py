@@ -324,7 +324,7 @@ def competition(config,
                         competitions.write_csv(
                             general_totals_transpose, key, header=headstring)
                         competitions.write_xlsx(
-                            general_totals_transpose, key, header=headstringExcel)
+                            general_totals_transpose, key, header=headstringExcel, with_rounding=True)
 
                 header = ['Zone', 'laag', 'middellaag', 'middelhoog', 'hoog']
                 for modality in modalities:
@@ -356,7 +356,7 @@ def competition(config,
                                   motive=motive,
                                   modality=modality)
                     competitions.write_xlsx(
-                        general_totals_transpose, key, header=header)
+                        general_totals_transpose, key, header=header, with_rounding=True)
 
                     key = DataKey(id='Ontpl_concproduct',
                                   part_of_day=part_of_day,
@@ -364,6 +364,6 @@ def competition(config,
                                   motive=motive,
                                   modality=modality)
                     competitions.write_xlsx(
-                        general_matrix_product, key, header=header)
+                        general_matrix_product, key, header=header, with_rounding=True)
 
     return competitions
