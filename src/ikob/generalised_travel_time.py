@@ -191,7 +191,7 @@ def generalised_travel_time(config) -> DataSource:
                                 parking_times[i][1] + parking_times[j][2]
                             if additional_costs:
                                 ggr_skim[i][j] = total_time + factor * (car_distance_matrix[i][j] * (
-                                    var_car_rate + road_pricing) + additional_cost_matrix[i][j] / 100) + parking_costs[j] / 100
+                                    var_car_rate + road_pricing) + additional_cost_matrix[i][j] / 100 + parking_costs[j] / 100)
                             else:
                                 ggr_skim[i][j] = total_time + factor * (car_distance_matrix[i][j] * correction_factors[i][income_levels.index(
                                     income_level)] * (var_car_rate + road_pricing) + parking_costs[j] / 100)
@@ -248,11 +248,11 @@ def generalised_travel_time(config) -> DataSource:
                             total_time = car_time_matrix[i][j] + \
                                 parking_times[i][1] + parking_times[j][2]
                             if additional_costs:
-                                ggr_skim[i][j] = total_time + factor * car_distance_matrix[i][j] * \
-                                    road_pricing + additional_cost_matrix[i][j] / 100 + parking_costs[j] / 100
+                                ggr_skim[i][j] = total_time + factor * (
+                                    car_distance_matrix[i][j] * road_pricing + additional_cost_matrix[i][j] / 100 + parking_costs[j] / 100)
                             else:
                                 ggr_skim[i][j] = total_time + correction_factors[i][income_levels.index(
-                                    income_level)] * factor * car_distance_matrix[i][j] * road_pricing + parking_costs[j] / 100
+                                    income_level)] * factor * (car_distance_matrix[i][j] * road_pricing + parking_costs[j] / 100)
                     key = DataKey(id='GratisAuto',
                                   part_of_day=pod,
                                   income=income_level,
