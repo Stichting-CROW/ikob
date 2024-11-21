@@ -19,9 +19,9 @@ def create_citizens_file(distribution_matrix, working_population):
     return citizens_file
 
 
-def possible_companies(config,
-                       single_weights: DataSource,
-                       combined_weights: DataSource) -> DataSource:
+def potential_companies(config,
+                        single_weights: DataSource,
+                        combined_weights: DataSource) -> DataSource:
     logger.info("Possibilities for companies and institutes.")
 
     project_config = config['project']

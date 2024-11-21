@@ -13,7 +13,7 @@ from ikob.deployment_opportunities import deployment_opportunities
 from ikob.generalised_travel_time import generalised_travel_time
 from ikob.group_distribution import distribute_over_groups
 from ikob.ikobconfig import getConfigFromArgs, loadConfig
-from ikob.possible_companies import possible_companies
+from ikob.potential_companies import potential_companies
 from ikob.single_weights import calculate_single_weights
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ def run_scripts(project_file, skip_steps=None):
         possibilities = DataSource(config, DataType.DESTINATIONS)
 
     if not skip_steps[5]:
-        origins = possible_companies(config, single_weights, combined_weights)
+        origins = potential_companies(config, single_weights, combined_weights)
     else:
         origins = DataSource(config, DataType.ORIGINS)
 
