@@ -27,6 +27,7 @@ def run_scripts(project_file, skip_steps=None):
     logger.info("Reading project file: %s.", project_file)
     config = getConfigFromArgs(project_file)
 
+    logger.info("Starting simulations...")
     if not skip_steps:
         skip_steps = [False] * 8
 
@@ -72,9 +73,12 @@ def run_scripts(project_file, skip_steps=None):
     else:
         competition_citizens = DataSource(config, DataType.COMPETITION)
 
+    logger.info("All simulations are completed.")
+
     # TODO: For now all files are written to disk to assert their contents in
     # end-to-end testing. Ultimately only files that are essential outputs
     # should persist.
+    logger.info("Writing output to disk...")
     for container in [
             travel_time,
             single_weights,

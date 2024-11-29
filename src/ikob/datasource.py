@@ -236,6 +236,7 @@ class DataSource:
         return data
 
     def store(self):
+        logger.info("Writing output for data: %s.", self.datatype.value)
         for key, data in self.cache.items():
             self.write_csv(data, key)
 
