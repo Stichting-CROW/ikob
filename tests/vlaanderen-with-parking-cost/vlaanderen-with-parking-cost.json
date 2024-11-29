@@ -1,0 +1,106 @@
+{
+  "TVOM": {
+    "werk": {
+      "middellaag": 9.0,
+      "laag": 12.0,
+      "hoog": 4.0,
+      "middelhoog": 6.0
+    },
+    "overig": {
+      "middellaag": 10.9,
+      "laag": 15.5,
+      "hoog": 4.8,
+      "middelhoog": 7.25
+    }
+  },
+  "project": {
+    "schatten_of_bekend": [
+      "geschat"
+    ],
+    "conc_afstand": [
+      "concurrentie"
+    ],
+    "naam": "Vlaanderen",
+    "beprijzingsregime": "Basis",
+    "paden": {
+      "segs_directory": "tests/vlaanderen/SEGS",
+      "skims_directory": "tests/vlaanderen/skims",
+      "output_directory": "tests/vlaanderen-with-parking-cost/"
+    },
+    "verstedelijkingsscenario": "2023",
+    "welke_groepen": [
+      "alle groepen"
+    ],
+    "motieven": [
+      "werk"
+    ],
+    "welke_inkomensgroepen": [
+      "laag",
+      "middellaag",
+      "middelhoog",
+      "hoog"
+    ]
+  },
+  "verdeling": {
+    "GratisOVpercentage": 0.03,
+    "Percelektrisch": {
+      "middellaag": 0.0,
+      "laag": 0.0,
+      "hoog": 0.0,
+      "middelhoog": 0.0
+    }
+  },
+  "skims": {
+    "Kosten auto fossiele brandstof": {
+      "variabele kosten": 16.0,
+      "kmheffing": 0.0
+    },
+    "Kosten elektrische auto": {
+      "variabele kosten": 5.0,
+      "kmheffing": 0.0
+    },
+    "varkostenga": {
+      "GeenAuto": 0.33,
+      "GeenRijbewijs": 2.4
+    },
+    "pricecap": {
+      "gebruiken": false,
+      "getal": 9999.0
+    },
+    "OV kostenbestand": {
+      "gebruiken": false
+    },
+    "parkeerzoektijden_bestand": "tests/vlaanderen/SEGS/Parkeerzoektijd.csv",
+    "OV kosten": {
+      "kmkosten": 12.0,
+      "starttarief": 75.0
+    },
+    "dagsoort": [
+      "Restdag"
+    ],
+    "tijdkostenga": {
+      "GeenAuto": 0.05,
+      "GeenRijbewijs": 0.4
+    }
+  },
+  "geavanceerd": {
+    "kunstmab": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "additionele_kosten": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "parkeerkosten": {
+      "bestand": "tests/vlaanderen-with-parking-cost/costs.csv",
+      "gebruiken": true
+    }
+  },
+  "ketens": {
+    "ketens": {
+      "gebruiken": false,
+      "naam hub": ""
+    }
+  }
+}

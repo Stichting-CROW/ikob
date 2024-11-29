@@ -102,11 +102,9 @@ def generalised_travel_time(config) -> DataSource:
             pt_time_matrix = skims_reader.read('OV_Tijd', pod)
             pt_distance_matrix = skims_reader.read('OV_Afstand', pod)
             if parking_costs:
-                raise NotImplementedError(
-                    "Needs to be replaced with datasource reading...")
-                parking_costs_file = parking_costs_file.replace('.csv', '')
-                parking_costs = utils.read_csv_int(
-                    parking_costs_file, aantal_lege_regels=0)
+                parking_costs = utils.read_csv(
+                    parking_costs_file, type_caster=int)
+                assert len(parking_costs) == len(pt_distance_matrix)
             else:
                 parking_costs = utils.zeros(len(pt_distance_matrix))
 
@@ -191,7 +189,7 @@ def generalised_travel_time(config) -> DataSource:
                                 parking_times[i][1] + parking_times[j][2]
                             if additional_costs:
                                 ggr_skim[i][j] = total_time + factor * (car_distance_matrix[i][j] * (
-                                    var_car_rate + road_pricing) + additional_cost_matrix[i][j] / 100) + parking_costs[j] / 100
+                                    var_car_rate + road_pricing) + additional_cost_matrix[i][j] / 100 + parking_costs[j] / 100)
                             else:
                                 ggr_skim[i][j] = total_time + factor * (car_distance_matrix[i][j] * correction_factors[i][income_levels.index(
                                     income_level)] * (var_car_rate + road_pricing) + parking_costs[j] / 100)
@@ -248,11 +246,11 @@ def generalised_travel_time(config) -> DataSource:
                             total_time = car_time_matrix[i][j] + \
                                 parking_times[i][1] + parking_times[j][2]
                             if additional_costs:
-                                ggr_skim[i][j] = total_time + factor * car_distance_matrix[i][j] * \
-                                    road_pricing + additional_cost_matrix[i][j] / 100 + parking_costs[j] / 100
+                                ggr_skim[i][j] = total_time + factor * (
+                                    car_distance_matrix[i][j] * road_pricing + additional_cost_matrix[i][j] / 100 + parking_costs[j] / 100)
                             else:
                                 ggr_skim[i][j] = total_time + correction_factors[i][income_levels.index(
-                                    income_level)] * factor * car_distance_matrix[i][j] * road_pricing + parking_costs[j] / 100
+                                    income_level)] * factor * (car_distance_matrix[i][j] * road_pricing + parking_costs[j] / 100)
                     key = DataKey(id='GratisAuto',
                                   part_of_day=pod,
                                   income=income_level,
