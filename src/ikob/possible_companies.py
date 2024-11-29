@@ -1,19 +1,11 @@
 import logging
 
+import numpy as np
+
 import ikob.utils as utils
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 
 logger = logging.getLogger(__name__)
-
-
-def get_potencies(matrix, citizens_transposed, group, groups):
-    group_list = []
-    for i in range(len(matrix)):
-        weights = []
-        for m, ct in zip(matrix[i], citizens_transposed[groups.index(group)]):
-            weights.append(m * ct)
-        group_list.append(sum(weights))
-    return group_list
 
 
 def create_citizens_file(distribution_matrix, working_population):
@@ -196,7 +188,7 @@ def possible_companies(config,
                     for modality in modalities:
                         working_population_list = utils.zeros(
                             len(working_population))
-                        for group in groups:
+                        for igroup, group in enumerate(groups):
                             income = utils.group_income_level(group)
                             if income_group == income or income_group == 'alle':
                                 preference = utils.find_preference(
@@ -213,11 +205,7 @@ def possible_companies(config,
                                                   regime=regimes,
                                                   motive=motive)
                                     bike_matrix = single_weights.get(key)
-                                    group_list = get_potencies(
-                                        bike_matrix, citizens_transpose, group, groups)
-
-                                    for i in range(0, len(bike_matrix)):
-                                        working_population_list[i] += group_list[i]
+                                    working_population_list += bike_matrix @ citizens_transpose[igroup]
 
                                 elif modality == 'Auto':
                                     string = utils.single_group(
@@ -234,30 +222,15 @@ def possible_companies(config,
                                                 fuel_kind=fuel_kind)
                                             matrix = single_weights.get(key)
 
-                                            group_list_1 = get_potencies(
-                                                matrix, citizens_transpose, group, groups)
                                             if fuel_kind == 'elektrisch':
                                                 K = electric_percentage.get(
                                                     income_group) / 100
-                                                logger.debug(
-                                                    'aandeel elektrisch is: %s', K)
-                                                group_list_e = [
-                                                    x * K for x in group_list_1]
                                             else:
-                                                L = 1 - \
+                                                K = 1 - \
                                                     electric_percentage.get(income_group) / 100
-                                                logger.debug(
-                                                    'aandeel fossiel is %s', L)
-                                                group_list_f = [
-                                                    x * L for x in group_list_1]
 
-                                        for i in range(len(matrix)):
-                                            group_list[i] = group_list_e[i] + \
-                                                group_list_f[i]
-
-                                        for i in range(0, len(matrix)):
-                                            working_population_list[i] += group_list[i]
-
+                                            working_population_list += K * \
+                                                matrix @ citizens_transpose[igroup]
                                     else:
                                         key = DataKey(f'{string}_vk',
                                                       part_of_day=part_of_day,
@@ -266,11 +239,7 @@ def possible_companies(config,
                                                       regime=regimes,
                                                       motive=motive)
                                         matrix = single_weights.get(key)
-
-                                        group_list = get_potencies(
-                                            matrix, citizens_transpose, group, groups)
-                                        for i in range(0, len(matrix)):
-                                            working_population_list[i] += group_list[i]
+                                        working_population_list += matrix @ citizens_transpose[igroup]
 
                                 elif modality == 'OV':
                                     string = utils.single_group(
@@ -282,12 +251,7 @@ def possible_companies(config,
                                                   regime=regimes,
                                                   motive=motive)
                                     matrix = single_weights.get(key)
-
-                                    group_list = get_potencies(
-                                        matrix, citizens_transpose, group, groups)
-
-                                    for i in range(0, len(matrix)):
-                                        working_population_list[i] += group_list[i]
+                                    working_population_list += matrix @ citizens_transpose[igroup]
                                 else:
                                     string = utils.combined_group(
                                         modality, group)
@@ -306,26 +270,15 @@ def possible_companies(config,
                                                 fuel_kind=fuel_kind)
                                             matrix = combined_weights.get(key)
 
-                                            group_list_1 = get_potencies(
-                                                matrix, citizens_transpose, group, groups)
-
                                             if fuel_kind == 'elektrisch':
                                                 K = electric_percentage.get(
                                                     income_group) / 100
-                                                group_list_e = [
-                                                    x * K for x in group_list_1]
                                             else:
                                                 K = 1 - \
                                                     electric_percentage.get(income_group) / 100
-                                                group_list_f = [
-                                                    x * K for x in group_list_1]
 
-                                        for i in range(len(matrix)):
-                                            group_list[i] = group_list_e[i] + \
-                                                group_list_f[i]
-
-                                        for i in range(0, len(matrix)):
-                                            working_population_list[i] += group_list[i]
+                                            working_population_list += K * \
+                                                matrix @ citizens_transpose[igroup]
 
                                     else:
                                         key = DataKey(f'{string}_vk',
@@ -336,11 +289,7 @@ def possible_companies(config,
                                                       motive=motive,
                                                       subtopic='combinaties')
                                         matrix = combined_weights.get(key)
-
-                                        group_list = get_potencies(
-                                            matrix, citizens_transpose, group, groups)
-                                        for i in range(0, len(matrix)):
-                                            working_population_list[i] += group_list[i]
+                                        working_population_list += matrix @ citizens_transpose[igroup]
 
                         key = DataKey(id='Totaal',
                                       part_of_day=part_of_day,
