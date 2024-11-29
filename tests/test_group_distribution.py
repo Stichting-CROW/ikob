@@ -1,7 +1,7 @@
 import logging
 import pathlib
 
-from test_end_to_end import compare_directories
+from test_end_to_end import compare_directories, remove_directory
 
 from ikob.group_distribution import distribute_over_groups
 from ikob.ikobconfig import getConfigFromArgs
@@ -27,3 +27,6 @@ def test_group_distribution():
     result_dir = project_dir / case
     reference_dir = project_dir / "reference"
     assert compare_directories(result_dir, reference_dir), msg
+
+    # Clean up files if test succeeds
+    remove_directory(result_dir)
