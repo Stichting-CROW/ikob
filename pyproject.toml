@@ -7,7 +7,8 @@ name = "ikob"
 version = "0.0.1"
 description = "IKOB"
 readme = "README.md"
-requires-python = ">= 3.12"
+# In version 3.13.0 the GUI fails to launch: https://github.com/Stichting-CROW/ikob/issues/74.
+requires-python = ">= 3.12, != 3.13.0"
 license = { file = "LICENSE" }
 classifiers = [
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
