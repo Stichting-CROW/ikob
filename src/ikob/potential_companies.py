@@ -19,9 +19,9 @@ def create_citizens_file(distribution_matrix, working_population):
     return citizens_file
 
 
-def possible_companies(config,
-                       single_weights: DataSource,
-                       combined_weights: DataSource) -> DataSource:
+def potential_companies(config,
+                        single_weights: DataSource,
+                        combined_weights: DataSource) -> DataSource:
     logger.info("Possibilities for companies and institutes.")
 
     project_config = config['project']
@@ -204,7 +204,7 @@ def possible_companies(config,
                                                   preference=tmp_preference,
                                                   regime=regimes,
                                                   motive=motive)
-                                    bike_matrix = single_weights.get(key)
+                                    bike_matrix = single_weights.get(key).T
                                     working_population_list += bike_matrix @ citizens_transpose[igroup]
 
                                 elif modality == 'Auto':
@@ -220,7 +220,7 @@ def possible_companies(config,
                                                 regime=regimes,
                                                 motive=motive,
                                                 fuel_kind=fuel_kind)
-                                            matrix = single_weights.get(key)
+                                            matrix = single_weights.get(key).T
 
                                             if fuel_kind == 'elektrisch':
                                                 K = electric_percentage.get(
@@ -238,7 +238,7 @@ def possible_companies(config,
                                                       income=income,
                                                       regime=regimes,
                                                       motive=motive)
-                                        matrix = single_weights.get(key)
+                                        matrix = single_weights.get(key).T
                                         working_population_list += matrix @ citizens_transpose[igroup]
 
                                 elif modality == 'OV':
@@ -250,7 +250,7 @@ def possible_companies(config,
                                                   income=income,
                                                   regime=regimes,
                                                   motive=motive)
-                                    matrix = single_weights.get(key)
+                                    matrix = single_weights.get(key).T
                                     working_population_list += matrix @ citizens_transpose[igroup]
                                 else:
                                     string = utils.combined_group(
@@ -268,7 +268,8 @@ def possible_companies(config,
                                                 motive=motive,
                                                 subtopic='combinaties',
                                                 fuel_kind=fuel_kind)
-                                            matrix = combined_weights.get(key)
+                                            matrix = combined_weights.get(
+                                                key).T
 
                                             if fuel_kind == 'elektrisch':
                                                 K = electric_percentage.get(
@@ -288,7 +289,7 @@ def possible_companies(config,
                                                       regime=regimes,
                                                       motive=motive,
                                                       subtopic='combinaties')
-                                        matrix = combined_weights.get(key)
+                                        matrix = combined_weights.get(key).T
                                         working_population_list += matrix @ citizens_transpose[igroup]
 
                         key = DataKey(id='Totaal',
