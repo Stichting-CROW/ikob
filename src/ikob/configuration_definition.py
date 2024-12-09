@@ -99,11 +99,11 @@ def default_project_tab():
             default='alle groepen',
             items=['alle groepen', 'alleen autobezitters'],
         ),
-        'schatten_of_bekend': config_item(
-            'Is het percentage autobezit bekend of moet het uit CBS-gegevens geschat worden?',
+        'fiets of E-fiets': config_item(
+            'Rekenen met fiets of E-fiets (slechts één aanklikken)',
             DataType.CHECKLIST,
-            default='geschat',
-            items=['bekend', 'geschat'],
+            default='fiets',
+            items=['fiets', 'E-fiets'],
         ),
         'welke_inkomensgroepen': config_item(
             'Welke inkomensgroepen moeten worden meegenomen',
@@ -344,9 +344,17 @@ def default_chains_and_hubs_tab():
             'naam hub': config_item(
                 'Wat is de naam van de verzameling hubs?',
                 DataType.TEXT,
+            ),
+            'hub_kosten': config_item(
+                'Kosten parkeren op hub en natransport per OV of fiets',
+                DataType.NUMBER,
+                default=0,
+                bounds=[0, 9999],
+                unit='Eurocenten',
             )
         }
     }
+
 
 
 def default_configuration_definition():
