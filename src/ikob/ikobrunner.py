@@ -80,9 +80,9 @@ def run_scripts(project_file, skip_steps=None):
     # should persist.
     logger.info("Writing output to disk...")
     for container in [
-            travel_time,
-            single_weights,
-            combined_weights,
+#            travel_time,
+#            single_weights,
+#            combined_weights,
             possibilities,
             origins,
             competition_citizens,
