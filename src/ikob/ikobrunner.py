@@ -134,10 +134,15 @@ class ConfigApp(Tk):
         "Concurrentiepositie voor bereik arbeidsplaatsen",
         "Concurrentiepositie voor bedrijven qua bereikbaarheid")
 
+    options = (
+        "Enable IKOB cache",
+    )
+
     def __init__(self):
         super().__init__()
         self.title("IKOB Runner")
         self._checks = [BooleanVar(value=True) for _ in self.stappen]
+        self._option_checks = [BooleanVar(value=False) for _ in self.options]
         self._configvar = StringVar()
         self.run_button = None
         self.create_widgets()
@@ -149,6 +154,7 @@ class ConfigApp(Tk):
         self.widgets.extend(
             widgets.pathWidget(F1, "Project", self._configvar, file=True)
         )
+
         self.widgets.append(F1)
         labels = [stap for stap in self.stappen]
         self.widgets.extend(
@@ -156,12 +162,24 @@ class ConfigApp(Tk):
                 F1, "Stappen", labels, self._checks, row=1, itemsperrow=1
             )
         )
+
+        self.widgets.append(F1)
+        self.widgets.extend(
+            widgets.checklistWidget(
+                F1,
+                "Options",
+                list(
+                    self.options),
+                self._option_checks,
+                row=2,
+                itemsperrow=1))
+
         B = Button(
             master=F1,
             text="Start",
             command=lambda: threading.Thread(target=self.cmdRun).start()
         )
-        B.grid(row=2, column=2, sticky="ew", **self.PAD)
+        B.grid(row=3, column=2, sticky="ew", **self.PAD)
         self.run_button = B
         self.widgets.append(B)
 
@@ -175,8 +193,14 @@ class ConfigApp(Tk):
         # to prevent users launching many run_scripts instances.
         self.run_button.configure(state="disabled")
 
+        # Enable/Disable ikob caching.
+        use_cache = self._option_checks[0].get()
+
         try:
-            run_scripts(project_file, skip_steps, write_weights=False)
+            run_scripts(project_file,
+                        skip_steps,
+                        write_weights=False,
+                        use_cache=use_cache)
         except BaseException as err:
             msg = f"An error occured: {err}"
             messagebox.showerror(title="FOUT", message=msg)
