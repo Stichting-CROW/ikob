@@ -22,7 +22,8 @@ logger = logging.getLogger(__name__)
 def run_scripts(
     project_file,
     skip_steps: list[bool] | None = None,
-    write_weights: bool = False
+    write_weights: bool = False,
+    use_cache: bool = False
 ):
     """
     Run through all steps for a given project.
@@ -31,7 +32,9 @@ def run_scripts(
         project_file: the path to a JSON project config
         skip_steps: a list of bools to skip that index step
         write_weights: skip writing out weights results
+        use_cache: use in-memory cache for data variables
     """
+    logger.info("Using ikob cache: %s.", use_cache)
     logger.info("Reading project file: %s.", project_file)
     config = getConfigFromArgs(project_file)
 
@@ -39,47 +42,62 @@ def run_scripts(
     if not skip_steps:
         skip_steps = [False] * 8
 
+    travel_time = DataSource(
+        config,
+        DataType.GENERALISED_TRAVEL_TIME,
+        use_cache=use_cache)
     if not skip_steps[0]:
-        travel_time = generalised_travel_time(config)
-    else:
-        travel_time = DataSource(config, DataType.GENERALISED_TRAVEL_TIME)
+        generalised_travel_time(config, travel_time)
 
     if not skip_steps[1]:
         # TODO: Pass temporary SEGS output as arguments too.
         distribute_over_groups(config)
 
+    single_weights = DataSource(config, DataType.WEIGHTS, use_cache=use_cache)
     if not skip_steps[2]:
-        single_weights = calculate_single_weights(config, travel_time)
-    else:
-        single_weights = DataSource(config, DataType.WEIGHTS)
+        calculate_single_weights(config, travel_time, single_weights)
 
+    combined_weights = DataSource(
+        config, DataType.WEIGHTS, use_cache=use_cache)
     if not skip_steps[3]:
-        combined_weights = calculate_combined_weights(config, single_weights)
-    else:
-        combined_weights = DataSource(config, DataType.WEIGHTS)
+        calculate_combined_weights(config, single_weights, combined_weights)
 
+    possibilities = DataSource(
+        config,
+        DataType.DESTINATIONS,
+        use_cache=use_cache)
     if not skip_steps[4]:
-        possibilities = deployment_opportunities(
-            config, single_weights, combined_weights)
-    else:
-        possibilities = DataSource(config, DataType.DESTINATIONS)
+        deployment_opportunities(
+            config,
+            single_weights,
+            combined_weights,
+            possibilities)
 
+    origins = DataSource(config, DataType.ORIGINS, use_cache=use_cache)
     if not skip_steps[5]:
-        origins = potential_companies(config, single_weights, combined_weights)
-    else:
-        origins = DataSource(config, DataType.ORIGINS)
+        potential_companies(config, single_weights, combined_weights, origins)
 
+    competition_jobs = DataSource(
+        config,
+        DataType.COMPETITION,
+        use_cache=use_cache)
     if not skip_steps[6]:
-        competition_jobs = competition_on_jobs(
-            config, single_weights, combined_weights, origins)
-    else:
-        competition_jobs = DataSource(config, DataType.COMPETITION)
+        competition_on_jobs(
+            config,
+            single_weights,
+            combined_weights,
+            origins,
+            competition_jobs)
 
+    competition_citizens = DataSource(
+        config, DataType.COMPETITION, use_cache=use_cache)
     if not skip_steps[7]:
-        competition_citizens = competition_on_citizens(
-            config, single_weights, combined_weights, possibilities)
-    else:
-        competition_citizens = DataSource(config, DataType.COMPETITION)
+        competition_on_citizens(
+            config,
+            single_weights,
+            combined_weights,
+            possibilities,
+            competition_citizens)
 
     logger.info("All simulations are completed.")
 

@@ -31,7 +31,8 @@ def calculate_weights(generalised_travel_time, modality, preference, motive):
 
 def calculate_single_weights(
         config,
-        generalised_travel_time: DataSource) -> DataSource:
+        generalised_travel_time: DataSource,
+        weights: DataSource):
     logger.info(
         "Weights (travel time decay curves) for car, PT, bike, and E-bike.")
 
@@ -48,8 +49,6 @@ def calculate_single_weights(
     preferences = ['Auto', 'Neutraal', 'Fiets', 'OV']
     modalities_bike = ['Fiets']
     fuel_kinds = ['fossiel', 'elektrisch']
-
-    weights = DataSource(config, DataType.WEIGHTS)
 
     for part_of_day in part_of_days:
         for motive in motives:

@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 def deployment_opportunities(config,
                              single_weights: DataSource,
-                             combined_weights: DataSource) -> DataSource:
+                             combined_weights: DataSource,
+                             potencies: DataSource):
     logger.info("Deployment opportunities for citizens.")
 
     project_config = config['project']
@@ -122,8 +123,6 @@ def deployment_opportunities(config,
                     working_population_totals[i]
 
     income_distributions_transposed = utils.transpose(income_distributions)
-
-    potencies = DataSource(config, DataType.DESTINATIONS)
 
     for car_possession_group in car_possession_groups:
         for motive in motives:

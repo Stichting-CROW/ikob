@@ -21,7 +21,8 @@ def create_citizens_file(distribution_matrix, working_population):
 
 def potential_companies(config,
                         single_weights: DataSource,
-                        combined_weights: DataSource) -> DataSource:
+                        combined_weights: DataSource,
+                        origins: DataSource):
     logger.info("Possibilities for companies and institutes.")
 
     project_config = config['project']
@@ -159,8 +160,6 @@ def potential_companies(config,
 
     citizens = create_citizens_file(distribution_matrix, working_population)
     citizens_transpose = utils.transpose(citizens)
-
-    origins = DataSource(config, DataType.ORIGINS)
 
     for car_possession_group in car_possession_groups:
         for motive in motives:
