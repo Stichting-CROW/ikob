@@ -2,8 +2,7 @@ import argparse
 import logging
 import sys
 import threading
-from tkinter import (BooleanVar, Button, Frame, StringVar, Tk, filedialog,
-                     messagebox)
+from tkinter import BooleanVar, Button, Frame, StringVar, Tk, filedialog, messagebox
 
 from ikob.combined_weights import calculate_combined_weights
 from ikob.competition import competition_on_citizens, competition_on_jobs
@@ -81,8 +80,8 @@ def run_scripts(project_file, skip_steps=None):
     logger.info("Writing output to disk...")
     for container in [
             travel_time,
-#            single_weights,
-#            combined_weights,
+            # single_weights,
+            # combined_weights,
             possibilities,
             origins,
             competition_citizens,
