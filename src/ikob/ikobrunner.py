@@ -2,7 +2,8 @@ import argparse
 import logging
 import sys
 import threading
-from tkinter import BooleanVar, Button, Frame, StringVar, Tk, filedialog, messagebox
+from tkinter import (BooleanVar, Button, Frame, StringVar, Tk, filedialog,
+                     messagebox)
 
 from ikob.combined_weights import calculate_combined_weights
 from ikob.competition import competition_on_citizens, competition_on_jobs
@@ -19,10 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 def run_scripts(
-        project_file, 
-        skip_steps: list[bool] | None =None,
-        write_weights: bool = False
-    ):
+    project_file,
+    skip_steps: list[bool] | None = None,
+    write_weights: bool = False
+):
     """
     Run through all steps for a given project.
 
@@ -87,13 +88,13 @@ def run_scripts(
     # should persist.
     logger.info("Writing output to disk...")
     sources_to_save = [travel_time,
-            possibilities,
-            origins,
-            competition_citizens,
-            competition_jobs]
+                       possibilities,
+                       origins,
+                       competition_citizens,
+                       competition_jobs]
     if write_weights:
         sources_to_save.extend([single_weights, combined_weights])
-    
+
     for container in sources_to_save:
         container.store()
 
