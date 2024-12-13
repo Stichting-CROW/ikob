@@ -18,10 +18,18 @@ from ikob.single_weights import calculate_single_weights
 logger = logging.getLogger(__name__)
 
 
-def run_scripts(project_file, skip_steps=None):
+def run_scripts(
+        project_file, 
+        skip_steps: list[bool] | None =None,
+        write_weights: bool = False
+    ):
     """
     Run through all steps for a given project.
-    Steps are skipped if skip_steps is set.
+
+    Args:
+        project_file: the path to a JSON project config
+        skip_steps: a list of bools to skip that index step
+        write_weights: skip writing out weights results
     """
     logger.info("Reading project file: %s.", project_file)
     config = getConfigFromArgs(project_file)
@@ -78,14 +86,15 @@ def run_scripts(project_file, skip_steps=None):
     # end-to-end testing. Ultimately only files that are essential outputs
     # should persist.
     logger.info("Writing output to disk...")
-    for container in [
-            travel_time,
-            # single_weights,
-            # combined_weights,
+    sources_to_save = [travel_time,
             possibilities,
             origins,
             competition_citizens,
-            competition_jobs]:
+            competition_jobs]
+    if write_weights:
+        sources_to_save.extend([single_weights, combined_weights])
+    
+    for container in sources_to_save:
         container.store()
 
 
@@ -148,7 +157,7 @@ class ConfigApp(Tk):
         self.run_button.configure(state="disabled")
 
         try:
-            run_scripts(project_file, skip_steps)
+            run_scripts(project_file, skip_steps, write_weights=False)
         except BaseException as err:
             msg = f"An error occured: {err}"
             messagebox.showerror(title="FOUT", message=msg)

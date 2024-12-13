@@ -104,7 +104,7 @@ def test_end_to_end(case):
         remove_directory(result_dir)
 
     # End-to-end test should not skip any steps: all scripts should pass.
-    run_scripts(project)
+    run_scripts(project, write_weights=True)
 
     for result_dir in compare_dirs:
         reference_dir = project_dir / "reference" / result_dir.stem
