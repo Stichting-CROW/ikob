@@ -93,30 +93,20 @@ def default_project_tab():
             items=['werk', 'winkeldagelijkszorg',
                    'winkelnietdagelijksonderwijs', 'sociaal-recreatief']
         ),
-        'welke_groepen': config_item(
-            'Welke groepen moeten worden meegenomen qua autobezit',
+        'fiets of E-fiets': config_item(
+            'Rekenen met fiets of E-fiets (slechts één aanklikken)',
             DataType.CHECKLIST,
-            default='alle groepen',
-            items=['alle groepen', 'alleen autobezitters'],
+            default='fiets',
+            items=['fiets', 'E-fiets'],
         ),
-        'schatten_of_bekend': config_item(
-            'Is het percentage autobezit bekend of moet het uit CBS-gegevens geschat worden?',
-            DataType.CHECKLIST,
-            default='geschat',
-            items=['bekend', 'geschat'],
-        ),
+
         'welke_inkomensgroepen': config_item(
             'Welke inkomensgroepen moeten worden meegenomen',
             DataType.CHECKLIST,
             default=['laag', 'middellaag', 'middelhoog', 'hoog'],
             items=['laag', 'middellaag', 'middelhoog', 'hoog'],
         ),
-        'conc_afstand': config_item(
-            'Moet in stap 8 alleen concurrentie of ook afstand worden berekend',
-            DataType.CHECKLIST,
-            default='concurrentie',
-            items=['concurrentie', 'afstand'],
-        ),
+
     }
 
 
