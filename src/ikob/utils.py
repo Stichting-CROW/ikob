@@ -61,10 +61,12 @@ def write_csv(matrix, filenaam, header=[]):
         # np.savetxt writes this by default as one column.
         matrix = matrix.reshape(1, matrix.shape[0])
 
+    fmt = '%d' if np.isdtype(matrix.dtype, 'integral') else '%.18e'
     delim = ","
     header = delim.join(header)
     np.savetxt(filenaam,
                matrix,
+               fmt=fmt,
                delimiter=delim,
                header=header,
                comments='')

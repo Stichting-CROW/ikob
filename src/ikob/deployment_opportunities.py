@@ -203,6 +203,9 @@ def deployment_opportunities(config,
 
                     general_possibility_totals_transposed = utils.transpose(
                         general_possibility_totals)
+                    general_possibility_totals_transposed = np.round(
+                        general_possibility_totals_transposed).astype(int)
+
                     key = DataKey('Ontpl_totaal',
                                   part_of_day=part_of_day,
                                   group=car_possession_group,
@@ -243,6 +246,8 @@ def deployment_opportunities(config,
                             else:
                                 general_matrix_product[i].append(0)
 
+                    general_possibility_totals_transposed = np.round(
+                        general_possibility_totals_transposed).astype(int)
                     key = DataKey('Ontpl_totaal',
                                   part_of_day=part_of_day,
                                   group=car_possession_group,
@@ -250,6 +255,9 @@ def deployment_opportunities(config,
                                   modality=modality)
                     potencies.write_xlsx(
                         general_possibility_totals_transposed, key, header=header)
+
+                    general_matrix_product = np.round(
+                        general_matrix_product).astype(int)
                     key = DataKey('Ontpl_totaalproduct',
                                   part_of_day=part_of_day,
                                   group=car_possession_group,

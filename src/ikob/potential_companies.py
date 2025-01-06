@@ -308,6 +308,7 @@ def potential_companies(config,
                                   motive=motive)
 
                     origins_total = utils.transpose(general_possibility_totals)
+                    origins_total = np.round(origins_total).astype(int)
                     origins.write_csv(origins_total, key, header=headstring)
                     origins.write_xlsx(
                         origins_total, key, header=headstringExcel)
@@ -337,6 +338,8 @@ def potential_companies(config,
                             else:
                                 general_matrix_product[i].append(0)
 
+                    general_total_transpose = np.round(
+                        general_total_transpose).astype(int)
                     key = DataKey(id='Pot_totaal',
                                   part_of_day=part_of_day,
                                   group=car_possession_group,
