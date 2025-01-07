@@ -319,6 +319,12 @@ def default_advanced_tab():
                 DataType.FILE,
             ),
         },
+        'welke_groepen': config_item(
+            'Welke groepen moeten worden meegenomen qua autobezit',
+            DataType.CHECKLIST,
+            default='alle groepen',
+            items=['alle groepen', 'alleen autobezitters'],
+        ),
     }
 
 
@@ -326,7 +332,7 @@ def default_chains_and_hubs_tab():
     return {
         'label': 'Ketens',
 
-        'ketens': {
+        'chains': {
             'gebruiken': config_item(
                 'Wel ketens en hubs',
                 DataType.CHECKBOX,

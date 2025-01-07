@@ -1,0 +1,108 @@
+{
+  "TVOM": {
+    "overig": {
+      "laag": 15.5,
+      "middellaag": 10.9,
+      "middelhoog": 7.25,
+      "hoog": 4.8
+    },
+    "werk": {
+      "laag": 12.0,
+      "middellaag": 9.0,
+      "middelhoog": 6.0,
+      "hoog": 4.0
+    }
+  },
+  "project": {
+    "welke_inkomensgroepen": [
+      "laag",
+      "middellaag",
+      "middelhoog",
+      "hoog"
+    ],
+    "verstedelijkingsscenario": "",
+    "paden": {
+      "segs_directory": "SEGS",
+      "skims_directory": "",
+      "output_directory": "output"
+    },
+    "beprijzingsregime": "Basis",
+    "motieven": [
+      "werk"
+    ],
+    "fiets of E-fiets": [
+      "fiets"
+    ],
+    "naam": "Project 1"
+  },
+  "ketens": {
+    "chains": {
+      "bestand": "",
+      "naam hub": "",
+      "gebruiken": false
+    },
+    "bestemmingslijst": {
+      "bestand": "",
+      "gebruiken": false
+    }
+  },
+  "geavanceerd": {
+    "welke_groepen": [
+      "alle groepen"
+    ],
+    "parkeerkosten": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "kunstmab": {
+      "bestand": "",
+      "gebruiken": false
+    },
+    "additionele_kosten": {
+      "bestand": "",
+      "gebruiken": false
+    }
+  },
+  "verdeling": {
+    "Percelektrisch": {
+      "middellaag": 0.0,
+      "laag": 0.0,
+      "middelhoog": 0.0,
+      "hoog": 0.0
+    },
+    "GratisOVpercentage": 0.03
+  },
+  "skims": {
+    "parkeerzoektijden_bestand": "",
+    "OV kosten": {
+      "starttarief": 75.0,
+      "kmkosten": 12.0
+    },
+    "varkostenga": {
+      "GeenAuto": 0.33,
+      "GeenRijbewijs": 2.4
+    },
+    "OV kostenbestand": {
+      "gebruiken": false
+    },
+    "pricecap": {
+      "getal": 9999.0,
+      "gebruiken": false
+    },
+    "Kosten auto fossiele brandstof": {
+      "kmheffing": 0.0,
+      "variabele kosten": 16.0
+    },
+    "tijdkostenga": {
+      "GeenAuto": 0.05,
+      "GeenRijbewijs": 0.4
+    },
+    "dagsoort": [
+      "Restdag"
+    ],
+    "Kosten elektrische auto": {
+      "kmheffing": 0.0,
+      "variabele kosten": 5.0
+    }
+  }
+}

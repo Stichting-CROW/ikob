@@ -28,11 +28,12 @@ def potential_companies(config,
     skims_config = config['skims']
     distribution_config = config['verdeling']
     part_of_days = skims_config['dagsoort']
+    advanced_config = config['geavanceerd']
 
     scenarios = project_config['verstedelijkingsscenario']
     regimes = project_config['beprijzingsregime']
     motives = project_config['motieven']
-    car_possession_groups = project_config['welke_groepen']
+    car_possession_groups = advanced_config['welke_groepen']
     fuel_kinds = ['fossiel', 'elektrisch']
     electric_percentage = distribution_config['Percelektrisch']
 

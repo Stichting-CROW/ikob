@@ -18,11 +18,12 @@ def deployment_opportunities(config,
     skims_config = config['skims']
     distribution_config = config['verdeling']
     part_of_days = skims_config['dagsoort']
+    advanced_config = config['geavanceerd']
 
     scenario = project_config['verstedelijkingsscenario']
     regime = project_config['beprijzingsregime']
     motives = project_config['motieven']
-    car_possession_groups = project_config['welke_groepen']
+    car_possession_groups = advanced_config['welke_groepen']
     income_groups = project_config['welke_inkomensgroepen']
     electric_percentage = distribution_config['Percelektrisch']
 
