@@ -33,71 +33,31 @@ def potential_companies(config,
     regimes = project_config['beprijzingsregime']
     motives = project_config['motieven']
     car_possession_groups = project_config['welke_groepen']
+    income_groups = project_config['welke_inkomensgroepen']
     fuel_kinds = ['fossiel', 'elektrisch']
     electric_percentage = distribution_config['Percelektrisch']
 
     # Vaste waarden
-    groups = [
-        'GratisAuto_laag',
-        'GratisAuto_GratisOV_laag',
-        'WelAuto_GratisOV_laag',
-        'WelAuto_vkAuto_laag',
-        'WelAuto_vkNeutraal_laag',
-        'WelAuto_vkFiets_laag',
-        'WelAuto_vkOV_laag',
-        'GeenAuto_GratisOV_laag',
-        'GeenAuto_vkNeutraal_laag',
-        'GeenAuto_vkFiets_laag',
-        'GeenAuto_vkOV_laag',
-        'GeenRijbewijs_GratisOV_laag',
-        'GeenRijbewijs_vkNeutraal_laag',
-        'GeenRijbewijs_vkFiets_laag',
-        'GeenRijbewijs_vkOV_laag',
-        'GratisAuto_middellaag',
-        'GratisAuto_GratisOV_middellaag',
-        'WelAuto_GratisOV_middellaag',
-        'WelAuto_vkAuto_middellaag',
-        'WelAuto_vkNeutraal_middellaag',
-        'WelAuto_vkFiets_middellaag',
-        'WelAuto_vkOV_middellaag',
-        'GeenAuto_GratisOV_middellaag',
-        'GeenAuto_vkNeutraal_middellaag',
-        'GeenAuto_vkFiets_middellaag',
-        'GeenAuto_vkOV_middellaag',
-        'GeenRijbewijs_GratisOV_middellaag',
-        'GeenRijbewijs_vkNeutraal_middellaag',
-        'GeenRijbewijs_vkFiets_middellaag',
-        'GeenRijbewijs_vkOV_middellaag',
-        'GratisAuto_middelhoog',
-        'GratisAuto_GratisOV_middelhoog',
-        'WelAuto_GratisOV_middelhoog',
-        'WelAuto_vkAuto_middelhoog',
-        'WelAuto_vkNeutraal_middelhoog',
-        'WelAuto_vkFiets_middelhoog',
-        'WelAuto_vkOV_middelhoog',
-        'GeenAuto_GratisOV_middelhoog',
-        'GeenAuto_vkNeutraal_middelhoog',
-        'GeenAuto_vkFiets_middelhoog',
-        'GeenAuto_vkOV_middelhoog',
-        'GeenRijbewijs_GratisOV_middelhoog',
-        'GeenRijbewijs_vkNeutraal_middelhoog',
-        'GeenRijbewijs_vkFiets_middelhoog',
-        'GeenRijbewijs_vkOV_middelhoog',
-        'GratisAuto_hoog',
-        'GratisAuto_GratisOV_hoog',
-        'WelAuto_GratisOV_hoog',
-        'WelAuto_vkAuto_hoog',
-        'WelAuto_vkNeutraal_hoog',
-        'WelAuto_vkFiets_hoog',
-        'WelAuto_vkOV_hoog',
-        'GeenAuto_GratisOV_hoog',
-        'GeenAuto_vkNeutraal_hoog',
-        'GeenAuto_vkFiets_hoog',
-        'GeenAuto_vkOV_hoog',
-        'GeenRijbewijs_GratisOV_hoog',
-        'GeenRijbewijs_vkNeutraal_hoog',
-        'GeenRijbewijs_vkFiets_hoog',
-        'GeenRijbewijs_vkOV_hoog']
+    base_groups = [
+        'GratisAuto',
+        'GratisAuto_GratisOV',
+        'WelAuto_GratisOV',
+        'WelAuto_vkAuto',
+        'WelAuto_vkNeutraal',
+        'WelAuto_vkFiets',
+        'WelAuto_vkOV',
+        'GeenAuto_GratisOV',
+        'GeenAuto_vkNeutraal',
+        'GeenAuto_vkFiets',
+        'GeenAuto_vkOV',
+        'GeenRijbewijs_GratisOV',
+        'GeenRijbewijs_vkNeutraal',
+        'GeenRijbewijs_vkFiets',
+        'GeenRijbewijs_vkOV']
+    groups = []
+    for income_group in income_groups:
+        for base_group in base_groups:
+            groups.append(f'{base_group}_{income_group}')
 
     modalities = ['Fiets', 'Auto', 'OV', 'Auto_Fiets', 'OV_Fiets', 'Auto_OV',
                   'Auto_OV_Fiets']
