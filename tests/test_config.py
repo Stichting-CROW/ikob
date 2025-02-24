@@ -22,12 +22,6 @@ old_config = """
     }
   },
   "project": {
-    "schatten_of_bekend": [
-      "geschat"
-    ],
-    "conc_afstand": [
-      "concurrentie"
-    ],
     "naam": "Vlaanderen",
     "beprijzingsregime": "Basis",
     "paden": {
@@ -36,11 +30,11 @@ old_config = """
       "output_directory": "tests/vlaanderen/"
     },
     "verstedelijkingsscenario": "2023",
-    "welke_groepen": [
-      "alle groepen"
-    ],
     "motieven": [
       "werk"
+    ],
+    "fiets of E-fiets": [
+        "Fiets"
     ],
     "ketens": {
       "gebruiken": false,
@@ -73,6 +67,11 @@ old_config = """
       "gebruiken": false,
       "bestand": ""
     }
+  },
+  "geavanceerd": {
+    "welke_groepen": [
+      "alle groepen"
+    ]
   },
   "skims": {
     "Kosten auto fossiele brandstof": {

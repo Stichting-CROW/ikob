@@ -56,20 +56,11 @@
     "parkeerzoektijden_bestand": "tests/eindhoven-500/SEGS/Parkeerzoektijd.csv"
   },
   "project": {
-    "conc_afstand": [
-      "concurrentie"
-    ],
-    "welke_groepen": [
-      "alle groepen"
-    ],
     "paden": {
       "segs_directory": "tests/eindhoven-500/SEGS",
       "output_directory": "tests/eindhoven-500",
       "skims_directory": "tests/eindhoven-500/skims"
     },
-    "schatten_of_bekend": [
-      "geschat"
-    ],
     "verstedelijkingsscenario": "2018",
     "welke_inkomensgroepen": [
       "laag",
@@ -80,6 +71,9 @@
     "naam": "eindhoven-500",
     "motieven": [
       "werk"
+    ],
+    "fiets of E-fiets": [
+        "Fiets"
     ],
     "beprijzingsregime": "Basis"
   },
@@ -95,12 +89,19 @@
     "parkeerkosten": {
       "bestand": "",
       "gebruiken": false
-    }
+    },
+    "welke_groepen": [
+      "alle groepen"
+    ]
   },
   "ketens": {
-    "ketens": {
+    "chains": {
       "gebruiken": false,
       "naam hub": ""
+    },
+    "bestemmingslijst": {
+      "gebruiken": false,
+      "bestand": ""
     }
   }
 }

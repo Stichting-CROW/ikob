@@ -23,9 +23,13 @@
     }
   },
   "ketens": {
-    "ketens": {
+    "chains": {
       "gebruiken": false,
       "naam hub": ""
+    },
+    "bestemmingslijst": {
+      "gebruiken": false,
+      "bestand": ""
     }
   },
   "project": {
@@ -38,16 +42,10 @@
     "motieven": [
       "werk"
     ],
+    "fiets of E-fiets": [
+        "Fiets"
+    ],
     "naam": "EB_Eindhoven_Basis_nw",
-    "welke_groepen": [
-      "alle groepen"
-    ],
-    "conc_afstand": [
-      "concurrentie"
-    ],
-    "schatten_of_bekend": [
-      "geschat"
-    ],
     "welke_inkomensgroepen": [
       "laag",
       "middellaag",
@@ -101,6 +99,9 @@
     "kunstmab": {
       "bestand": "",
       "gebruiken": false
-    }
+    },
+    "welke_groepen": [
+      "alle groepen"
+    ]
   }
 }

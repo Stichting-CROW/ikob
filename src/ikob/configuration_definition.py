@@ -93,29 +93,17 @@ def default_project_tab():
             items=['werk', 'winkeldagelijkszorg',
                    'winkelnietdagelijksonderwijs', 'sociaal-recreatief']
         ),
-        'welke_groepen': config_item(
-            'Welke groepen moeten worden meegenomen qua autobezit',
+        'fiets of E-fiets': config_item(
+            'Rekenen met fiets of E-fiets (slechts één aanklikken)',
             DataType.CHECKLIST,
-            default='alle groepen',
-            items=['alle groepen', 'alleen autobezitters'],
-        ),
-        'schatten_of_bekend': config_item(
-            'Is het percentage autobezit bekend of moet het uit CBS-gegevens geschat worden?',
-            DataType.CHECKLIST,
-            default='geschat',
-            items=['bekend', 'geschat'],
+            default='Fiets',
+            items=['Fiets', 'E-fiets'],
         ),
         'welke_inkomensgroepen': config_item(
             'Welke inkomensgroepen moeten worden meegenomen',
             DataType.CHECKLIST,
             default=['laag', 'middellaag', 'middelhoog', 'hoog'],
             items=['laag', 'middellaag', 'middelhoog', 'hoog'],
-        ),
-        'conc_afstand': config_item(
-            'Moet in stap 8 alleen concurrentie of ook afstand worden berekend',
-            DataType.CHECKLIST,
-            default='concurrentie',
-            items=['concurrentie', 'afstand'],
         ),
     }
 
@@ -329,6 +317,13 @@ def default_advanced_tab():
                 DataType.FILE,
             ),
         },
+        'welke_groepen': config_item(
+            'Welke groepen moeten worden meegenomen qua autobezit',
+            DataType.CHECKLIST,
+            default='alle groepen',
+            items=['alle groepen', 'alleen autobezitters'],
+        ),
+
     }
 
 
@@ -336,16 +331,32 @@ def default_chains_and_hubs_tab():
     return {
         'label': 'Ketens',
 
-        'ketens': {
+        'chains': {
+            'label': 'Definitie van de set hubs',
             'gebruiken': config_item(
                 'Wel ketens en hubs',
                 DataType.CHECKBOX,
             ),
+            'bestand': config_item(
+                'Bestand met de hubs',
+                DataType.FILE,
+            ),
             'naam hub': config_item(
                 'Wat is de naam van de verzameling hubs?',
                 DataType.TEXT,
-            )
-        }
+            ),
+        },
+        'bestemmingslijst': {
+            'label': 'bestemmingslijst gebruiken',
+            'gebruiken': config_item(
+                'bestemmingslijst',
+                DataType.CHECKBOX
+            ),
+            'bestand': config_item(
+                'bestand met de bestemmingslijst',
+                DataType.FILE,
+            ),
+        },
     }
 
 
@@ -440,6 +451,10 @@ def transfer_to_chains_tab(config):
 
     Introduced in commit `9bf0d1a`.
     """
+    if "chains" in config:
+        # Cannot fix: a translated entry is already present.
+        return
+
     if "ketens" in config:
         # Cannot fix: ketens already present.
         return config
@@ -447,9 +462,11 @@ def transfer_to_chains_tab(config):
     msg = "Trying to auto fix \"ketens\" configuration entry."
     logger.warning(msg)
 
-    config["ketens"] = {}
+    group = "ketens"
+    config[group] = {}
+    translation = {"ketens": "chains"}
     for key in ["ketens"]:
-        config["ketens"][key] = config["project"].pop(key)
+        config[group][translation[key]] = config["project"].pop(key)
 
     return config
 

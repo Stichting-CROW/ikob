@@ -46,7 +46,7 @@ def calculate_single_weights(
     # Vaste waarden
     incomes = ['hoog', 'middelhoog', 'middellaag', 'laag']
     preferences = ['Auto', 'Neutraal', 'Fiets', 'OV']
-    modalities_bike = ['Fiets']
+    modalities_bike = project_config['fiets of E-fiets']
     fuel_kinds = ['fossiel', 'elektrisch']
 
     weights = DataSource(config, DataType.WEIGHTS)
@@ -65,12 +65,12 @@ def calculate_single_weights(
                             ggr_skim, modality, preference, motive)
 
                         if preference == 'Auto':
-                            key = DataKey(f'{modality}_vk',
+                            key = DataKey(f'Fiets_vk',
                                           part_of_day=part_of_day,
                                           regime=regimes,
                                           motive=motive)
                         else:
-                            key = DataKey(f'{modality}_vk',
+                            key = DataKey(f'Fiets_vk',
                                           part_of_day=part_of_day,
                                           regime=regimes,
                                           motive=motive,

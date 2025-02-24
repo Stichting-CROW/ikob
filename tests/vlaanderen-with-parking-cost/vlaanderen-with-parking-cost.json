@@ -14,12 +14,6 @@
     }
   },
   "project": {
-    "schatten_of_bekend": [
-      "geschat"
-    ],
-    "conc_afstand": [
-      "concurrentie"
-    ],
     "naam": "Vlaanderen",
     "beprijzingsregime": "Basis",
     "paden": {
@@ -28,11 +22,11 @@
       "output_directory": "tests/vlaanderen-with-parking-cost/"
     },
     "verstedelijkingsscenario": "2023",
-    "welke_groepen": [
-      "alle groepen"
-    ],
     "motieven": [
       "werk"
+    ],
+    "fiets of E-fiets": [
+        "Fiets"
     ],
     "welke_inkomensgroepen": [
       "laag",
@@ -95,12 +89,19 @@
     "parkeerkosten": {
       "bestand": "tests/vlaanderen-with-parking-cost/costs.csv",
       "gebruiken": true
-    }
+    },
+    "welke_groepen": [
+      "alle groepen"
+    ]
   },
   "ketens": {
-    "ketens": {
+    "chains": {
       "gebruiken": false,
       "naam hub": ""
+    },
+    "bestemmingslijst": {
+      "gebruiken": false,
+      "bestand": ""
     }
   }
 }
