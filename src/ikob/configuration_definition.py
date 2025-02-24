@@ -331,16 +331,32 @@ def default_chains_and_hubs_tab():
     return {
         'label': 'Ketens',
 
-        'ketens': {
+        'chains': {
+            'label': 'Definitie van de set hubs',
             'gebruiken': config_item(
                 'Wel ketens en hubs',
                 DataType.CHECKBOX,
             ),
+            'bestand': config_item(
+                'Bestand met de hubs',
+                DataType.FILE,
+            ),
             'naam hub': config_item(
                 'Wat is de naam van de verzameling hubs?',
                 DataType.TEXT,
-            )
-        }
+            ),
+        },
+        'bestemmingslijst': {
+            'label': 'bestemmingslijst gebruiken',
+            'gebruiken': config_item(
+                'bestemmingslijst',
+                DataType.CHECKBOX
+            ),
+            'bestand': config_item(
+                'bestand met de bestemmingslijst',
+                DataType.FILE,
+            ),
+        },
     }
 
 
@@ -435,6 +451,10 @@ def transfer_to_chains_tab(config):
 
     Introduced in commit `9bf0d1a`.
     """
+    if "chains" in config:
+        # Cannot fix: a translated entry is already present.
+        return
+
     if "ketens" in config:
         # Cannot fix: ketens already present.
         return config
@@ -442,9 +462,11 @@ def transfer_to_chains_tab(config):
     msg = "Trying to auto fix \"ketens\" configuration entry."
     logger.warning(msg)
 
-    config["ketens"] = {}
+    group = "ketens"
+    config[group] = {}
+    translation = {"ketens": "chains"}
     for key in ["ketens"]:
-        config["ketens"][key] = config["project"].pop(key)
+        config[group][translation[key]] = config["project"].pop(key)
 
     return config
 

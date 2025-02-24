@@ -23,9 +23,13 @@
     }
   },
   "ketens": {
-    "ketens": {
+    "chains": {
       "gebruiken": false,
       "naam hub": ""
+    },
+    "bestemmingslijst": {
+      "gebruiken": false,
+      "bestand": ""
     }
   },
   "project": {
