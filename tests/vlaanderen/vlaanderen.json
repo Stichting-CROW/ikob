@@ -22,9 +22,6 @@
       "output_directory": "tests/vlaanderen/"
     },
     "verstedelijkingsscenario": "2023",
-    "welke_groepen": [
-      "alle groepen"
-    ],
     "motieven": [
       "werk"
     ],
@@ -89,7 +86,10 @@
     "parkeerkosten": {
       "bestand": "",
       "gebruiken": false
-    }
+    },
+    "welke_groepen": [
+      "alle groepen"
+    ]
   },
   "ketens": {
     "ketens": {

@@ -30,9 +30,6 @@ old_config = """
       "output_directory": "tests/vlaanderen/"
     },
     "verstedelijkingsscenario": "2023",
-    "welke_groepen": [
-      "alle groepen"
-    ],
     "motieven": [
       "werk"
     ],
@@ -67,6 +64,11 @@ old_config = """
       "gebruiken": false,
       "bestand": ""
     }
+  },
+  "geavanceerd": {
+    "welke_groepen": [
+      "alle groepen"
+    ]
   },
   "skims": {
     "Kosten auto fossiele brandstof": {

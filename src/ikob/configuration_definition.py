@@ -93,12 +93,6 @@ def default_project_tab():
             items=['werk', 'winkeldagelijkszorg',
                    'winkelnietdagelijksonderwijs', 'sociaal-recreatief']
         ),
-        'welke_groepen': config_item(
-            'Welke groepen moeten worden meegenomen qua autobezit',
-            DataType.CHECKLIST,
-            default='alle groepen',
-            items=['alle groepen', 'alleen autobezitters'],
-        ),
         'welke_inkomensgroepen': config_item(
             'Welke inkomensgroepen moeten worden meegenomen',
             DataType.CHECKLIST,
@@ -317,6 +311,13 @@ def default_advanced_tab():
                 DataType.FILE,
             ),
         },
+        'welke_groepen': config_item(
+            'Welke groepen moeten worden meegenomen qua autobezit',
+            DataType.CHECKLIST,
+            default='alle groepen',
+            items=['alle groepen', 'alleen autobezitters'],
+        ),
+
     }
 
 

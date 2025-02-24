@@ -56,9 +56,6 @@
     "parkeerzoektijden_bestand": "tests/eindhoven-500/SEGS/Parkeerzoektijd.csv"
   },
   "project": {
-    "welke_groepen": [
-      "alle groepen"
-    ],
     "paden": {
       "segs_directory": "tests/eindhoven-500/SEGS",
       "output_directory": "tests/eindhoven-500",
@@ -89,7 +86,10 @@
     "parkeerkosten": {
       "bestand": "",
       "gebruiken": false
-    }
+    },
+    "welke_groepen": [
+      "alle groepen"
+    ]
   },
   "ketens": {
     "ketens": {

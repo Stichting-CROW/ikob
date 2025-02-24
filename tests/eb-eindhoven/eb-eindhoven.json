@@ -39,9 +39,6 @@
       "werk"
     ],
     "naam": "EB_Eindhoven_Basis_nw",
-    "welke_groepen": [
-      "alle groepen"
-    ],
     "welke_inkomensgroepen": [
       "laag",
       "middellaag",
@@ -95,6 +92,9 @@
     "kunstmab": {
       "bestand": "",
       "gebruiken": false
-    }
+    },
+    "welke_groepen": [
+      "alle groepen"
+    ]
   }
 }

@@ -22,9 +22,6 @@
       "output_directory": "tests/vlaanderen-with-parking-cost/"
     },
     "verstedelijkingsscenario": "2023",
-    "welke_groepen": [
-      "alle groepen"
-    ],
     "motieven": [
       "werk"
     ],
@@ -89,7 +86,10 @@
     "parkeerkosten": {
       "bestand": "tests/vlaanderen-with-parking-cost/costs.csv",
       "gebruiken": true
-    }
+    },
+    "welke_groepen": [
+      "alle groepen"
+    ]
   },
   "ketens": {
     "ketens": {
