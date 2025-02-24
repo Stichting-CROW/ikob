@@ -26,32 +26,23 @@ def deployment_opportunities(config,
     income_groups = project_config['welke_inkomensgroepen']
     electric_percentage = distribution_config['Percelektrisch']
 
-    if 'alle groepen' in car_possession_groups:
-        base_groups = [
-            'GratisAuto',
-            'GratisAuto_GratisOV',
-            'WelAuto_GratisOV',
-            'WelAuto_vkAuto',
-            'WelAuto_vkNeutraal',
-            'WelAuto_vkFiets',
-            'WelAuto_vkOV',
-            'GeenAuto_GratisOV',
-            'GeenAuto_vkNeutraal',
-            'GeenAuto_vkFiets',
-            'GeenAuto_vkOV',
-            'GeenRijbewijs_GratisOV',
-            'GeenRijbewijs_vkNeutraal',
-            'GeenRijbewijs_vkFiets',
-            'GeenRijbewijs_vkOV']
-    else:
-        base_groups = [
-            'GratisAuto',
-            'GratisAuto_GratisOV',
-            'WelAuto_GratisOV',
-            'WelAuto_vkAuto',
-            'WelAuto_vkNeutraal',
-            'WelAuto_vkFiets',
-            'WelAuto_vkOV']
+    base_groups = [
+        'GratisAuto',
+        'GratisAuto_GratisOV',
+        'WelAuto_GratisOV',
+        'WelAuto_vkAuto',
+        'WelAuto_vkNeutraal',
+        'WelAuto_vkFiets',
+        'WelAuto_vkOV',
+        'GeenAuto_GratisOV',
+        'GeenAuto_vkNeutraal',
+        'GeenAuto_vkFiets',
+        'GeenAuto_vkOV',
+        'GeenRijbewijs_GratisOV',
+        'GeenRijbewijs_vkNeutraal',
+        'GeenRijbewijs_vkFiets',
+        'GeenRijbewijs_vkOV'
+    ]
 
     groups = []
     for income_group in income_groups:
