@@ -93,6 +93,12 @@ def default_project_tab():
             items=['werk', 'winkeldagelijkszorg',
                    'winkelnietdagelijksonderwijs', 'sociaal-recreatief']
         ),
+        'fiets of E-fiets': config_item(
+            'Rekenen met fiets of E-fiets (slechts één aanklikken)',
+            DataType.CHECKLIST,
+            default='Fiets',
+            items=['Fiets', 'E-fiets'],
+        ),
         'welke_inkomensgroepen': config_item(
             'Welke inkomensgroepen moeten worden meegenomen',
             DataType.CHECKLIST,

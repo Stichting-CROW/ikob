@@ -33,6 +33,9 @@ old_config = """
     "motieven": [
       "werk"
     ],
+    "fiets of E-fiets": [
+        "Fiets"
+    ],
     "ketens": {
       "gebruiken": false,
       "naam hub": ""

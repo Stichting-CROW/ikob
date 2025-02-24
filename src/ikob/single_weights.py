@@ -46,7 +46,7 @@ def calculate_single_weights(
     # Vaste waarden
     incomes = ['hoog', 'middelhoog', 'middellaag', 'laag']
     preferences = ['Auto', 'Neutraal', 'Fiets', 'OV']
-    modalities_bike = ['Fiets']
+    modalities_bike = project_config['fiets of E-fiets']
     fuel_kinds = ['fossiel', 'elektrisch']
 
     weights = DataSource(config, DataType.WEIGHTS)
