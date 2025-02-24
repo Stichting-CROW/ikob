@@ -105,12 +105,6 @@ def default_project_tab():
             default=['laag', 'middellaag', 'middelhoog', 'hoog'],
             items=['laag', 'middellaag', 'middelhoog', 'hoog'],
         ),
-        'conc_afstand': config_item(
-            'Moet in stap 8 alleen concurrentie of ook afstand worden berekend',
-            DataType.CHECKLIST,
-            default='concurrentie',
-            items=['concurrentie', 'afstand'],
-        ),
     }
 
 

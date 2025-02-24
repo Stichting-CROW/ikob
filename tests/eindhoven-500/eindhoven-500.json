@@ -56,9 +56,6 @@
     "parkeerzoektijden_bestand": "tests/eindhoven-500/SEGS/Parkeerzoektijd.csv"
   },
   "project": {
-    "conc_afstand": [
-      "concurrentie"
-    ],
     "welke_groepen": [
       "alle groepen"
     ],

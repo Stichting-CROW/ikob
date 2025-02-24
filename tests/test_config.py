@@ -22,9 +22,6 @@ old_config = """
     }
   },
   "project": {
-    "conc_afstand": [
-      "concurrentie"
-    ],
     "naam": "Vlaanderen",
     "beprijzingsregime": "Basis",
     "paden": {
