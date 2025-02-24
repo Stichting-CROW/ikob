@@ -67,9 +67,6 @@
       "output_directory": "tests/eindhoven-500",
       "skims_directory": "tests/eindhoven-500/skims"
     },
-    "schatten_of_bekend": [
-      "geschat"
-    ],
     "verstedelijkingsscenario": "2018",
     "welke_inkomensgroepen": [
       "laag",

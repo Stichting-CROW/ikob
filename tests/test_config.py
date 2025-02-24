@@ -22,9 +22,6 @@ old_config = """
     }
   },
   "project": {
-    "schatten_of_bekend": [
-      "geschat"
-    ],
     "conc_afstand": [
       "concurrentie"
     ],

@@ -99,12 +99,6 @@ def default_project_tab():
             default='alle groepen',
             items=['alle groepen', 'alleen autobezitters'],
         ),
-        'schatten_of_bekend': config_item(
-            'Is het percentage autobezit bekend of moet het uit CBS-gegevens geschat worden?',
-            DataType.CHECKLIST,
-            default='geschat',
-            items=['bekend', 'geschat'],
-        ),
         'welke_inkomensgroepen': config_item(
             'Welke inkomensgroepen moeten worden meegenomen',
             DataType.CHECKLIST,
