@@ -106,8 +106,8 @@ python -m pytest -o log_cli=true -o log_file_level=info
 The current CI pipelines enforce code formatting through `autopep8` and `isort`. To ensure modified sources files adhere to the requirements of these linters, run
 
 ```sh
-isort src/ikob/*.py tests/*.py
-autopep8 --in-place --aggressive --aggressive src/ikob/*.py tests/*.py
+isort src/ikob/*.py tests/*.py preprocessing/*.py
+autopep8 --in-place --aggressive --aggressive src/ikob/*.py tests/*.py preprocessing/*.py
 ```
 
 ## Deployment
