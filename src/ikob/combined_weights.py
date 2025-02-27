@@ -37,7 +37,8 @@ def has_preference(kind_car, kind_pt, preference):
 
 
 def calculate_combined_weights(config,
-                               single_weights: DataSource) -> DataSource:
+                               single_weights: DataSource,
+                               combined_weigths: DataSource):
     logger.info("Maximum weights by multiple modalities.")
 
     project_config = config['project']
@@ -53,8 +54,6 @@ def calculate_combined_weights(config,
     car_kinds = ['Auto', 'GeenAuto', 'GeenRijbewijs', 'GratisAuto']
     pt_kinds = ['OV', 'GratisOV']
     fuel_kinds = ['fossiel', 'elektrisch']
-
-    combined_weigths = DataSource(config, DataType.WEIGHTS)
 
     for motive in motives:
         for part_of_day in part_of_days:

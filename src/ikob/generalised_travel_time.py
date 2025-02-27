@@ -25,7 +25,7 @@ def costs_public_transport(
     return distance
 
 
-def generalised_travel_time(config) -> DataSource:
+def generalised_travel_time(config, generalised_travel_time):
     logger.info("Compute generalised travel time from time and costs.")
 
     project_config = config['project']
@@ -87,9 +87,6 @@ def generalised_travel_time(config) -> DataSource:
 
     skims_dir = config['project']['paden']['skims_directory']
     skims_reader = SkimsSource(skims_dir)
-
-    generalised_travel_time = DataSource(
-        config, DataType.GENERALISED_TRAVEL_TIME)
 
     for motive in motives:
         tvom = tvom_work if motive == 'werk' else tvom_other

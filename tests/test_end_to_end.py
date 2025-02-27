@@ -90,8 +90,9 @@ def remove_directory(dir: pathlib.Path):
         shutil.rmtree(dir)
 
 
+@pytest.mark.parametrize("use_cache", [True, False])
 @pytest.mark.parametrize("case", ["vlaanderen", "eindhoven-500"])
-def test_end_to_end(case):
+def test_end_to_end(case: str, use_cache: bool):
     test_dir = pathlib.Path("tests")
     project_dir = test_dir.joinpath(case).resolve()
     project = project_dir.joinpath(f"{case}.json")
@@ -104,7 +105,7 @@ def test_end_to_end(case):
         remove_directory(result_dir)
 
     # End-to-end test should not skip any steps: all scripts should pass.
-    run_scripts(project, write_weights=True)
+    run_scripts(project, write_weights=True, use_cache=use_cache)
 
     for result_dir in compare_dirs:
         reference_dir = project_dir / "reference" / result_dir.stem

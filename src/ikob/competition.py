@@ -81,24 +81,28 @@ def get_weight_matrix(
 def competition_on_jobs(config,
                         single_weights: DataSource,
                         combined_weights: DataSource,
-                        origins: DataSource) -> DataSource:
+                        origins: DataSource,
+                        competitions: DataSource):
     return competition(
         config,
         single_weights,
         combined_weights,
         origins,
+        competitions,
         citizens=False)
 
 
 def competition_on_citizens(config,
                             single_weights: DataSource,
                             combined_weights: DataSource,
-                            origins: DataSource) -> DataSource:
+                            origins: DataSource,
+                            competitions: DataSource):
     return competition(
         config,
         single_weights,
         combined_weights,
         origins,
+        competitions,
         citizens=True)
 
 
@@ -106,7 +110,8 @@ def competition(config,
                 single_weights: DataSource,
                 combined_weights: DataSource,
                 origins: DataSource,
-                citizens: bool = True) -> DataSource:
+                competitions: DataSource,
+                citizens: bool = True):
     if citizens:
         msg = "Competition for companies and accessiblity."
     else:
@@ -243,7 +248,6 @@ def competition(config,
                     citizens_totals[i]
 
     subtopic_competition = "inwoners" if citizens else "arbeidsplaatsen"
-    competitions = DataSource(config, DataType.COMPETITION)
 
     for car_possession_group in car_possession_groups:
         for motive in motives:

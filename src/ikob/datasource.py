@@ -189,10 +189,11 @@ class DataKey:
 
 
 class DataSource:
-    def __init__(self, config, datatype: DataType):
+    def __init__(self, config, datatype: DataType, use_cache=False):
         self.config = config
         self.project_dir = get_project_directory(config)
         self.cache: dict[DataKey, NDArray] = {}
+        self.use_cache = use_cache
         self.datatype = datatype
 
         # TODO: Improve handling of data directory structure:
@@ -225,14 +226,20 @@ class DataSource:
         return ""
 
     def set(self, key: DataKey, data: NDArray):
-        self.cache[key] = data
+        if self.use_cache:
+            self.cache[key] = data
+        else:
+            self.write_csv(data, key)
 
     def get(self, key: DataKey) -> NDArray:
-        if key in self.cache:
+        if self.use_cache and key in self.cache:
             return self.cache[key]
 
         data = self.read_csv(key)
-        self.set(key, data)
+
+        if self.use_cache:
+            self.set(key, data)
+
         return data
 
     def store(self):
