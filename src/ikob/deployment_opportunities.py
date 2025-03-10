@@ -135,10 +135,6 @@ def deployment_opportunities(config,
                     type_caster=float,
                     scenario=scenario)
 
-            distribution_matrix = segs_source.read(
-                f"Verdeling_over_groepen_{target_group}",
-                type_caster=float,
-                scenario=scenario)
             distribution_matrix_transpose = utils.transpose(
                 distribution_matrix)
 
