@@ -5,8 +5,7 @@ import pytest
 
 from ikob.datasource import read_parking_times
 from ikob.ikobconfig import getConfigFromArgs
-from ikob.urbanisation_grade_to_parking_times import \
-    urbanisation_grade_to_parking_times
+from ikob.urbanisation_grade_to_parking_times import urbanisation_grade_to_parking_times
 from ikob.utils import read_csv_int
 
 

@@ -28,8 +28,7 @@ def is_equal_excel_csv(result: pathlib.Path, reference: pathlib.Path) -> bool:
     reference_frame = file_to_frame(reference)
 
     try:
-        pd.testing.assert_frame_equal(result_frame, reference_frame,
-                                      rtol=1e-5, atol=1e-8)
+        pd.testing.assert_frame_equal(result_frame, reference_frame, rtol=1e-5, atol=1e-8)
         return True
     except AssertionError as err:
         logger.warning(f"File {result} differs from reference:\n{err}")
@@ -58,10 +57,7 @@ def same_directory(dcmp: filecmp.dircmp) -> bool:
 
     # File is only present in one of the directory trees.
     if dcmp.left_only or dcmp.right_only:
-        msg = (
-            "Result and reference directories contain different files:"
-            f"{dcmp.left_only}, {dcmp.right_only}"
-        )
+        msg = f"Result and reference directories contain different files:{dcmp.left_only}, {dcmp.right_only}"
         logger.warning(msg)
         return False
 

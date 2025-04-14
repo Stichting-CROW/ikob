@@ -21,10 +21,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "autopep8",
-    "isort",
     "pandas",
     "pytest",
+    "ruff",
 ]
 
 deploy = [
@@ -38,4 +37,20 @@ ikobrunner = "ikob:ikobrunner.main"
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
+]
+
+[tool.ruff]
+extend-exclude = [
+    "documentation",
+    "scripts",
+]
+# NOTE: The original source files contained various functions with
+# highly nested for loops and if statements. The longer line length
+# (slightly) improves their readability.
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+extend-select = [
+    "I",
 ]

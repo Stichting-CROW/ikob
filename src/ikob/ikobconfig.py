@@ -8,11 +8,13 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 from ikob.config import build, validate
-from ikob.configuration_definition import (default_config,
-                                           default_configuration_definition,
-                                           project_name,
-                                           try_fix_incompatible_configuration,
-                                           validate_config)
+from ikob.configuration_definition import (
+    default_config,
+    default_configuration_definition,
+    project_name,
+    try_fix_incompatible_configuration,
+    validate_config,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -71,8 +73,7 @@ def loadConfig(filename):
                 logger.error(msg)
                 raise ValueError(msg)
 
-        config["__filename__"] = os.path.splitext(
-            os.path.basename(filename))[0]
+        config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
     return config
 
 
@@ -125,8 +126,7 @@ class ConfigApp(tk.Tk):
                     message="Het bestand bevat geen geldige configuratie.",
                 )
             except IOError:
-                messagebox.showerror(
-                    title="Fout", message="Het bestand kan niet worden geladen.")
+                messagebox.showerror(title="Fout", message="Het bestand kan niet worden geladen.")
             else:
                 build.setTkVars(self._template, read_config)
 
@@ -146,13 +146,9 @@ class ConfigApp(tk.Tk):
         try:
             saveConfig(filename, config)
         except BaseException:
-            messagebox.showerror(
-                title="Fout", message="Het bestand kan niet worden opgeslagen."
-            )
+            messagebox.showerror(title="Fout", message="Het bestand kan niet worden opgeslagen.")
         else:
-            messagebox.showinfo(
-                title="Opgeslagen",
-                message="Configuratie opgeslagen.")
+            messagebox.showinfo(title="Opgeslagen", message="Configuratie opgeslagen.")
 
 
 def main(verbose=False):
@@ -170,9 +166,7 @@ def main(verbose=False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        prog="ikobconfig", description="Launch the IKOB config GUI."
-    )
+    parser = argparse.ArgumentParser(prog="ikobconfig", description="Launch the IKOB config GUI.")
     parser.add_argument(
         "-v",
         "--verbose",

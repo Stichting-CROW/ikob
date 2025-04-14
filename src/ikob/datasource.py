@@ -8,8 +8,7 @@ from typing import Optional
 from numpy.typing import NDArray
 
 import ikob.utils as utils
-from ikob.urbanisation_grade_to_parking_times import \
-    urbanisation_grade_to_parking_times
+from ikob.urbanisation_grade_to_parking_times import urbanisation_grade_to_parking_times
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +18,14 @@ def get_project_name(config) -> str:
 
 
 def get_project_directory(config) -> pathlib.Path:
-    paths = config['project']['paden']
-    output_dir = pathlib.Path(paths['output_directory'])
+    paths = config["project"]["paden"]
+    output_dir = pathlib.Path(paths["output_directory"])
     return output_dir / get_project_name(config)
 
 
 def get_temporary_directory(config) -> pathlib.Path:
     project_dir = get_project_directory(config)
-    return project_dir / 'tussenresultaten'
+    return project_dir / "tussenresultaten"
 
 
 def read_csv_from_config(config, key: str, id: str, type_caster=float):
@@ -47,12 +46,9 @@ def read_parking_times(config):
     """
 
     config_skims = config["skims"]
-    segs_dir = pathlib.Path(config['project']['paden']['segs_directory'])
+    segs_dir = pathlib.Path(config["project"]["paden"]["segs_directory"])
 
-    parking_time_path = pathlib.Path(config_skims.get(
-        "parkeerzoektijden_bestand",
-        segs_dir / "Parkeerzoektijd.csv"
-    ))
+    parking_time_path = pathlib.Path(config_skims.get("parkeerzoektijden_bestand", segs_dir / "Parkeerzoektijd.csv"))
 
     if parking_time_path.exists():
         logging.info("Reading parking times: '%s'", parking_time_path)
@@ -60,8 +56,7 @@ def read_parking_times(config):
 
     urbanisation_path = segs_dir / "Stedelijkheidsgraad.csv"
     assert urbanisation_path.exists(), (
-        "Missing both Parkeerzoektijden, Stedelijkheidsgraad files."
-        "Parkeerzoektijden file cannot be generated."
+        "Missing both Parkeerzoektijden, Stedelijkheidsgraad files.Parkeerzoektijden file cannot be generated."
     )
 
     msg = "Generating parking times from '%s'"
@@ -90,15 +85,14 @@ class SegsSource:
     """A data provider for SEGS files."""
 
     def __init__(self, config):
-        self.segs_dir = pathlib.Path(
-            config['project']['paden']['segs_directory'])
+        self.segs_dir = pathlib.Path(config["project"]["paden"]["segs_directory"])
         self.tmp_dir = get_temporary_directory(config)
 
     def _segs_input_dir(self, id, jaar, scenario):
         return self._segs_dir(self.segs_dir, id, jaar, scenario)
 
     def _segs_output_dir(self, id, jaar, scenario, group="", modifier=""):
-        root = self.tmp_dir / 'groepenverdeling'
+        root = self.tmp_dir / "groepenverdeling"
         return self._segs_dir(root, id, jaar, scenario, group, modifier)
 
     def _segs_dir(self, path, id, jaar, scenario, group="", modifier=""):
@@ -121,7 +115,7 @@ class SegsSource:
         # for one variable, the fix is introduced here. Once that data is
         # passed along as function arguments (kept in memory), this TODO
         # is to be resolved.
-        should_read_from_output = 'Verdeling_over_groepen' in id
+        should_read_from_output = "Verdeling_over_groepen" in id
 
         if should_read_from_output:
             path = self._segs_output_dir(id, jaar, scenario)
@@ -131,30 +125,12 @@ class SegsSource:
         path = path.with_suffix(".csv")
         return utils.read_csv(path, type_caster=type_caster)
 
-    def write_csv(
-            self,
-            data,
-            id,
-            header,
-            group="",
-            jaar="",
-            modifier="",
-            scenario=""):
-        path = self._segs_output_dir(
-            id, jaar, scenario, group, modifier).with_suffix(".csv")
+    def write_csv(self, data, id, header, group="", jaar="", modifier="", scenario=""):
+        path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".csv")
         return utils.write_csv(data, path, header=header)
 
-    def write_xlsx(
-            self,
-            data,
-            id,
-            header,
-            group="",
-            jaar="",
-            modifier="",
-            scenario=""):
-        path = self._segs_output_dir(
-            id, jaar, scenario, group, modifier).with_suffix(".xlsx")
+    def write_xlsx(self, data, id, header, group="", jaar="", modifier="", scenario=""):
+        path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".xlsx")
         return utils.write_xls(data, path, header)
 
 
@@ -175,6 +151,7 @@ class DataKey:
     strings and can be passed towards the DataSource to read/write
     the desired data.
     """
+
     id: str
     part_of_day: str
     regime: Optional[str] = ""
@@ -211,8 +188,17 @@ class DataSource:
         id_with_suffix = self._add_id_suffix(key)
         dagsoort = key.part_of_day.lower()
         regime = key.regime.lower()
-        path = self.project_dir / base / regime / key.motive / key.group / \
-            self.datatype.value / key.subtopic / dagsoort / key.fuel_kind
+        path = (
+            self.project_dir
+            / base
+            / regime
+            / key.motive
+            / key.group
+            / self.datatype.value
+            / key.subtopic
+            / dagsoort
+            / key.fuel_kind
+        )
         os.makedirs(path, exist_ok=True)
         return path / id_with_suffix
 

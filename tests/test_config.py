@@ -1,8 +1,7 @@
 import json
 import pathlib
 
-from ikob.configuration_definition import (try_fix_incompatible_configuration,
-                                           validate_config)
+from ikob.configuration_definition import try_fix_incompatible_configuration, validate_config
 from ikob.ikobconfig import loadConfig
 
 old_config = """
@@ -123,6 +122,6 @@ def test_auto_fix_config():
 
 def test_load_fixable_config(tmpdir):
     tmpdir = pathlib.Path(tmpdir)
-    config_file = (tmpdir / "test.json")
+    config_file = tmpdir / "test.json"
     config_file.write_text(old_config)
     loadConfig(config_file)

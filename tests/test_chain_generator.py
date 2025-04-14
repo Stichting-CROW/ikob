@@ -20,9 +20,7 @@ def test_chain_generator(tmpdir):
     transfer_time_pt = 8
     transfer_time_bike = 5
 
-    chain_generator(result_dir,
-                    name, hubs,
-                    transfer_time_pt, transfer_time_bike)
+    chain_generator(result_dir, name, hubs, transfer_time_pt, transfer_time_bike)
 
     # Since output files are written back to input directory, the remaining
     # input files are removed before comparing output files with references.

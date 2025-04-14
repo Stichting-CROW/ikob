@@ -18,16 +18,15 @@ def ask_user_for_skims_directory():
     skims = Tk()
     skims.geometry = main_window_size
     skims.label = label
-    skims.directory = filedialog.askdirectory(initialdir=initialdir,
-                                              title=title)
+    skims.directory = filedialog.askdirectory(initialdir=initialdir, title=title)
     skims.destroy()
-    return skims.directory + '/'
+    return skims.directory + "/"
 
 
 def ask_user_for_hubs() -> list[int]:
     """Prompt user over ``stdin`` for hubs in the hub set."""
     hubs = []
-    prompt = 'Geef de zone(s) met hub(s) één voor één aan. Als je de laatste hebt gehad, typ dan -1: '
+    prompt = "Geef de zone(s) met hub(s) één voor één aan. Als je de laatste hebt gehad, typ dan -1: "
 
     while True:
         response = input(prompt)
@@ -41,26 +40,24 @@ def ask_user_for_hubs() -> list[int]:
 
 def ask_user_for_hub_name() -> str:
     """Prompt user over ``stdin`` for a idenfier for the hub set."""
-    prompt = 'Geef de hubset een naam'
+    prompt = "Geef de hubset een naam"
     return input(prompt)
 
 
 def ask_user_for_transfer_times() -> tuple[int, int]:
     """Prompt user over ``stdin`` for transfer time between transport kinds."""
-    prompt = 'Hoeveel overstaptijd is er op de hub tussen auto en OV?'
+    prompt = "Hoeveel overstaptijd is er op de hub tussen auto en OV?"
     transfer_time_car_pt = int(input(prompt))
 
-    prompt = 'Hoeveel overstaptijd is er op de hub tussen auto en fiets?'
+    prompt = "Hoeveel overstaptijd is er op de hub tussen auto en fiets?"
     transfer_time_car_bike = int(input(prompt))
 
     return transfer_time_car_pt, transfer_time_car_bike
 
 
-def chain_generator(skims_directory: pathlib.Path,
-                    name: str,
-                    hubs: list[int],
-                    transfer_time_pt: int,
-                    transfer_time_bike: int):
+def chain_generator(
+    skims_directory: pathlib.Path, name: str, hubs: list[int], transfer_time_pt: int, transfer_time_bike: int
+):
     """Generate skim input files for chains (P+R)
 
     Note: The hubs are internally converted for zero-base indexing.
@@ -68,11 +65,11 @@ def chain_generator(skims_directory: pathlib.Path,
     # Correct for zero-base indexing.
     hubs = np.array(hubs) - 1
 
-    car_times = read_csv(skims_directory / 'Auto_Tijd.csv')
-    bike_times = read_csv(skims_directory / 'Fiets_Tijd.csv')
-    pt_times = read_csv(skims_directory / 'OV_Tijd.csv')
-    car_distances = read_csv(skims_directory / 'Auto_Afstand.csv')
-    pt_distances = read_csv(skims_directory / 'OV_Afstand.csv')
+    car_times = read_csv(skims_directory / "Auto_Tijd.csv")
+    bike_times = read_csv(skims_directory / "Fiets_Tijd.csv")
+    pt_times = read_csv(skims_directory / "OV_Tijd.csv")
+    car_distances = read_csv(skims_directory / "Auto_Afstand.csv")
+    pt_distances = read_csv(skims_directory / "OV_Afstand.csv")
 
     n_hubs = len(hubs)
     n_car_times = len(car_times)
@@ -86,7 +83,7 @@ def chain_generator(skims_directory: pathlib.Path,
     pr_destination_car_distances = np.zeros((n_car_times, n_car_times, n_hubs))
     pr_bike_car_distances = np.zeros((n_car_times, n_car_times, n_hubs))
 
-    for (i, j) in np.ndindex(n_car_times, n_car_times):
+    for i, j in np.ndindex(n_car_times, n_car_times):
         mask = pt_times[i, hubs] <= car_times[hubs, j]
 
         pr_destination_times[i, j, :] = np.where(
@@ -125,7 +122,7 @@ def chain_generator(skims_directory: pathlib.Path,
             pt_distances[i, hubs],
         )
 
-    for (i, j) in np.ndindex(n_car_times, n_car_times):
+    for i, j in np.ndindex(n_car_times, n_car_times):
         mask = bike_times[i, hubs] <= bike_times[hubs, j]
 
         pr_bike_times[i, j, :] = np.where(
@@ -168,17 +165,12 @@ def chain_generator(skims_directory: pathlib.Path,
     initial = 9999
     pr_origin_time = np.min(pr_origin_times, axis=2, initial=initial)
     pr_bike_time = np.min(pr_bike_times, axis=2, initial=initial)
-    pr_origin_pt_distance = np.min(
-        pr_origin_pt_distances, axis=2, initial=initial)
-    pr_destination_car_distance = np.min(
-        pr_destination_car_distances, axis=2, initial=initial)
-    pr_destination_pt_distance = np.min(
-        pr_destination_pt_distances, axis=2, initial=initial)
-    pr_bike_car_distance = np.min(
-        pr_bike_car_distances, axis=2, initial=initial)
+    pr_origin_pt_distance = np.min(pr_origin_pt_distances, axis=2, initial=initial)
+    pr_destination_car_distance = np.min(pr_destination_car_distances, axis=2, initial=initial)
+    pr_destination_pt_distance = np.min(pr_destination_pt_distances, axis=2, initial=initial)
+    pr_bike_car_distance = np.min(pr_bike_car_distances, axis=2, initial=initial)
     pr_destination_time = np.min(pr_destination_times, axis=2, initial=initial)
-    pr_origin_car_distance = np.min(
-        pr_origin_car_distances, axis=2, initial=initial)
+    pr_origin_car_distance = np.min(pr_origin_car_distances, axis=2, initial=initial)
 
     # Extract hubs at minimum values.
     rmin = np.argmin(pr_destination_times, axis=2)
@@ -191,16 +183,16 @@ def chain_generator(skims_directory: pathlib.Path,
     pr_min_hubs_bike += 1
 
     filename_and_data = [
-        (f'PplusR_{name}_bestemmings_Tijd.csv', pr_destination_time),
-        (f'PplusR_{name}_bestemmings_Afstand_Auto.csv', pr_destination_car_distance),
-        (f'PplusR_{name}_bestemmings_Afstand_OV.csv', pr_destination_pt_distance),
-        (f'PplusR_{name}_herkomst_Tijd.csv', pr_origin_time),
-        (f'PplusR_{name}_herkomst_Afstand_Auto.csv', pr_origin_car_distance),
-        (f'PplusR_{name}_herkomst_Afstand_OV.csv', pr_origin_pt_distance),
-        (f'Pplusfiets_{name}_Tijd.csv', pr_bike_time),
-        (f'Pplusfiets_{name}_Afstand_Auto.csv', pr_bike_car_distance),
-        (f'Pplusfiets_{name}_bestehubs.csv', pr_min_hubs_bike),
-        (f'PplusR_{name}_bestehubs.csv', pr_min_hubs),
+        (f"PplusR_{name}_bestemmings_Tijd.csv", pr_destination_time),
+        (f"PplusR_{name}_bestemmings_Afstand_Auto.csv", pr_destination_car_distance),
+        (f"PplusR_{name}_bestemmings_Afstand_OV.csv", pr_destination_pt_distance),
+        (f"PplusR_{name}_herkomst_Tijd.csv", pr_origin_time),
+        (f"PplusR_{name}_herkomst_Afstand_Auto.csv", pr_origin_car_distance),
+        (f"PplusR_{name}_herkomst_Afstand_OV.csv", pr_origin_pt_distance),
+        (f"Pplusfiets_{name}_Tijd.csv", pr_bike_time),
+        (f"Pplusfiets_{name}_Afstand_Auto.csv", pr_bike_car_distance),
+        (f"Pplusfiets_{name}_bestehubs.csv", pr_min_hubs_bike),
+        (f"PplusR_{name}_bestehubs.csv", pr_min_hubs),
     ]
     for filename, data in filename_and_data:
         write_csv(data, skims_directory / filename)

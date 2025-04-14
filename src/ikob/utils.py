@@ -32,14 +32,9 @@ def read_csv(filenaam, type_caster=float):
     # First, attempt to read without header.
     # If this fails, read with skipping the header.
     try:
-        matrix = np.loadtxt(filenaam,
-                            dtype=type_caster,
-                            delimiter=',')
+        matrix = np.loadtxt(filenaam, dtype=type_caster, delimiter=",")
     except ValueError:
-        matrix = np.loadtxt(filenaam,
-                            dtype=type_caster,
-                            skiprows=1,
-                            delimiter=',')
+        matrix = np.loadtxt(filenaam, dtype=type_caster, skiprows=1, delimiter=",")
     return matrix
 
 
@@ -61,100 +56,95 @@ def write_csv(matrix, filenaam, header=[]):
         # np.savetxt writes this by default as one column.
         matrix = matrix.reshape(1, matrix.shape[0])
 
-    fmt = '%d' if np.isdtype(matrix.dtype, 'integral') else '%.18e'
+    fmt = "%d" if np.isdtype(matrix.dtype, "integral") else "%.18e"
     delim = ","
     header = delim.join(header)
-    np.savetxt(filenaam,
-               matrix,
-               fmt=fmt,
-               delimiter=delim,
-               header=header,
-               comments='')
+    np.savetxt(filenaam, matrix, fmt=fmt, delimiter=delim, header=header, comments="")
 
 
 def group_income_level(naam):
-    if naam[-4:] == 'hoog':
-        if naam[-10:] == 'middelhoog':
-            return 'middelhoog'
+    if naam[-4:] == "hoog":
+        if naam[-10:] == "middelhoog":
+            return "middelhoog"
         else:
-            return 'hoog'
-    elif naam[-4:] == 'laag':
-        if naam[-10:] == 'middellaag':
-            return 'middellaag'
+            return "hoog"
+    elif naam[-4:] == "laag":
+        if naam[-10:] == "middellaag":
+            return "middellaag"
         else:
-            return 'laag'
+            return "laag"
     else:
-        return ''
+        return ""
 
 
 def find_preference(naam, mod):
-    if 'vk' in naam:
-        Beginvk = naam.find('vk')
+    if "vk" in naam:
+        Beginvk = naam.find("vk")
         if naam[Beginvk + 2] == "A":
-            return 'Auto'
+            return "Auto"
         elif naam[Beginvk + 2] == "N":
-            return 'Neutraal'
+            return "Neutraal"
         elif naam[Beginvk + 2] == "O":
-            return 'OV'
+            return "OV"
         elif naam[Beginvk + 2] == "F":
-            return 'Fiets'
+            return "Fiets"
         else:
-            return ''
-    elif 'GratisAuto' in naam:
-        if 'GratisAuto_GratisOV' in naam and 'OV' in mod and 'Auto' in mod:
-            return 'Neutraal'
+            return ""
+    elif "GratisAuto" in naam:
+        if "GratisAuto_GratisOV" in naam and "OV" in mod and "Auto" in mod:
+            return "Neutraal"
         else:
-            if 'Auto' in mod:
-                return 'Auto'
+            if "Auto" in mod:
+                return "Auto"
             else:
-                return 'OV'
-    elif 'GratisOV' in naam:
-        return 'OV'
+                return "OV"
+    elif "GratisOV" in naam:
+        return "OV"
     else:
-        return ''
+        return ""
 
 
 def single_group(mod, gr):
-    if mod == 'Auto':
-        if 'GratisAuto' in gr:
-            return 'GratisAuto'
-        elif 'Wel' in gr:
-            return 'Auto'
-        if 'GeenAuto' in gr:
-            return 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            return 'GeenRijbewijs'
-    if mod == 'OV':
-        if 'GratisOV' in gr:
-            return 'GratisOV'
+    if mod == "Auto":
+        if "GratisAuto" in gr:
+            return "GratisAuto"
+        elif "Wel" in gr:
+            return "Auto"
+        if "GeenAuto" in gr:
+            return "GeenAuto"
+        if "GeenRijbewijs" in gr:
+            return "GeenRijbewijs"
+    if mod == "OV":
+        if "GratisOV" in gr:
+            return "GratisOV"
         else:
-            return 'OV'
+            return "OV"
 
 
 def combined_group(mod, gr):
-    string = ''
-    if 'Auto' in mod:
-        if 'GratisAuto' in gr:
-            string = 'GratisAuto'
-        elif 'Wel' in gr:
-            string = 'Auto'
-        if 'GeenAuto' in gr:
-            string = 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            string = 'GeenRijbewijs'
-    if 'OV' in mod:
-        if 'GratisOV' in gr:
-            if string == '':
-                string = string + 'GratisOV'
+    string = ""
+    if "Auto" in mod:
+        if "GratisAuto" in gr:
+            string = "GratisAuto"
+        elif "Wel" in gr:
+            string = "Auto"
+        if "GeenAuto" in gr:
+            string = "GeenAuto"
+        if "GeenRijbewijs" in gr:
+            string = "GeenRijbewijs"
+    if "OV" in mod:
+        if "GratisOV" in gr:
+            if string == "":
+                string = string + "GratisOV"
             else:
-                string = string + '_GratisOV'
+                string = string + "_GratisOV"
         else:
-            if string == '':
-                string = string + 'OV'
+            if string == "":
+                string = string + "OV"
             else:
-                string = string + '_OV'
-    if 'EFiets' in mod:
-        string = string + '_EFiets'
-    elif 'Fiets' in mod:
-        string = string + '_Fiets'
+                string = string + "_OV"
+    if "EFiets" in mod:
+        string = string + "_EFiets"
+    elif "Fiets" in mod:
+        string = string + "_Fiets"
     return string

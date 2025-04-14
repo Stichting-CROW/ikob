@@ -2,8 +2,7 @@ import argparse
 import logging
 import sys
 import threading
-from tkinter import (BooleanVar, Button, Frame, StringVar, Tk, filedialog,
-                     messagebox)
+from tkinter import BooleanVar, Button, Frame, StringVar, Tk, filedialog, messagebox
 
 from ikob.combined_weights import calculate_combined_weights
 from ikob.competition import competition_on_citizens, competition_on_jobs
@@ -19,11 +18,7 @@ from ikob.single_weights import calculate_single_weights
 logger = logging.getLogger(__name__)
 
 
-def run_scripts(
-    project_file,
-    skip_steps: list[bool] | None = None,
-    write_weights: bool = False
-):
+def run_scripts(project_file, skip_steps: list[bool] | None = None, write_weights: bool = False):
     """
     Run through all steps for a given project.
 
@@ -59,8 +54,7 @@ def run_scripts(
         combined_weights = DataSource(config, DataType.WEIGHTS)
 
     if not skip_steps[4]:
-        possibilities = deployment_opportunities(
-            config, single_weights, combined_weights)
+        possibilities = deployment_opportunities(config, single_weights, combined_weights)
     else:
         possibilities = DataSource(config, DataType.DESTINATIONS)
 
@@ -70,14 +64,12 @@ def run_scripts(
         origins = DataSource(config, DataType.ORIGINS)
 
     if not skip_steps[6]:
-        competition_jobs = competition_on_jobs(
-            config, single_weights, combined_weights, origins)
+        competition_jobs = competition_on_jobs(config, single_weights, combined_weights, origins)
     else:
         competition_jobs = DataSource(config, DataType.COMPETITION)
 
     if not skip_steps[7]:
-        competition_citizens = competition_on_citizens(
-            config, single_weights, combined_weights, possibilities)
+        competition_citizens = competition_on_citizens(config, single_weights, combined_weights, possibilities)
     else:
         competition_citizens = DataSource(config, DataType.COMPETITION)
 
@@ -87,11 +79,7 @@ def run_scripts(
     # end-to-end testing. Ultimately only files that are essential outputs
     # should persist.
     logger.info("Writing output to disk...")
-    sources_to_save = [travel_time,
-                       possibilities,
-                       origins,
-                       competition_citizens,
-                       competition_jobs]
+    sources_to_save = [travel_time, possibilities, origins, competition_citizens, competition_jobs]
     if write_weights:
         sources_to_save.extend([single_weights, combined_weights])
 
@@ -114,7 +102,8 @@ class ConfigApp(Tk):
         "Bereikbaarheid arbeidsplaatsen voor inwoners",
         "Potentie bereikbaarheid voor bedrijven en instellingen",
         "Concurrentiepositie voor bereik arbeidsplaatsen",
-        "Concurrentiepositie voor bedrijven qua bereikbaarheid")
+        "Concurrentiepositie voor bedrijven qua bereikbaarheid",
+    )
 
     def __init__(self):
         super().__init__()
@@ -128,21 +117,11 @@ class ConfigApp(Tk):
         self.widgets = []
         F1 = Frame()
         F1.pack(expand=1, fill="both", **self.PAD)
-        self.widgets.extend(
-            widgets.pathWidget(F1, "Project", self._configvar, file=True)
-        )
+        self.widgets.extend(widgets.pathWidget(F1, "Project", self._configvar, file=True))
         self.widgets.append(F1)
         labels = [stap for stap in self.stappen]
-        self.widgets.extend(
-            widgets.checklistWidget(
-                F1, "Stappen", labels, self._checks, row=1, itemsperrow=1
-            )
-        )
-        B = Button(
-            master=F1,
-            text="Start",
-            command=lambda: threading.Thread(target=self.cmdRun).start()
-        )
+        self.widgets.extend(widgets.checklistWidget(F1, "Stappen", labels, self._checks, row=1, itemsperrow=1))
+        B = Button(master=F1, text="Start", command=lambda: threading.Thread(target=self.cmdRun).start())
         B.grid(row=2, column=2, sticky="ew", **self.PAD)
         self.run_button = B
         self.widgets.append(B)
@@ -183,8 +162,7 @@ class ConfigApp(Tk):
                     message="Het bestand bevat geen geldige configuratie.",
                 )
             except IOError:
-                messagebox.showerror(
-                    title="Fout", message="Het bestand kan niet worden geladen.")
+                messagebox.showerror(title="Fout", message="Het bestand kan niet worden geladen.")
 
 
 def main(verbose=False):
@@ -195,9 +173,7 @@ def main(verbose=False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        prog="ikobrunner", description="Launch the IKOB runner GUI."
-    )
+    parser = argparse.ArgumentParser(prog="ikobrunner", description="Launch the IKOB runner GUI.")
     parser.add_argument(
         "-v",
         "--verbose",
