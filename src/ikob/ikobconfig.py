@@ -7,7 +7,7 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
-from ikob.config import build, validate
+from ikob.gui import build, validate
 from ikob.configuration_definition import (
     default_config,
     default_configuration_definition,

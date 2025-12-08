@@ -7,11 +7,11 @@ from tkinter import BooleanVar, Button, Frame, StringVar, Tk, Widget, filedialog
 
 from ikob.combined_weights import calculate_combined_weights
 from ikob.competition import competition_on_citizens, competition_on_jobs
-from ikob.config import widgets
 from ikob.datasource import DataSource, DataType
 from ikob.deployment_opportunities import deployment_opportunities
 from ikob.distribute_over_groups import distribute_over_groups
 from ikob.generalized_travel_time import generalized_travel_time
+from ikob.gui import widgets
 from ikob.ikobconfig import get_config_from_args, load_config
 from ikob.potential_companies import potential_companies
 from ikob.single_weights import calculate_single_weights

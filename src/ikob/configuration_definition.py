@@ -1,7 +1,7 @@
 import logging
 from enum import Enum
 
-from ikob.config import build, validate
+from ikob.gui import build, validate
 
 logger = logging.getLogger(__name__)
 
