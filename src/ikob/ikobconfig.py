@@ -7,7 +7,6 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
-from ikob.gui import build, validate
 from ikob.configuration_definition import (
     default_config,
     default_configuration_definition,
@@ -15,6 +14,8 @@ from ikob.configuration_definition import (
     try_fix_incompatible_configuration,
     validate_config,
 )
+from ikob.gui.gui_builder import GuiBuilder
+from ikob.gui.template_validator import TemplateValidator
 
 logger = logging.getLogger(__name__)
 
@@ -93,24 +94,25 @@ class ConfigApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("IKOB configuratie")
+        self.gui_builder = GuiBuilder()
         self.add_variables()
         self.create_widgets()
 
     def add_variables(self):
         self._template = default_configuration_definition()
-        build.addTkVarsTemplate(self._template)
+        self.gui_builder.add_tk_vars_template(self._template)
 
     def create_widgets(self):
-        self._widgets = build.buildTkInterface(
+        self._widgets = self.gui_builder.build_tk_interface(
             self,
             self._template,
-            cmdNew=self.new_project_cmd,
-            cmdLoad=self.load_project_cmd,
-            cmdSave=self.save_project_cmd,
+            new_cmd=self.new_project_cmd,
+            load_cmd=self.load_project_cmd,
+            save_cmd=self.save_project_cmd,
         )
 
     def new_project_cmd(self):
-        build.setTkVars(self._template, default_config())
+        self.gui_builder.set_tk_vars(self._template, default_config())
 
     def load_project_cmd(self):
         filename = filedialog.askopenfilename(
@@ -128,10 +130,10 @@ class ConfigApp(tk.Tk):
             except IOError:
                 messagebox.showerror(title="Fout", message="Het bestand kan niet worden geladen.")
             else:
-                build.setTkVars(self._template, read_config)
+                self.gui_builder.set_tk_vars(self._template, read_config)
 
     def save_project_cmd(self):
-        config = build.buildConfigDict(self._template)
+        config = self.gui_builder.build_config_dict(self._template)
         filename = filedialog.asksaveasfilename(
             title="Kies een .json project bestand.",
             initialfile=_project_filename(project_name(config)),
@@ -166,7 +168,7 @@ def main():
             stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s -  %(message)s"
         )
 
-    if not validate.validateTemplate(default_configuration_definition()):
+    if not TemplateValidator.validate_template(default_configuration_definition()):
         messagebox.showerror(
             title="Fout",
             message="De standaard configuratiedefinitie is niet geldig: Kijk in ConfiguratieDefinitie.py",

@@ -11,7 +11,7 @@ from ikob.datasource import DataSource, DataType
 from ikob.deployment_opportunities import deployment_opportunities
 from ikob.distribute_over_groups import distribute_over_groups
 from ikob.generalized_travel_time import generalized_travel_time
-from ikob.gui import widgets
+from ikob.gui.widget_factory import WidgetFactory
 from ikob.ikobconfig import get_config_from_args, load_config
 from ikob.potential_companies import potential_companies
 from ikob.single_weights import calculate_single_weights
@@ -92,9 +92,6 @@ def run_scripts(project_file, skip_steps: list[bool] | None = None, write_weight
 
 
 class ConfigApp(Tk):
-    PAD_X = 5
-    PAD_Y = 5
-
     stappen = (
         "Gegeneraliseerde reistijd berekenen uit tijd en kosten",
         "Verdeling van de groepen over de buurten of zones",
@@ -111,6 +108,7 @@ class ConfigApp(Tk):
         self.title("IKOB Runner")
         self._checks = [BooleanVar(value=True) for _ in self.stappen]
         self._configvar = StringVar()
+        self.widget_factory = WidgetFactory()
         self.run_button = None
         self.create_widgets()
 
@@ -118,16 +116,29 @@ class ConfigApp(Tk):
         self.widgets: list[Widget] = []
 
         frame = Frame()
-        frame.pack(expand=1, fill="both", padx=self.PAD_X, pady=self.PAD_Y)
+        frame.pack(
+            expand=1,
+            fill="both",
+            padx=self.widget_factory.PADX,
+            pady=self.widget_factory.PADY,
+        )
 
-        self.widgets.extend(widgets.pathWidget(frame, "Project", self._configvar, file=True))
+        self.widgets.extend(self.widget_factory.path_widget(frame, "Project", self._configvar, file=True))
         self.widgets.append(frame)
 
         labels = [stap for stap in self.stappen]
-        self.widgets.extend(widgets.checklistWidget(frame, "Stappen", labels, self._checks, row=1, itemsperrow=1))
+        self.widgets.extend(
+            self.widget_factory.checklist_widget(frame, "Stappen", labels, self._checks, row=1, items_per_row=1)
+        )
 
         button = Button(master=frame, text="Start", command=lambda: threading.Thread(target=self.run_cmd).start())
-        button.grid(row=2, column=2, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
+        button.grid(
+            row=2,
+            column=2,
+            sticky="ew",
+            padx=self.widget_factory.PADX,
+            pady=self.widget_factory.PADY,
+        )
         self.run_button = button
         self.widgets.append(button)
 

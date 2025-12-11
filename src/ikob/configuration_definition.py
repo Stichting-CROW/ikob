@@ -1,7 +1,8 @@
 import logging
 from enum import Enum
 
-from ikob.gui import build, validate
+from ikob.gui import gui_builder
+from ikob.gui.template_validator import TemplateValidator
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +186,7 @@ def default_skims_tab():
     }
 
 
-def default_tovm_tab():
+def default_tvom_tab():
     levels = ["Hoog", "Middelhoog", "Middellaag", "Laag"]
     werk_values = [4, 6, 9, 12]
 
@@ -331,7 +332,7 @@ def default_configuration_definition():
 
     project_tab = default_project_tab()
     skims_tab = default_skims_tab()
-    tovm_tab = default_tovm_tab()
+    tvom_tab = default_tvom_tab()
     verdeling_tab = default_verdeling_tab()
     chains_and_hubs_tab = default_chains_and_hubs_tab()
     advanced_tab = default_advanced_tab()
@@ -339,7 +340,7 @@ def default_configuration_definition():
     return {
         "project": project_tab,
         "skims": skims_tab,
-        "TVOM": tovm_tab,
+        "TVOM": tvom_tab,
         "verdeling": verdeling_tab,
         "ketens": chains_and_hubs_tab,
         "geavanceerd": advanced_tab,
@@ -354,7 +355,7 @@ def project_name(config):
 def validate_config(config, strict=True):
     """Validate a config dictionary."""
 
-    return validate.validateConfigWithTemplate(config, default_configuration_definition(), strict=strict)
+    return TemplateValidator.validate_config_with_template(config, default_configuration_definition(), strict=strict)
 
 
 def try_fix_incompatible_configuration(config):
@@ -452,5 +453,5 @@ def fiets_checklist_to_checkbox(config):
 def default_config():
     """Provide the configuration using the default config definition."""
     template = default_configuration_definition()
-    config = build.buildConfigDict(template)
+    config = gui_builder.build_config_dict(template)
     return config
