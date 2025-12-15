@@ -1,21 +1,19 @@
 import argparse
-import json
 import logging
 import os
 import re
 import sys
 import tkinter as tk
+from dataclasses import asdict
 from tkinter import filedialog, messagebox
 
-from ikob.configuration_definition import (
-    default_config,
-    default_configuration_definition,
-    project_name,
-    try_fix_incompatible_configuration,
-    validate_config,
+import yaml
+
+from ikob.gui.configuration_definition import (
+    FILENAME_FIELD_NAME,
+    IkobConfig,
 )
-from ikob.gui.gui_builder import GuiBuilder
-from ikob.gui.template_validator import TemplateValidator
+from ikob.gui.gui_builder import IkobGui
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +26,12 @@ def _project_filename(project_name, make_safe=True):
     door de gebruiker opgegeven naam van een project.
     """
     filename, ext = os.path.splitext(project_name)
-    if ext != ".json":
+    if ext != ".yaml":
         filename = project_name
     if make_safe:
         filename = re.sub(r"[^\w\s]", "", filename)
         filename = re.sub(r"\s+", "_", filename)
-    return filename + ".json"
+    return filename + ".yaml"
 
 
 def get_config_from_args(project=None):
@@ -55,33 +53,21 @@ def get_config_from_args(project=None):
 def load_config(filename):
     config = None
     try:
-        with open(filename) as json_file:
-            config = json.load(json_file)
+        with open(filename) as file:
+            yaml_dict = yaml.safe_load(file)
+            return IkobConfig(**yaml_dict)
     except BaseException as e:
         raise IOError(f"Kan niet lezen uit: '{filename}' with error:\n'{e}'.")
-    if config:
-        if not validate_config(config):
-            msg = "Loaded config file: '%s' is incompatible with current IKOB."
-            logger.warning(msg, filename)
 
-            config = try_fix_incompatible_configuration(config)
-
-            if validate_config(config):
-                msg = "Automatically recovered from incompatible config file."
-                logger.info(msg)
-            else:
-                msg = "Configuration has irrecoverable incompatible format."
-                logger.error(msg)
-                raise ValueError(msg)
-
-        config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
+    # This is a bit of an ugly hack that should be fixed
+    setattr(config, FILENAME_FIELD_NAME, os.path.splitext(os.path.basename(filename))[0])
     return config
 
 
-def saveConfig(filename, config):
+def saveConfig(filename: str, config: IkobConfig):
     try:
-        with open(filename, "w") as json_file:
-            json.dump(config, json_file, indent=2)
+        with open(filename, "w") as file:
+            yaml.dump(asdict(config), file, indent=2, default_flow_style=False)
     except BaseException:
         raise IOError(f"Kan configuratie niet wegschrijven naar: {filename}.")
     return True
@@ -94,30 +80,21 @@ class ConfigApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("IKOB configuratie")
-        self.gui_builder = GuiBuilder()
-        self.add_variables()
-        self.create_widgets()
-
-    def add_variables(self):
-        self._template = default_configuration_definition()
-        self.gui_builder.add_tk_vars_template(self._template)
-
-    def create_widgets(self):
+        self.gui_builder = IkobGui()
         self._widgets = self.gui_builder.build_tk_interface(
             self,
-            self._template,
-            new_cmd=self.new_project_cmd,
-            load_cmd=self.load_project_cmd,
-            save_cmd=self.save_project_cmd,
+            new_cmd=self._new_project_cmd,
+            load_cmd=self._load_project_cmd,
+            save_cmd=self._save_project_cmd,
         )
 
-    def new_project_cmd(self):
-        self.gui_builder.set_tk_vars(self._template, default_config())
+    def _new_project_cmd(self):
+        self.gui_builder.reset_gui()
 
-    def load_project_cmd(self):
+    def _load_project_cmd(self):
         filename = filedialog.askopenfilename(
-            title="Kies een .json project bestand.",
-            filetypes=[("project file", ".json")],
+            title="Kies een .yaml project bestand.",
+            filetypes=[("project file", ".yaml"), ("Project file", ".json")],
         )
         if filename:
             try:
@@ -130,14 +107,14 @@ class ConfigApp(tk.Tk):
             except IOError:
                 messagebox.showerror(title="Fout", message="Het bestand kan niet worden geladen.")
             else:
-                self.gui_builder.set_tk_vars(self._template, read_config)
+                self.gui_builder.load_config_in_gui(read_config)
 
-    def save_project_cmd(self):
-        config = self.gui_builder.build_config_dict(self._template)
+    def _save_project_cmd(self):
+        config = self.gui_builder.get_config_from_gui()
         filename = filedialog.asksaveasfilename(
-            title="Kies een .json project bestand.",
-            initialfile=_project_filename(project_name(config)),
-            filetypes=[("project file", ".json")],
+            title="Kies een .yaml project bestand.",
+            initialfile=_project_filename(config.project.name),
+            filetypes=[("project file", ".yaml")],
         )
 
         # The filename remains empty when the dialog is cancelled.
@@ -167,13 +144,14 @@ def main():
         logging.basicConfig(
             stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s -  %(message)s"
         )
+    logger.info("starting app")
 
-    if not TemplateValidator.validate_template(default_configuration_definition()):
-        messagebox.showerror(
-            title="Fout",
-            message="De standaard configuratiedefinitie is niet geldig: Kijk in ConfiguratieDefinitie.py",
-        )
-        exit(1)
+    # if not TemplateValidator.validate_template(default_configuration_definition()):
+    #     messagebox.showerror(
+    #         title="Fout",
+    #         message="De standaard configuratiedefinitie is niet geldig: Kijk in ConfiguratieDefinitie.py",
+    #     )
+    #     exit(1)
     App = ConfigApp()
     App.mainloop()
 

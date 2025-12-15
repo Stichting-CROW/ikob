@@ -1,5 +1,6 @@
 def work_constants(modality, preference, motive):
     motives = ["werk", "sociaal-recreatief", "winkeldagelijks", "onderwijs"]
+
     assert motive in motives, f"Unknown motive: '{motive}'"
 
     if motive == "werk" or motive == "sociaal-recreatief":

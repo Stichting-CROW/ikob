@@ -17,6 +17,8 @@ dependencies = [
     "numpy",
     "openpyxl",
     "xlsxwriter",
+    "pyyaml",
+    "pydantic"
 ]
 
 [project.optional-dependencies]

@@ -1,33 +1,65 @@
-# ruff: noqa: F403,F405
+import logging
 import tkinter as tk
+from dataclasses import fields, is_dataclass
 from tkinter import ttk
 
+from ikob.gui.configuration_definition import IkobConfig
+from ikob.gui.gui_config_classes import (
+    GUI_ITEM_FACTORY_KEY,
+    GUI_LABEL_KEY,
+    GuiConfigError,
+    GuiConfigItem,
+    GuiDataType,
+)
 from ikob.gui.widget_factory import WidgetFactory
 
-# Build a config dictionary from the template
+logger = logging.getLogger(__name__)
 
 
-class GuiBuilder:
-    """Gui and config builder, the widgets have state for the file dialogs, otherwise stateless."""
+class IkobGui:
+    """Gui and config builder. Uses the IkobConfig data class to build build the gui.
+
+    IkobConfig is dataclass where each field has some metadata for the Gui.
+    Fields are either:
+        A config subsection, represented by a dataclass with a label
+        A config item, represented by a field in dataclass with a GuiConfigItem
+
+    The GuiBuilding first adds tk variables to the fields initialized with the initial value of the config item.
+    Then the tk interface can be build. Widgets are created based on the type of field (subsection / config item)
+    and on the different data types of the config items (text, checkbox etc.)
+
+    The gui's edits will be made to the tk vars of the config items,
+    these edits can be transferred to the data class
+    and the defaults of the data class can also be restored to the gui.
+    """
 
     def __init__(self):
-        self.widget_factory = WidgetFactory()
+        self._widget_factory = WidgetFactory()
+        self._config = IkobConfig()
+        self._add_tk_vars_to_config(self._config)
 
-    def build_tk_interface(self, root, tk_template, new_cmd, load_cmd, save_cmd):
+    def build_tk_interface(self, root: tk.Tk, new_cmd, load_cmd, save_cmd) -> list[tk.Widget]:
+        """Build the tk widgets from the ikob config.
+
+        Throws an error if the meta data of the config (used for the gui) is not as expected
+        """
         notebook = ttk.Notebook(root)
         widgets: list[tk.Widget] = [notebook]
-        for key in tk_template:
-            if not isinstance(tk_template[key], dict):
-                continue
+        for field in fields(self._config):
+            metadata = field.metadata
+            assert GUI_LABEL_KEY in metadata, (
+                "All fields in IkobConfig are expected to be gui_sections (see gui_section())"
+            )
+            label = metadata[GUI_LABEL_KEY]
 
             tab = ttk.Frame(notebook)
             tab.columnconfigure((1), weight=1)
-            label = key
-            if "label" in tk_template[key]:
-                label = tk_template[key]["label"]
+
             notebook.add(tab, text=label)
             widgets.append(tab)
-            widgets.extend(self._add_widgets(tab, tk_template[key]))
+
+            gui_section = getattr(self._config, field.name)
+            widgets.extend(self._add_widgets(tab, gui_section))
 
         notebook.pack(expand=True, fill="both")
         # Add load/save/new buttons.
@@ -47,162 +79,146 @@ class GuiBuilder:
 
         return widgets
 
-    @staticmethod
-    def build_config_dict(template):
+    def get_config_from_gui(self) -> IkobConfig:
         """
-        Build a config dictionary from the template
+        return a populated IkobConfig class with the values from the gui
         """
-        config = {}
-        for key in set(template.keys()):
-            if key != "label":
-                if isinstance(template[key], dict):
-                    if "type" in template[key]:
-                        config[key] = GuiBuilder._get_value(template[key])
-                    else:
-                        config[key] = GuiBuilder.build_config_dict(template[key])
-                else:
-                    config[key] = template[key]
-        return config
+        # Manually do a deep copy to a new IkobConfig instance.
+        # The instance in self._config is internal and a deep copy does not work because of the tk gui items in there.
+        return_config = IkobConfig()
+        logger.info("Writing gui values to a config class")
+        self._get_config_from_gui(self._config, return_config)
+        return return_config
 
-    def add_tk_vars_template(self, template):
-        """
-        Add tkvars to a template
-        """
-        for key in set(template.keys()):
-            if key == "label":
-                continue
-            if not isinstance(template[key], dict):
-                continue
-            if "type" not in template[key]:
-                self.add_tk_vars_template(template[key])
-                continue
+    def reset_gui(self):
+        # Pass through to a recursive method
+        logger.info("Resetting gui values to defaults")
+        self._reset_gui_values_to_default(self._config)
 
-            var = None
-            leaf = template[key]
-            leaf_type = leaf["type"]
-            if leaf_type == "number":
-                var = tk.DoubleVar(value=self._default_value(leaf))  # type: ignore
-            elif leaf_type == "text" or leaf_type == "file" or leaf_type == "directory" or leaf_type == "choice":
-                var = tk.StringVar(value=self._default_value(leaf))  # type: ignore
-            elif leaf_type == "checkbox":
-                var = tk.BooleanVar(value=self._default_value(leaf))  # type: ignore
-            elif leaf_type == "checklist":
-                default_list = self, self._default_value(leaf)
-                var = [tk.BooleanVar(value=(item in default_list)) for item in leaf["items"]]
-            if var:
-                template[key]["tkvar"] = var
+    def load_config_in_gui(self, config_to_load):
+        # Pass through to a recursive method
+        logger.info("Loading existing config into gui")
+        self._load_config_in_gui(self._config, config_to_load)
+
+    def _load_config_in_gui(self, gui_section, config_section):
+        assert is_dataclass(config_section), f"Cannot load config from non dataclass, type is {type(config_section)}"
+        assert is_dataclass(gui_section), "Cannot load config to non dataclass"
+
+        for gui_field in fields(gui_section):
+            config_field = None
+            for f in fields(config_section):
+                if f.name == gui_field.name:
+                    config_field = f
+            if config_field is None:
+                raise GuiConfigError(
+                    f"Cannot load config to gui. Field {gui_field.name} present in gui but not in config to load."
+                )
+
+            gui_metadata = gui_field.metadata
+
+            if GUI_ITEM_FACTORY_KEY in gui_metadata:
+                # The field is a gui item
+                # Get the value from the config field and load it in the gui item
+                gui_item = GuiConfigItem.from_metadata(gui_section, gui_field)
+                value = getattr(config_section, config_field.name)
+                gui_item.set_gui_value(value)
+            elif GUI_LABEL_KEY in gui_metadata:
+                # The field is gui section
+                logger.info("now looking at meta data with label ")
+                logger.info(gui_metadata[GUI_LABEL_KEY])
+                logger.info(f"Processing subsection at name {gui_field.name}")
+
+                gui_subsection = getattr(gui_section, gui_field.name)
+                config_subsection = getattr(config_section, gui_field.name)
+                self._load_config_in_gui(gui_subsection, config_subsection)
             else:
-                print(f"FOUT? template[{key}] = {leaf}")
+                raise GuiConfigError(
+                    f"The field {gui_field.name} has neither {GUI_ITEM_FACTORY_KEY} nor {GUI_LABEL_KEY} in it's metadata. "
+                    "Unable to make make config gui."
+                )
 
-    def set_tk_vars(self, template, config):
-        """
-        Set the value of a config item in tkvars
-        """
-        for key in template:
-            if key not in config:
-                # handle missing key?
-                continue
-            if isinstance(config[key], dict):
-                self.set_tk_vars(template[key], config[key])
-                continue
+    def _get_config_from_gui(self, gui_section, config_section):
+        assert is_dataclass(gui_section), "Cannot add gui values to non dataclass"
 
-            if "type" not in template[key]:
-                continue
+        for gui_field in fields(gui_section):
+            config_field = None
+            for f in fields(config_section):
+                if f.name == gui_field.name:
+                    config_field = f
+            if config_field is None:
+                raise GuiConfigError(
+                    f"Cannot load config to gui. Field {gui_field.name} present in gui but not in config to load."
+                )
 
-            leaf_type = template[key]["type"]
-            if leaf_type == "checklist":
-                values = config[key]
-                for i, item in enumerate(template[key]["items"]):
-                    template[key]["tkvar"][i].set(item in values)
+            gui_metadata = gui_field.metadata
+
+            if GUI_ITEM_FACTORY_KEY in gui_metadata:
+                # The field is a gui item
+                # Get the value from the gui and load it in the config
+                gui_item = GuiConfigItem.from_metadata(gui_section, gui_field)
+                value = gui_item.get_gui_value()
+                setattr(config_section, config_field.name, value)
+            elif GUI_LABEL_KEY in gui_metadata:
+                # The field is gui section
+                gui_subsection = getattr(gui_section, gui_field.name)
+                config_subsection = getattr(config_section, gui_field.name)
+                self._load_config_in_gui(gui_subsection, config_subsection)
             else:
-                template[key]["tkvar"].set(config[key])
+                raise GuiConfigError(
+                    f"The field {gui_field.name} has neither {GUI_ITEM_FACTORY_KEY} nor {GUI_LABEL_KEY} in it's metadata. "
+                    "Unable to make make config gui."
+                )
 
-    @staticmethod
-    def _empty_value(leaf_type):
-        if leaf_type == "number":
-            return 0
-        elif leaf_type == "text" or leaf_type == "file" or leaf_type == "directory" or leaf_type == "choice":
-            return ""
-        elif leaf_type == "check":
-            return False
-        elif leaf_type == "checklist":
-            return []
-        return None
-
-    @staticmethod
-    def _default_value(leaf):
-        if "default" in leaf:
-            return leaf["default"]
-        elif leaf["type"] == "choice":
-            return leaf["items"][0]
-        else:
-            return GuiBuilder._empty_value(leaf["type"])
-
-    @staticmethod
-    def _get_value(leaf):
-        value = None
-        if "tkvar" in leaf:
-            leaf_type = leaf["type"]
-            leaf_tkvar = leaf["tkvar"]
-            leaf_items = leaf["items"] if "items" in leaf else None
-            if leaf_type == "checklist":
-                value = []
-                assert leaf_items is not None, "When the type of the tk leaf is a checklist it's expected to have items"
-
-                for i, var in enumerate(leaf_tkvar):
-                    if var.get():
-                        value.append(leaf_items[i])
+    def _reset_gui_values_to_default(self, gui_section):
+        assert is_dataclass(gui_section), "Cannot reset gui values of non dataclass"
+        for field in fields(gui_section):
+            metadata = field.metadata
+            if GUI_ITEM_FACTORY_KEY in metadata:
+                # The field is a gui item
+                gui_item = GuiConfigItem.from_metadata(gui_section, field)
+                default_value = gui_item.default
+                gui_item.set_gui_value(default_value)
+            elif GUI_LABEL_KEY in metadata:
+                # The field is gui section
+                subsection = getattr(gui_section, field.name)
+                self._reset_gui_values_to_default(subsection)
             else:
-                value = leaf_tkvar.get()
-        else:
-            value = GuiBuilder._default_value(leaf)
-        return value
+                raise GuiConfigError(
+                    f"The field {field.name} has neither {GUI_ITEM_FACTORY_KEY} nor {GUI_LABEL_KEY} in it's metadata. "
+                    "Unable to make make config gui."
+                )
 
-    def _add_widgets(self, master, template):
+    def _add_tk_vars_to_config(self, gui_section):
+        assert is_dataclass(gui_section), "Cannot add tk vars to non dataclass"
+
+        for field in fields(gui_section):
+            metadata = field.metadata
+            if GUI_ITEM_FACTORY_KEY in metadata:
+                # The field is a gui item
+                gui_item = GuiConfigItem.from_metadata(gui_section, field)
+                gui_item.build_and_set_tk_var()
+            elif GUI_LABEL_KEY in metadata:
+                # The field is gui section
+                subsection = getattr(gui_section, field.name)
+                self._add_tk_vars_to_config(subsection)
+            else:
+                raise GuiConfigError(
+                    f"The field {field.name} has neither {GUI_ITEM_FACTORY_KEY} nor {GUI_LABEL_KEY} in it's metadata. "
+                    "Unable to make make config gui."
+                )
+
+    def _add_widgets(self, master, gui_section) -> list[tk.Widget]:
         widgets = []
         row = 0
-        for key in template:
-            if key == "label":
-                continue
-            if not isinstance(template[key], dict):
-                continue
-
-            if "type" in template[key]:
-                leaf = template[key]
-                leaf_type = leaf["type"]
-                label = key
-                unit = ""
-                items = []
-                if "label" in leaf:
-                    label = leaf["label"]
-                if "unit" in leaf:
-                    unit = leaf["unit"]
-                if "items" in leaf:
-                    items = leaf["items"]
-                var = leaf["tkvar"]
-                if leaf_type == "number":
-                    widgets.extend(self.widget_factory.number_widget(master, label, unit, var, row=row))
-                elif leaf_type == "text":
-                    widgets.extend(self.widget_factory.text_widget(master, label, var, row=row))
-                elif leaf_type == "file":
-                    widgets.extend(self.widget_factory.path_widget(master, label, var, row=row, file=True))
-                elif leaf_type == "directory":
-                    widgets.extend(self.widget_factory.path_widget(master, label, var, row=row))
-                elif leaf_type == "choice":
-                    widgets.extend(self.widget_factory.choice_widget(master, label, items, unit, var, row=row))
-                elif leaf_type == "checkbox":
-                    widgets.extend(self.widget_factory.checkbox_widget(master, label, var, row=row))
-                elif leaf_type == "checklist":
-                    widgets.extend(self.widget_factory.checklist_widget(master, label, items, var, row=row))
-                else:
-                    dummy = tk.Label(master=master, text="Dummy")
-                    dummy.grid(row=row, column=0)
-                    widgets.append(dummy)
-                row = row + 1
-            else:
-                label = key
-                if "label" in template[key]:
-                    label = template[key]["label"]
+        for field in fields(gui_section):
+            metadata = field.metadata
+            if GUI_ITEM_FACTORY_KEY in metadata:
+                # The field is a gui item
+                gui_item = GuiConfigItem.from_metadata(gui_section, field)
+                widgets.extend(self._get_widget_for_item(master, gui_item, row))
+            elif GUI_LABEL_KEY in metadata:
+                # The field is a gui section
+                label = metadata[GUI_LABEL_KEY]
                 frame = tk.LabelFrame(master=master, text=label, borderwidth=2)
                 frame.columnconfigure((1), weight=1)
                 frame.grid(
@@ -210,10 +226,41 @@ class GuiBuilder:
                     column=0,
                     columnspan=3,
                     sticky="ew",
-                    padx=self.widget_factory.PADX,
-                    pady=self.widget_factory.PADY,
+                    padx=self._widget_factory.PADX,
+                    pady=self._widget_factory.PADY,
                 )
                 widgets.append(frame)
-                self._add_widgets(frame, template[key])
-                row = row + 1
+                subsection = getattr(gui_section, field.name)
+                self._add_widgets(frame, subsection)
+            else:
+                raise GuiConfigError(
+                    f"The field {field.name} has neither {GUI_ITEM_FACTORY_KEY} nor {GUI_LABEL_KEY} in it's metadata. "
+                    "Unable to make make config gui."
+                )
+            row = row + 1
+
         return widgets
+
+    def _get_widget_for_item(self, master, config_item: GuiConfigItem, row: int) -> list[tk.Widget]:
+        label = config_item.label
+        unit = config_item.unit
+        items = config_item.items
+        tkvar = config_item.tkvar
+
+        if config_item.data_type == GuiDataType.NUMBER:
+            return self._widget_factory.number_widget(master, label, unit, tkvar, row=row)
+        elif config_item.data_type == GuiDataType.TEXT:
+            return self._widget_factory.text_widget(master, label, tkvar, row=row)
+        elif config_item.data_type == GuiDataType.FILE:
+            return self._widget_factory.path_widget(master, label, tkvar, row=row, file=True)
+        elif config_item.data_type == GuiDataType.DIRECTORY:
+            return self._widget_factory.path_widget(master, label, tkvar, row=row)
+        elif config_item.data_type == GuiDataType.CHECKBOX:
+            return self._widget_factory.checkbox_widget(master, label, tkvar, row=row)
+        elif config_item.data_type == GuiDataType.CHECKLIST:
+            return self._widget_factory.checklist_widget(master, label, items, tkvar, row=row)
+        else:
+            logger.warning("Adding a dummy label to the gui, is this intentional?")
+            dummy = tk.Label(master=master, text="Dummy")
+            dummy.grid(row=row, column=0)
+            return [dummy]

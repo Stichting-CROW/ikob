@@ -39,7 +39,6 @@ def generalized_travel_time(config) -> DataSource:
     regime = project_config["beprijzingsregime"]
     motives = project_config["motieven"]
     chains = ketens_config["chains"]["gebruiken"]
-    ketens_config["bestemmingslijst"]["gebruiken"]
     hub_name = ketens_config["chains"]["naam hub"]
     pt_cost_file = skims_config["OV kostenbestand"]["gebruiken"]
     tvom_work = tvom_config["werk"]
@@ -68,6 +67,7 @@ def generalized_travel_time(config) -> DataSource:
     if additional_costs:
         additional_cost_matrix = read_csv_from_config(config, key="geavanceerd", id="additionele_kosten")
     if chains:
+        # FIXME: this does nothing
         hubset = read_csv_from_config(config, key="ketens", id="chains")
         print(hubset)
 

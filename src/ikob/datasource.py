@@ -8,6 +8,7 @@ from typing import Optional
 from numpy.typing import NDArray
 
 import ikob.utils as utils
+from ikob.gui.configuration_definition import FILENAME_FIELD_NAME
 from ikob.urbanization_grade_to_parking_times import urbanization_grade_to_parking_times
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ class DataSourceError(Exception):
 
 
 def get_project_name(config) -> str:
-    return config["__filename__"]
+    return getattr(config, FILENAME_FIELD_NAME)
 
 
 def get_project_directory(config) -> pathlib.Path:

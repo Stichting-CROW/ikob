@@ -1,6 +1,7 @@
 import os
 
 import ikob.utils as utils
+from ikob.datasource import get_project_name
 from ikob.ikobconfig import get_config_from_args
 
 # Deze routine kijkt naar de command-line en leest
@@ -8,7 +9,7 @@ from ikob.ikobconfig import get_config_from_args
 # Indien er een probleem is, sluit het script hier af.
 config = get_config_from_args()
 # nieuw automatisch toegevoegd config item.
-Projectbestandsnaam = config["__filename__"]
+Projectbestandsnaam = get_project_name(config)
 
 # Haal (voor het gemak) onderdelen voor dit script er uit.
 project_config = config["project"]

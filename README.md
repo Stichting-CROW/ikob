@@ -16,6 +16,9 @@ Some commonly used abbreviations / jargon:
 - skims: Data to determine an impedance ('friction') matrix from zone to zone.  
   For example: A matrix of distances via car from zone to zone, costs per kilometer of traveling by car, etc.
 - GTR: Generalized travel time
+- PT: public transport
+- ICE: internal combustion engine
+- EV: electric vehicle
 
 ## Installation and usage
 

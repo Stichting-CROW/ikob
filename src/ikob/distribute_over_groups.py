@@ -18,7 +18,7 @@ def distribute_over_groups(config):
     # Ophalen van instellingen
     scenario = project_config["verstedelijkingsscenario"]
     artificial = advanced_config["kunstmab"]["gebruiken"]
-    free_pt_percentage = verdeling_config["GratisOVpercentage"]
+    free_pt_percentage = verdeling_config["GratisOVpercentage"]  # moet / 100 na refactor
     motieven = project_config["motieven"]
 
     # Vaste waarden
