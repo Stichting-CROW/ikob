@@ -44,31 +44,34 @@ class PathConfig:
 
 
 class Motive(StrEnum):
-    WORK = "work"
-    DAILY_GROCERIES = "daily_groceries"
-    EDUCATION = "education"
-    SOCIAL_RECREATIONAL = "social_recreational"
+    # The dutch names are still used as values here for compatibility with existing code
+    WORK = "werk"
+    DAILY_GROCERIES = "winkeldagelijks"
+    EDUCATION = "onderwijs"
+    SOCIAL_RECREATIONAL = "sociaal-recreatief"
 
 
 class IncomeGroup(StrEnum):
-    LOW = "low"
-    MEDIUM_LOW = "medium_low"
-    MEDIUM_HIGH = "medium_high"
-    HIGH = "high"
+    # The dutch names are still used as values here for compatibility with existing code
+    LOW = "laag"
+    MEDIUM_LOW = "middellaag"
+    MEDIUM_HIGH = "middelhoog"
+    HIGH = "hoog"
 
 
 class PartOfDay(StrEnum):
-    MORNING_RUSH = "morning_rush"
-    EVENING_RUSH = "evening_rush"
-    OFF_PEAK = "off_peak"
+    # The dutch names are still used as values here for compatibility with existing code
+    MORNING_RUSH = "Ochtendspits"
+    EVENING_RUSH = "Avondspits"
+    OFF_PEAK = "Restdag"
 
 
 FILENAME_FIELD_NAME = "__FILENAME__"
 
 
 class NoCarKind(StrEnum):
-    NO_CAR = "no_car"
-    NO_LICENSE = "no_license"
+    NO_CAR = "GeenAuto"
+    NO_LICENSE = "GeenRijbewijs"
 
 
 @dataclass
@@ -96,6 +99,16 @@ class ProjectConfig:
         default=list(IncomeGroup),
         items=list(IncomeGroup),
     )
+
+    def __post_init__(self):
+        self.validate()
+
+    def validate(self):
+        if len(self.motives) > 0:
+            if self.motives != [Motive.WORK] or self.motives != [Motive.WORK.value]:
+                logger.warning(f"Only the motive {Motive.WORK} is expected to work. Motives in config: {self.motives}.")
+        else:
+            logger.warning("No motives are configured.")
 
 
 @dataclass
@@ -167,7 +180,7 @@ class ElectricVehicleDistribution:
     def get_percentage(self, income_group: IncomeGroup):
         # this is to allow grabbing the percentage dynamically
         # TODO: in config validation it should be validated that all income groups are present as fields
-        return getattr(self, income_group)
+        return getattr(self, income_group.name.lower())
 
 
 @dataclass
@@ -197,28 +210,28 @@ class SkimsConfig:
 
 @dataclass
 class WorkTVOM:
-    low: float = gui_field("Low", GuiDataType.NUMBER, default=4)
-    medium_low: float = gui_field("Medium low", GuiDataType.NUMBER, default=6)
-    medium_high: float = gui_field("Medium high", GuiDataType.NUMBER, default=9)
-    high: float = gui_field("High", GuiDataType.NUMBER, default=12)
+    low: float = gui_field("Low", GuiDataType.NUMBER, default=12)
+    medium_low: float = gui_field("Medium low", GuiDataType.NUMBER, default=9)
+    medium_high: float = gui_field("Medium high", GuiDataType.NUMBER, default=6)
+    high: float = gui_field("High", GuiDataType.NUMBER, default=4)
 
     def get_tvom(self, income_group: IncomeGroup):
         # this is to allow grabbing the tvom dynamically
         # TODO: in config validation it should be validated that all income groups are present as fields
-        return getattr(self, income_group)
+        return getattr(self, income_group.name.lower())
 
 
 @dataclass
 class OtherTVOM:
-    low: float = gui_field("Low", GuiDataType.NUMBER, default=4.8, unit="Minutes/Euro")
-    medium_low: float = gui_field("Medium low", GuiDataType.NUMBER, default=7.25, unit="Minutes/Euro")
-    medium_high: float = gui_field("Medium high", GuiDataType.NUMBER, default=10.9, unit="Minutes/Euro")
-    high: float = gui_field("High", GuiDataType.NUMBER, default=15.5, unit="Minutes/Euro")
+    low: float = gui_field("Low", GuiDataType.NUMBER, default=15.5, unit="Minutes/Euro")
+    medium_low: float = gui_field("Medium low", GuiDataType.NUMBER, default=10.9, unit="Minutes/Euro")
+    medium_high: float = gui_field("Medium high", GuiDataType.NUMBER, default=7.25, unit="Minutes/Euro")
+    high: float = gui_field("High", GuiDataType.NUMBER, default=4.8, unit="Minutes/Euro")
 
     def get_tvom(self, income_group: IncomeGroup):
         # this is to allow grabbing the tvom dynamically
         # TODO: in config validation it should be validated that all income groups are present as fields
-        return getattr(self, income_group)
+        return getattr(self, income_group.name.lower())
 
 
 @dataclass
@@ -254,8 +267,8 @@ class AdditionalCostsConfig:
 
 
 class CarOwnershipGroup(StrEnum):
-    ALL_GROUPS = "all groups"
-    CAR_OWNERS_ONLY = "car_owners_only"
+    ALL_GROUPS = "alle groepen"
+    CAR_OWNERS_ONLY = "alleen autobezit"
 
 
 @dataclass

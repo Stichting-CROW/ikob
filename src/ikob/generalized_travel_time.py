@@ -65,7 +65,11 @@ def generalized_travel_time(config: IkobConfig) -> DataSource:
     use_parking_costs = advanced_config.parking_costs_cents.use
     pricecap = skims_config.pt_costs.use_price_cap
     pricecap_value = skims_config.pt_costs.price_cap
-    parking_times_temporary = read_csv_from_config(config.skims.parking_search_time_file)
+    try:
+        parking_times_temporary = read_csv_from_config(config.skims.parking_search_time_file)
+    except Exception as e:
+        logger.error(f"Unable to read parking search time file from path '{config.skims.parking_search_time_file}'.")
+        raise e
 
     if use_parking_costs:
         parking_cost_array = read_csv_from_config(config.advanced.parking_costs_cents.file)
@@ -191,7 +195,7 @@ def generalized_travel_time(config: IkobConfig) -> DataSource:
                         for j in range(num_zones):
                             total_time = car_time_matrix[i][j]
                             total_cost = car_time_matrix[i][j] * time_costs_no_car + car_distance_matrix[i][j] * (
-                                costs_no_car + road_pricing_fossil
+                                costs_no_car + road_pricing
                             )
                             gtr_skim[i][j] = total_time + factor * total_cost
 
@@ -206,7 +210,7 @@ def generalized_travel_time(config: IkobConfig) -> DataSource:
                         for j in range(num_zones):
                             total_time = car_time_matrix[i][j] + parking_times[i][1] + parking_times[j][2]
                             gtr_skim[i][j] = total_time + factor * (
-                                car_distance_matrix[i][j] * road_pricing_fossil
+                                car_distance_matrix[i][j] * road_pricing
                                 + additional_cost_matrix[i][j] / 100
                                 + parking_cost_array[j] / 100
                             )

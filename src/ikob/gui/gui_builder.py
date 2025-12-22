@@ -162,7 +162,7 @@ class IkobGui:
                 # The field is gui section
                 gui_subsection = getattr(gui_section, gui_field.name)
                 config_subsection = getattr(config_section, gui_field.name)
-                self._load_config_in_gui(gui_subsection, config_subsection)
+                self._get_config_from_gui(gui_subsection, config_subsection)
             else:
                 raise GuiConfigError(
                     f"The field {gui_field.name} has neither {GUI_ITEM_FACTORY_KEY} nor {GUI_LABEL_KEY} in it's metadata. "

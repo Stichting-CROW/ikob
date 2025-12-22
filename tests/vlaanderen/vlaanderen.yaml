@@ -1,0 +1,70 @@
+advanced:
+  additional_costs_cents:
+    file: ''
+    use: false
+  artificial_car_ownership:
+    file: ''
+    use: false
+  car_ownership_groups:
+  - alle groepen
+  parking_costs_cents:
+    file: ''
+    use: false
+chains_and_hubs:
+  hub_collection: ''
+  hub_file: ''
+  use: false
+project:
+  income_groups:
+  - laag
+  - middellaag
+  - middelhoog
+  - hoog
+  motives:
+  - werk
+  name: Project 1
+  paths:
+    output_directory: tests/vlaanderen/
+    segs_directory: tests/vlaanderen/SEGS
+    skims_directory: tests/vlaanderen/skims
+  pricing_regime: Basis
+  urbanization_scenario: '2023'
+  use_e_bike: false
+skims:
+  parking_search_time_file: tests/vlaanderen/SEGS/Parkeerzoektijd.csv
+  ev_costs:
+    cent_per_km: 5.0
+    km_charge: 0.0
+  ev_distribution:
+    high: 0.0
+    low: 0.0
+    medium_high: 0.0
+    medium_low: 0.0
+  free_pt_percentage: 3
+  ice_costs:
+    cent_per_km: 16.0
+    km_charge: 0.0
+  no_car_costs:
+    no_car_euro_per_km: 0.33
+    no_car_euro_per_min: 0.05
+    no_license_euro_per_km: 2.4
+    no_license_euro_per_min: 0.4
+  parts_of_day:
+  - Restdag
+  pt_costs:
+    base_fare_cent: 75.0
+    cent_per_km: 12.0
+    price_cap: 9999.0
+    use_price_cap: false
+  use_pt_costs_file: false
+tvom:
+  other_tvom:
+    low: 15.5
+    high: 4.8
+    medium_low: 10.9
+    medium_high: 7.25
+  work_tvom:
+    low: 12.0
+    high: 4.0
+    medium_low: 9.0
+    medium_high: 6.0

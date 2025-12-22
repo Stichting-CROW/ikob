@@ -66,11 +66,15 @@ def same_directory(dcmp: filecmp.dircmp) -> bool:
         reference = pathlib.Path(dcmp.right) / filepath
         if not is_equal_file(result, reference):
             return False
+        else:
+            print(f"{result} == {reference}")
 
     # Recursively compare directories.
     for sub_dcmp in dcmp.subdirs.values():
         if not same_directory(sub_dcmp):
             return False
+        else:
+            print(f"{sub_dcmp.left} == {sub_dcmp.right}")
 
     return True
 
@@ -90,9 +94,9 @@ def remove_directory(dir: pathlib.Path):
 def test_end_to_end(case):
     test_dir = pathlib.Path("tests")
     project_dir = test_dir.joinpath(case).resolve()
-    project = project_dir.joinpath(f"{case}.json")
+    project = project_dir.joinpath(f"{case}.yaml")
 
-    suffixes = ["resultaten", "basis", "tussenresultaten"]
+    suffixes = ["tussenresultaten", "resultaten", "basis"]
     compare_dirs = [project_dir / case / s for s in suffixes]
 
     # Delete old results if still present

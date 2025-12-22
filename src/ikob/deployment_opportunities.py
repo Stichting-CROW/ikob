@@ -139,7 +139,6 @@ def deployment_opportunities(
                                     regime,
                                     part_of_day,
                                     income,
-                                    income_group,
                                     K,
                                 )
                                 possibility = matrix @ place_of_employment * distribution

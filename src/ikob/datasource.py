@@ -138,7 +138,7 @@ class SegsSource:
             return utils.read_csv(path, type_caster=type_caster)
         except FileNotFoundError:
             raise DataSourceError(
-                f"File SEGS file '{path}' not found. Is the scenario (used as subfolder) '{scenario}' correct?"
+                f"SEGS file '{path}' not found. Is the scenario (used as subfolder) '{scenario}' correct?"
             )
 
     def write_csv(self, data, id, header, group="", jaar="", modifier="", scenario=""):

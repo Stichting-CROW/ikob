@@ -4,7 +4,9 @@ import os
 import re
 import sys
 import tkinter as tk
+import traceback
 from dataclasses import asdict
+from enum import StrEnum
 from tkinter import filedialog, messagebox
 
 import yaml
@@ -18,6 +20,11 @@ from ikob.gui.gui_builder import IkobGui
 logger = logging.getLogger(__name__)
 
 # Interface: load/save config files.
+
+yaml.SafeDumper.add_multi_representer(
+    StrEnum,
+    yaml.representer.SafeRepresenter.represent_str,
+)
 
 
 def _project_filename(project_name, make_safe=True):
@@ -55,7 +62,7 @@ def load_config(filename):
     try:
         with open(filename) as file:
             yaml_dict = yaml.safe_load(file)
-            return IkobConfig(**yaml_dict)
+            config = IkobConfig(**yaml_dict)
     except BaseException as e:
         raise IOError(f"Kan niet lezen uit: '{filename}' with error:\n'{e}'.")
 
@@ -67,10 +74,9 @@ def load_config(filename):
 def saveConfig(filename: str, config: IkobConfig):
     try:
         with open(filename, "w") as file:
-            yaml.dump(asdict(config), file, indent=2, default_flow_style=False)
-    except BaseException:
-        raise IOError(f"Kan configuratie niet wegschrijven naar: {filename}.")
-    return True
+            yaml.dump(asdict(config), file, indent=2, default_flow_style=False, Dumper=yaml.SafeDumper)
+    except BaseException as e:
+        raise IOError(f"Kan configuratie niet wegschrijven naar: {filename}.", e)
 
 
 # User interface
@@ -125,6 +131,7 @@ class ConfigApp(tk.Tk):
         try:
             saveConfig(filename, config)
         except BaseException:
+            logger.error(traceback.format_exc())
             messagebox.showerror(title="Fout", message="Het bestand kan niet worden opgeslagen.")
         else:
             messagebox.showinfo(title="Opgeslagen", message="Configuratie opgeslagen.")
@@ -140,18 +147,13 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.verbose:
-        logging.basicConfig(
-            stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s -  %(message)s"
-        )
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(name)s \t -  %(message)s",
+    )
     logger.info("starting app")
 
-    # if not TemplateValidator.validate_template(default_configuration_definition()):
-    #     messagebox.showerror(
-    #         title="Fout",
-    #         message="De standaard configuratiedefinitie is niet geldig: Kijk in ConfiguratieDefinitie.py",
-    #     )
-    #     exit(1)
     App = ConfigApp()
     App.mainloop()
 

@@ -7,6 +7,7 @@ from ikob.datasource import SegsSource, read_csv_from_config
 from ikob.gui.configuration_definition import (
     IkobConfig,
     IncomeGroup,
+    Motive,
 )
 
 logger = logging.getLogger(__name__)
@@ -80,7 +81,7 @@ def distribute_over_groups(config: IkobConfig):
     no_car_with_license = []
 
     for mot in motives:
-        if mot == "werk":
+        if mot == Motive.WORK:
             population_share = "Beroepsbevolking"
             citizens_per_class = segs_source.read(f"{population_share}_inkomensklasse", scenario=scenario)
         elif mot == "winkelnietdagelijksonderwijs":

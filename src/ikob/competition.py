@@ -266,7 +266,6 @@ def competition(
                                     regimes,
                                     part_of_day,
                                     income,
-                                    income_group,
                                     K,
                                 )
 

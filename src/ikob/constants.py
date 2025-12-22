@@ -1,7 +1,10 @@
-def work_constants(modality, preference, motive):
-    motives = ["werk", "sociaal-recreatief", "winkeldagelijks", "onderwijs"]
+from ikob.gui.configuration_definition import Motive
 
-    assert motive in motives, f"Unknown motive: '{motive}'"
+
+def work_constants(modality, preference, motive):
+    motives = list(Motive)
+
+    assert motive in motives, f"Unknown motive: '{motive}' not in known motives: list(Motive)"
 
     if motive == "werk" or motive == "sociaal-recreatief":
         return _work_constants(modality, preference)

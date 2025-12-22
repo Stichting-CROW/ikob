@@ -5,7 +5,7 @@ import numpy as np
 
 from ikob.constants import work_constants
 from ikob.datasource import DataKey, DataSource, DataType
-from ikob.gui.configuration_definition import IkobConfig, IncomeGroup
+from ikob.gui.configuration_definition import IkobConfig, IncomeGroup, NoCarKind
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +42,8 @@ def calculate_single_weights(config: IkobConfig, generalized_travel_time: DataSo
 
     # Vaste waarden
     incomes = list(IncomeGroup)
+    no_car_kinds = list(NoCarKind)
+
     preferences = ["Auto", "Neutraal", "Fiets", "OV"]
     modalities_bike = ["E-fiets"] if project_config.use_e_bike else ["Fiets"]
     fuel_kinds = ["fossiel", "elektrisch"]
@@ -91,7 +93,6 @@ def calculate_single_weights(config: IkobConfig, generalized_travel_time: DataSo
                         )
                         weights.set(key, weight_matrix.copy())
 
-            no_car_kinds = ["GeenAuto", "GeenRijbewijs"]
             no_car_preferences = ["Neutraal", "OV", "Fiets"]
             for no_car_kind in no_car_kinds:
                 for preference in no_car_preferences:

@@ -3,7 +3,7 @@ import logging
 import sys
 import threading
 import traceback
-from tkinter import BooleanVar, Button, Frame, StringVar, Tk, Widget, filedialog, messagebox
+from tkinter import BooleanVar, Button, Frame, StringVar, Tk, Widget, messagebox
 
 from ikob.combined_weights import calculate_combined_weights
 from ikob.competition import competition_on_citizens, competition_on_jobs
@@ -12,7 +12,7 @@ from ikob.deployment_opportunities import deployment_opportunities
 from ikob.distribute_over_groups import distribute_over_groups
 from ikob.generalized_travel_time import generalized_travel_time
 from ikob.gui.widget_factory import WidgetFactory
-from ikob.ikobconfig import get_config_from_args, load_config
+from ikob.ikobconfig import get_config_from_args
 from ikob.potential_companies import potential_companies
 from ikob.single_weights import calculate_single_weights
 
@@ -158,6 +158,7 @@ class ConfigApp(Tk):
             run_scripts(project_file, skip_steps, write_weights=False)
         except BaseException as err:
             msg = f"An error occurred: {err}"
+            logger.error(traceback.format_exc())
             messagebox.showerror(title="FOUT", message=msg)
         else:
             msg = "Alle stappen zijn succesvol uitgevoerd."
@@ -165,22 +166,6 @@ class ConfigApp(Tk):
 
         # After success/error the run button can be re-enabled.
         self.run_button.configure(state="active")
-
-    def cmdLaadProject(self):
-        filename = filedialog.askopenfilename(
-            title="Kies een .json project bestand.",
-            filetypes=[("project file", ".json")],
-        )
-        if filename:
-            try:
-                _ = load_config(filename)
-            except ValueError:
-                messagebox.showerror(
-                    title="Fout",
-                    message="Het bestand bevat geen geldige configuratie.",
-                )
-            except IOError:
-                messagebox.showerror(title="Fout", message="Het bestand kan niet worden geladen.")
 
 
 def main():
@@ -198,10 +183,11 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.verbose:
-        logging.basicConfig(
-            stream=sys.stdout, level=logging.INFO, format="%(asctime)s - %(levelname)s - %(name)s \t -  %(message)s"
-        )
+    logging.basicConfig(
+        stream=sys.stdout,
+        level=logging.DEBUG if args.verbose else logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(name)s \t -  %(message)s",
+    )
     if not args.project:
         App = ConfigApp()
         App.mainloop()
