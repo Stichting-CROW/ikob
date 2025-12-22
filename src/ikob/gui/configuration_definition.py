@@ -15,8 +15,6 @@ from ikob.gui.gui_config_classes import (
 
 logger = logging.getLogger(__name__)
 
-FILENAME_FIELD_NAME = "__FILENAME__"
-
 
 def gui_field(label: str, data_type: GuiDataType, default: str | list[str] | float = "", items=[], unit="") -> Any:
     return field(
@@ -47,22 +45,30 @@ class PathConfig:
 
 class Motive(StrEnum):
     WORK = "work"
-    DAILY_GROCERIES = "daily groceries"
+    DAILY_GROCERIES = "daily_groceries"
     EDUCATION = "education"
-    SOCIAL_RECREATIONAL = "social-recreational"
+    SOCIAL_RECREATIONAL = "social_recreational"
 
 
 class IncomeGroup(StrEnum):
     LOW = "low"
-    MEDIUM_LOW = "medium-low"
-    MEDIUM_HIGH = "medium-high"
+    MEDIUM_LOW = "medium_low"
+    MEDIUM_HIGH = "medium_high"
     HIGH = "high"
 
 
 class PartOfDay(StrEnum):
-    MORNING_RUSH = "morning rush"
-    EVENING_RUSH = "evening rush"
-    OFF_PEAK = "off peak"
+    MORNING_RUSH = "morning_rush"
+    EVENING_RUSH = "evening_rush"
+    OFF_PEAK = "off_peak"
+
+
+FILENAME_FIELD_NAME = "__FILENAME__"
+
+
+class NoCarKind(StrEnum):
+    NO_CAR = "no_car"
+    NO_LICENSE = "no_license"
 
 
 @dataclass
@@ -71,8 +77,8 @@ class ProjectConfig:
     urbanization_scenario: str = gui_field(
         "The urbanization scenario (SEGS subdirectory) to use", data_type=GuiDataType.TEXT
     )
-    pricing_scenario: str = gui_field(
-        "The name of the pricing config, used to distinguish output",
+    pricing_regime: str = gui_field(
+        "The name of the pricing regimes, used to distinguish output of different runs of the same project",
         default="Basis",
         data_type=GuiDataType.TEXT,
     )
@@ -113,11 +119,13 @@ class PTCosts:
 @dataclass
 class ICECarCosts:
     cent_per_km: float = gui_field("Variable costs", GuiDataType.NUMBER, unit="Eurocent/km", default=16)
+    km_charge: float = gui_field("Additional km charge", GuiDataType.NUMBER, unit="Eurocent/km")
 
 
 @dataclass
 class EVCarCosts:
     cent_per_km: float = gui_field("Variable costs", GuiDataType.NUMBER, unit="Eurocent/km", default=5)
+    km_charge: float = gui_field("Additional km charge", GuiDataType.NUMBER, unit="Eurocent/km")
 
 
 @dataclass
@@ -164,14 +172,14 @@ class ElectricVehicleDistribution:
 
 @dataclass
 class SkimsConfig:
-    day_type: list[PartOfDay] = gui_field(
+    parts_of_day: list[PartOfDay] = gui_field(
         "The parts of the day to consider",
         GuiDataType.CHECKLIST,
         default=list(PartOfDay),
         items=list(PartOfDay),
     )
     pt_costs: PTCosts = gui_section("Public transport costs", PTCosts)
-    pt_costs_file: bool = gui_field(
+    use_pt_costs_file: bool = gui_field(
         "Is there a separate file for public transport costs (overwrites the cost computation) ", GuiDataType.CHECKBOX
     )
     free_pt_percentage: float = gui_field(
@@ -180,7 +188,8 @@ class SkimsConfig:
     ice_costs: ICECarCosts = gui_section("Cost for an internal combustion engine vehicle", ICECarCosts)
     ev_costs: EVCarCosts = gui_section("Cost for an electric vehicle", EVCarCosts)
     ev_distribution: ElectricVehicleDistribution = gui_section(
-        "Percentage of car owners with an electric vehicle", ElectricVehicleDistribution
+        "Percentage of car owners with an electric vehicle",
+        ElectricVehicleDistribution,
     )
     parking_search_time_file: str = gui_field("Parking search time file", GuiDataType.FILE)
     no_car_costs: NoCarCosts = gui_section("Car travel costs for non car owners", NoCarCosts)
@@ -276,4 +285,4 @@ class IkobConfig:
     skims: SkimsConfig = gui_section("Travel costs and time", SkimsConfig)
     tvom: TVOMConfig = gui_section("Time value of money", TVOMConfig)
     chains_and_hubs: ChainsAndHubsConfig = gui_section("Chains and hubs", ChainsAndHubsConfig)
-    advances: AdvancedConfig = gui_section("Advances", AdvancedConfig)
+    advanced: AdvancedConfig = gui_section("Advanced", AdvancedConfig)

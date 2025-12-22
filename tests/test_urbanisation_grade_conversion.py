@@ -28,11 +28,11 @@ def test_generate_parkeerzoektijden():
     assert np.all(reference == read_parking_times(config))
 
     # Remove path from config and fall back to expected location.
-    del config["skims"]["parkeerzoektijden_bestand"]
+    del config.skims.parking_search_time_file
     assert np.all(reference == read_parking_times(config))
 
     # Set config to unknown path, trigger conversion on the fly.
-    config["skims"]["parkeerzoektijden_bestand"] = "unset"
+    config.skims.parking_search_time_file = "unset"
     assert np.all(reference == read_parking_times(config))
 
 
@@ -44,8 +44,8 @@ def test_assert_failed_parkeerzoektijden_conversion():
     # Overwrite SEGS directory to trigger failure in converting
     # parkeerzoektijden as stedelijkheidsgraag is not present.
     config = get_config_from_args(project_file)
-    config["skims"]["parkeerzoektijden_bestand"] = "unset"
-    config["project"]["paden"]["segs_directory"] = "unset"
+    config.skims.parking_search_time_file = "unset"
+    config.project.paths.segs_directory = "unset"
 
     with pytest.raises(AssertionError):
         _ = read_parking_times(config)

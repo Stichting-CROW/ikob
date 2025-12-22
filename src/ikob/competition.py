@@ -4,6 +4,7 @@ import numpy as np
 
 import ikob.utils as utils
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.gui.configuration_definition import IkobConfig, IncomeGroup
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +30,6 @@ def get_weight_matrix(
     regime,
     part_of_day,
     income,
-    income_group,
     ratio_electric: float,
 ):
     preference = utils.find_preference(group, modality)
@@ -97,21 +97,25 @@ def get_weight_matrix(
 
 
 def competition_on_jobs(
-    config, single_weights: DataSource, combined_weights: DataSource, origins: DataSource
+    config: IkobConfig, single_weights: DataSource, combined_weights: DataSource, origins: DataSource
 ) -> DataSource:
     logger.info("Starting step: Compute competition on jobs")
     return competition(config, single_weights, combined_weights, origins, citizens=False)
 
 
 def competition_on_citizens(
-    config, single_weights: DataSource, combined_weights: DataSource, origins: DataSource
+    config: IkobConfig, single_weights: DataSource, combined_weights: DataSource, origins: DataSource
 ) -> DataSource:
     logger.info("Starting step: Compute competition on citizens")
     return competition(config, single_weights, combined_weights, origins, citizens=True)
 
 
 def competition(
-    config, single_weights: DataSource, combined_weights: DataSource, origins: DataSource, citizens: bool = True
+    config: IkobConfig,
+    single_weights: DataSource,
+    combined_weights: DataSource,
+    origins: DataSource,
+    citizens: bool = True,
 ) -> DataSource:
     if citizens:
         msg = "Competition for companies and accessibility."
@@ -119,17 +123,16 @@ def competition(
         msg = "Competition for places of employment."
     logger.info(msg)
 
-    project_config = config["project"]
-    skims_config = config["skims"]
-    distribution_config = config["verdeling"]
-    part_of_days = skims_config["dagsoort"]
-    advanced_config = config["geavanceerd"]
+    project_config = config.project
+    skims_config = config.skims
+    advanced_config = config.advanced
 
-    scenario = project_config["verstedelijkingsscenario"]
-    regimes = project_config["beprijzingsregime"]
-    motives = project_config["motieven"]
-    car_possession_groups = advanced_config["welke_groepen"]
-    electric_percentage = distribution_config["Percelektrisch"]
+    parts_of_days = skims_config.parts_of_day
+    scenario = project_config.urbanization_scenario
+    regimes = project_config.pricing_regime
+    motives = project_config.motives
+    car_possession_groups = advanced_config.car_ownership_groups
+    electric_percentage = skims_config.ev_distribution
 
     groups = [
         "GratisAuto_laag",
@@ -195,7 +198,7 @@ def competition(
     ]
 
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
-    income_groups = ["laag", "middellaag", "middelhoog", "hoog"]
+    income_groups = list(IncomeGroup)
     headstring = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
     headstringExcel = ["Zone", "Fiets", "Auto", "OV", "Auto-Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
 
@@ -230,7 +233,7 @@ def competition(
                 f"Verdeling_over_groepen_{target_group}", scenario=scenario, type_caster=float
             )
 
-            for part_of_day in part_of_days:
+            for part_of_day in parts_of_days:
                 for i_income_group, income_group in enumerate(income_groups):
                     general_possibility_totals = []
 
@@ -253,7 +256,7 @@ def competition(
 
                             income = utils.group_income_level(group)
                             if income_group == income or income_group == "alle":
-                                K = electric_percentage.get(income_group) / 100
+                                K = electric_percentage.get_percentage(income_group) / 100
                                 matrix = get_weight_matrix(
                                     single_weights,
                                     combined_weights,

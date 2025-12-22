@@ -8,7 +8,7 @@ from typing import Optional
 from numpy.typing import NDArray
 
 import ikob.utils as utils
-from ikob.gui.configuration_definition import FILENAME_FIELD_NAME
+from ikob.gui.configuration_definition import FILENAME_FIELD_NAME, IkobConfig
 from ikob.urbanization_grade_to_parking_times import urbanization_grade_to_parking_times
 
 logger = logging.getLogger(__name__)
@@ -18,52 +18,44 @@ class DataSourceError(Exception):
     pass
 
 
-def get_project_name(config) -> str:
+def get_project_name(config: IkobConfig) -> str:
     return getattr(config, FILENAME_FIELD_NAME)
 
 
-def get_project_directory(config) -> pathlib.Path:
-    paths = config["project"]["paden"]
-    output_dir = pathlib.Path(paths["output_directory"])
+def get_project_directory(config: IkobConfig) -> pathlib.Path:
+    config.project.paths.output_directory
+    output_dir = pathlib.Path(config.project.paths.output_directory)
     return output_dir / get_project_name(config)
 
 
-def get_temporary_directory(config) -> pathlib.Path:
+def get_temporary_directory(config: IkobConfig) -> pathlib.Path:
     project_dir = get_project_directory(config)
     return project_dir / "tussenresultaten"
 
 
-def read_csv_from_config(config, key: str, id: str, type_caster=float):
+def read_csv_from_config(csv_path, type_caster=float):
     """Read key from id section in the configuration file."""
-    csv_path = config[key][id]
-    if isinstance(csv_path, dict):
-        csv_path = csv_path["bestand"]
-
-    if csv_path == "":
-        raise DataSourceError(
-            f"Problem occurred while reading path from config with key: '{key}' and id '{id}'. Path is empty"
-        )
-
-    csv_path = pathlib.Path(csv_path)
     try:
         return utils.read_csv(csv_path, type_caster)
-    except Exception:
-        raise DataSourceError(
-            f"Problem occurred while reading path from config with key: '{key}' and id '{id}'. Path is '{csv_path}'"
-        )
+    except Exception as e:
+        raise DataSourceError(f"Problem occurred while reading path from config with path: '{csv_path}'", e)
 
 
-def read_parking_times(config):
+def read_parking_times(config: IkobConfig):
     """Read parkeerzoektijden from disk.
 
     When the parkeerzoektijden file is not present, it is attempted
     to generate the parkeerzoektijden from stedelijkheidsgraad.
     """
 
-    config_skims = config["skims"]
-    segs_dir = pathlib.Path(config["project"]["paden"]["segs_directory"])
+    config_skims = config.skims
+    segs_dir = pathlib.Path(config.project.paths.segs_directory)
 
-    parking_time_path = pathlib.Path(config_skims.get("parkeerzoektijden_bestand", segs_dir / "Parkeerzoektijd.csv"))
+    parking_time_path = pathlib.Path(
+        config_skims.parking_search_time_file
+        if config_skims.parking_search_time_file != ""
+        else segs_dir / "Parkeerzoektijd.csv"
+    )
 
     if parking_time_path.exists():
         logging.info("Reading parking times from: '%s'", parking_time_path)
@@ -101,8 +93,8 @@ class SkimsSource:
 class SegsSource:
     """A data provider for SEGS files."""
 
-    def __init__(self, config):
-        self.segs_dir = pathlib.Path(config["project"]["paden"]["segs_directory"])
+    def __init__(self, config: IkobConfig):
+        self.segs_dir = pathlib.Path(config.project.paths.segs_directory)
         if self.segs_dir == "":
             raise DataSourceError("Skims source initialized with empty skims dir")
         self.tmp_dir = get_temporary_directory(config)
@@ -125,7 +117,7 @@ class SegsSource:
         os.makedirs(path, exist_ok=True)
         return path / filename
 
-    def read(self, id: str, jaar="", type_caster=int, scenario=""):
+    def read(self, id: str, jaar="", type_caster: type = int, scenario=""):
         # TODO: This is a temporary fix. The 'Verdeling_over_groepen*'
         # files are written to disk as SEGS files. These were originally
         # written back into the _input_ directory and read out in later

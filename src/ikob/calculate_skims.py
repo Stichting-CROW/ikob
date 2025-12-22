@@ -2,6 +2,7 @@ import os
 
 import ikob.utils as utils
 from ikob.datasource import get_project_name
+from ikob.gui.configuration_definition import NoCarKind
 from ikob.ikobconfig import get_config_from_args
 
 # Deze routine kijkt naar de command-line en leest
@@ -12,37 +13,36 @@ config = get_config_from_args()
 Projectbestandsnaam = get_project_name(config)
 
 # Haal (voor het gemak) onderdelen voor dit script er uit.
-project_config = config["project"]
-paden_config = config["project"]["paden"]
-skims_config = config["skims"]
-tvom_config = config["TVOM"]
-ketens_config = config["ketens"]
+project_config = config.project
+paden_config = config.project.paths
+skims_config = config.skims
+tvom_config = config.tvom
+ketens_config = config.chains_and_hubs
 
 # Ophalen van instellingen
-jaar = project_config["jaar"]
-Basisdirectory = paden_config["skims_directory"]
+jaar = project_config.urbanization_scenario
+Basisdirectory = paden_config.skims_directory
 Skimsdirectory = os.path.join(Basisdirectory, "skims")
 os.makedirs(Skimsdirectory, exist_ok=True)
-motieven = project_config["motieven"]
-Ketens = ketens_config["ketens"]["gebruiken"]
-Hubnaam = ketens_config["ketens"]["naam hub"]
-aspect = skims_config["aspect"]
-TVOMwerk = tvom_config["werk"]
-TVOMoverig = tvom_config["overig"]
-varautotarief = skims_config["varautotarief"]
-kmheffing = skims_config["kmheffing"]
-varkostenga = skims_config["varkostenga"]
-tijdkostenga = skims_config["tijdkostenga"]
-dagsoort = skims_config["dagsoort"]
-soortgeenauto = skims_config["soortgeenauto"]
-# benader_kosten = skims_config['OV kosten']['benaderen']['gebruiken']
-OVkmtarief = skims_config["OV kosten"]["kmkosten"]
-starttarief = skims_config["OV kosten"]["starttarief"]
-Parkeerzoektijdfile = skims_config["parkeerzoektijden_bestand"]
-Additionele_kosten = skims_config["additionele_kosten"]["gebruiken"]
-Additionele_kostenfile = skims_config["additionele_kosten"]["bestand"]
-Parkeerkosten = skims_config["parkeerkosten"]["gebruiken"]
-Parkeerkostenfile = skims_config["parkeerkosten"]["bestand"]
+motieven = project_config.motives
+Ketens = ketens_config.use
+Hubnaam = ketens_config.hub_collection
+TVOMwerk = tvom_config.work_tvom
+TVOMoverig = tvom_config.other_tvom
+varautotarief = skims_config.ice_costs.cent_per_km
+kmheffing = skims_config.ice_costs.km_charge
+varkostenga = skims_config.no_car_costs.no_car_euro_per_km
+tijdkostenga = skims_config.no_car_costs.no_car_euro_per_min
+dagsoort = skims_config.parts_of_day
+soortgeenauto = list(NoCarKind)
+
+OVkmtarief = skims_config.pt_costs.cent_per_km
+starttarief = skims_config.pt_costs.base_fare_cent
+Parkeerzoektijdfile = skims_config.parking_search_time_file
+Additionele_kosten = config.advanced.additional_costs_cents.use
+Additionele_kostenfile = config.advanced.additional_costs_cents.file
+Parkeerkosten = config.advanced.parking_costs_cents.use
+Parkeerkostenfile = config.advanced.parking_costs_cents.file
 
 
 if Additionele_kosten:

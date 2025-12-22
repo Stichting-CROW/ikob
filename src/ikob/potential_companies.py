@@ -4,6 +4,7 @@ import numpy as np
 
 import ikob.utils as utils
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.gui.configuration_definition import IkobConfig, IncomeGroup
 
 logger = logging.getLogger(__name__)
 
@@ -17,24 +18,23 @@ def create_citizens_file(distribution_matrix, working_population):
     return citizens_file
 
 
-def potential_companies(config, single_weights: DataSource, combined_weights: DataSource) -> DataSource:
+def potential_companies(config: IkobConfig, single_weights: DataSource, combined_weights: DataSource) -> DataSource:
     logger.info("Starting step: Possibilities for companies and institutes.")
 
-    project_config = config["project"]
-    skims_config = config["skims"]
-    distribution_config = config["verdeling"]
-    part_of_days = skims_config["dagsoort"]
-    advanced_config = config["geavanceerd"]
+    project_config = config.project
+    skims_config = config.skims
+    advanced_config = config.advanced
 
-    scenarios = project_config["verstedelijkingsscenario"]
-    regimes = project_config["beprijzingsregime"]
-    motives = project_config["motieven"]
-    car_possession_groups = advanced_config["welke_groepen"]
-    income_groups = project_config["welke_inkomensgroepen"]
-    fuel_kinds = ["fossiel", "elektrisch"]
-    electric_percentage = distribution_config["Percelektrisch"]
+    parts_of_day = skims_config.parts_of_day
+    scenarios = project_config.urbanization_scenario
+    regime = project_config.pricing_regime
+    motives = project_config.motives
+    car_possession_groups = advanced_config.car_ownership_groups
+    income_groups = project_config.income_groups
+    electric_percentage = skims_config.ev_distribution
 
     # Vaste waarden
+    fuel_kinds = ["fossiel", "elektrisch"]
     base_groups = [
         "GratisAuto",
         "GratisAuto_GratisOV",
@@ -59,7 +59,7 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
 
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
 
-    income_groups = ["laag", "middellaag", "middelhoog", "hoog"]
+    income_groups = list(IncomeGroup)
     headstring = [
         "Fiets",
         "EFiets",
@@ -137,7 +137,7 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
                     f"Verdeling_over_groepen_{target_group}_alleen_autobezit", scenario=scenarios, type_caster=float
                 )
 
-            for part_of_day in part_of_days:
+            for part_of_day in parts_of_day:
                 for income_group in income_groups:
                     general_possibility_totals = []
                     for modality in modalities:
@@ -156,7 +156,7 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
                                         f"{modality}_vk",
                                         part_of_day=part_of_day,
                                         preference=tmp_preference,
-                                        regime=regimes,
+                                        regime=regime,
                                         motive=motive,
                                     )
                                     bike_matrix = single_weights.get(key).T
@@ -171,16 +171,16 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
                                                 part_of_day=part_of_day,
                                                 preference=preference,
                                                 income=income,
-                                                regime=regimes,
+                                                regime=regime,
                                                 motive=motive,
                                                 fuel_kind=fuel_kind,
                                             )
                                             matrix = single_weights.get(key).T
 
                                             if fuel_kind == "elektrisch":
-                                                K = electric_percentage.get(income_group) / 100
+                                                K = electric_percentage.get_percentage(income_group) / 100
                                             else:
-                                                K = 1 - electric_percentage.get(income_group) / 100
+                                                K = 1 - electric_percentage.get_percentage(income_group) / 100
 
                                             working_population_list += K * matrix @ citizens_transpose[igroup]
                                     else:
@@ -189,7 +189,7 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
                                             part_of_day=part_of_day,
                                             preference=preference,
                                             income=income,
-                                            regime=regimes,
+                                            regime=regime,
                                             motive=motive,
                                         )
                                         matrix = single_weights.get(key).T
@@ -202,7 +202,7 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
                                         part_of_day=part_of_day,
                                         preference=preference,
                                         income=income,
-                                        regime=regimes,
+                                        regime=regime,
                                         motive=motive,
                                     )
                                     matrix = single_weights.get(key).T
@@ -218,7 +218,7 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
                                                 part_of_day=part_of_day,
                                                 preference=preference,
                                                 income=income,
-                                                regime=regimes,
+                                                regime=regime,
                                                 motive=motive,
                                                 subtopic="combinaties",
                                                 fuel_kind=fuel_kind,
@@ -226,9 +226,9 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
                                             matrix = combined_weights.get(key).T
 
                                             if fuel_kind == "elektrisch":
-                                                K = electric_percentage.get(income_group) / 100
+                                                K = electric_percentage.get_percentage(income_group) / 100
                                             else:
-                                                K = 1 - electric_percentage.get(income_group) / 100
+                                                K = 1 - electric_percentage.get_percentage(income_group) / 100
 
                                             working_population_list += K * matrix @ citizens_transpose[igroup]
 
@@ -238,7 +238,7 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
                                             part_of_day=part_of_day,
                                             preference=preference,
                                             income=income,
-                                            regime=regimes,
+                                            regime=regime,
                                             motive=motive,
                                             subtopic="combinaties",
                                         )

@@ -5,25 +5,27 @@ import numpy as np
 import ikob.utils as utils
 from ikob.competition import get_weight_matrix
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.gui.configuration_definition import IkobConfig
 
 logger = logging.getLogger(__name__)
 
 
-def deployment_opportunities(config, single_weights: DataSource, combined_weights: DataSource) -> DataSource:
+def deployment_opportunities(
+    config: IkobConfig, single_weights: DataSource, combined_weights: DataSource
+) -> DataSource:
     logger.info("Starting step: Deployment opportunities for citizens.")
 
-    project_config = config["project"]
-    skims_config = config["skims"]
-    distribution_config = config["verdeling"]
-    part_of_days = skims_config["dagsoort"]
-    advanced_config = config["geavanceerd"]
+    project_config = config.project
+    skims_config = config.skims
+    parts_of_day = skims_config.parts_of_day
+    advanced_config = config.advanced
 
-    scenario = project_config["verstedelijkingsscenario"]
-    regime = project_config["beprijzingsregime"]
-    motives = project_config["motieven"]
-    car_possession_groups = advanced_config["welke_groepen"]
-    income_groups = project_config["welke_inkomensgroepen"]
-    electric_percentage = distribution_config["Percelektrisch"]
+    urbanization_scenario = project_config.urbanization_scenario
+    regime = project_config.pricing_regime
+    motives = project_config.motives
+    car_possession_groups = advanced_config.car_ownership_groups
+    income_groups = project_config.income_groups
+    electric_percentage = skims_config.ev_distribution
 
     base_groups = [
         "GratisAuto",
@@ -55,21 +57,23 @@ def deployment_opportunities(config, single_weights: DataSource, combined_weight
     segs_source = SegsSource(config)
 
     if "winkelnietdagelijksonderwijs" in motives:
-        working_population_per_class = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
-        employment_segs = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
+        working_population_per_class = segs_source.read("Leerlingen", scenario=urbanization_scenario, type_caster=float)
+        employment_segs = segs_source.read("Leerlingenplaatsen", scenario=urbanization_scenario, type_caster=float)
         place_of_employments = utils.transpose(employment_segs)
     else:
         working_population_per_class = segs_source.read(
-            "Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float
+            "Beroepsbevolking_inkomensklasse", scenario=urbanization_scenario, type_caster=float
         )
-        employment_segs = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
+        employment_segs = segs_source.read(
+            "Arbeidsplaatsen_inkomensklasse", scenario=urbanization_scenario, type_caster=float
+        )
         place_of_employments = utils.transpose(employment_segs)
 
     working_population_totals = [sum(bbpk) for bbpk in working_population_per_class]
 
     if "sociaal-recreatief" in motives:
         id = "L65plus_inkomensklasse" if "65+" in regime else "Inwoners_inkomensklasse"
-        citizens_per_class = segs_source.read(id, scenario=scenario, type_caster=float)
+        citizens_per_class = segs_source.read(id, scenario=urbanization_scenario, type_caster=float)
         citizen_totals = [sum(ipk) for ipk in citizens_per_class]
 
     income_distributions = np.zeros((len(working_population_per_class), len(working_population_per_class[0])))
@@ -93,16 +97,18 @@ def deployment_opportunities(config, single_weights: DataSource, combined_weight
 
             if car_possession_group == "alle groepen":
                 distribution_matrix = segs_source.read(
-                    f"Verdeling_over_groepen_{target_group}", type_caster=float, scenario=scenario
+                    f"Verdeling_over_groepen_{target_group}", type_caster=float, scenario=urbanization_scenario
                 )
             else:
                 distribution_matrix = segs_source.read(
-                    f"Verdeling_over_groepen_{target_group}_alleen_autobezit", type_caster=float, scenario=scenario
+                    f"Verdeling_over_groepen_{target_group}_alleen_autobezit",
+                    type_caster=float,
+                    scenario=urbanization_scenario,
                 )
 
             distribution_matrix_transpose = utils.transpose(distribution_matrix)
 
-            for part_of_day in part_of_days:
+            for part_of_day in parts_of_day:
                 for i_income_group, income_group in enumerate(income_groups):
                     if motive == "werk" or motive == "winkelnietdagelijksonderwijs":
                         place_of_employment = np.array(place_of_employments[i_income_group])
@@ -123,7 +129,7 @@ def deployment_opportunities(config, single_weights: DataSource, combined_weight
 
                             income = utils.group_income_level(group)
                             if income_group == income or income_group == "alle":
-                                K = electric_percentage.get(income_group) / 100
+                                K = electric_percentage.get_percentage(income_group) / 100
                                 matrix = get_weight_matrix(
                                     single_weights,
                                     combined_weights,

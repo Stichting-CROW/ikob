@@ -7,12 +7,12 @@ from ikob.ikobconfig import get_config_from_args
 # het opgegeven configuratie bestand in een dict.
 # Indien er een probleem is, sluit het script hier af.
 config = get_config_from_args()
-paden_config = config["project"]["paden"]
+paden_config = config.project.paths
 
 # Ophalen van instellingen
-skims_directory = paden_config["skims_directory"]
-segs_directory = paden_config["segs_directory"]
-year = config["project"]["jaar"]
+skims_directory = paden_config.skims_directory
+segs_directory = paden_config.segs_directory
+year = config.project.urbanization_scenario
 
 income_distribution_path = os.path.join(segs_directory, "Inkomensverdeling_per_zone")
 citizens_count_path = os.path.join(segs_directory, f"Beroepsbevolking{year}")

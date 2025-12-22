@@ -3,6 +3,7 @@ import logging
 import numpy as np
 
 from ikob.datasource import DataKey, DataSource, DataType
+from ikob.gui.configuration_definition import IkobConfig, IncomeGroup
 
 logger = logging.getLogger(__name__)
 
@@ -36,27 +37,27 @@ def has_preference(kind_car, kind_pt, preference):
         return True
 
 
-def calculate_combined_weights(config, single_weights: DataSource) -> DataSource:
+def calculate_combined_weights(config: IkobConfig, single_weights: DataSource) -> DataSource:
     logger.info("Starting step: Maximum weights by multiple modalities.")
 
-    project_config = config["project"]
-    skims_config = config["skims"]
+    project_config = config.project
+    skims_config = config.skims
 
-    motives = project_config["motieven"]
-    regimes = project_config["beprijzingsregime"]
-    part_of_days = skims_config["dagsoort"]
+    motives = project_config.motives
+    regime = project_config.pricing_regime
+    parts_of_day = skims_config.parts_of_day
 
-    incomes = ["hoog", "middelhoog", "middellaag", "laag"]
+    incomes = list(IncomeGroup)
     preferences = ["Auto", "Neutraal", "Fiets", "OV"]
     modalities_bike = ["Fiets"]
     car_kinds = ["Auto", "GeenAuto", "GeenRijbewijs", "GratisAuto"]
     pt_kinds = ["OV", "GratisOV"]
     fuel_kinds = ["fossiel", "elektrisch"]
 
-    combined_weigths = DataSource(config, DataType.WEIGHTS)
+    combined_weights = DataSource(config, DataType.WEIGHTS)
 
     for motive in motives:
-        for part_of_day in part_of_days:
+        for part_of_day in parts_of_day:
             for income in incomes:
                 for preference in preferences:
                     for modality_bike in modalities_bike:
@@ -69,7 +70,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                 f"{modality_bike}_vk",
                                 part_of_day=part_of_day,
                                 preference=preference_bike,
-                                regime=regimes,
+                                regime=regime,
                                 motive=motive,
                             )
                             bike_matrix = single_weights.get(key)
@@ -79,7 +80,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                 part_of_day=part_of_day,
                                 preference=preference,
                                 income=income,
-                                regime=regimes,
+                                regime=regime,
                                 motive=motive,
                             )
                             pt_matrix = single_weights.get(key)
@@ -89,12 +90,12 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                 f"{pt_kind}_{modality_bike}_vk",
                                 part_of_day=part_of_day,
                                 income=income,
-                                regime=regimes,
+                                regime=regime,
                                 motive=motive,
                                 preference=preference,
                                 subtopic="combinaties",
                             )
-                            combined_weigths.set(key, max.copy())
+                            combined_weights.set(key, max.copy())
 
                         for car_kind in car_kinds:
                             if not has_preference(car_kind, "OV", preference):
@@ -105,7 +106,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                 f"{modality_bike}_vk",
                                 part_of_day=part_of_day,
                                 preference=preference_bike,
-                                regime=regimes,
+                                regime=regime,
                                 motive=motive,
                             )
                             bike_matrix = single_weights.get(key)
@@ -117,7 +118,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                         part_of_day=part_of_day,
                                         preference=preference,
                                         income=income,
-                                        regime=regimes,
+                                        regime=regime,
                                         motive=motive,
                                         fuel_kind=fuel_kind,
                                     )
@@ -128,20 +129,20 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                         f"{car_kind}_{modality_bike}_vk",
                                         part_of_day=part_of_day,
                                         income=income,
-                                        regime=regimes,
+                                        regime=regime,
                                         motive=motive,
                                         preference=preference,
                                         subtopic="combinaties",
                                         fuel_kind=fuel_kind,
                                     )
-                                    combined_weigths.set(key, max.copy())
+                                    combined_weights.set(key, max.copy())
                             else:
                                 key = DataKey(
                                     f"{car_kind}_vk",
                                     part_of_day=part_of_day,
                                     preference=preference,
                                     income=income,
-                                    regime=regimes,
+                                    regime=regime,
                                     motive=motive,
                                 )
                                 car_matrix = single_weights.get(key)
@@ -151,12 +152,12 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                     f"{car_kind}_{modality_bike}_vk",
                                     part_of_day=part_of_day,
                                     income=income,
-                                    regime=regimes,
+                                    regime=regime,
                                     motive=motive,
                                     preference=preference,
                                     subtopic="combinaties",
                                 )
-                                combined_weigths.set(key, max.copy())
+                                combined_weights.set(key, max.copy())
 
                     for pt_kind in pt_kinds:
                         for car_kind in car_kinds:
@@ -168,7 +169,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                 part_of_day=part_of_day,
                                 preference=preference,
                                 income=income,
-                                regime=regimes,
+                                regime=regime,
                                 motive=motive,
                             )
                             pt_matrix = single_weights.get(key)
@@ -180,7 +181,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                         part_of_day=part_of_day,
                                         preference=preference,
                                         income=income,
-                                        regime=regimes,
+                                        regime=regime,
                                         motive=motive,
                                         fuel_kind=fuel_kind,
                                     )
@@ -190,20 +191,20 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                         f"{car_kind}_{pt_kind}_vk",
                                         part_of_day=part_of_day,
                                         income=income,
-                                        regime=regimes,
+                                        regime=regime,
                                         motive=motive,
                                         preference=preference,
                                         subtopic="combinaties",
                                         fuel_kind=fuel_kind,
                                     )
-                                    combined_weigths.set(key, max.copy())
+                                    combined_weights.set(key, max.copy())
                             else:
                                 key = DataKey(
                                     f"{car_kind}_vk",
                                     part_of_day=part_of_day,
                                     preference=preference,
                                     income=income,
-                                    regime=regimes,
+                                    regime=regime,
                                     motive=motive,
                                 )
                                 car_matrix = single_weights.get(key)
@@ -213,12 +214,12 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                     f"{car_kind}_{pt_kind}_vk",
                                     part_of_day=part_of_day,
                                     income=income,
-                                    regime=regimes,
+                                    regime=regime,
                                     motive=motive,
                                     preference=preference,
                                     subtopic="combinaties",
                                 )
-                                combined_weigths.set(key, max.copy())
+                                combined_weights.set(key, max.copy())
 
                     for modality_bike in modalities_bike:
                         for pt_kind in pt_kinds:
@@ -231,7 +232,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                     f"{modality_bike}_vk",
                                     part_of_day=part_of_day,
                                     preference=preference_bike,
-                                    regime=regimes,
+                                    regime=regime,
                                     motive=motive,
                                 )
                                 bike_matrix = single_weights.get(key)
@@ -241,7 +242,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                     part_of_day=part_of_day,
                                     preference=preference,
                                     income=income,
-                                    regime=regimes,
+                                    regime=regime,
                                     motive=motive,
                                 )
                                 pt_matrix = single_weights.get(key)
@@ -253,7 +254,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                             part_of_day=part_of_day,
                                             preference=preference,
                                             income=income,
-                                            regime=regimes,
+                                            regime=regime,
                                             motive=motive,
                                             fuel_kind=fuel_kind,
                                         )
@@ -264,20 +265,20 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                             f"{car_kind}_{pt_kind}_{modality_bike}_vk",
                                             part_of_day=part_of_day,
                                             income=income,
-                                            regime=regimes,
+                                            regime=regime,
                                             motive=motive,
                                             preference=preference,
                                             subtopic="combinaties",
                                             fuel_kind=fuel_kind,
                                         )
-                                        combined_weigths.set(key, max.copy())
+                                        combined_weights.set(key, max.copy())
                                 else:
                                     key = DataKey(
                                         f"{car_kind}_vk",
                                         part_of_day=part_of_day,
                                         preference=preference,
                                         income=income,
-                                        regime=regimes,
+                                        regime=regime,
                                         motive=motive,
                                     )
                                     car_matrix = single_weights.get(key)
@@ -287,11 +288,11 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                         f"{car_kind}_{pt_kind}_{modality_bike}_vk",
                                         part_of_day=part_of_day,
                                         income=income,
-                                        regime=regimes,
+                                        regime=regime,
                                         motive=motive,
                                         preference=preference,
                                         subtopic="combinaties",
                                     )
-                                    combined_weigths.set(key, max.copy())
+                                    combined_weights.set(key, max.copy())
 
-    return combined_weigths
+    return combined_weights
