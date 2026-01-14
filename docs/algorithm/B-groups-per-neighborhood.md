@@ -165,7 +165,7 @@ stedelijkheidsgraad en het resterende gedeelte verdeeld over de andere onderdele
 
 ## Stap 3: Bepaling voorkeuren
 
-<figure>
+<figure markdown>
 <figcaption>
 Tabel 6 Voorkeuren vervoerswijzen per stedelijkheidsgraad (bron: OVIN en enquête gemeente Amsterdam),percentages
 </figcaption>
@@ -178,27 +178,32 @@ Tabel 6 Voorkeuren vervoerswijzen per stedelijkheidsgraad (bron: OVIN en enquêt
 | 4                   | 70   | 10       | 15    | 5   |
 | 5                   | 85   | 5        | 10    | 0   |
 
-</figcaption>
+</figure>
 
-<figure>
+<figure markdown>
 <figcaption>
 Tabel 7 Voorkeuren vervoerswijze (percentage) voor hen die geen auto bezitten. Bron : OVIN en enquête gemeente Amsterdam
 </figcaption>
-Stedelijkheidsgraad Neutraal Fiets OV
-1 33 40 27
-2 38 46 15
-3 40 50 10
-4 33 50 17
-5 33 67 0
 
-<figcaption>
+| Stedelijkheidsgraad | Neutraal | Fiets | OV  |
+| ------------------- | -------- | ----- | --- |
+| 1                   | 33       | 40    | 27  |
+| 2                   | 38       | 46    | 15  |
+| 3                   | 40       | 50    | 10  |
+| 4                   | 33       | 50    | 17  |
+| 5                   | 33       | 67    | 0   |
+
+</figure>
 
 Voor een zone z met stedelijkheidsgraad s is dan voor vervoerswijze v:
-𝑉𝐾𝑣𝑧 =𝑉𝐾𝑣𝑠
 
-Variant: “Kunstmatig autobezit”
+$$VK_{vz} = VK_{vs}$$
+
+## Variant: “Kunstmatig autobezit”
+
 In bepaalde beleidsvarianten wil men bv door lagere parkeernormen het autobezit beperken. De
 effectiviteit daarvan kan in beeld gebracht worden door een file “Kunstmatig autobezit” toe te
-voegen, waarin voor de betreffende zones het beoogde autobezit wordt neergezet.  
-In dat geval wordt dus:𝐴𝐴𝑧 =𝐾𝐴ℎ𝑧, waarbij KAhz staat voor het Kunstmatig Autobezit per
+voegen, waarin voor de betreffende zones het beoogde autobezit wordt neergezet.
+
+In dat geval wordt dus: $AA_z = KA_{hz}$, waarbij $KA_{hz}$ staat voor het Kunstmatig Autobezit per
 huishouden.
