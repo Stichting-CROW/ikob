@@ -45,6 +45,7 @@ custom_fences = [
 [project.markdown_extensions.pymdownx.mark]
 [project.markdown_extensions.pymdownx.tilde]
 [project.markdown_extensions.admonition]
+[project.markdown_extensions.md_in_html]
 
 [project.theme]
 
