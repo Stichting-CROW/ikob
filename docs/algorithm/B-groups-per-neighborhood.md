@@ -7,7 +7,7 @@ icon: lucide/circle-pile
 Gebruikte symbolen:
 
 _s_ = Stedelijkheidsgraad  
-_S_~z~_ = Stedelijkheidsgraad van zone \_z_  
+_S_~z~ = Stedelijkheidsgraad van zone _z_  
 _i_ = Inkomensklasse _i_  
 _z_ = zone _z_  
 _v_ = vervoerswijze  

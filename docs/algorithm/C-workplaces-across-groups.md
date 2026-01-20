@@ -25,6 +25,8 @@ Daaruit is als volgt het verband met het opleidingsniveau af te leiden:
 | R Cultuur, sport en recreatie             | 12%       | 40%        | 49%         | 0%       |
 | S Overige dienstverlening                 | 16%       | 53%        | 30%         | 1%       |
 
+Bron: CBS
+
 Er is een grote samenhang tussen opleiding en inkomensniveau:
 
 Op grond van CBS-gegevens en analyses van de gemeente Amsterdam wordt de volgende verdeling
