@@ -11,7 +11,7 @@ Gesommeerd over alle bestemmingszones
 
 Symbolen:
 
-_C_~ghv~~= Concurrentiekracht voor groep _g_ in herkomstzone _h_ voor vervoerswijze(combinatie) _v_  
+_C_~ghv~ = Concurrentiekracht voor groep _g_ in herkomstzone _h_ voor vervoerswijze(combinatie) _v_  
 _C_~ihv~ = Concurrentiekracht voor inkomensklasse _i_ in herkomstzone _h_ voor vervoerswijze(combinatie) _v_  
 _G_~ghbvm~ = Gewicht van de (combinatie) van vervoerswijzen _v_ voor groep _g_ met herkomst _h_ en bestemming _b_ voor motief _m_  
 _A_~ib~ = Aantal arbeidsplaatsen voor inkomensklasse _i_ in bestemmingszone _b_  

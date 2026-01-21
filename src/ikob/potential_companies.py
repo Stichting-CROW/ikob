@@ -21,7 +21,7 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
     """
     From combined weights to number of citizens that can reach employment opportunities
 
-    Corresponds to section D5 in the IKOB-algorithm.pdf.
+    Corresponds to https://docs.crow.nl/ikob/algorithm/D5-from-combined-weights-to-the-number-of-residents-who-can-reach-businesses-and-institutions
     """
     logger.info("Starting step: Possibilities for companies and institutes.")
 
@@ -316,7 +316,7 @@ def potential_companies(config, single_weights: DataSource, combined_weights: Da
                                 general_matrix_product[i].append(0)
 
                     # Section D5 regional aggregation note:
-                    # The PDF defines $B_{irv}$ as a jobs-weighted aggregation over destination zones in a region.
+                    # https://docs.crow.nl/ikob/algorithm/D5-from-combined-weights-to-the-number-of-residents-who-can-reach-businesses-and-institutions defines $B_{irv}$ as a jobs-weighted aggregation over destination zones in a region.
                     # Here `Pot_totaalproduct` prepares the numerator term $B_{ibv} \cdot A_{ib}$ by multiplying
                     # the destination-level reach (`general_total_transpose`) by the number of jobs/pupil-places
                     # in that destination zone (`place_of_employment_class`).

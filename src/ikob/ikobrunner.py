@@ -23,7 +23,7 @@ def run_scripts(project_file, skip_steps: list[bool] | None = None, write_weight
     """
     Run through all steps for a given project.
 
-    For details about the all the steps taken see documentation/IKOB-algorithm.pdf.
+    For details about the all the steps taken see https://docs.crow.nl/ikob/algorithm/
     In de docstring of each specific step the relevant section of the documentation is referenced.
     documentation/IKOB-documentation-partially-outdated.pdf is partially outdated, but might still provide some insight into the code.
     Do note that at the very least naming has changed and output is not written to disk after each step any more.

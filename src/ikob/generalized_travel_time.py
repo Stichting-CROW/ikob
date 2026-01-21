@@ -30,7 +30,7 @@ def generalized_travel_time(config) -> DataSource:
     """
     Compute generalized (experienced) travel time from time and costs.
 
-    Corresponds to section D1 in IKOB-algorithm.pdf
+    Corresponds to https://docs.crow.nl/ikob/algorithm/D1-calculation-of-experienced-travel-time
     """
 
     logger.info("Starting step: Compute generalized travel time from time and costs.")
@@ -182,7 +182,7 @@ def generalized_travel_time(config) -> DataSource:
                     generalized_travel_time.set(key, gtr_skim.copy())
 
                 # Then PT, pt costs are (optionally) computed from travel times and skims_config["OV kosten"]
-                # This does tot strictly follow the documentation in IKOB-algorithm.pdf
+                # This does tot strictly follow the documentation in https://docs.crow.nl/ikob/algorithm/
                 factor = tvom.get(income_level)
                 gtr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix + factor * pt_cost_matrix, 9999)
                 key = DataKey(id="OV", part_of_day=pod, income=income_level, motive=motive, regime=regime)

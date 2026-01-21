@@ -102,7 +102,7 @@ def competition_on_jobs(
     """
     For every zone it's determined if the zone has a (dis)advantage compared to other zones in reaching employment opportunities.
 
-    Corresponds to section D6 in the IKOB-algorithm.pdf.
+    https://docs.crow.nl/ikob/algorithm/D6-for-each-neighborhood-the-extent-to-which-it-has-an-advantage-or-disadvantage-compared-to-other-neighborhoods-in-finding-jobs-is-determined-by-income-group
 
     D6 defines a competition factor residents that discounts
     destinations with many competing residents.
@@ -117,7 +117,7 @@ def competition_on_citizens(
     """
     For every zone with employment opportunities it's determined if the zone has a (dis)advantage compared to other zones in attracting citizens.
 
-    Corresponds to section D7 in the IKOB-algorithm.pdf.
+    https://docs.crow.nl/ikob/algorithm/D7-for-each-job-zone-the-extent-to-which-it-is-advantageous-or-disadvantageous-compared-to-other-job-zones-in-terms-of-accessibility-for-residents-per-income-group-is-determined
 
     D7 is the "mirror" of D6: it defines a competition factor for jobs/destinations that discounts
     origins with many competing jobs/destinations.

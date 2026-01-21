@@ -9,6 +9,7 @@ Potential accessibility is calculated in analogy with [Hansen (1958)](https://ww
 So, the further away an amenity (like a job location) is, the less it will count as a full option. The calculated potential accessibility, therefore, is a weighted amount.
 
 Some commonly used abbreviations / jargon:
+
 - TVOM: Time value of money, how much money a unit of time is worth.  
   Used to combine both travel time and travel costs into a single metric.
 - SEGS: Sociaal-economische gegevens (Social-Economic data).  

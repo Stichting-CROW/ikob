@@ -37,7 +37,7 @@ def calculate_single_weights(config, generalized_travel_time: DataSource) -> Dat
     """
     From experienced travel time to the computation of weights
 
-    Corresponds to section D2 in the IKOB-algorithm.pdf
+    Corresponds to https://docs.crow.nl/ikob/algorithm/D2-from-experienced-travel-time-to-calculation-of-weights
 
     Loops over the computed generalized travel time from the previous step and applies a decay curve to them.
     """

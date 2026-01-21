@@ -12,7 +12,7 @@ def distribute_groups_over_zones(config):
     """
     Distribute groups over zones
 
-    Corresponds to section B in IKOB-algorithm.pdf
+    https://docs.crow.nl/ikob/algorithm/B-groups-per-neighborhood
 
     This step does not work with a data source like the other steps, but instead writes the result to file.
     """
@@ -25,7 +25,7 @@ def distribute_groups_over_zones(config):
     # Ophalen van instellingen
     scenario = project_config["verstedelijkingsscenario"]
     artificial = advanced_config["kunstmab"]["gebruiken"]
-    # This seems to be Table 5 of IKOB-algorithm.pdf, although this uses a flat percentage for all urbanization grades
+    # This seems to be Table 5 of https://docs.crow.nl/ikob/algorithm/B-groups-per-neighborhood, although this uses a flat percentage for all urbanization grades
     free_pt_percentage = verdeling_config["GratisOVpercentage"]
     motieven = project_config["motieven"]
 
@@ -42,7 +42,7 @@ def distribute_groups_over_zones(config):
     # Decrement one to account for zero-based indexing later on.
     urbanization = [int(sgg) - 1 for sgg in urbanization_grade_segs]
 
-    # See table 4 of section B in IKOB-algorithm.pdf for the source
+    # See table 4 of section B in https://docs.crow.nl/ikob/algorithm/B-groups-per-neighborhood for the source
     free_car_per_income = [0, 0.02, 0.175, 0.275]
     min_car_possession = car_possessions_per_household_segs
 
@@ -52,11 +52,11 @@ def distribute_groups_over_zones(config):
             itertools.starmap(min, zip(car_possessions_per_household_segs, artificial_car_possession_segs))
         )
 
-    # Read SEGS input files. See tables 1-3 of IKOB-algorithm.pdf
+    # Read SEGS input files. See tables 1-3 in https://docs.crow.nl/ikob/algorithm/B-groups-per-neighborhood
     no_license_segs = segs_source.read("GeenRijbewijs")
     no_car_segs = segs_source.read("GeenAuto")
     with_car_segs = segs_source.read("WelAuto")
-    # Tables 6-7 of IKOB-algorithm.pdf
+    # Tables 6-7 in https://docs.crow.nl/ikob/algorithm/B-groups-per-neighborhood
     preferences_segs = segs_source.read("Voorkeuren")
     preferences_no_car_segs = segs_source.read("VoorkeurenGeenAuto")
 
@@ -107,7 +107,7 @@ def distribute_groups_over_zones(config):
             total_car_possession_survey.append([])
             survey_per_income_class.append([])
             # First determine theoretical car and possessions.
-            # See Step 1 in section B of IKOB-algorithm.pdf
+            # See Step 1 in section B in https://docs.crow.nl/ikob/algorithm/B-groups-per-neighborhood
             car_possession_share = []
             for id, wc in zip(income_distribution, with_car_segs[urbanization[i]]):
                 car_possession_share.append(id * wc / 100)
@@ -131,7 +131,7 @@ def distribute_groups_over_zones(config):
                 no_car_with_license = no_car_segs[urbanization[i]][i_income] / 100 * no_car_correction
                 no_license = no_license_segs[urbanization[i]][i_income] / 100 * no_car_correction
 
-                # Step 2 of section B of IKOB-algorithm.pdf
+                # Step 2 of section B in https://docs.crow.nl/ikob/algorithm/B-groups-per-neighborhood
                 # Also computes free pt data
                 income_share = income_distribution[i_income]
 
@@ -149,7 +149,7 @@ def distribute_groups_over_zones(config):
                 total_survey[i].append(free_pt_share)
                 survey_per_income_class[i].append(free_pt_share / with_car)
 
-                # Step 3 of section B of IKOB-algorithm.pdf
+                # Step 3 of section B in https://docs.crow.nl/ikob/algorithm/B-groups-per-neighborhood
                 for i_preference in range(len(preferences)):
                     share_preference = (
                         no_free_car * (1 - free_pt_percentage) * preferences_segs[urbanization[i]][i_preference] / 100

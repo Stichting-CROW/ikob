@@ -40,7 +40,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
     """
     From weights for single travel modes to combined weights.
 
-    Corresponds to section D3 in the IKOB-algorithm.pdf
+    https://docs.crow.nl/ikob/algorithm/D3-from-single-mode-weights-to-combined-weights/
 
     Travelers are expected to always take the travel mode of least resistance (highest weight) available.
     i.e. the maximum weight over the available travel modes is taken here.
