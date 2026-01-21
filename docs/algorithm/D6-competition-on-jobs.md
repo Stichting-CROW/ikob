@@ -3,8 +3,8 @@
 In woorden de ‘concurrentiekracht qua bereikbaarheid van arbeidsplaatsen voor inwoners uit een zone' is:
 
 $$
-\frac{𝐴𝑎𝑛𝑡𝑎𝑙\;𝑎𝑟𝑏𝑒𝑖𝑑𝑠𝑝𝑙𝑎𝑎𝑡𝑠𝑒𝑛\;𝑖𝑛\;𝑏𝑒𝑠𝑡𝑒𝑚𝑚𝑖𝑛𝑔𝑠𝑧𝑜𝑛𝑒}
-{𝑃𝑜𝑡𝑒𝑛𝑡𝑖𝑒\;𝑣𝑎𝑛\;𝑑𝑒\;𝑏𝑒𝑠𝑡𝑒𝑚𝑚𝑖𝑛𝑔𝑠𝑧𝑜𝑛𝑒} \times 𝑅𝑒𝑖𝑠𝑡𝑖𝑗𝑑𝑔𝑒𝑤𝑖𝑐ℎ𝑡
+\frac{\text{Aantal arbeidsplaatsen in bestemmingszone}}
+{\text{Potentie van de bestemmingszone}} \times \text{Reistijdgewicht}
 $$
 
 Gesommeerd over alle bestemmingszones

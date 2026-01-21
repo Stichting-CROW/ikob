@@ -3,8 +3,8 @@
 In woorden de ‘concurrentiekracht qua bereikbaarheid van bedrijven en instellingen in een zone voor inwoners eromheen is voor een groep is:
 
 $$
-\frac{𝐴𝑎𝑛𝑡𝑎𝑙\;𝑖𝑛𝑤𝑜𝑛𝑒𝑟𝑠\;𝑖𝑛\;ℎ𝑒𝑟𝑘𝑜𝑚𝑠𝑡𝑠𝑧𝑜𝑛𝑒}
-{𝐴𝑎𝑛𝑡𝑎𝑙\;𝑏𝑒𝑟𝑒𝑖𝑘𝑏𝑎𝑟𝑒\;𝑎𝑟𝑏𝑒𝑖𝑑𝑠𝑝𝑙𝑎𝑎𝑡𝑠𝑒𝑛\;𝑣𝑜𝑜𝑟\;𝑑𝑒\;ℎ𝑒𝑟𝑘𝑜𝑚𝑠𝑡𝑧𝑜𝑛𝑒} \times 𝑅𝑒𝑖𝑠𝑡𝑖𝑗𝑑𝑔𝑒𝑤𝑖𝑐ℎ𝑡
+\frac{\text{Aantal inwoners in herkomstzone}}
+{\text{Aantal bereikbare arbeidsplaatsen voor de herkomstzone}} \times \text{Reistijdgewicht}
 $$
 
 Gesommeerd over alle herkomstzones
