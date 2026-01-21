@@ -1,5 +1,5 @@
 def work_constants(modality, preference, motive):
-    """Returns the value from Table 9-11 in https://docs.crow.nl/ikob/algorithm/D2-from-experienced-travel-time-to-calculation-of-weights"""
+    """Returns the value from Table 9-11 in https://docs.crow.nl/ikob/algorithm/D2-single-weights/"""
     motives = ["werk", "sociaal-recreatief", "winkeldagelijks", "onderwijs"]
     assert motive in motives, f"Unknown motive: '{motive}'"
 

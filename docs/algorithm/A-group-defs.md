@@ -1,7 +1,3 @@
----
-icon: lucide/users
----
-
 # A: Definitie van groepen
 
 De groepen worden bepaald aan de hand van:

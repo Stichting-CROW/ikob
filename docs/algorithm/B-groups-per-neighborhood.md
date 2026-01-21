@@ -1,7 +1,3 @@
----
-icon: lucide/circle-pile
----
-
 # B: Verdeling groepen over buurten
 
 Gebruikte symbolen:

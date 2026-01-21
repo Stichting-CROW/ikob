@@ -30,7 +30,7 @@ def generalized_travel_time(config) -> DataSource:
     """
     Compute generalized (experienced) travel time from time and costs.
 
-    Corresponds to https://docs.crow.nl/ikob/algorithm/D1-calculation-of-experienced-travel-time
+    Corresponds to https://docs.crow.nl/ikob/algorithm/D1-experienced-travel-time
     """
 
     logger.info("Starting step: Compute generalized travel time from time and costs.")

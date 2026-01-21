@@ -16,7 +16,7 @@ def employment_opportunities(config, single_weights: DataSource, combined_weight
     The definition of employment opportunities and the population to consider changes based on the travel motive to consider.
     For example, for education students and schools are considered while for the motive work the working population and jobs are considered.
 
-    Corresponds to https://docs.crow.nl/ikob/algorithm/D4-from-combined-weights-to-number-of-accessible-workplaces
+    Corresponds to https://docs.crow.nl/ikob/algorithm/D4-employment-opportunities
     """
     logger.info("Starting step: Employment opportunities for citizens.")
 
@@ -214,7 +214,7 @@ def employment_opportunities(config, single_weights: DataSource, combined_weight
                                 general_matrix_product[i].append(0)
 
                     # section D4 regional aggregation note:
-                    # https://docs.crow.nl/ikob/algorithm/D4-from-combined-weights-to-number-of-accessible-workplaces defines $B_{irv}$ as a population-weighted aggregation of zone-level reachability
+                    # https://docs.crow.nl/ikob/algorithm/D4-employment-opportunities/ defines $B_{irv}$ as a population-weighted aggregation of zone-level reachability
                     # $B_{ihv}$ over the zones $h$ that belong to a region $r$:
                     #   $B_{irv} = (\sum_{h \in r} B_{ihv} \cdot I_{ih}) / (\sum_{h \in r} I_{ih})$.
                     # This function does not explicitly group zones into regions or compute that weighted average.
