@@ -16,7 +16,9 @@ Some commonly used abbreviations / jargon:
   For example: Shops per zone, working population per zone, etc.
 - skims: Data to determine an impedance ('friction') matrix from zone to zone.  
   For example: A matrix of distances via car from zone to zone, costs per kilometer of traveling by car, etc.
-- GTR: Generalized travel time
+- GTR: Generalized travel time.
+
+Documentation on the construction of the IKOB algorithm, including a detailed description of its underlying methodology and the variables used in the calculation, is available at: [https://docs.crow.nl/ikob/](https://docs.crow.nl/ikob/).
 
 ## Installation and usage
 
