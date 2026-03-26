@@ -1,7 +1,10 @@
+import logging
 import pathlib
+from dataclasses import dataclass, field
 
 import numpy as np
-import xlsxwriter
+
+logger = logging.getLogger(__name__)
 
 
 def zeros(lengte):
@@ -12,46 +15,41 @@ def transpose(matrix):
     return np.array(matrix).T
 
 
-def write_xls(matrix, filenaam, header):
-    if not isinstance(filenaam, pathlib.Path):
-        filenaam = pathlib.Path(filenaam)
-
-    workbook = xlsxwriter.Workbook(filenaam)
-    worksheet = workbook.add_worksheet()
-    worksheet.write_row(0, 0, header)
-    for r in range(0, len(matrix)):
-        worksheet.write(r + 1, 0, r + 1)
-        worksheet.write_row(r + 1, 1, matrix[r])
-    workbook.close()
-
-
-def read_csv(filenaam, type_caster=float):
+def read_csv(filenaam, type_caster=float, has_index_column=False):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
     # First, attempt to read without header.
     # If this fails, read with skipping the header.
     try:
-        matrix = np.loadtxt(filenaam,
-                            dtype=type_caster,
-                            delimiter=',')
+        matrix = np.loadtxt(filenaam, dtype=type_caster, delimiter=",")
     except ValueError:
-        matrix = np.loadtxt(filenaam,
-                            dtype=type_caster,
-                            skiprows=1,
-                            delimiter=',')
-    return matrix
+        matrix = np.loadtxt(filenaam, dtype=type_caster, skiprows=1, delimiter=",")
+    if has_index_column:
+        return matrix[:, 1:]
+    else:
+        return matrix
 
 
-def read_csv_int(filenaam):
-    return read_csv(filenaam, type_caster=int)
+def read_csv_int(filenaam, has_index_column=False):
+    return read_csv(filenaam, type_caster=int, has_index_column=has_index_column)
 
 
-def read_csv_float(filenaam):
-    return read_csv(filenaam, type_caster=float)
+def read_csv_float(filenaam, has_index_column=False):
+    return read_csv(filenaam, type_caster=float, has_index_column=has_index_column)
 
 
-def write_csv(matrix, filenaam, header=[]):
+@dataclass
+class CsvIndex:
+    name: str = ""
+    values: list[int] = field(default_factory=list)
+
+    @classmethod
+    def zone_index(cls, num_zones):
+        return cls("zone", list(range(1, num_zones + 1)))
+
+
+def write_csv(matrix, filenaam, index=CsvIndex(), header=[]):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
@@ -61,100 +59,107 @@ def write_csv(matrix, filenaam, header=[]):
         # np.savetxt writes this by default as one column.
         matrix = matrix.reshape(1, matrix.shape[0])
 
-    fmt = '%d' if np.isdtype(matrix.dtype, 'integral') else '%.18e'
+    # Determine format for data
+    data_fmt = "%d" if np.isdtype(matrix.dtype, "integral") else "%.18e"
+
+    # Add index column if provided
+    if len(index.values) > 0:
+        index_col = np.array(index.values).reshape(-1, 1)
+        matrix = np.hstack([index_col, matrix])
+        header = [index.name, *header]
+        # Index is always integer, data keeps its original format
+        fmt = ["%d"] + [data_fmt] * (matrix.shape[1] - 1)
+    else:
+        fmt = data_fmt
+
     delim = ","
     header = delim.join(header)
-    np.savetxt(filenaam,
-               matrix,
-               fmt=fmt,
-               delimiter=delim,
-               header=header,
-               comments='')
+    np.savetxt(filenaam, matrix, fmt=fmt, delimiter=delim, header=header, comments="")
 
 
 def group_income_level(naam):
-    if naam[-4:] == 'hoog':
-        if naam[-10:] == 'middelhoog':
-            return 'middelhoog'
+    if naam[-4:] == "hoog":
+        if naam[-10:] == "middelhoog":
+            return "middelhoog"
         else:
-            return 'hoog'
-    elif naam[-4:] == 'laag':
-        if naam[-10:] == 'middellaag':
-            return 'middellaag'
+            return "hoog"
+    elif naam[-4:] == "laag":
+        if naam[-10:] == "middellaag":
+            return "middellaag"
         else:
-            return 'laag'
+            return "laag"
     else:
-        return ''
+        return ""
 
 
 def find_preference(naam, mod):
-    if 'vk' in naam:
-        Beginvk = naam.find('vk')
+    if "vk" in naam:
+        Beginvk = naam.find("vk")
         if naam[Beginvk + 2] == "A":
-            return 'Auto'
+            return "Auto"
         elif naam[Beginvk + 2] == "N":
-            return 'Neutraal'
+            return "Neutraal"
         elif naam[Beginvk + 2] == "O":
-            return 'OV'
+            return "OV"
         elif naam[Beginvk + 2] == "F":
-            return 'Fiets'
+            return "Fiets"
         else:
-            return ''
-    elif 'GratisAuto' in naam:
-        if 'GratisAuto_GratisOV' in naam and 'OV' in mod and 'Auto' in mod:
-            return 'Neutraal'
+            return ""
+    elif "GratisAuto" in naam:
+        if "GratisAuto_GratisOV" in naam and "OV" in mod and "Auto" in mod:
+            return "Neutraal"
         else:
-            if 'Auto' in mod:
-                return 'Auto'
+            if "Auto" in mod:
+                return "Auto"
             else:
-                return 'OV'
-    elif 'GratisOV' in naam:
-        return 'OV'
+                return "OV"
+    elif "GratisOV" in naam:
+        return "OV"
     else:
-        return ''
+        return ""
 
 
 def single_group(mod, gr):
-    if mod == 'Auto':
-        if 'GratisAuto' in gr:
-            return 'GratisAuto'
-        elif 'Wel' in gr:
-            return 'Auto'
-        if 'GeenAuto' in gr:
-            return 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            return 'GeenRijbewijs'
-    if mod == 'OV':
-        if 'GratisOV' in gr:
-            return 'GratisOV'
+    if mod == "Auto":
+        if "GratisAuto" in gr:
+            return "GratisAuto"
+        elif "Wel" in gr:
+            return "Auto"
+        if "GeenAuto" in gr:
+            return "GeenAuto"
+        if "GeenRijbewijs" in gr:
+            return "GeenRijbewijs"
+    if mod == "OV":
+        if "GratisOV" in gr:
+            return "GratisOV"
         else:
-            return 'OV'
+            return "OV"
 
 
 def combined_group(mod, gr):
-    string = ''
-    if 'Auto' in mod:
-        if 'GratisAuto' in gr:
-            string = 'GratisAuto'
-        elif 'Wel' in gr:
-            string = 'Auto'
-        if 'GeenAuto' in gr:
-            string = 'GeenAuto'
-        if 'GeenRijbewijs' in gr:
-            string = 'GeenRijbewijs'
-    if 'OV' in mod:
-        if 'GratisOV' in gr:
-            if string == '':
-                string = string + 'GratisOV'
+    string = ""
+    if "Auto" in mod:
+        if "GratisAuto" in gr:
+            string = "GratisAuto"
+        elif "Wel" in gr:
+            string = "Auto"
+        if "GeenAuto" in gr:
+            string = "GeenAuto"
+        if "GeenRijbewijs" in gr:
+            string = "GeenRijbewijs"
+    if "OV" in mod:
+        if "GratisOV" in gr:
+            if string == "":
+                string = string + "GratisOV"
             else:
-                string = string + '_GratisOV'
+                string = string + "_GratisOV"
         else:
-            if string == '':
-                string = string + 'OV'
+            if string == "":
+                string = string + "OV"
             else:
-                string = string + '_OV'
-    if 'EFiets' in mod:
-        string = string + '_EFiets'
-    elif 'Fiets' in mod:
-        string = string + '_Fiets'
+                string = string + "_OV"
+    if "EFiets" in mod:
+        string = string + "_EFiets"
+    elif "Fiets" in mod:
+        string = string + "_Fiets"
     return string

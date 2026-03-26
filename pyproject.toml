@@ -8,7 +8,7 @@ version = "0.0.1"
 description = "IKOB"
 readme = "README.md"
 # In version 3.13.0 the GUI fails to launch: https://github.com/Stichting-CROW/ikob/issues/74.
-requires-python = ">= 3.12, != 3.13.0"
+requires-python = ">= 3.13.1"
 license = { file = "LICENSE" }
 classifiers = [
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
@@ -16,15 +16,13 @@ classifiers = [
 dependencies = [
     "numpy",
     "openpyxl",
-    "xlsxwriter",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "autopep8",
-    "isort",
     "pandas",
     "pytest",
+    "ruff",
 ]
 
 deploy = [
@@ -38,4 +36,20 @@ ikobrunner = "ikob:ikobrunner.main"
 [tool.pytest.ini_options]
 testpaths = [
     "tests",
+]
+
+[tool.ruff]
+extend-exclude = [
+    "documentation",
+    "scripts",
+]
+# NOTE: The original source files contained various functions with
+# highly nested for loops and if statements. The longer line length
+# (slightly) improves their readability.
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+extend-select = [
+    "I",
 ]

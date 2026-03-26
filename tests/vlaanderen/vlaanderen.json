@@ -14,12 +14,6 @@
     }
   },
   "project": {
-    "schatten_of_bekend": [
-      "geschat"
-    ],
-    "conc_afstand": [
-      "concurrentie"
-    ],
     "naam": "Vlaanderen",
     "beprijzingsregime": "Basis",
     "paden": {
@@ -28,12 +22,16 @@
       "output_directory": "tests/vlaanderen/"
     },
     "verstedelijkingsscenario": "2023",
-    "welke_groepen": [
-      "alle groepen"
-    ],
-    "motieven": [
-      "werk"
-    ],
+    "motief": {
+      "naam": "werk",
+      "reizende populatie": "tests/vlaanderen/SEGS/2023/Beroepsbevolking_inkomensklasse.csv",
+      "bestemmingsplaatsen": "tests/vlaanderen/SEGS/2023/Arbeidsplaatsen_inkomensklasse.csv",
+      "TVOM": "werk",
+      "reistijdvervalscurve": "werk en sociaal-recreatief"
+    },
+    "fiets of E-fiets": {
+        "E-fiets": false
+    },
     "welke_inkomensgroepen": [
       "laag",
       "middellaag",
@@ -95,12 +93,20 @@
     "parkeerkosten": {
       "bestand": "",
       "gebruiken": false
-    }
+    },
+    "welke_groepen": [
+      "alle groepen"
+    ]
   },
   "ketens": {
-    "ketens": {
+    "chains": {
       "gebruiken": false,
+      "bestand": "",
       "naam hub": ""
+    },
+    "bestemmingslijst": {
+      "gebruiken": false,
+      "bestand": ""
     }
   }
 }
