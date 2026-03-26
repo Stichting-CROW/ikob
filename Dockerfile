@@ -9,4 +9,8 @@ COPY . /app
 
 # Install ikob.
 RUN pip install --upgrade pip
-RUN pip install -e .[dev]
+RUN pip install -e .[dev,deploy]
+
+# By default, start the ikob runner. 
+# If desired, ikobconfig may be supplied as alternative entrypoint
+ENTRYPOINT [ "/app/src/ikob/ikobrunner.py" ]
