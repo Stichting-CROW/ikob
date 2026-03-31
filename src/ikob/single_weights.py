@@ -11,28 +11,17 @@ logger = logging.getLogger(__name__)
 
 ALL_PREFERENCES = ["Auto", "Neutraal", "Fiets", "OV"]
 
+"""Vectorisation of this nested loop will speed it up significantly""""
 
 def calculate_weights(generalized_travel_time, modality, preference, decay_curve_name: DecayCurveName):
-    """
-    Applies a decay curve to the generalized travel time to compute a weight or 'resistance' for the movement.
-    A weight of 1 means a movement with very little resistance (a short & cheap movement).
-    A weight of 0 means a movement with a lot of resistance (a long & expensive movement).
-    """
     alpha, omega, scaling = work_constants(modality, preference, decay_curve_name)
-    n = len(generalized_travel_time)
-    weight_matrix = np.zeros((n, n))
-
-    for r in range(len(generalized_travel_time)):
-        for k in range(len(generalized_travel_time)):
-            if generalized_travel_time[r][k] < 180:
-                travel_time = (1.0 / (1 + math.exp((-omega + generalized_travel_time[r][k]) * alpha))) * scaling
-            else:
-                travel_time = 0.0
-
-            if travel_time < 0.001:
-                travel_time = 0.0
-
-            weight_matrix[r, k] = travel_time
+    gtr = np.asarray(generalized_travel_time)
+    weight_matrix = np.where(
+        gtr < 180,
+        (1.0 / (1.0 + np.exp((gtr - omega) * alpha))) * scaling,
+        0.0
+    )
+    weight_matrix[weight_matrix < 0.001] = 0.0
     return weight_matrix
 
 
