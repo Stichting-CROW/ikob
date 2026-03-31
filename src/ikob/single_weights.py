@@ -11,7 +11,9 @@ logger = logging.getLogger(__name__)
 
 ALL_PREFERENCES = ["Auto", "Neutraal", "Fiets", "OV"]
 
-"""Vectorisation of this nested loop will speed it up significantly""""
+"""
+Vectorisation of this nested loop will speed it up significantly
+"""
 
 def calculate_weights(generalized_travel_time, modality, preference, decay_curve_name: DecayCurveName):
     alpha, omega, scaling = work_constants(modality, preference, decay_curve_name)
