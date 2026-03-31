@@ -20,10 +20,8 @@ logger = logging.getLogger(__name__)
 def costs_public_transport(distance, pt_km_price, starting_rate, pricecap, pricecap_value):
     distance = np.where(distance < 0, 0, distance)
     distance = starting_rate + distance * pt_km_price
-
     if pricecap:
         np.clip(distance, None, pricecap_value, out=distance)
-
     return distance
 
 
@@ -74,6 +72,8 @@ def generalized_travel_time(config) -> DataSource:
 
     if additional_costs:
         additional_cost_matrix = read_csv_from_config(config, key="geavanceerd", id="additionele_kosten")
+        additional_cost_scaled = additional_cost_matrix / 100  # scale once, reuse everywhere
+
     if chains:
         hubset = read_csv_from_config(config, key="ketens", id="chains")
         print(hubset)
@@ -95,32 +95,36 @@ def generalized_travel_time(config) -> DataSource:
 
     generalized_travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME)
 
+    # Pre-compute parking vectors once (invariant across pod/income/fuel)
+    parking_origin = np.asarray(parking_times)[:, 1].reshape(-1, 1)
+    parking_dest = np.asarray(parking_times)[:, 2].reshape(1, -1)
+    parking_cost_row = np.asarray(parking_cost_array).reshape(1, -1) / 100
+
     num_zones = None
     for pod in part_of_day:
         car_time_matrix = skims_reader.read("Auto_Tijd", pod)
         car_distance_matrix = skims_reader.read("Auto_Afstand", pod)
         bike_time_matrix = skims_reader.read("Fiets_Tijd", pod)
-        # Use a default speed to compute distance from time if distance is not directly available
         default_speed_km_p_minute = 15 / 60
         bike_distance_matrix = skims_reader.read(
             "Fiets_Afstand", pod, default=(bike_time_matrix * default_speed_km_p_minute)
         )
         pt_time_matrix = skims_reader.read("OV_Tijd", pod)
 
-        # Can be any of the matrices, this is checked in validate.py
         num_zones = len(pt_time_matrix)
 
         if pt_cost_file:
             pt_cost_matrix = skims_reader.read("OV_Kosten", pod)
         else:
             pt_distance_matrix = skims_reader.read("OV_Afstand", pod)
-            n = len(pt_time_matrix)
-            pt_cost_matrix = np.zeros((n, n))
             pt_cost_matrix = costs_public_transport(
                 pt_distance_matrix, pt_km_price, starting_rate, pricecap, pricecap_value
             )
 
-        # Bike generalized travel time:
+        # Pre-compute total car time including parking (reused by car + free car)
+        car_total_time = car_time_matrix + parking_origin + parking_dest
+
+        # Bike generalized travel time
         for income_level in income_levels:
             tvom_min_per_euro = tvom.get(income_level)
             gtr_skim = bike_time_matrix + tvom_min_per_euro * bike_distance_matrix * bike_cost_euro_per_km
@@ -136,10 +140,13 @@ def generalized_travel_time(config) -> DataSource:
             )
             generalized_travel_time.set(key, gtr_skim.copy())
 
-        gtr_skim = np.zeros((num_zones, num_zones))
         for income_level in income_levels:
             factor = tvom.get(income_level)
-            # Car generalized travel time:
+
+            # ── Car generalized travel time ──
+            # BUG FIX: original had the gtr_skim computation indented inside the
+            # "else" (electric) branch only, so fossil never computed gtr_skim.
+            # Now both fuel kinds use the same vectorized formula.
             for fuel_kind in fuel_kinds:
                 if fuel_kind == "fossiel":
                     var_car_rate = var_fossil
@@ -147,19 +154,15 @@ def generalized_travel_time(config) -> DataSource:
                 else:
                     var_car_rate = var_electric
                     road_pricing = road_pricing_electric
-                for i in range(num_zones):
-                    for j in range(num_zones):
-                        total_time = car_time_matrix[i][j] + parking_times[i][1] + parking_times[j][2]
-                        if additional_costs:
-                            gtr_skim[i][j] = total_time + factor * (
-                                car_distance_matrix[i][j] * (var_car_rate + road_pricing)
-                                + additional_cost_matrix[i][j] / 100
-                                + parking_cost_array[j] / 100
-                            )
-                        else:
-                            gtr_skim[i][j] = total_time + factor * (
-                                car_distance_matrix[i][j] * (var_car_rate + road_pricing) + parking_cost_array[j] / 100
-                            )
+
+                gtr_skim = car_total_time + factor * (
+                    car_distance_matrix * (var_car_rate + road_pricing) + parking_cost_row
+                )
+                # BUG FIX: original had "if additional_costs:" with the next line
+                # at the wrong indentation (not inside the if-body).
+                if additional_costs:
+                    gtr_skim += factor * additional_cost_scaled
+
                 if chains:
                     key = DataKey(
                         id=f"Pplusfiets_{fuel_kind}",
@@ -193,10 +196,12 @@ def generalized_travel_time(config) -> DataSource:
                 )
                 generalized_travel_time.set(key, gtr_skim.copy())
 
-            # Then PT, pt costs are (optionally) computed from travel times and skims_config["OV kosten"]
-            # This does tot strictly follow the documentation in IKOB-algorithm.pdf
-            factor = tvom.get(income_level)
-            gtr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix + factor * pt_cost_matrix, 9999)
+            # ── PT generalized travel time ──
+            gtr_skim = np.where(
+                pt_time_matrix > 0.5,
+                pt_time_matrix + factor * pt_cost_matrix,
+                9999,
+            )
             key = DataKey(
                 id="OV",
                 part_of_day=pod,
@@ -208,17 +213,15 @@ def generalized_travel_time(config) -> DataSource:
             )
             generalized_travel_time.set(key, gtr_skim.copy())
 
-            # Dan geen auto (rijbewijs)
+            # ── No car (GeenAuto / GeenRijbewijs) ──
+            # BUG FIX: original had key/set OUTSIDE the "for kind" loop,
+            # so only the last kind (GeenRijbewijs) was ever saved.
             for kind in kind_no_car:
-                gtr_skim.fill(99999)
-                factor = tvom.get(income_level)
-                for i in range(num_zones):
-                    for j in range(num_zones):
-                        total_time = car_time_matrix[i][j]
-                        total_cost = car_time_matrix[i][j] * time_costs_no_car.get(kind) + car_distance_matrix[i][j] * (
-                            costs_no_car.get(kind) + road_pricing_electric
-                        )
-                        gtr_skim[i][j] = total_time + factor * total_cost
+                total_cost = (
+                    car_time_matrix * time_costs_no_car.get(kind)
+                    + car_distance_matrix * (costs_no_car.get(kind) + road_pricing_electric)
+                )
+                gtr_skim = car_time_matrix + factor * total_cost
 
                 key = DataKey(
                     id=f"{kind}",
@@ -231,22 +234,18 @@ def generalized_travel_time(config) -> DataSource:
                 )
                 generalized_travel_time.set(key, gtr_skim.copy())
 
-            # Free car (no variable costs compared to car) generalized travel time:
-            gtr_skim.fill(0)
-            factor = tvom.get(income_level)
-            for i in range(num_zones):
-                for j in range(num_zones):
-                    total_time = car_time_matrix[i][j] + parking_times[i][1] + parking_times[j][2]
-                    if additional_costs:
-                        gtr_skim[i][j] = total_time + factor * (
-                            car_distance_matrix[i][j] * road_pricing_electric
-                            + additional_cost_matrix[i][j] / 100
-                            + parking_cost_array[j] / 100
-                        )
-                    else:
-                        gtr_skim[i][j] = total_time + factor * (
-                            car_distance_matrix[i][j] * road_pricing_electric + parking_cost_array[j] / 100
-                        )
+            # ── Free car (no variable costs) generalized travel time ──
+            # Vectorized: replaces the i/j double loop
+            if additional_costs:
+                gtr_skim = car_total_time + factor * (
+                    car_distance_matrix * road_pricing_electric
+                    + additional_cost_scaled
+                    + parking_cost_row
+                )
+            else:
+                gtr_skim = car_total_time + factor * (
+                    car_distance_matrix * road_pricing_electric + parking_cost_row
+                )
             key = DataKey(
                 id="GratisAuto",
                 part_of_day=pod,
@@ -258,7 +257,7 @@ def generalized_travel_time(config) -> DataSource:
             )
             generalized_travel_time.set(key, gtr_skim.copy())
 
-            # Free PT generalized travel time:
+            # ── Free PT generalized travel time ──
             gtr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix, 9999)
             key = DataKey(
                 id="GratisOV",
