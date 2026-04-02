@@ -1,9 +1,11 @@
 import numpy as np
 import pytest
 
+from ikob.utils import IKOB_INFINITE
+
 
 def test_costs_public_transport_pricecap_and_starting_rate():
-    from ikob.generalized_travel_time import costs_public_transport
+    from ikob.utils import costs_public_transport
 
     # Prepare
     distance = np.array(
@@ -166,7 +168,7 @@ def test_generalized_travel_time_fiets(monkeypatch):
 def test_generalized_travel_time_public_transport(monkeypatch):
     import ikob.generalized_travel_time as gtt
     from ikob.datasource import DataKey
-    from ikob.generalized_travel_time import costs_public_transport
+    from ikob.utils import costs_public_transport
 
     config, pod, regime, motive, income, _, _, _, _, pt_time, pt_dist, _, tvom = setup_generalized_travel_time_input(
         monkeypatch, gtt
@@ -189,7 +191,7 @@ def test_generalized_travel_time_public_transport(monkeypatch):
         )
     )
     # Don't take the PT option if travel is less than 0.5 minutes.
-    expected_pt = np.where(pt_time > 0.5, expected_pt, 9999)
+    expected_pt = np.where(pt_time > 0.5, expected_pt, IKOB_INFINITE)
     np.testing.assert_allclose(pt, expected_pt)
 
 
@@ -203,7 +205,7 @@ def test_generalized_travel_time_free_public_transport(monkeypatch):
 
     free_pt_key = DataKey(id="GratisOV", part_of_day=pod, motive=motive, regime=regime)
     free_pt = datasource.get(free_pt_key)
-    expected_free_pt = np.where(pt_time > 0.5, pt_time, 9999)
+    expected_free_pt = np.where(pt_time > 0.5, pt_time, IKOB_INFINITE)
     np.testing.assert_allclose(free_pt, expected_free_pt)
 
 

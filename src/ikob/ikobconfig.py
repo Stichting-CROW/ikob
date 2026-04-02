@@ -12,8 +12,6 @@ from ikob.configuration_definition import (
     default_config,
     default_configuration_definition,
     project_name,
-    try_fix_incompatible_configuration,
-    validate_config,
 )
 
 logger = logging.getLogger(__name__)
@@ -59,13 +57,13 @@ def load_config(filename):
     except BaseException as e:
         raise IOError(f"Kan niet lezen uit: '{filename}' with error:\n'{e}'.")
     if config:
-        if not validate_config(config):
+        if not validate.validate_config(config):
             msg = "Loaded config file: '%s' is incompatible with current IKOB."
             logger.warning(msg, filename)
 
-            config = try_fix_incompatible_configuration(config)
+            config = validate.try_fix_incompatible_configuration(config)
 
-            if validate_config(config):
+            if validate.validate_config(config):
                 msg = "Automatically recovered from incompatible config file."
                 logger.info(msg)
             else:

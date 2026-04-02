@@ -4,7 +4,7 @@ import pathlib
 
 import pytest
 
-from ikob.configuration_definition import try_fix_incompatible_configuration, validate_config
+from ikob.config.validate import try_fix_incompatible_configuration, validate_config
 from ikob.ikobconfig import load_config
 
 old_config = """

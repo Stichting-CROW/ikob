@@ -6,6 +6,8 @@ from pathlib import Path
 import numpy as np
 
 from ikob import utils
+from ikob.chain_generator import Hubs
+from ikob.configuration_definition import default_config, default_configuration_definition
 from ikob.datasource import SegsSource, SkimsSource, read_csv_from_config, read_parking_times
 
 logger = logging.getLogger(__name__)
@@ -20,12 +22,45 @@ class FileValidator:
         num_zones, valid = self._skims_files_validation()
         if valid:
             valid &= self._motive_files_validation(num_zones)
+            valid &= self._chain_files_validation(num_zones)
 
         if not valid:
             # This is only an error when we are trying to run ikob right now when loading / saving config a warning is good.
             logger.warning(
                 "Unable to run ikob with the current config + input directory.",
             )
+        return valid
+
+    def _chain_files_validation(self, num_zones):
+        valid = True
+        if self.config["ketens"]["chains"]["gebruiken"]:
+            try:
+                hubs_raw = read_csv_from_config(self.config, key="ketens", id="chains")
+
+            except Exception as e:
+                logger.warning("A problem occurred while attempting to load the hub file: \n", exc_info=e)
+                return False
+
+            if not Hubs.validate(hubs_raw):
+                logger.warning("A problem occurred while validating hub data")
+                valid = False
+
+        if self.config["ketens"]["bestemmingslijst"]["gebruiken"]:
+            try:
+                destination_list = read_csv_from_config(
+                    self.config, key="ketens", id="bestemmingslijst", type_caster=int
+                )
+
+            except Exception as e:
+                logger.warning("A problem occurred while attempting to load the hub destination list: \n", exc_info=e)
+                return False
+
+            for destination_zone in destination_list:
+                if not 1 <= destination_zone <= num_zones:
+                    logger.warning(
+                        f"Destination zone {destination_zone} in hub destination list is not between 1 and the total number of zones {num_zones}"
+                    )
+                    valid = False
         return valid
 
     def _skims_files_validation(self):
@@ -166,6 +201,128 @@ class FileValidator:
             )
             return False
         return True
+
+
+def validate_config(config, strict=True, log_lvl=logging.WARNING):
+    """Validate a config dictionary."""
+    return validateConfigWithTemplate(config, default_configuration_definition(), strict=strict, log_lvl=log_lvl)
+
+
+def try_fix_incompatible_configuration(config):
+    """Attempt to recover from incompatible configuration files.
+
+    Some configuration changes can be automatically resolved to
+    maintain backward compatibility.
+    Adds default values to the config if they are missing.
+    """
+    fixers = [
+        transfer_to_advanced_tab,
+        transfer_to_chains_tab,
+        fiets_checklist_to_checkbox,
+        motieven_to_motief,
+    ]
+
+    default = default_config()
+    for fixer in fixers:
+        config = fixer(config)
+        new_config = merge_configs(default, config)
+        if validate_config(new_config, log_lvl=logging.INFO):
+            logger.info("Auto fixed config")
+            return new_config
+    logger.warning("Could not auto fix configuration. Using provided config as-is.")
+    return config
+
+
+def merge_configs(default, custom):
+    """Merge custom configuration with default configuration."""
+    if isinstance(default, dict) and isinstance(custom, dict):
+        result = default.copy()
+        for key, value in custom.items():
+            result[key] = merge_configs(default.get(key, {}), value)
+        return result
+    return custom if custom is not None else default
+
+
+def transfer_to_advanced_tab(config):
+    """Try to recover from missing "geavanceerd" configuration.
+
+    Introduced in commit `6c6684c`.
+    """
+    logger.info('Trying to auto fix "geavanceerd" configuration entry.')
+
+    # There is nothing to fix if the deprecated key is not present.
+    if "verdeling" not in config:
+        return config
+
+    for key in ["kunstmab", "parkeerkosten", "additionele_kosten"]:
+        if key not in config["verdeling"]:
+            continue
+
+        config["geavanceerd"][key] = config["verdeling"].pop(key)
+
+    return config
+
+
+def transfer_to_chains_tab(config):
+    """Try to recover from missing "ketens" configuration.
+
+    Introduced in commit `9bf0d1a`.
+    """
+    if "chains" in config:
+        # Cannot fix: a translated entry is already present.
+        return
+
+    if "ketens" in config:
+        # Cannot fix: ketens already present.
+        return config
+
+    logger.info('Trying to auto fix "ketens" configuration entry.')
+
+    group = "ketens"
+    config[group] = {}
+    translation = {"ketens": "chains"}
+    for key in ["ketens"]:
+        config[group][translation[key]] = config["project"].pop(key)
+
+    # Add missing bestemmingslijst entry.
+    config[group]["bestemmingslijst"] = {
+        "gebruiken": False,
+        "bestand": "",
+    }
+
+    return config
+
+
+def motieven_to_motief(config):
+    if "motieven" in config["project"]:
+        if config["project"]["motieven"] == ["werk"]:
+            # This motief is the default new motive, so we can remove the motieven section and rely on the default
+            del config["project"]["motieven"]
+        else:
+            logger.warning(
+                "'motieven' defined in config other than the default 'werk' motief. Manually edit the config to use the new 'motief'"
+            )
+    return config
+
+
+def fiets_checklist_to_checkbox(config):
+    """Update decremented fiets checklist into checkbox."""
+
+    fiets_of_efiets = config["project"]["fiets of E-fiets"]
+    is_deprecated = isinstance(fiets_of_efiets, list)
+
+    if not is_deprecated:
+        return config
+
+    # Since chancing the configuration from a checklist into a
+    # checkbox, selecting multiple entries are no longer supported,
+    # so multiple entries are not attempted to be fixed.
+    if len(fiets_of_efiets) > 1:
+        return config
+
+    is_enabled = fiets_of_efiets == ["E-fiets"]
+    config["project"]["fiets of E-fiets"] = {"E-fiets": is_enabled}
+    return config
 
 
 def _validateDefaultType(valtype, defvalue):

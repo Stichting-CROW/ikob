@@ -3,8 +3,12 @@ import pathlib
 from dataclasses import dataclass, field
 
 import numpy as np
+import numpy.typing as npt
 
 logger = logging.getLogger(__name__)
+
+# This is used throughout the code as a pseudo infinite travel time that's still outputted as a number
+IKOB_INFINITE = 9999.0
 
 
 def zeros(lengte):
@@ -163,3 +167,50 @@ def combined_group(mod, gr):
     elif "Fiets" in mod:
         string = string + "_Fiets"
     return string
+
+
+"""
+Some functions that compute general travel time / costs to avoid copying this logic
+"""
+
+
+def compute_bike_gtt(
+    bike_time_matrix: npt.NDArray,
+    bike_distance_matrix: npt.NDArray,
+    bike_cost_euro_per_km: float,
+    tvom_factor: float,
+):
+    return bike_time_matrix + tvom_factor * bike_distance_matrix * bike_cost_euro_per_km
+
+
+def compute_pt_gtt(pt_time_matrix: npt.NDArray, pt_cost_matrix: npt.NDArray, tvom_factor: float):
+    return np.where(pt_time_matrix > 0.5, pt_time_matrix + tvom_factor * pt_cost_matrix, IKOB_INFINITE)
+
+
+def compute_car_gtt(
+    car_time: npt.NDArray,
+    car_dist: npt.NDArray,
+    var_rate: float,
+    road_pricing: float,
+    tvom_factor: float,
+    additional_costs_eurocent: npt.NDArray,
+    parking_times_array: npt.NDArray,
+    parking_costs_array_eurocent: npt.NDArray,
+):
+    parking_time_matrix = parking_times_array[:, 1][:, np.newaxis] + parking_times_array[:, 2][np.newaxis, :]
+    return (
+        car_time
+        + parking_time_matrix
+        + tvom_factor
+        * ((var_rate + road_pricing) * car_dist + additional_costs_eurocent / 100 + parking_costs_array_eurocent / 100)
+    )
+
+
+def costs_public_transport(distance, pt_km_price, starting_rate, pricecap, pricecap_value):
+    distance = np.where(distance < 0, 0, distance)
+    distance = starting_rate + distance * pt_km_price
+
+    if pricecap:
+        np.clip(distance, None, pricecap_value, out=distance)
+
+    return distance
