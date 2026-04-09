@@ -17,7 +17,7 @@ Some commonly used abbreviations / jargon:
   For example: Shops per zone, working population per zone, etc.
 - skims: Data to determine an impedance ('friction') matrix from zone to zone.  
   For example: A matrix of distances via car from zone to zone, costs per kilometer of traveling by car, etc.
-- GTR: Generalized travel time
+- GTR / GTT: Generalized travel time
 - ICE: Internal combustion engine. Also referred to using fuel_kind 'fossiel'. 
 - vk: (dutch) voorkeur / (english) preference
 - groups: See [Groups](./README.md#groups)
@@ -210,7 +210,6 @@ The remaining folders contain test projects and reference output.
 
 There are some reference tests:
 - tests/e2e/test_end_to_end.py
-- tests/unit/test_chain_generator.py
 - tests/unit/test_parking_cost_file.py
 - tests/unit/test_group_distribution.py
 
@@ -222,6 +221,13 @@ To generate new reference data for these tests it's easiest to just run the test
 # Output
 
 See OUTPUT.md for the structure of the output (results) directory. This file is also included in the output directory produced by the code.
+
+# Input
+
+The input is not (yet) extensively documented. The input files themselves contain a header and index column which give an indication of their content.
+The headers are no more than a user facing description. Their content is ignored while reading files and all the data is simply treated as a numpy array.
+
+Further instruction on how to build this input data can be found in the [ikob-scripts repo](https://github.com/Stichting-CROW/ikob-scripts).
 
 # Groups 
 

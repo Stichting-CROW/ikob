@@ -123,6 +123,7 @@ def reachable_population(config, single_weights: DataSource, combined_weights: D
                                     regime=regimes,
                                     motive=motive_name,
                                 )
+                                # Get the transpose because normally the weights are indexed [origin, destination].
                                 bike_matrix = single_weights.get(key).T
 
                                 # section D5: $B_{gbv} = \sum_h I_{gh} \cdot G_{ghbvm}$.
@@ -141,6 +142,7 @@ def reachable_population(config, single_weights: DataSource, combined_weights: D
                                             motive=motive_name,
                                             fuel_kind=fuel_kind,
                                         )
+                                        # Get the transpose because normally the weights are indexed [origin, destination].
                                         matrix = single_weights.get(key).T
 
                                         if fuel_kind == "elektrisch":
@@ -159,6 +161,7 @@ def reachable_population(config, single_weights: DataSource, combined_weights: D
                                         regime=regimes,
                                         motive=motive_name,
                                     )
+                                    # Get the transpose because normally the weights are indexed [origin, destination].
                                     matrix = single_weights.get(key).T
 
                                     # section D5: $\sum_h I_{gh} \cdot G_{ghbvm}$ for auto groups without fuel split.
@@ -174,6 +177,7 @@ def reachable_population(config, single_weights: DataSource, combined_weights: D
                                     regime=regimes,
                                     motive=motive_name,
                                 )
+                                # Get the transpose because normally the weights are indexed [origin, destination].
                                 matrix = single_weights.get(key).T
 
                                 # section D5: $\sum_h I_{gh} \cdot G_{ghbvm}$ for OV.
@@ -195,6 +199,7 @@ def reachable_population(config, single_weights: DataSource, combined_weights: D
                                             subtopic="combinaties",
                                             fuel_kind=fuel_kind,
                                         )
+                                        # Get the transpose because normally the weights are indexed [origin, destination].
                                         matrix = combined_weights.get(key).T
 
                                         if fuel_kind == "elektrisch":
@@ -215,6 +220,7 @@ def reachable_population(config, single_weights: DataSource, combined_weights: D
                                         motive=motive_name,
                                         subtopic="combinaties",
                                     )
+                                    # Get the transpose because normally the weights are indexed [origin, destination].
                                     matrix = combined_weights.get(key).T
 
                                     # section D5: combined-mode $\sum_h I_{gh} \cdot G_{ghbvm}$.

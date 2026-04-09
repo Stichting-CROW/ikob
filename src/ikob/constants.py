@@ -54,7 +54,7 @@ def _daily_shopping_constants(modality, preference):
     alpha = 0.225
     omega = 12.5
     scaling = 1
-    if modality == "Fiets" or "EFiets":
+    if modality in ("Fiets", "EFiets"):
         omega = 10
         if preference == "Fiets":
             omega = 12.5
@@ -70,7 +70,7 @@ def _non_daily_shopping_constants(modality, preference):
     alpha = 0.225
     omega = 20
     scaling = 1
-    if modality == "Fiets" or "EFiets":
+    if modality in ("Fiets", "EFiets"):
         omega = 15
         if preference == "Fiets":
             omega = 20

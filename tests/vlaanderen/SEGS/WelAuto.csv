@@ -1,6 +1,6 @@
-﻿Laag,Middellaag,Middelhoog,Hoog
-33,59,78,94
-49,74,91,97
-60,80,94,97
-66,84,95,98
-70,86,96,97
+﻿Stedelijkheidsgraad,Laag,Middellaag,Middelhoog,Hoog
+1,33,59,78,94
+2,49,74,91,97
+3,60,80,94,97
+4,66,84,95,98
+5,70,86,96,97

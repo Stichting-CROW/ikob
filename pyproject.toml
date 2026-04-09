@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ikob"
-version = "0.0.1"
+version = "1.0.0"
 description = "IKOB"
 readme = "README.md"
 # In version 3.13.0 the GUI fails to launch: https://github.com/Stichting-CROW/ikob/issues/74.

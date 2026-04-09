@@ -1,9 +1,11 @@
 import numpy as np
 import pytest
 
+from ikob.utils import IKOB_INFINITE
+
 
 def test_costs_public_transport_pricecap_and_starting_rate():
-    from ikob.generalized_travel_time import costs_public_transport
+    from ikob.utils import costs_public_transport
 
     # Prepare
     distance = np.array(
@@ -166,7 +168,7 @@ def test_generalized_travel_time_fiets(monkeypatch):
 def test_generalized_travel_time_public_transport(monkeypatch):
     import ikob.generalized_travel_time as gtt
     from ikob.datasource import DataKey
-    from ikob.generalized_travel_time import costs_public_transport
+    from ikob.utils import costs_public_transport
 
     config, pod, regime, motive, income, _, _, _, _, pt_time, pt_dist, _, tvom = setup_generalized_travel_time_input(
         monkeypatch, gtt
@@ -189,7 +191,7 @@ def test_generalized_travel_time_public_transport(monkeypatch):
         )
     )
     # Don't take the PT option if travel is less than 0.5 minutes.
-    expected_pt = np.where(pt_time > 0.5, expected_pt, 9999)
+    expected_pt = np.where(pt_time > 0.5, expected_pt, IKOB_INFINITE)
     np.testing.assert_allclose(pt, expected_pt)
 
 
@@ -203,7 +205,7 @@ def test_generalized_travel_time_free_public_transport(monkeypatch):
 
     free_pt_key = DataKey(id="GratisOV", part_of_day=pod, motive=motive, regime=regime)
     free_pt = datasource.get(free_pt_key)
-    expected_free_pt = np.where(pt_time > 0.5, pt_time, 9999)
+    expected_free_pt = np.where(pt_time > 0.5, pt_time, IKOB_INFINITE)
     np.testing.assert_allclose(free_pt, expected_free_pt)
 
 
@@ -220,7 +222,7 @@ def test_generalized_travel_time_auto_fossiel(monkeypatch):
     auto_key = DataKey(id="Auto_fossiel", part_of_day=pod, income=income, regime=regime, motive=motive)
     auto = datasource.get(auto_key)
     # total_time = car_time + parking_arrival(origin) + parking_departure(dest)
-    total_time = car_time + parking_times[:, [1]] + parking_times[[0, 1, 2], [2]]
+    total_time = car_time + parking_times[:, [0]] + parking_times[[0, 1, 2], [1]]
     expected_auto = total_time + config["TVOM"][tvom][income] * car_dist * (
         config["skims"]["Kosten auto fossiele brandstof"]["variabele kosten"] / 100
         + config["skims"]["Kosten auto fossiele brandstof"]["kmheffing"] / 100
@@ -308,8 +310,8 @@ def test_generalized_travel_time_includes_additional_and_parking_costs(monkeypat
     # Focus assertion on one cell to keep intent clear:
     assert auto[0][1] == pytest.approx(
         car_time[0][1]
-        + parking_times[0][1]
-        + parking_times[1][2]
+        + parking_times[0][0]
+        + parking_times[1][1]
         + config["TVOM"][tvom][income]
         * (
             car_dist[0][1]
