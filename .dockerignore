@@ -1,0 +1,12 @@
+Dockerfile
+scripts
+documentation
+.github
+.pytest_cache
+build
+tests
+venv
+.venv
+.git
+.gitignore
+.vscode

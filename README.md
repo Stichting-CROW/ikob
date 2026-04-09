@@ -157,6 +157,46 @@ in `dist/ikobrunner/_internal`. The full directory, i.e. `dist/ikobrunner` is
 self contained and can be moved to the desired location. Running the executable
 will run the typical `ikobrunner` script.
 
+## With Docker
+
+The following assumes this repo is checked out in the pwd.
+That's not required for running projects or creating a config, but then be sure to supply your own volumes with project data, making sure that the paths in the container matches the paths in the config.
+
+- **Build**: `$ docker build -t ghcr.io/stichting-crow/ikob .`
+- **Run tests**: `$ docker run --rm -it -v ${pwd}/tests:/app/tests --entrypoint python ghcr.io/stichting-crow/ikob -m pytest`
+- **Run a project headlessly**: `$ docker run --rm -it -v /my/data:/data ghcr.io/stichting-crow/ikob src/ikob/ikobrunner.py --project /data/project.json --verbose`
+- **Create a config**: this requires a GUI, which really depends on the host OS. See below.
+
+<details><summary>Dockerized config with GUI</summary>
+
+This works on my machine™ (Windows 11 v24H2, in PowerShell, using Ubuntu v22.04 on WSL v2.6.3.0 and Docker Desktop). Adapted from [Stack Overflow (CC BY-SA 4.0)](https://stackoverflow.com/a/75392952):
+
+> ```powershell
+> PS > docker run --rm -it `
+>   -v ${pwd}/tests:/app/tests `
+>   -v /run/desktop/mnt/host/wslg/.X11-unix:/tmp/.X11-unix `
+>   -v /run/desktop/mnt/host/wslg:/mnt/wslg `
+>   -e DISPLAY=:0 `
+>   -e WAYLAND_DISPLAY=wayland-0 `
+>   -e XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir `
+>   --entrypoint /app/src/ikob/ikobconfig.py `
+>   ghcr.io/stichting-crow/ikob
+> ```
+
+On Linux, it should be simpler (untested).
+In either case, don't forget to mount a volume where to save your file to.
+
+> ```sh
+> $ docker run --rm -it \
+>   -v $(pwd)/tests:/app/tests \
+>   -e DISPLAY=$DISPLAY \
+>   -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+>   --entrypoint /app/src/ikob/ikobconfig.py \
+>   ghcr.io/stichting-crow/ikob
+> ```
+
+</details>
+
 # Testing
 
 ## Test Types
