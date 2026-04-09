@@ -160,7 +160,7 @@ will run the typical `ikobrunner` script.
 ## With Docker
 
 The following assumes this repo is checked out in the pwd.
-That's not required for running projects or creating a config, but then be sure to supply your own volumes with project data.
+That's not required for running projects or creating a config, but then be sure to supply your own volumes with project data, making sure that the paths in the container matches the paths in the config.
 
 - **Build**: `$ docker build -t ghcr.io/stichting-crow/ikob .`
 - **Run tests**: `$ docker run --rm -it -v ${pwd}/tests:/app/tests --entrypoint python ghcr.io/stichting-crow/ikob -m pytest`
