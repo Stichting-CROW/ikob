@@ -18,7 +18,7 @@ def create_citizens_file(distribution_matrix, working_population):
     return citizens_file
 
 
-def reachable_population(config, single_weights: DataSource, combined_weights: DataSource) -> DataSource:
+def calculate_reachable_population(config, single_weights: DataSource, combined_weights: DataSource) -> DataSource:
     """
     From combined weights to number of citizens that can reach the destination in a zone.
 

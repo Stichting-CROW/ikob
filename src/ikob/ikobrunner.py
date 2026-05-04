@@ -13,8 +13,8 @@ from ikob.datasource import DataSource, DataType
 from ikob.distribute_over_groups import distribute_population_over_groups
 from ikob.generalized_travel_time import generalized_travel_time
 from ikob.ikobconfig import get_config_from_args, load_config
-from ikob.reachable_destinations import reachable_destinations
-from ikob.reachable_population import reachable_population
+from ikob.reachable_destinations import calculate_reachable_destinations
+from ikob.reachable_population import calculate_reachable_population
 from ikob.single_weights import calculate_single_weights
 
 logger = logging.getLogger(__name__)
@@ -65,22 +65,24 @@ def run_scripts(project_file, skip_steps: list[bool] | None = None, write_weight
         combined_weights = DataSource(config, DataType.WEIGHTS)
 
     if not skip_steps[4]:
-        opportunities = reachable_destinations(config, single_weights, combined_weights)
+        reachable_destinations = calculate_reachable_destinations(config, single_weights, combined_weights)
     else:
-        opportunities = DataSource(config, DataType.DESTINATIONS)
+        reachable_destinations = DataSource(config, DataType.DESTINATIONS)
 
     if not skip_steps[5]:
-        origins = reachable_population(config, single_weights, combined_weights)
+        reachable_population = calculate_reachable_population(config, single_weights, combined_weights)
     else:
-        origins = DataSource(config, DataType.ORIGINS)
+        reachable_population = DataSource(config, DataType.ORIGINS)
 
     if not skip_steps[6]:
-        competition_destinations = competition_on_destinations(config, single_weights, combined_weights, origins)
+        competition_destinations = competition_on_destinations(
+            config, single_weights, combined_weights, reachable_destinations
+        )
     else:
         competition_destinations = DataSource(config, DataType.COMPETITION)
 
     if not skip_steps[7]:
-        competition_citizens = competition_on_citizens(config, single_weights, combined_weights, opportunities)
+        competition_citizens = competition_on_citizens(config, single_weights, combined_weights, reachable_population)
     else:
         competition_citizens = DataSource(config, DataType.COMPETITION)
 
@@ -90,7 +92,13 @@ def run_scripts(project_file, skip_steps: list[bool] | None = None, write_weight
     # end-to-end testing. Ultimately only files that are essential outputs
     # should persist.
     logger.info("Writing output to disk...")
-    sources_to_save = [travel_time, opportunities, origins, competition_citizens, competition_destinations]
+    sources_to_save = [
+        travel_time,
+        reachable_destinations,
+        reachable_population,
+        competition_citizens,
+        competition_destinations,
+    ]
     if write_weights:
         sources_to_save.extend([single_weights, combined_weights])
 

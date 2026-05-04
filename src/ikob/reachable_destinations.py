@@ -10,7 +10,7 @@ from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 logger = logging.getLogger(__name__)
 
 
-def reachable_destinations(config, single_weights: DataSource, combined_weights: DataSource) -> DataSource:
+def calculate_reachable_destinations(config, single_weights: DataSource, combined_weights: DataSource) -> DataSource:
     """
     From (combined) weights to reachable destinations per zone.
 
