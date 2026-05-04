@@ -13,7 +13,7 @@ def reachable_destinations_setup(request, monkeypatch, segs_capture):
     """Common setup for employment opportunities tests.
 
     The setup regards reachable jobs by the working population"""
-    import ikob.reachable_destinations as reachable_destinations
+    import ikob.reachable_destinations as rd
 
     pod = "Restdag"
     motive = "werk or something else"
@@ -61,7 +61,7 @@ def reachable_destinations_setup(request, monkeypatch, segs_capture):
     )
 
     # Use the parametrized weight matrix
-    monkeypatch.setattr(reachable_destinations, "get_weight_matrix", lambda *args, **kwargs: request.param)
+    monkeypatch.setattr(rd, "get_weight_matrix", lambda *args, **kwargs: request.param)
 
     # Capture csv writes
     csv_writes = []
@@ -69,7 +69,7 @@ def reachable_destinations_setup(request, monkeypatch, segs_capture):
     def capture_write_csv(self, data, key, header=None):
         csv_writes.append({"data": data, "key": key, "header": header})
 
-    monkeypatch.setattr(reachable_destinations.DataSource, "write_csv", capture_write_csv)
+    monkeypatch.setattr(rd.DataSource, "write_csv", capture_write_csv)
 
     class _Weights:
         def get(self, _key):
@@ -97,10 +97,10 @@ def reachable_destinations_setup(request, monkeypatch, segs_capture):
         "geavanceerd": {"welke_groepen": ["alle groepen"]},
     }
 
-    potencies = reachable_destinations.reachable_destinations(config, _Weights(), _Weights())  # type: ignore
+    reachable_destinations = rd.calculate_reachable_destinations(config, _Weights(), _Weights())  # type: ignore
 
     return {
-        "potencies": potencies,
+        "reachable_destinations": reachable_destinations,
         "csv_writes": csv_writes,
         "pod": pod,
         "motive": motive,
@@ -122,7 +122,7 @@ def test_reachable_destinations_totals(modality, income_group, income_index, rea
     """Reachable employment opportunities totals are independent of working population size and distribution over groups."""
     from ikob.datasource import DataKey
 
-    potencies = reachable_destinations_setup["potencies"]
+    reachable_destinations = reachable_destinations_setup["reachable_destinations"]
     pod = reachable_destinations_setup["pod"]
     motive = reachable_destinations_setup["motive"]
     jobs_income = reachable_destinations_setup["jobs_income"]
@@ -136,7 +136,7 @@ def test_reachable_destinations_totals(modality, income_group, income_index, rea
         motive=motive,
         modality=modality,
     )
-    totals = potencies.get(key)
+    totals = reachable_destinations.get(key)
 
     # Intended behavior: each zone reaches its own jobs, multiplied by the weight
     expected_totaal = weight_matrix @ jobs_income[:, income_index]

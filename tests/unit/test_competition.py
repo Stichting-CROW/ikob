@@ -181,7 +181,7 @@ def test_competition_on_jobs_per_capita_sensitivity(
     monkeypatch.setattr(comp, "get_weight_matrix", lambda *args, **kwargs: weight_matrix)
     monkeypatch.setattr(comp.DataSource, "write_csv", lambda *args, **kwargs: None)
 
-    class _Origins:
+    class _Destinations:
         def get(self, _key: DataKey):
             # Reach of each zone to each zone
             if _key.income == "laag":
@@ -220,7 +220,7 @@ def test_competition_on_jobs_per_capita_sensitivity(
     }
 
     # Act
-    competitions = comp.competition_on_destinations(config, _Weights(), _Weights(), _Origins())  # type: ignore
+    competitions = comp.competition_on_destinations(config, _Weights(), _Weights(), _Destinations())  # type: ignore
 
     # Assert
     key = DataKey(

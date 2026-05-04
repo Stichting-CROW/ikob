@@ -42,14 +42,14 @@ def segs_capture(monkeypatch):
         import ikob.competition as competition
         import ikob.datasource as datasource
         import ikob.distribute_over_groups as distribute_over_groups
-        import ikob.reachable_destinations as reachable_destinations
+        import ikob.reachable_destinations as rd
         import ikob.reachable_population as reachable_population
 
         capture = SegsCapture(data_by_key)
 
         monkeypatch.setattr(datasource, "SegsSource", lambda _: capture)
         monkeypatch.setattr(distribute_over_groups, "SegsSource", lambda _: capture)
-        monkeypatch.setattr(reachable_destinations, "SegsSource", lambda _: capture)
+        monkeypatch.setattr(rd, "SegsSource", lambda _: capture)
         monkeypatch.setattr(reachable_population, "SegsSource", lambda _: capture)
         monkeypatch.setattr(competition, "SegsSource", lambda _: capture)
         return capture
