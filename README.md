@@ -11,19 +11,22 @@ So, the further away an amenity (like a job location) is, the less it will count
 ### Nomenclature
 
 Some commonly used abbreviations / jargon:
+
 - TVOM: Time value of money, how much money a unit of time is worth.  
   Used to combine both travel time and travel costs into a single metric.
 - SEGS: Sociaal-economische gegevens (Social-Economic data).  
   For example: Shops per zone, working population per zone, etc.
 - skims: Data to determine an impedance ('friction') matrix from zone to zone.  
   For example: A matrix of distances via car from zone to zone, costs per kilometer of traveling by car, etc.
-- GTR / GTT: Generalized travel time
-- ICE: Internal combustion engine. Also referred to using fuel_kind 'fossiel'. 
+- GTR / GTT: Generalized travel time.
+- ICE: Internal combustion engine. Also referred to using fuel_kind 'fossiel'.
 - vk: (dutch) voorkeur / (english) preference
 - groups: See [Groups](./README.md#groups)
 
 In the past, IKOB was focussed on commuting trips. You might see this reflected in nomenclature where terms like 'employment', 'jobs' are used to indicate the traveling population and their destinations.
-Ikob since has been generalized to allow for different motives, but you might see this remnants of this old approach. 
+Ikob since has been generalized to allow for different motives, but you might see this remnants of this old approach.
+
+Documentation on the construction of the IKOB algorithm, including a detailed description of its underlying methodology and the variables used in the calculation, is available at: [https://docs.crow.nl/ikob/](https://docs.crow.nl/ikob/).
 
 ## Installation and usage
 
@@ -209,14 +212,15 @@ The remaining folders contain test projects and reference output.
 ## Reference Tests
 
 There are some reference tests:
+
 - tests/e2e/test_end_to_end.py
 - tests/unit/test_parking_cost_file.py
 - tests/unit/test_group_distribution.py
 
 These compare current output against stored reference output.
-These detect when output has changed but don't verify expected behavior. 
+These detect when output has changed but don't verify expected behavior.
 
-To generate new reference data for these tests it's easiest to just run the test without deleting the computed results at the end. In general this boils down to removing the `remove_directory` call. If the test uses a [temporary test directory](https://docs.pytest.org/en/6.2.x/tmpdir.html#the-tmpdir-fixture) or something similar, it's easiest to make that a concrete path and get the results from there. 
+To generate new reference data for these tests it's easiest to just run the test without deleting the computed results at the end. In general this boils down to removing the `remove_directory` call. If the test uses a [temporary test directory](https://docs.pytest.org/en/6.2.x/tmpdir.html#the-tmpdir-fixture) or something similar, it's easiest to make that a concrete path and get the results from there.
 
 # Output
 
@@ -229,11 +233,12 @@ The headers are no more than a user facing description. Their content is ignored
 
 Further instruction on how to build this input data can be found in the [ikob-scripts repo](https://github.com/Stichting-CROW/ikob-scripts).
 
-# Groups 
+# Groups
 
-The code uses the term 'groups' a lot to refer to different slices of the population. Income groups (income classes) are different from groups. 
+The code uses the term 'groups' a lot to refer to different slices of the population. Income groups (income classes) are different from groups.
 
 The code uses the following income classes:
+
 - low
 - medium-low
 - medium-high
@@ -261,8 +266,9 @@ The code uses the following groups:
 
 Where each group is additionally suffixed by an income class to split the population up further.\
 In [distribute_over_groups.py](./src/ikob/distribute_over_groups.py) the population of each zone is distributed over these groups according to social-economic data.
-# Motieven 
+
+# Motieven
 
 A run of ikob is always for a specific travel motive. In the project config you can configure the name of the motive, the corresponding traveling population and the destinations corresponding to the travel motive. In addition, it's also possible to configure the time value of money used for the motive, and the travel time decay curve to use.
 
-When you run ikob for multiple different motives in sequence, the results are separated in the results directory (generally by a subdirectory with the motive name). 
+When you run ikob for multiple different motives in sequence, the results are separated in the results directory (generally by a subdirectory with the motive name).
