@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import numpy as np
 
@@ -8,14 +9,14 @@ from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 logger = logging.getLogger(__name__)
 
 
-def compute_income_distributions(citizens_or_places_of_employment):
-    totals = [sum(row) for row in citizens_or_places_of_employment]
+def compute_income_distributions(citizens_or_destinations):
+    totals = [sum(row) for row in citizens_or_destinations]
 
-    income_distributions = np.zeros((len(citizens_or_places_of_employment), len(citizens_or_places_of_employment[0])))
-    for i in range(len(citizens_or_places_of_employment)):
-        for j in range(len(citizens_or_places_of_employment[0])):
+    income_distributions = np.zeros((len(citizens_or_destinations), len(citizens_or_destinations[0])))
+    for i in range(len(citizens_or_destinations)):
+        for j in range(len(citizens_or_destinations[0])):
             if totals[i] > 0:
-                income_distributions[i][j] = citizens_or_places_of_employment[i][j] / totals[i]
+                income_distributions[i][j] = citizens_or_destinations[i][j] / totals[i]
 
     return income_distributions
 
@@ -29,7 +30,6 @@ def get_weight_matrix(
     regime,
     part_of_day,
     income,
-    income_group,
     ratio_electric: float,
 ):
     preference = utils.find_preference(group, modality)
@@ -37,7 +37,12 @@ def get_weight_matrix(
     if modality == "Fiets" or modality == "EFiets":
         preference_bike = "Fiets" if preference == "Fiets" else ""
         key = DataKey(
-            f"{modality}_vk", part_of_day=part_of_day, regime=regime, motive=motive, preference=preference_bike
+            f"{modality}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference_bike,
+            income=income,
         )
         return single_weights.get(key)
 
@@ -96,18 +101,18 @@ def get_weight_matrix(
     return combined_weights.get(key)
 
 
-def competition_on_jobs(
+def competition_on_destinations(
     config, single_weights: DataSource, combined_weights: DataSource, origins: DataSource
 ) -> DataSource:
     """
-    For every zone it's determined if the zone has a (dis)advantage compared to other zones in reaching employment opportunities.
+    For every zone it's determined if the zone has a (dis)advantage compared to other zones in reaching destinations.
 
-    https://docs.crow.nl/ikob/algorithm/D6-competition-on-jobs
+    Corresponds to section D6 in the IKOB-algorithm.pdf.
 
     D6 defines a competition factor residents that discounts
     destinations with many competing residents.
     """
-    logger.info("Starting step: Compute competition on jobs")
+    logger.info("Starting step: Compute competition on destinations")
     return competition(config, single_weights, combined_weights, origins, citizens=False)
 
 
@@ -115,9 +120,9 @@ def competition_on_citizens(
     config, single_weights: DataSource, combined_weights: DataSource, origins: DataSource
 ) -> DataSource:
     """
-    For every zone with employment opportunities it's determined if the zone has a (dis)advantage compared to other zones in attracting citizens.
+    For every zone it's determined if the zone has a (dis)advantage compared to other zones in attracting citizens.
 
-    https://docs.crow.nl/ikob/algorithm/D7-competition-on-citizens/
+    Corresponds to section D7 in the IKOB-algorithm.pdf.
 
     D7 is the "mirror" of D6: it defines a competition factor for jobs/destinations that discounts
     origins with many competing jobs/destinations.
@@ -132,7 +137,7 @@ def competition(
     if citizens:
         msg = "Competition for citizens."
     else:
-        msg = "Competition for places of employment."
+        msg = "Competition for destinations."
     logger.info(msg)
 
     project_config = config["project"]
@@ -143,7 +148,9 @@ def competition(
 
     scenario = project_config["verstedelijkingsscenario"]
     regimes = project_config["beprijzingsregime"]
-    motives = project_config["motieven"]
+    motive_name = project_config["motief"]["naam"]
+    traveling_population_path = Path(project_config["motief"]["reizende populatie"])
+    destinations_path = Path(project_config["motief"]["bestemmingsplaatsen"])
     car_possession_groups = advanced_config["welke_groepen"]
     electric_percentage = distribution_config["Percelektrisch"]
 
@@ -213,168 +220,169 @@ def competition(
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
     income_groups = ["laag", "middellaag", "middelhoog", "hoog"]
     headstring = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
-    headstringExcel = ["Zone", "Fiets", "Auto", "OV", "Auto-Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
 
     segs_source = SegsSource(config)
 
-    if "winkelnietdagelijksonderwijs" in motives:
-        citizens_per_class = segs_source.read("Leerlingen", scenario=scenario, type_caster=float)
-        places_of_employment = segs_source.read("Leerlingenplaatsen", scenario=scenario, type_caster=float)
-    else:
-        citizens_per_class = segs_source.read("Beroepsbevolking_inkomensklasse", scenario=scenario, type_caster=float)
-        places_of_employment = segs_source.read("Arbeidsplaatsen_inkomensklasse", scenario=scenario, type_caster=float)
+    traveling_population = segs_source.read(traveling_population_path.name, scenario=scenario)
+    destinations = segs_source.read(destinations_path.name, scenario=scenario)
 
-    income_distributions = compute_income_distributions(citizens_per_class if citizens else places_of_employment)
-    subtopic_competition = "inwoners" if citizens else "arbeidsplaatsen"
+    income_distributions = compute_income_distributions(traveling_population if citizens else destinations)
+    subtopic_competition = "inwoners" if citizens else "bestemmingen"
+    # Matches the suffix in potential_companies.py and employment_opportunities.py
+    competition_filename_suffix = "Pot" if citizens else "Ontpl"
     competitions = DataSource(config, DataType.COMPETITION)
 
     if citizens:
-        citizens_or_places_of_employment = citizens_per_class
+        citizens_or_destinations = traveling_population
     else:
-        citizens_or_places_of_employment = places_of_employment
+        citizens_or_destinations = destinations
+
+    num_zones = len(citizens_or_destinations)
 
     for car_possession_group in car_possession_groups:
-        for motive in motives:
-            if motive == "werk":
-                target_group = "Beroepsbevolking"
-            elif motive == "winkelnietdagelijksonderwijs":
-                target_group = "Leerlingen"
-            else:
-                target_group = "Inwoners"
+        distribution_matrix = segs_source.read(
+            "Verdeling_over_groepen",
+            type_caster=float,
+            scenario=scenario,
+            group=motive_name,
+            modifier="alleen_autobezit" if car_possession_group == "alleen autobezit" else "",
+            has_index_column=True,
+        )
 
-            distribution_matrix = segs_source.read(
-                f"Verdeling_over_groepen_{target_group}", scenario=scenario, type_caster=float
-            )
+        for part_of_day in part_of_days:
+            for i_income_group, income_group in enumerate(income_groups):
+                general_possibility_totals = []
 
-            for part_of_day in part_of_days:
-                for i_income_group, income_group in enumerate(income_groups):
-                    general_possibility_totals = []
-
-                    for modality in modalities:
-                        key = DataKey(
-                            "Totaal",
-                            part_of_day=part_of_day,
-                            motive=motive,
-                            modality=modality,
-                            income=income_group,
-                            group=car_possession_group,
-                        )
-                        reach = origins.get(key)
-
-                        # Section D6/D7: `reach` is the previously computed reachability used as denominator.
-                        # - citizens=False (D6 / competition_on_jobs): `reach` comes from D5 / potential_companies and is destination-side potential (how many
-                        #   residents can reach each destination zone).
-                        # - citizens=True  (D7 / competition_on_citizens): `reach` comes from D4 / employment_opportunities and is origin-side reachable opportunities
-                        #   (how many jobs/places residents in an origin zone can reach).
-
-                        competition_total = np.zeros(len(citizens_or_places_of_employment))
-
-                        for i_group, group in enumerate(groups):
-                            distribution = distribution_matrix[:, i_group]
-                            income_distribution = income_distributions[:, i_income_group]
-
-                            income = utils.group_income_level(group)
-                            if income_group == income or income_group == "alle":
-                                K = electric_percentage.get(income_group) / 100
-                                matrix = get_weight_matrix(
-                                    single_weights,
-                                    combined_weights,
-                                    group,
-                                    modality,
-                                    motive,
-                                    regimes,
-                                    part_of_day,
-                                    income,
-                                    income_group,
-                                    K,
-                                )
-
-                                # Section D6/D7 competition term:
-                                # Compute a scarcity/competition ratio per zone and propagate it through the origin-destination weights.
-                                # - citizens=False (D6 / competition_on_jobs): `citizens_or_places_of_employment` is $A_{ib}$ (jobs/places per
-                                #   destination). Dividing by `reach` discounts destinations with many competing residents.
-                                # - citizens=True  (D7 / competition_on_citizens): `citizens_or_places_of_employment` is $I_{ih}$ (residents per
-                                #   origin). Dividing by `reach` discounts origins with many reachable opportunities.
-                                competition = matrix @ (
-                                    citizens_or_places_of_employment.T[i_income_group] / np.where(reach > 0, reach, 1.0)
-                                )
-
-                                # aggregation to income-class level:
-                                # We sum across all groups whose income level matches `income_group`.
-                                # The `distribution` and `income_distribution` scaling makes this an income-class level
-                                # score rather than a raw per-group score.
-                                competition_total += (
-                                    competition
-                                    * distribution
-                                    / np.where(income_distribution > 0, income_distribution, 1)
-                                )
-
-                        key = DataKey(
-                            id="Totaal",
-                            part_of_day=part_of_day,
-                            subtopic=subtopic_competition,
-                            income=income_group,
-                            motive=motive,
-                            modality=modality,
-                        )
-                        competitions.set(key, competition_total.copy())
-
-                        general_possibility_totals.append(competitions.get(key))
-                        general_totals_transpose = utils.transpose(general_possibility_totals)
-                        key = DataKey(
-                            id="Ontpl_conc",
-                            part_of_day=part_of_day,
-                            subtopic=subtopic_competition,
-                            income=income_group,
-                            motive=motive,
-                        )
-                        competitions.write_csv(general_totals_transpose, key, header=headstring)
-                        competitions.write_xlsx(general_totals_transpose, key, header=headstringExcel)
-
-                header = ["Zone", "laag", "middellaag", "middelhoog", "hoog"]
                 for modality in modalities:
-                    general_matrix_product = []
-                    general_matrix = []
-                    for income_group in income_groups:
-                        key = DataKey(
-                            "Totaal",
-                            part_of_day=part_of_day,
-                            motive=motive,
-                            modality=modality,
-                            income=income_group,
-                            subtopic=subtopic_competition,
-                        )
-                        general_matrix.append(competitions.get(key))
-                    general_totals_transpose = utils.transpose(general_matrix)
+                    key = DataKey(
+                        "Totaal",
+                        part_of_day=part_of_day,
+                        motive=motive_name,
+                        modality=modality,
+                        income=income_group,
+                        group=car_possession_group,
+                    )
+                    reach = origins.get(key)
 
-                    for i in range(len(citizens_or_places_of_employment)):
-                        general_matrix_product.append([])
-                        for j in range(len(citizens_or_places_of_employment[0])):
-                            if (citizens and (places_of_employment[i][j] > 0)) or (
-                                (not citizens) and (citizens_per_class[i, j] > 0)
-                            ):
-                                general_matrix_product[i].append(
-                                    general_totals_transpose[i][j] * citizens_or_places_of_employment[i][j]
-                                )
-                            else:
-                                general_matrix_product[i].append(0)
+                    # Section D6/D7: `reach` is the previously computed reachability used as denominator.
+                    # - citizens=False (D6 / competition_on_destinations): `reach` comes from D5 / reachable_population and is destination-side potential (how many
+                    #   residents can reach each destination zone).
+                    # - citizens=True  (D7 / competition_on_citizens): `reach` comes from D4 / reachable_destinations and is origin-side reachable opportunities
+                    #   (how many jobs/places residents in an origin zone can reach).
+
+                    competition_total = np.zeros(len(citizens_or_destinations))
+
+                    for i_group, group in enumerate(groups):
+                        distribution = distribution_matrix[:, i_group]
+                        income_distribution = income_distributions[:, i_income_group]
+
+                        income = utils.group_income_level(group)
+                        if income_group == income or income_group == "alle":
+                            K = electric_percentage.get(income_group) / 100
+                            matrix = get_weight_matrix(
+                                single_weights,
+                                combined_weights,
+                                group,
+                                modality,
+                                motive_name,
+                                regimes,
+                                part_of_day,
+                                income,
+                                K,
+                            )
+
+                            # Section D6/D7 competition term:
+                            # Compute a scarcity/competition ratio per zone and propagate it through the origin-destination weights.
+                            # - citizens=False (D6 / competition_on_destinations): `citizens_or_destinations` is $A_{ib}$ (jobs/places per
+                            #   destination). Dividing by `reach` discounts destinations with many competing residents.
+                            # - citizens=True  (D7 / competition_on_citizens): `citizens_or_destinations` is $I_{ih}$ (residents per
+                            #   origin). Dividing by `reach` discounts origins with many reachable opportunities.
+                            competition = matrix @ (
+                                citizens_or_destinations.T[i_income_group] / np.where(reach > 0, reach, 1.0)
+                            )
+
+                            # aggregation to income-class level:
+                            # We sum across all groups whose income level matches `income_group`.
+                            # The `distribution` and `income_distribution` scaling makes this an income-class level
+                            # score rather than a raw per-group score.
+                            competition_total += (
+                                competition * distribution / np.where(income_distribution > 0, income_distribution, 1)
+                            )
 
                     key = DataKey(
-                        id="Ontpl_conc",
+                        id="Totaal",
                         part_of_day=part_of_day,
                         subtopic=subtopic_competition,
-                        motive=motive,
+                        income=income_group,
+                        motive=motive_name,
                         modality=modality,
+                        group=car_possession_group,
+                        is_temporary=True,
                     )
-                    competitions.write_xlsx(general_totals_transpose, key, header=header)
+                    competitions.set(key, competition_total.copy())
 
+                    general_possibility_totals.append(competitions.get(key))
+                    general_totals_transpose = utils.transpose(general_possibility_totals)
                     key = DataKey(
-                        id="Ontpl_concproduct",
+                        id=f"{competition_filename_suffix}_conc",
                         part_of_day=part_of_day,
                         subtopic=subtopic_competition,
-                        motive=motive,
-                        modality=modality,
+                        income=income_group,
+                        motive=motive_name,
+                        group=car_possession_group,
+                        index=DataKey.zone_index(num_zones),
                     )
-                    competitions.write_xlsx(general_matrix_product, key, header=header)
+                    competitions.write_csv(general_totals_transpose, key, header=headstring)
+
+            header = ["laag", "middellaag", "middelhoog", "hoog"]
+            for modality in modalities:
+                general_matrix_product = []
+                general_matrix = []
+                for income_group in income_groups:
+                    key = DataKey(
+                        "Totaal",
+                        part_of_day=part_of_day,
+                        motive=motive_name,
+                        modality=modality,
+                        income=income_group,
+                        subtopic=subtopic_competition,
+                        group=car_possession_group,
+                    )
+                    general_matrix.append(competitions.get(key))
+                general_totals_transpose = utils.transpose(general_matrix)
+
+                for i in range(len(citizens_or_destinations)):
+                    general_matrix_product.append([])
+                    for j in range(len(citizens_or_destinations[0])):
+                        if (citizens and (destinations[i][j] > 0)) or (
+                            (not citizens) and (traveling_population[i, j] > 0)
+                        ):
+                            general_matrix_product[i].append(
+                                general_totals_transpose[i][j] * citizens_or_destinations[i][j]
+                            )
+                        else:
+                            general_matrix_product[i].append(0)
+
+                key = DataKey(
+                    id=f"{competition_filename_suffix}_conc",
+                    part_of_day=part_of_day,
+                    subtopic=subtopic_competition,
+                    motive=motive_name,
+                    modality=modality,
+                    group=car_possession_group,
+                    index=DataKey.zone_index(num_zones),
+                )
+                competitions.write_csv(general_totals_transpose, key, header=header)
+
+                key = DataKey(
+                    id=f"{competition_filename_suffix}_concproduct",
+                    part_of_day=part_of_day,
+                    subtopic=subtopic_competition,
+                    motive=motive_name,
+                    modality=modality,
+                    group=car_possession_group,
+                    index=DataKey.zone_index(num_zones),
+                )
+                competitions.write_csv(general_matrix_product, key, header=header)
 
     return competitions

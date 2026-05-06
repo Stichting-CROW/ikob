@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import json
 import logging
@@ -12,8 +13,6 @@ from ikob.configuration_definition import (
     default_config,
     default_configuration_definition,
     project_name,
-    try_fix_incompatible_configuration,
-    validate_config,
 )
 
 logger = logging.getLogger(__name__)
@@ -59,13 +58,13 @@ def load_config(filename):
     except BaseException as e:
         raise IOError(f"Kan niet lezen uit: '{filename}' with error:\n'{e}'.")
     if config:
-        if not validate_config(config):
+        if not validate.validate_config(config):
             msg = "Loaded config file: '%s' is incompatible with current IKOB."
             logger.warning(msg, filename)
 
-            config = try_fix_incompatible_configuration(config)
+            config = validate.try_fix_incompatible_configuration(config)
 
-            if validate_config(config):
+            if validate.validate_config(config):
                 msg = "Automatically recovered from incompatible config file."
                 logger.info(msg)
             else:
@@ -74,16 +73,21 @@ def load_config(filename):
                 raise ValueError(msg)
 
         config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
+        validate.FileValidator(config).validate_input_files()
     return config
 
 
 def saveConfig(filename, config):
     try:
+        config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
+        config_is_valid = validate.FileValidator(config).validate_input_files()
+        del config["__filename__"]
         with open(filename, "w") as json_file:
             json.dump(config, json_file, indent=2)
-    except BaseException:
+    except BaseException as e:
+        logger.error(f"Kan configuratie niet wegschrijven naar: {filename}.", exc_info=e)
         raise IOError(f"Kan configuratie niet wegschrijven naar: {filename}.")
-    return True
+    return config_is_valid
 
 
 # User interface
@@ -143,12 +147,18 @@ class ConfigApp(tk.Tk):
             return
 
         filename = _project_filename(filename, make_safe=False)
+        config_is_valid = True
         try:
-            saveConfig(filename, config)
+            config_is_valid = saveConfig(filename, config)
         except BaseException:
             messagebox.showerror(title="Fout", message="Het bestand kan niet worden opgeslagen.")
         else:
-            messagebox.showinfo(title="Opgeslagen", message="Configuratie opgeslagen.")
+            if not config_is_valid:
+                messagebox.showwarning(
+                    title="Opgeslagen", message="Configuratie opgeslagen met waarschuwingen. Zie console."
+                )
+            else:
+                messagebox.showinfo(title="Opgeslagen", message="Configuratie opgeslagen.")
 
 
 def main():

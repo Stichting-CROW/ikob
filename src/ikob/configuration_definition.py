@@ -1,7 +1,8 @@
 import logging
-from enum import Enum
+from enum import Enum, StrEnum
 
-from ikob.config import build, validate
+from ikob.config import build
+from ikob.utils import IKOB_INFINITE
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,17 @@ def config_item(
     return dictionary
 
 
+class DecayCurveName(StrEnum):
+    WORK_AND_SOCIAL = "werk en sociaal-recreatief"
+    DAILY_SHOPPING_AND_HEALTH = "dagelijkse boodschappen en zorg"
+    NON_DAILY_SHOPPING_AND_EDUCATION = "niet-dagelijkse boodschappen en onderwijs"
+
+
+class TvomType(StrEnum):
+    WORK = "werk"
+    OTHER = "overig"
+
+
 def default_project_tab():
     return {
         "label": "Project",
@@ -63,12 +75,27 @@ def default_project_tab():
             "segs_directory": config_item("SEGS directory", DataType.DIRECTORY),
             "output_directory": config_item("Output directory", DataType.DIRECTORY, default="output"),
         },
-        "motieven": config_item(
-            "Motieven",
-            DataType.CHECKLIST,
-            default="werk",
-            items=["werk", "winkeldagelijkszorg", "winkelnietdagelijksonderwijs", "sociaal-recreatief"],
-        ),
+        "motief": {
+            "naam": config_item("Naam van het motief", DataType.TEXT, default="werk"),
+            "reizende populatie": config_item(
+                "Populatie bestand voor dit motief", DataType.FILE, default="Beroepsbevolking_inkomensklasse.csv"
+            ),
+            "bestemmingsplaatsen": config_item(
+                "Bestemmingen bestand voor dit motief", DataType.FILE, default="Arbeidsplaatsen_inkomensklasse.csv"
+            ),
+            "TVOM": config_item(
+                "De te gebruiken tijdswaarde van geld (TVOM tab)",
+                DataType.CHOICE,
+                default=TvomType.WORK,
+                items=list(TvomType),
+            ),
+            "reistijdvervalscurve": config_item(
+                "De te gebruiken reistijd vervalscurve",
+                DataType.CHOICE,
+                default=DecayCurveName.WORK_AND_SOCIAL,
+                items=list(DecayCurveName),
+            ),
+        },
         "fiets of E-fiets": {
             "label": "Rekenen met Fiets of E-fiets",
             "E-fiets": config_item(
@@ -121,7 +148,7 @@ def default_skims_tab():
                 "pricecap",
                 DataType.CHECKBOX,
             ),
-            "getal": config_item("Wat is de pricecap in Euros", DataType.NUMBER, default=9999.0),
+            "getal": config_item("Wat is de pricecap in Euros", DataType.NUMBER, default=IKOB_INFINITE),
         },
         "Kosten auto fossiele brandstof": {
             "variabele kosten": config_item(
@@ -154,14 +181,14 @@ def default_skims_tab():
                 "Deelauto (bezit geen auto, wel rijbewijs)",
                 DataType.NUMBER,
                 default=0.33,
-                bounds=[0, 9999],
+                bounds=[0, IKOB_INFINITE],
                 unit="Euro/km",
             ),
             "GeenRijbewijs": config_item(
                 "Taxi (bezit geen rijbewijs)",
                 DataType.NUMBER,
                 default=2.40,
-                bounds=[0, 9999],
+                bounds=[0, IKOB_INFINITE],
                 unit="Euro/km",
             ),
         },
@@ -171,21 +198,27 @@ def default_skims_tab():
                 "Deelauto (bezit geen auto, wel rijbewijs)",
                 DataType.NUMBER,
                 default=0.05,
-                bounds=[0, 9999],
+                bounds=[0, IKOB_INFINITE],
                 unit="Euro/Minuut",
             ),
             "GeenRijbewijs": config_item(
                 "Taxi (bezit geen rijbewijs)",
                 DataType.NUMBER,
                 default=0.40,
-                bounds=[0, 9999],
+                bounds=[0, IKOB_INFINITE],
                 unit="Euro/Minuut",
             ),
         },
+        "bike_cost_ct_per_km": config_item(
+            "Fiets kosten of -vergoeding (negatief bedrag is vergoeding)",
+            DataType.NUMBER,
+            default=0.0,
+            unit="Eurocent/km",
+        ),
     }
 
 
-def default_tovm_tab():
+def default_tvom_tab():
     levels = ["Hoog", "Middelhoog", "Middellaag", "Laag"]
     werk_values = [4, 6, 9, 12]
 
@@ -202,11 +235,11 @@ def default_tovm_tab():
 
     return {
         "label": "Waarde van tijd",
-        "werk": {
+        TvomType.WORK: {
             "label": "Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief werk",
             **werk_levels,
         },
-        "overig": {
+        TvomType.OTHER: {
             "label": "Waarde van 1€ kosten in gegeneraliseerde reistijd per inkomensgroep, motief overig",
             **overig_levels,
         },
@@ -331,7 +364,7 @@ def default_configuration_definition():
 
     project_tab = default_project_tab()
     skims_tab = default_skims_tab()
-    tovm_tab = default_tovm_tab()
+    tvom_tab = default_tvom_tab()
     verdeling_tab = default_verdeling_tab()
     chains_and_hubs_tab = default_chains_and_hubs_tab()
     advanced_tab = default_advanced_tab()
@@ -339,7 +372,7 @@ def default_configuration_definition():
     return {
         "project": project_tab,
         "skims": skims_tab,
-        "TVOM": tovm_tab,
+        "TVOM": tvom_tab,
         "verdeling": verdeling_tab,
         "ketens": chains_and_hubs_tab,
         "geavanceerd": advanced_tab,
@@ -349,104 +382,6 @@ def default_configuration_definition():
 def project_name(config):
     """Extract the project name from the project configuration."""
     return config["project"]["naam"]
-
-
-def validate_config(config, strict=True):
-    """Validate a config dictionary."""
-
-    return validate.validateConfigWithTemplate(config, default_configuration_definition(), strict=strict)
-
-
-def try_fix_incompatible_configuration(config):
-    """Attempt to recover from incompatible configuration files.
-
-    Some configuration changes can be automatically resolved to
-    maintain backward compatibility.
-    """
-    fixers = [
-        transfer_to_advanced_tab,
-        transfer_to_chains_tab,
-        fiets_checklist_to_checkbox,
-    ]
-
-    for fixer in fixers:
-        config = fixer(config)
-        if validate_config(config):
-            return config
-
-    return config
-
-
-def transfer_to_advanced_tab(config):
-    """Try to recover from missing "geavanceerd" configuration.
-
-    Introduced in commit `6c6684c`.
-    """
-    msg = 'Trying to auto fix "geavanceerd" configuration entry.'
-    logger.warning(msg)
-
-    # There is nothing to fix if the deprecated key is not present.
-    if "verdeling" not in config:
-        return config
-
-    for key in ["kunstmab", "parkeerkosten", "additionele_kosten"]:
-        if key not in config["verdeling"]:
-            continue
-
-        config["geavanceerd"][key] = config["verdeling"].pop(key)
-
-    return config
-
-
-def transfer_to_chains_tab(config):
-    """Try to recover from missing "ketens" configuration.
-
-    Introduced in commit `9bf0d1a`.
-    """
-    if "chains" in config:
-        # Cannot fix: a translated entry is already present.
-        return
-
-    if "ketens" in config:
-        # Cannot fix: ketens already present.
-        return config
-
-    msg = 'Trying to auto fix "ketens" configuration entry.'
-    logger.warning(msg)
-
-    group = "ketens"
-    config[group] = {}
-    translation = {"ketens": "chains"}
-    for key in ["ketens"]:
-        config[group][translation[key]] = config["project"].pop(key)
-
-    # Add missing bestemmingslijst entry.
-    config[group]["bestemmingslijst"] = {
-        "gebruiken": False,
-        "bestand": "",
-    }
-
-    return config
-
-
-def fiets_checklist_to_checkbox(config):
-    """Update decremented fiets checklist into checkbox."""
-
-    fiets_of_efiets = config["project"]["fiets of E-fiets"]
-    is_deprecated = isinstance(fiets_of_efiets, list)
-
-    if not is_deprecated:
-        return config
-
-    # Since chancing the configuration from a checklist into a
-    # checkbox, selecting multiple entries are no longer supported,
-    # so multiple entries are not attempted to be fixed.
-    if len(fiets_of_efiets) > 1:
-        return config
-
-    is_enabled = fiets_of_efiets == ["E-fiets"]
-    config["project"]["fiets of E-fiets"] = {"E-fiets": is_enabled}
-    return config
 
 
 def default_config():

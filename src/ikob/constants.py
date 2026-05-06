@@ -1,14 +1,17 @@
-def work_constants(modality, preference, motive):
-    """Returns the value from Table 9-11 in https://docs.crow.nl/ikob/algorithm/D2-single-weights/"""
-    motives = ["werk", "sociaal-recreatief", "winkeldagelijks", "onderwijs"]
-    assert motive in motives, f"Unknown motive: '{motive}'"
+from ikob.configuration_definition import DecayCurveName
 
-    if motive == "werk" or motive == "sociaal-recreatief":
+
+def work_constants(modality, preference, decay_curve_name: DecayCurveName):
+    """Returns the value from Table 9-11 in IKOB-algorithm.pdf"""
+
+    if decay_curve_name == DecayCurveName.WORK_AND_SOCIAL:
         return _work_constants(modality, preference)
-    elif motive == "winkeldagelijks" or motive == "onderwijs":
+    elif decay_curve_name == DecayCurveName.DAILY_SHOPPING_AND_HEALTH:
         return _daily_shopping_constants(modality, preference)
-    else:
+    elif decay_curve_name == DecayCurveName.NON_DAILY_SHOPPING_AND_EDUCATION:
         return _non_daily_shopping_constants(modality, preference)
+    else:
+        raise ValueError(f"Unknown decay_curve_name: '{decay_curve_name}'")
 
 
 def _work_constants(modality, preference):
@@ -51,7 +54,7 @@ def _daily_shopping_constants(modality, preference):
     alpha = 0.225
     omega = 12.5
     scaling = 1
-    if modality == "Fiets" or "EFiets":
+    if modality in ("Fiets", "EFiets"):
         omega = 10
         if preference == "Fiets":
             omega = 12.5
@@ -67,7 +70,7 @@ def _non_daily_shopping_constants(modality, preference):
     alpha = 0.225
     omega = 20
     scaling = 1
-    if modality == "Fiets" or "EFiets":
+    if modality in ("Fiets", "EFiets"):
         omega = 15
         if preference == "Fiets":
             omega = 20
