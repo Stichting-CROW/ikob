@@ -8,6 +8,8 @@ This data is used to create accessibility profiles for several groups within soc
 Potential accessibility is calculated in analogy with [Hansen (1958)](https://www.tandfonline.com/doi/abs/10.1080/01944365908978307 "Subscription needed"). It uses distance decay curves for each mode, based on time and cost (perception) by each group in society.
 So, the further away an amenity (like a job location) is, the less it will count as a full option. The calculated potential accessibility, therefore, is a weighted amount.
 
+### Nomenclature
+
 Some commonly used abbreviations / jargon:
 
 - TVOM: Time value of money, how much money a unit of time is worth.  
@@ -16,7 +18,13 @@ Some commonly used abbreviations / jargon:
   For example: Shops per zone, working population per zone, etc.
 - skims: Data to determine an impedance ('friction') matrix from zone to zone.  
   For example: A matrix of distances via car from zone to zone, costs per kilometer of traveling by car, etc.
-- GTR: Generalized travel time.
+- GTR / GTT: Generalized travel time.
+- ICE: Internal combustion engine. Also referred to using fuel_kind 'fossiel'.
+- vk: (dutch) voorkeur / (english) preference
+- groups: See [Groups](./README.md#groups)
+
+In the past, IKOB was focussed on commuting trips. You might see this reflected in nomenclature where terms like 'employment', 'jobs' are used to indicate the traveling population and their destinations.
+Ikob since has been generalized to allow for different motives, but you might see this remnants of this old approach.
 
 Documentation on the construction of the IKOB algorithm, including a detailed description of its underlying methodology and the variables used in the calculation, is available at: [https://docs.crow.nl/ikob/](https://docs.crow.nl/ikob/).
 
@@ -100,7 +108,7 @@ python src/ikob/ikobrunner.py
 ## Development
 
 For IKOB development first install IKOB following the manual installation
-outlined in the [#Installation-and-usage] section. This should provide a
+outlined in the [Installation and usage](#installation-and-usage) section. This should provide a
 local, editable installation of IKOB. To verify all is setup well, you
 can run the IKOB test suite through `pytest`.
 
@@ -115,11 +123,11 @@ To enable logger output:
 python -m pytest -o log_cli=true -o log_file_level=info
 ```
 
-The current CI pipelines enforce code formatting through `autopep8` and `isort`. To ensure modified sources files adhere to the requirements of these linters, run
+The current CI pipelines enforce code formatting through `ruff`.
+To ensure modified sources files adhere to the requirements of these linters, run
 
 ```sh
-isort src/ikob/*.py tests/*.py
-autopep8 --in-place --aggressive --aggressive src/ikob/*.py tests/*.py
+python -m ruff check
 ```
 
 ## Deployment
@@ -151,3 +159,116 @@ application under `dist/ikob`. This directory contains the executable as
 in `dist/ikobrunner/_internal`. The full directory, i.e. `dist/ikobrunner` is
 self contained and can be moved to the desired location. Running the executable
 will run the typical `ikobrunner` script.
+
+## With Docker
+
+The following assumes this repo is checked out in the pwd.
+That's not required for running projects or creating a config, but then be sure to supply your own volumes with project data, making sure that the paths in the container matches the paths in the config.
+
+- **Build**: `$ docker build -t ghcr.io/stichting-crow/ikob .`
+- **Run tests**: `$ docker run --rm -it -v ${pwd}/tests:/app/tests --entrypoint python ghcr.io/stichting-crow/ikob -m pytest`
+- **Run a project headlessly**: `$ docker run --rm -it -v /my/data:/data ghcr.io/stichting-crow/ikob src/ikob/ikobrunner.py --project /data/project.json --verbose`
+- **Create a config**: this requires a GUI, which really depends on the host OS. See below.
+
+<details><summary>Dockerized config with GUI</summary>
+
+This works on my machine™ (Windows 11 v24H2, in PowerShell, using Ubuntu v22.04 on WSL v2.6.3.0 and Docker Desktop). Adapted from [Stack Overflow (CC BY-SA 4.0)](https://stackoverflow.com/a/75392952):
+
+> ```powershell
+> PS > docker run --rm -it `
+>   -v ${pwd}/tests:/app/tests `
+>   -v /run/desktop/mnt/host/wslg/.X11-unix:/tmp/.X11-unix `
+>   -v /run/desktop/mnt/host/wslg:/mnt/wslg `
+>   -e DISPLAY=:0 `
+>   -e WAYLAND_DISPLAY=wayland-0 `
+>   -e XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir `
+>   --entrypoint /app/src/ikob/ikobconfig.py `
+>   ghcr.io/stichting-crow/ikob
+> ```
+
+On Linux, it should be simpler (untested).
+In either case, don't forget to mount a volume where to save your file to.
+
+> ```sh
+> $ docker run --rm -it \
+>   -v $(pwd)/tests:/app/tests \
+>   -e DISPLAY=$DISPLAY \
+>   -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+>   --entrypoint /app/src/ikob/ikobconfig.py \
+>   ghcr.io/stichting-crow/ikob
+> ```
+
+</details>
+
+# Testing
+
+## Test Types
+
+- **Unit tests** (`tests/unit/`) - Test individual components using toy examples and monkey patching
+- **E2E tests** (`tests/e2e/`) - Run the full ikobrunner script end-to-end
+
+The remaining folders contain test projects and reference output.
+
+## Reference Tests
+
+There are some reference tests:
+
+- tests/e2e/test_end_to_end.py
+- tests/unit/test_parking_cost_file.py
+- tests/unit/test_group_distribution.py
+
+These compare current output against stored reference output.
+These detect when output has changed but don't verify expected behavior.
+
+To generate new reference data for these tests it's easiest to just run the test without deleting the computed results at the end. In general this boils down to removing the `remove_directory` call. If the test uses a [temporary test directory](https://docs.pytest.org/en/6.2.x/tmpdir.html#the-tmpdir-fixture) or something similar, it's easiest to make that a concrete path and get the results from there.
+
+# Output
+
+See OUTPUT.md for the structure of the output (results) directory. This file is also included in the output directory produced by the code.
+
+# Input
+
+The input is not (yet) extensively documented. The input files themselves contain a header and index column which give an indication of their content.
+The headers are no more than a user facing description. Their content is ignored while reading files and all the data is simply treated as a numpy array.
+
+Further instruction on how to build this input data can be found in the [ikob-scripts repo](https://github.com/Stichting-CROW/ikob-scripts).
+
+# Groups
+
+The code uses the term 'groups' a lot to refer to different slices of the population. Income groups (income classes) are different from groups.
+
+The code uses the following income classes:
+
+- low
+- medium-low
+- medium-high
+- high
+
+The groups are there to differentiate slices of the population with different modalities at their disposal and with different preferences.\
+The code uses the following groups:
+| Group | Description |
+|---|---|
+| GratisAuto | Those with a free car |
+| GratisAuto_GratisOV | Those with a free car and free public transport |
+| WelAuto_GratisOV | Those with a car and free public transport |
+| WelAuto_vkAuto | Those with a car and a preference for car |
+| WelAuto_vkNeutraal | Those with a car and a neutral preference |
+| WelAuto_vkFiets | Those with a car and a preference for cycling |
+| WelAuto_vkOV | Those with a car and a preference for public transport |
+| GeenAuto_GratisOV | Those without a car and free public transport |
+| GeenAuto_vkNeutraal | Those without a car and a neutral preference |
+| GeenAuto_vkFiets | Those without a car and a preference for cycling |
+| GeenAuto_vkOV | Those without a car and a preference for public transport |
+| GeenRijbewijs_GratisOV | Those without a driver’s license and free public transport |
+| GeenRijbewijs_vkNeutraal | Those without a driver’s license and a neutral preference |
+| GeenRijbewijs_vkFiets | Those without a driver’s license and a preference for cycling |
+| GeenRijbewijs_vkOV | Those without a driver’s license and a preference for public transport |
+
+Where each group is additionally suffixed by an income class to split the population up further.\
+In [distribute_over_groups.py](./src/ikob/distribute_over_groups.py) the population of each zone is distributed over these groups according to social-economic data.
+
+# Motieven
+
+A run of ikob is always for a specific travel motive. In the project config you can configure the name of the motive, the corresponding traveling population and the destinations corresponding to the travel motive. In addition, it's also possible to configure the time value of money used for the motive, and the travel time decay curve to use.
+
+When you run ikob for multiple different motives in sequence, the results are separated in the results directory (generally by a subdirectory with the motive name).

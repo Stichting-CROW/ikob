@@ -22,9 +22,13 @@
       "output_directory": "tests/vlaanderen-with-parking-cost/"
     },
     "verstedelijkingsscenario": "2023",
-    "motieven": [
-      "werk"
-    ],
+    "motief": {
+      "naam": "werk",
+      "reizende populatie": "tests/vlaanderen/SEGS/2023/Beroepsbevolking_inkomensklasse.csv",
+      "bestemmingsplaatsen": "tests/vlaanderen/SEGS/2023/Arbeidsplaatsen_inkomensklasse.csv",
+      "TVOM": "werk",
+      "reistijdvervalscurve": "werk en sociaal-recreatief"
+    },
     "fiets of E-fiets": {
         "E-fiets": false
     },

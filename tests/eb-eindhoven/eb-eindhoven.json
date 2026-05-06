@@ -40,9 +40,13 @@
       "skims_directory": "tests/eb-eindhoven/skims",
       "output_directory": "tests/eb-eindhoven/"
     },
-    "motieven": [
-      "werk"
-    ],
+    "motief": {
+      "naam": "werk",
+      "reizende populatie": "tests/eb-eindhoven/SEGS/2023H/Beroepsbevolking_inkomensklasse.csv",
+      "bestemmingsplaatsen": "tests/eb-eindhoven/SEGS/2023H/Arbeidsplaatsen_inkomensklasse.csv",
+      "TVOM": "werk",
+      "reistijdvervalscurve": "werk en sociaal-recreatief"
+    },
     "fiets of E-fiets": {
         "E-fiets": false
     },
