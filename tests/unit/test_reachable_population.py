@@ -13,7 +13,7 @@ def reachable_population_setup(request, monkeypatch, segs_capture):
     """Common setup for reachable population tests.
 
     The setup regards reachable working population by employers"""
-    import ikob.reachable_population as pc
+    import ikob.reachable_population as rp
 
     pod = "Restdag"
     motive = "werk or something else"
@@ -70,7 +70,7 @@ def reachable_population_setup(request, monkeypatch, segs_capture):
     def capture_write_csv(self, data, key, header=None):
         csv_writes.append({"data": data, "key": key, "header": header})
 
-    monkeypatch.setattr(pc.DataSource, "write_csv", capture_write_csv)
+    monkeypatch.setattr(rp.DataSource, "write_csv", capture_write_csv)
 
     config = {
         "__filename__": "pytest",
@@ -94,10 +94,10 @@ def reachable_population_setup(request, monkeypatch, segs_capture):
         "geavanceerd": {"welke_groepen": ["alle groepen"]},
     }
 
-    origins = pc.reachable_population(config, _Weights(), _Weights())  # type: ignore
+    reachable_populations = rp.calculate_reachable_population(config, _Weights(), _Weights())  # type: ignore
 
     return {
-        "origins": origins,
+        "reachable_populations": reachable_populations,
         "csv_writes": csv_writes,
         "pod": pod,
         "motive": motive,
@@ -119,7 +119,7 @@ def test_reachable_population_totals(modality, income_group, income_index, reach
     """Reachable citizens (potential workforce) totals are independent of job counts and distribution over groups."""
     from ikob.datasource import DataKey
 
-    origins = reachable_population_setup["origins"]
+    reachable_populations = reachable_population_setup["reachable_populations"]
     pod = reachable_population_setup["pod"]
     motive = reachable_population_setup["motive"]
     working_pop_income = reachable_population_setup["working_pop_income"]
@@ -133,7 +133,7 @@ def test_reachable_population_totals(modality, income_group, income_index, reach
         motive=motive,
         modality=modality,
     )
-    totals = origins.get(key)
+    totals = reachable_populations.get(key)
     expected_totaal = np.array(weight_matrix.T @ working_pop_income[:, income_index].T)
     np.testing.assert_allclose(totals, expected_totaal)
 
