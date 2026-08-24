@@ -9,17 +9,19 @@ logger = logging.getLogger(__name__)
 
 # This is used throughout the code as a pseudo infinite travel time that's still outputted as a number
 IKOB_INFINITE = 9999.0
+FLOAT_DTYPE = np.float32
+INT_DTYPE = np.int32
 
 
 def zeros(lengte):
-    return np.zeros(lengte)
+    return np.zeros(lengte, dtype=FLOAT_DTYPE)
 
 
 def transpose(matrix):
-    return np.array(matrix).T
+    return np.asarray(matrix).T
 
 
-def read_csv(filenaam, type_caster=float, has_index_column=True):
+def read_csv(filenaam, type_caster: type = FLOAT_DTYPE, has_index_column=True):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
@@ -44,11 +46,11 @@ def read_csv(filenaam, type_caster=float, has_index_column=True):
 
 
 def read_csv_int(filenaam, has_index_column=True):
-    return read_csv(filenaam, type_caster=int, has_index_column=has_index_column)
+    return read_csv(filenaam, type_caster=INT_DTYPE, has_index_column=has_index_column)
 
 
 def read_csv_float(filenaam, has_index_column=True):
-    return read_csv(filenaam, type_caster=float, has_index_column=has_index_column)
+    return read_csv(filenaam, type_caster=FLOAT_DTYPE, has_index_column=has_index_column)
 
 
 def _check_index_column(matrix: npt.NDArray, filenaam):
@@ -93,7 +95,7 @@ def write_csv(matrix, filenaam, index=None, header=None):
         matrix = matrix.reshape(1, -1)
 
     # Determine format for data
-    data_fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.6e"
+    data_fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.3e"
 
     # Add index column if provided
     if len(index.values) > 0:

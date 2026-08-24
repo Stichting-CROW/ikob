@@ -33,7 +33,7 @@ def get_temporary_directory(config) -> pathlib.Path:
     return project_dir / "tussenresultaten"
 
 
-def read_csv_from_config(config, key: str, id: str, type_caster=float, has_index_column=True):
+def read_csv_from_config(config, key: str, id: str, type_caster: type = utils.FLOAT_DTYPE, has_index_column=True):
     """Read key from id section in the configuration file."""
     csv_path = config[key][id]
     if isinstance(csv_path, dict):
@@ -89,7 +89,12 @@ class SkimsSource:
         self.skims_dir = pathlib.Path(skims_dir)
 
     def read(
-        self, id: str, dagdeel: str, type_caster=float, default: npt.NDArray | None = None, has_index_column=True
+        self,
+        id: str,
+        dagdeel: str,
+        type_caster: type = utils.FLOAT_DTYPE,
+        default: npt.NDArray | None = None,
+        has_index_column=True,
     ) -> npt.NDArray:
         """Read skims from disk.
 

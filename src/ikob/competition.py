@@ -16,7 +16,7 @@ def compute_income_distributions(citizens_or_destinations: npt.NDArray[np.intege
     return np.divide(
         citizens_or_destinations,
         totals,
-        out=np.zeros_like(citizens_or_destinations, dtype=np.float32),
+        out=np.zeros_like(citizens_or_destinations, dtype=utils.FLOAT_DTYPE),
         where=totals > 0,
     )
 
@@ -243,7 +243,7 @@ def competition(
     for car_possession_group in car_possession_groups:
         distribution_matrix = segs_source.read(
             "Verdeling_over_groepen",
-            type_caster=float,
+            type_caster=utils.FLOAT_DTYPE,
             scenario=scenario,
             group=motive_name,
             modifier="alleen_autobezit" if car_possession_group == "alleen autobezit" else "",
@@ -271,7 +271,7 @@ def competition(
                     # - citizens=True  (D7 / competition_on_citizens): `reach` comes from D4 / reachable_destinations and is origin-side reachable opportunities
                     #   (how many jobs/places residents in an origin zone can reach).
 
-                    competition_total = np.zeros(len(citizens_or_destinations))
+                    competition_total = np.zeros(len(citizens_or_destinations), dtype=utils.FLOAT_DTYPE)
 
                     for i_group, group in enumerate(groups):
                         distribution = distribution_matrix[:, i_group]

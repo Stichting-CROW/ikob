@@ -71,7 +71,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
 
     traveling_population_totals = [sum(bbpk) for bbpk in traveling_population]
 
-    income_distributions = np.zeros((len(traveling_population), len(traveling_population[0])))
+    income_distributions = np.zeros((len(traveling_population), len(traveling_population[0])), dtype=utils.FLOAT_DTYPE)
     for i in range(len(traveling_population)):
         for j in range(len(traveling_population[0])):
             if traveling_population_totals[i] > 0:
@@ -84,7 +84,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
     for car_possession_group in car_possession_groups:
         distribution_matrix = segs_source.read(
             "Verdeling_over_groepen",
-            type_caster=float,
+            type_caster=utils.FLOAT_DTYPE,
             scenario=scenario,
             group=motive_name,
             modifier="alleen_autobezit" if car_possession_group == "alleen autobezit" else "",
@@ -95,16 +95,16 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
 
         for part_of_day in part_of_days:
             for i_income_group, income_group in enumerate(income_groups):
-                destinations_for_income = np.array(destinations[i_income_group])
+                destinations_for_income = np.asarray(destinations[i_income_group], dtype=utils.FLOAT_DTYPE)
 
-                incomes = np.array(income_distributions_transposed[i_income_group])
+                incomes = np.asarray(income_distributions_transposed[i_income_group], dtype=utils.FLOAT_DTYPE)
                 general_possibility_totals = []
 
                 for modality in modalities:
-                    possibility_sum = np.zeros(len(destinations_segs))
+                    possibility_sum = np.zeros(len(destinations_segs), dtype=utils.FLOAT_DTYPE)
 
                     for i_group, group in enumerate(groups):
-                        distribution = np.array(distribution_matrix_transpose[i_group])
+                        distribution = np.asarray(distribution_matrix_transpose[i_group], dtype=utils.FLOAT_DTYPE)
 
                         income = utils.group_income_level(group)
                         if income_group == income or income_group == "alle":

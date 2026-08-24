@@ -74,7 +74,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
 
     working_population = []
 
-    working_population = np.asarray(traveling_population, dtype=np.float32).sum(axis=1)
+    working_population = np.asarray(traveling_population, dtype=utils.FLOAT_DTYPE).sum(axis=1)
 
     # section D5: derive group sizes $I_{gh}$ per origin zone by distributing the origin-zone working population
     # over groups using the SEG distribution matrix.
@@ -84,7 +84,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
     for car_possession_group in car_possession_groups:
         distribution_matrix = segs_source.read(
             "Verdeling_over_groepen",
-            type_caster=float,
+            type_caster=utils.FLOAT_DTYPE,
             scenario=scenario,
             group=motive_name,
             modifier="alleen_autobezit" if car_possession_group == "alleen autobezit" else "",

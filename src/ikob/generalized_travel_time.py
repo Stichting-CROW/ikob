@@ -58,7 +58,7 @@ def generalized_travel_time(config) -> DataSource:
     pricecap_value = skims_config["pricecap"]["getal"]
     bike_cost_euro_per_km = skims_config["bike_cost_ct_per_km"] / 100
     parking_times = read_parking_times(config)
-    parking_times_array = np.array(parking_times)
+    parking_times_array = np.asarray(parking_times, dtype=utils.FLOAT_DTYPE)
 
     if parking_costs:
         parking_cost_array = read_csv_from_config(config, key="geavanceerd", id="parkeerkosten")
@@ -68,7 +68,7 @@ def generalized_travel_time(config) -> DataSource:
     if additional_costs:
         additional_cost_matrix = read_csv_from_config(config, key="geavanceerd", id="additionele_kosten")
     else:
-        additional_cost_matrix = np.zeros((len(parking_times), len(parking_times)))
+        additional_cost_matrix = np.zeros((len(parking_times), len(parking_times)), dtype=utils.FLOAT_DTYPE)
 
     income_levels = ["laag", "middellaag", "middelhoog", "hoog"]
     pt_km_price = pt_km_price / 100
@@ -109,7 +109,7 @@ def generalized_travel_time(config) -> DataSource:
         else:
             pt_distance_matrix = skims_reader.read("OV_Afstand", pod)
             n = len(pt_time_matrix)
-            pt_cost_matrix = np.zeros((n, n))
+            pt_cost_matrix = np.zeros((n, n), dtype=utils.FLOAT_DTYPE)
             pt_cost_matrix = utils.costs_public_transport(
                 pt_distance_matrix, pt_km_price, starting_rate, pricecap, pricecap_value
             )
@@ -133,7 +133,7 @@ def generalized_travel_time(config) -> DataSource:
             )
             generalized_travel_time.set(key, gtr_skim)
 
-        gtr_skim = np.zeros((num_zones, num_zones))
+        gtr_skim = np.zeros((num_zones, num_zones), dtype=utils.FLOAT_DTYPE)
         for income_level in income_levels:
             tvom_factor = tvom_dict.get(income_level)
             # Car generalized travel time:
