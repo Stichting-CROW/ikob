@@ -204,16 +204,12 @@ def generalized_travel_time(config) -> DataSource:
             generalized_travel_time.set(key, gtr_skim)
 
             # Dan geen auto (rijbewijs)
+            tvom_factor = tvom_dict.get(income_level)
             for kind in kind_no_car:
-                gtr_skim.fill(IKOB_INFINITE)
-                tvom_factor = tvom_dict.get(income_level)
-                for i in range(num_zones):
-                    for j in range(num_zones):
-                        total_time = car_time_matrix[i][j]
-                        total_cost = car_time_matrix[i][j] * time_costs_no_car.get(kind) + car_distance_matrix[i][j] * (
-                            costs_no_car.get(kind) + road_pricing_electric
-                        )
-                        gtr_skim[i][j] = total_time + tvom_factor * total_cost
+                total_cost = car_time_matrix * time_costs_no_car.get(kind) + car_distance_matrix * (
+                    costs_no_car.get(kind) + road_pricing_electric
+                )
+                gtr_skim = car_time_matrix + tvom_factor * total_cost
 
                 key = DataKey(
                     id=f"{kind}",
@@ -227,21 +223,17 @@ def generalized_travel_time(config) -> DataSource:
                 generalized_travel_time.set(key, gtr_skim)
 
             # Free car (no variable costs compared to car) generalized travel time:
-            gtr_skim.fill(0)
             tvom_factor = tvom_dict.get(income_level)
-            for i in range(num_zones):
-                for j in range(num_zones):
-                    total_time = car_time_matrix[i][j] + parking_times[i][0] + parking_times[j][1]
-                    if additional_costs:
-                        gtr_skim[i][j] = total_time + tvom_factor * (
-                            car_distance_matrix[i][j] * road_pricing_electric
-                            + additional_cost_matrix[i][j] / 100
-                            + parking_cost_array[j] / 100
-                        )
-                    else:
-                        gtr_skim[i][j] = total_time + tvom_factor * (
-                            car_distance_matrix[i][j] * road_pricing_electric + parking_cost_array[j] / 100
-                        )
+            gtr_skim = utils.compute_car_gtt(
+                car_time=car_time_matrix,
+                car_dist=car_distance_matrix,
+                var_rate=0.0,
+                road_pricing=road_pricing_electric,
+                tvom_factor=tvom_factor,
+                additional_costs_eurocent=additional_cost_matrix,
+                parking_times_array=parking_times_array,
+                parking_costs_array_eurocent=parking_cost_array,
+            )
             key = DataKey(
                 id="GratisAuto",
                 part_of_day=pod,

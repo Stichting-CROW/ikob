@@ -3,6 +3,7 @@ from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 from ikob import utils
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
@@ -10,16 +11,14 @@ from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 logger = logging.getLogger(__name__)
 
 
-def compute_income_distributions(citizens_or_destinations):
-    totals = [sum(row) for row in citizens_or_destinations]
-
-    income_distributions = np.zeros((len(citizens_or_destinations), len(citizens_or_destinations[0])))
-    for i in range(len(citizens_or_destinations)):
-        for j in range(len(citizens_or_destinations[0])):
-            if totals[i] > 0:
-                income_distributions[i][j] = citizens_or_destinations[i][j] / totals[i]
-
-    return income_distributions
+def compute_income_distributions(citizens_or_destinations: npt.NDArray[np.integer]):
+    totals = citizens_or_destinations.sum(axis=1, keepdims=True)
+    return np.divide(
+        citizens_or_destinations,
+        totals,
+        out=np.zeros_like(citizens_or_destinations, dtype=np.float32),
+        where=totals > 0,
+    )
 
 
 @lru_cache
