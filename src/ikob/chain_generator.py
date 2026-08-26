@@ -29,16 +29,16 @@ class Hubs:
             logger.warning("Hub data is empty.")
             valid = False
 
-        if not hub_content_raw.shape[1] == 5:
+        if hub_content_raw.shape[1] != 5:
             logger.warning(f"Hub data should have 5 columns but has {hub_content_raw.shape[1]}.")
             valid = False
 
-        if not all([zone.is_integer() for zone in hub_content_raw[:, 0]]):
+        if not all(zone.is_integer() for zone in hub_content_raw[:, 0]):
             logger.warning("The first column of the hub data (the zone numbers) should contain only integers.")
             valid = False
 
         if not (
-            all([pay_for_pt.is_integer() for pay_for_pt in hub_content_raw[:, 4]])
+            all(pay_for_pt.is_integer() for pay_for_pt in hub_content_raw[:, 4])
             and np.all(np.logical_or(hub_content_raw[:, 4] == 1, hub_content_raw[:, 4] == 0))
         ):
             logger.warning("The fourth column of the hub data (wether to pay for pt) should contain either 0 or 1.")

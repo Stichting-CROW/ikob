@@ -55,8 +55,8 @@ def load_config(filename):
     try:
         with open(filename) as json_file:
             config = json.load(json_file)
-    except BaseException as e:
-        raise IOError(f"Kan niet lezen uit: '{filename}' with error:\n'{e}'.")
+    except BaseException as e:  # noqa: BLE001
+        raise OSError(f"Kan niet lezen uit: '{filename}' with error:\n'{e}'.")
     if config:
         if not validate.validate_config(config):
             msg = "Loaded config file: '%s' is incompatible with current IKOB."
@@ -86,7 +86,7 @@ def saveConfig(filename, config):
             json.dump(config, json_file, indent=2)
     except BaseException as e:
         logger.error(f"Kan configuratie niet wegschrijven naar: {filename}.", exc_info=e)
-        raise IOError(f"Kan configuratie niet wegschrijven naar: {filename}.")
+        raise OSError(f"Kan configuratie niet wegschrijven naar: {filename}.")
     return config_is_valid
 
 
@@ -129,7 +129,7 @@ class ConfigApp(tk.Tk):
                     title="Fout",
                     message="Het bestand bevat geen geldige configuratie.",
                 )
-            except IOError:
+            except OSError:
                 messagebox.showerror(title="Fout", message="Het bestand kan niet worden geladen.")
             else:
                 build.setTkVars(self._template, read_config)
@@ -150,7 +150,7 @@ class ConfigApp(tk.Tk):
         config_is_valid = True
         try:
             config_is_valid = saveConfig(filename, config)
-        except BaseException:
+        except BaseException:  # noqa: BLE001
             messagebox.showerror(title="Fout", message="Het bestand kan niet worden opgeslagen.")
         else:
             if not config_is_valid:
@@ -181,7 +181,7 @@ def main():
             title="Fout",
             message="De standaard configuratiedefinitie is niet geldig: Kijk in ConfiguratieDefinitie.py",
         )
-        exit(1)
+        sys.exit(1)
     App = ConfigApp()
     App.mainloop()
 

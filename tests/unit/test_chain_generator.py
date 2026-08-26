@@ -34,21 +34,21 @@ def test_parking_time_at_hub_is_ignored():
     hub_zone = 2
     hubs = _make_hubs(zones=[hub_zone], hub_costs=[100], pt_transfer=[5], bike_transfer=[3], pay_for_pt=[1])
 
-    kwargs = dict(
-        hubs=hubs,
-        car_time=car_time,
-        car_dist=car_dist,
-        bike_time=bike_time,
-        bike_dist=bike_dist,
-        pt_time=pt_time,
-        pt_cost=pt_cost,
-        tvom_factor=2.0,
-        var_car_rate=0.05,
-        road_pricing=0.01,
-        bike_cost_euro_per_km=0.02,
-        additional_costs=np.zeros((n, n)),
-        destination_list=np.linspace(1, n, n, dtype=int),
-    )
+    kwargs = {
+        "hubs": hubs,
+        "car_time": car_time,
+        "car_dist": car_dist,
+        "bike_time": bike_time,
+        "bike_dist": bike_dist,
+        "pt_time": pt_time,
+        "pt_cost": pt_cost,
+        "tvom_factor": 2.0,
+        "var_car_rate": 0.05,
+        "road_pricing": 0.01,
+        "bike_cost_euro_per_km": 0.02,
+        "additional_costs": np.zeros((n, n)),
+        "destination_list": np.linspace(1, n, n, dtype=int),
+    }
 
     # parking_times without any parking search time
     parking_times_zero = np.zeros((n, 3))
@@ -100,20 +100,20 @@ def test_no_pt_costs():
     pt_cost = pt_dist * 0.10
 
     hub_zone = 2
-    common = dict(
-        car_time=car_time,
-        car_dist=car_dist,
-        bike_time=bike_time,
-        bike_dist=bike_dist,
-        pt_time=pt_time,
-        tvom_factor=2.0,
-        var_car_rate=0.05,
-        road_pricing=0.01,
-        bike_cost_euro_per_km=0.02,
-        additional_costs=np.zeros((n, n)),
-        parking_times=np.zeros((n, 3)),
-        destination_list=np.linspace(1, n, n, dtype=int),
-    )
+    common = {
+        "car_time": car_time,
+        "car_dist": car_dist,
+        "bike_time": bike_time,
+        "bike_dist": bike_dist,
+        "pt_time": pt_time,
+        "tvom_factor": 2.0,
+        "var_car_rate": 0.05,
+        "road_pricing": 0.01,
+        "bike_cost_euro_per_km": 0.02,
+        "additional_costs": np.zeros((n, n)),
+        "parking_times": np.zeros((n, 3)),
+        "destination_list": np.linspace(1, n, n, dtype=int),
+    }
 
     # pay_for_pt=0 with real pt_cost
     hubs_no_pay = _make_hubs(zones=[hub_zone], hub_costs=[100], pt_transfer=[5], bike_transfer=[3], pay_for_pt=[0])
@@ -146,21 +146,21 @@ def test_minimum_across_hubs():
     )
 
     pt_cost = pt_dist * 0.08
-    input_dict = dict(
-        car_time=car_time,
-        car_dist=car_dist,
-        bike_time=bike_time,
-        bike_dist=bike_dist,
-        pt_time=pt_time,
-        pt_cost=pt_cost,
-        tvom_factor=1.5,
-        var_car_rate=0.04,
-        road_pricing=0.02,
-        bike_cost_euro_per_km=0.02,
-        additional_costs=np.zeros((n, n)),
-        parking_times=np.zeros((n, 3)),
-        destination_list=np.linspace(1, n, n, dtype=int),
-    )
+    input_dict = {
+        "car_time": car_time,
+        "car_dist": car_dist,
+        "bike_time": bike_time,
+        "bike_dist": bike_dist,
+        "pt_time": pt_time,
+        "pt_cost": pt_cost,
+        "tvom_factor": 1.5,
+        "var_car_rate": 0.04,
+        "road_pricing": 0.02,
+        "bike_cost_euro_per_km": 0.02,
+        "additional_costs": np.zeros((n, n)),
+        "parking_times": np.zeros((n, 3)),
+        "destination_list": np.linspace(1, n, n, dtype=int),
+    }
 
     result_bike, result_ride = compute_chain_travel_time(hubs, **input_dict)
 

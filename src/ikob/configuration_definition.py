@@ -18,8 +18,17 @@ class DataType(Enum):
 
 
 def config_item(
-    label: str, data_type: DataType, default: str = "", items: list[str] = [], bounds: list[str] = [], unit: str = ""
+    label: str,
+    data_type: DataType,
+    default: str = "",
+    items: list[str] | None = None,
+    bounds: list[str] | None = None,
+    unit: str = "",
 ):
+    if bounds is None:
+        bounds = []
+    if items is None:
+        items = []
     msg = "Invalid GUI data type provided."
     assert data_type in DataType, msg
 
@@ -29,9 +38,8 @@ def config_item(
         default = default_values.get(data_type, default)
 
     # The default value is expected as list when more items are present.
-    if data_type != DataType.CHOICE:
-        if items and isinstance(default, str):
-            default = [default]
+    if data_type != DataType.CHOICE and items and isinstance(default, str):
+        default = [default]  # type: ignore
 
     dictionary = {"label": label, "type": data_type.value, "default": default}
 

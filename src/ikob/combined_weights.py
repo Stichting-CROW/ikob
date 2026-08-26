@@ -13,23 +13,14 @@ def has_preference(kind_car, kind_pt, preference):
             return False
         else:
             if kind_pt == "GratisOV":
-                if preference != "OV":
-                    return False
-                else:
-                    return True
+                return preference == "OV"
             else:
                 return True
     elif kind_car == "GratisAuto":
         if kind_pt == "GratisOV":
-            if preference != "Neutraal":
-                return False
-            else:
-                return True
+            return preference == "Neutraal"
         else:
-            if preference != "Auto":
-                return False
-            else:
-                return True
+            return preference == "Auto"
     elif kind_pt == "GratisOV":
         return preference == "OV"
     else:

@@ -152,7 +152,7 @@ class FileValidator:
             return -1, False
 
         num_zones = len(pt_time_matrix)
-        if not len(parking_cost_array) == num_zones:
+        if len(parking_cost_array) != num_zones:
             logger.warning(f"The parking costs is expected to be of length equal to the number of zones, {num_zones}")
             return num_zones, False
 
@@ -163,10 +163,9 @@ class FileValidator:
             )
             return num_zones, False
 
-        if old_num_zones != -1:
-            if not num_zones == old_num_zones:
-                logger.warning("The number of zones should be the same for different parts of the day")
-                return num_zones, False
+        if old_num_zones != -1 and num_zones != old_num_zones:
+            logger.warning("The number of zones should be the same for different parts of the day")
+            return num_zones, False
 
         return num_zones, True
 
@@ -336,7 +335,7 @@ def _validateDefaultType(valtype, defvalue):
         return False
     if (valtype == "checklist") and defvaluetype is not list:
         return False
-    if (valtype == "checkbox") and defvaluetype is not bool:
+    if (valtype == "checkbox") and defvaluetype is not bool:  # noqa: SIM103
         return False
     return True
 
@@ -387,15 +386,13 @@ def _false(value, template):
 
 
 def _validateText(value, template):
-    if type(value) is not str:
-        return False
-    return True
+    return type(value) is str
 
 
 def _validateNumber(value, template):
     if not (type(value) is float or type(value) is int):
         return False
-    if "range" in template:
+    if "range" in template:  # noqa: SIM102
         if value < template.range[0] or value > template.range[1]:
             return False
     return True
@@ -415,9 +412,7 @@ def _validateBox(value, template):
 
 
 def _validateChoice(value, template):
-    if value not in template["items"]:
-        return False
-    return True
+    return value in template["items"]
 
 
 def validateConfigWithTemplate(config, template, strict=False, log_lvl=logging.WARNING):
@@ -431,7 +426,7 @@ def validateConfigWithTemplate(config, template, strict=False, log_lvl=logging.W
     Resultaat: True - Configuratie klopt.
                False - Configuratie klopt niet.
     """
-    templatekeys = [key for key in template.keys() if key != "label"]
+    templatekeys = [key for key in template if key != "label"]
     if not isinstance(config, dict):
         logger.log(log_lvl, "Validation failed: config is not a dictionary.")
         return False
@@ -444,10 +439,9 @@ def validateConfigWithTemplate(config, template, strict=False, log_lvl=logging.W
         )
         return False
     for key in templatekeys:
-        if not strict:
-            if key not in config:
-                logger.log(log_lvl, f"Validation failed: key '{key}' is missing in config but present in template.")
-                return False
+        if not strict and key not in config:
+            logger.log(log_lvl, f"Validation failed: key '{key}' is missing in config but present in template.")
+            return False
         if "type" in template[key]:
             check = {
                 "text": _validateText,

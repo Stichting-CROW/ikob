@@ -4,12 +4,11 @@ import os
 import pathlib
 import shutil
 from dataclasses import dataclass, field
-from typing import Type
 
 import numpy.typing as npt
 from numpy.typing import NDArray
 
-import ikob.utils as utils
+from ikob import utils
 from ikob.urbanization_grade_to_parking_times import urbanization_grade_to_parking_times
 
 logger = logging.getLogger(__name__)
@@ -48,7 +47,7 @@ def read_csv_from_config(config, key: str, id: str, type_caster=float, has_index
     csv_path = pathlib.Path(csv_path)
     try:
         return utils.read_csv(csv_path, type_caster, has_index_column=has_index_column)
-    except Exception:
+    except FileNotFoundError:
         raise DataSourceError(
             f"Problem occurred while reading path from config with key: '{key}' and id '{id}'. Path is '{csv_path}'"
         )
@@ -67,7 +66,7 @@ def read_parking_times(config):
     parking_time_path = pathlib.Path(config_skims.get("parkeerzoektijden_bestand", segs_dir / "Parkeerzoektijd.csv"))
 
     if parking_time_path.exists():
-        logging.info("Reading parking times from: '%s'", parking_time_path)
+        logger.info("Reading parking times from: '%s'", parking_time_path)
         return utils.read_csv_int(parking_time_path)
 
     urbanization_path = segs_dir / "Stedelijkheidsgraad.csv"
@@ -134,7 +133,7 @@ class SegsSource:
         return path / filename
 
     def read(
-        self, id: str, jaar="", type_caster: Type = int, scenario="", group="", modifier="", has_index_column=True
+        self, id: str, jaar="", type_caster: type = int, scenario="", group="", modifier="", has_index_column=True
     ):
         # TODO: This is a temporary fix. The 'Verdeling_over_groepen*'
         # files are written to disk as SEGS files. These were originally
@@ -159,9 +158,9 @@ class SegsSource:
                 f"File SEGS file '{path}' not found. Is the scenario (used as subfolder) '{scenario}' correct?"
             )
 
-    def write_csv(
-        self, data, id, header, group="", jaar="", modifier="", scenario="", index: utils.CsvIndex = utils.CsvIndex()
-    ):
+    def write_csv(self, data, id, header, group="", jaar="", modifier="", scenario="", index: utils.CsvIndex = None):
+        if index is None:
+            index = utils.CsvIndex()
         path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".csv")
         return utils.write_csv(data, path, header=header, index=index)
 
@@ -282,7 +281,9 @@ class DataSource:
         path = self._make_file_path(key).with_suffix(".csv")
         return utils.read_csv(path)
 
-    def write_csv(self, data, key: DataKey, header=[]):
+    def write_csv(self, data, key: DataKey, header=None):
+        if header is None:
+            header = []
         assert isinstance(key, DataKey)
         if key.is_temporary:
             return

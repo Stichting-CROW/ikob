@@ -62,7 +62,7 @@ def _check_index_column(matrix: npt.NDArray, filenaam):
     for idx in index_column:
         if abs(round(idx) - idx) > 1e-5:
             raise ValueError(f"Csv file {filenaam} has an invalid index column because index {idx} is not integer.")
-        idx = int(round(idx))
+        idx = round(idx)
         if idx - prev_index != 1:
             raise ValueError(f"Csv file {filenaam} has an invalid index column because the index is not sequential.")
         prev_index = idx
@@ -78,7 +78,11 @@ class CsvIndex:
         return cls("zone", list(range(1, num_zones + 1)))
 
 
-def write_csv(matrix, filenaam, index=CsvIndex(), header=[]):
+def write_csv(matrix, filenaam, index=None, header=None):
+    if header is None:
+        header = []
+    if index is None:
+        index = CsvIndex()
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 

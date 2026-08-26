@@ -39,11 +39,8 @@ def segs_capture(monkeypatch):
     def _make(data_by_key) -> SegsCapture:
         # Some modules import SegsSource directly ("from ikob.datasource import SegsSource"),
         # so patching only ikob.datasource.SegsSource is not sufficient.
-        import ikob.competition as competition
-        import ikob.datasource as datasource
-        import ikob.distribute_over_groups as distribute_over_groups
         import ikob.reachable_destinations as rd
-        import ikob.reachable_population as reachable_population
+        from ikob import competition, datasource, distribute_over_groups, reachable_population
 
         capture = SegsCapture(data_by_key)
 

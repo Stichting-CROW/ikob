@@ -1,4 +1,4 @@
-from typing import Iterable
+from collections.abc import Iterable
 
 
 def urbanization_grade_to_parking_times(urbanization_grades: Iterable[int]) -> list[list[int]]:

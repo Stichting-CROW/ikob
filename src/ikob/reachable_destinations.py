@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
-import ikob.utils as utils
+from ikob import utils
 from ikob.competition import get_weight_matrix
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 

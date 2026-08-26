@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 
-import ikob.utils as utils
+from ikob import utils
 from ikob.chain_generator import chain_generator
 from ikob.configuration_definition import TvomType
 from ikob.datasource import (

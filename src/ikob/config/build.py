@@ -1,4 +1,3 @@
-# ruff: noqa: F403,F405
 from tkinter import *
 from tkinter import ttk
 
@@ -73,27 +72,26 @@ def addTkVarsTemplate(template):
     Voeg tkvars toe aan een template
     """
     for key in set(template.keys()):
-        if key != "label":
-            if isinstance(template[key], dict):
-                if "type" in template[key]:
-                    var = None
-                    leaf = template[key]
-                    valtype = leaf["type"]
-                    if valtype == "number":
-                        var = DoubleVar(value=_default_value(leaf))
-                    elif valtype == "text" or valtype == "file" or valtype == "directory" or valtype == "choice":
-                        var = StringVar(value=_default_value(leaf))
-                    elif valtype == "checkbox":
-                        var = BooleanVar(value=_default_value(leaf))
-                    elif valtype == "checklist":
-                        deflist = _default_value(leaf)
-                        var = [BooleanVar(value=(item in deflist)) for item in leaf["items"]]
-                    if var:
-                        template[key]["tkvar"] = var
-                    else:
-                        print(f"FOUT? template[{key}] = {leaf}")
+        if key != "label" and isinstance(template[key], dict):
+            if "type" in template[key]:
+                var = None
+                leaf = template[key]
+                valtype = leaf["type"]
+                if valtype == "number":
+                    var = DoubleVar(value=_default_value(leaf))
+                elif valtype == "text" or valtype == "file" or valtype == "directory" or valtype == "choice":
+                    var = StringVar(value=_default_value(leaf))
+                elif valtype == "checkbox":
+                    var = BooleanVar(value=_default_value(leaf))
+                elif valtype == "checklist":
+                    deflist = _default_value(leaf)
+                    var = [BooleanVar(value=(item in deflist)) for item in leaf["items"]]
+                if var:
+                    template[key]["tkvar"] = var
                 else:
-                    addTkVarsTemplate(template[key])
+                    print(f"FOUT? template[{key}] = {leaf}")
+            else:
+                addTkVarsTemplate(template[key])
 
 
 def setTkVars(template, config):
@@ -122,50 +120,49 @@ def _addWidgets(master, template):
     widgets = []
     row = 0
     for key in template:
-        if key != "label":
-            if isinstance(template[key], dict):
-                if "type" in template[key]:
-                    leaf = template[key]
-                    vartype = leaf["type"]
-                    label = key
-                    unit = ""
-                    items = []
-                    if "label" in leaf:
-                        label = leaf["label"]
-                    if "unit" in leaf:
-                        unit = leaf["unit"]
-                    if "items" in leaf:
-                        items = leaf["items"]
-                    var = leaf["tkvar"]
-                    if vartype == "number":
-                        widgets.extend(numberWidget(master, label, unit, var, row=row))
-                    elif vartype == "text":
-                        widgets.extend(textWidget(master, label, var, row=row))
-                    elif vartype == "file":
-                        widgets.extend(pathWidget(master, label, var, row=row, file=True))
-                    elif vartype == "directory":
-                        widgets.extend(pathWidget(master, label, var, row=row))
-                    elif vartype == "choice":
-                        widgets.extend(choiceWidget(master, label, items, unit, var, row=row))
-                    elif vartype == "checkbox":
-                        widgets.extend(checkboxWidget(master, label, var, row=row))
-                    elif vartype == "checklist":
-                        widgets.extend(checklistWidget(master, label, items, var, row=row))
-                    else:
-                        dummy = Label(master=master, text="Dummy")
-                        dummy.grid(row=row, column=0)
-                        widgets.append(dummy)
-                    row = row + 1
+        if key != "label" and isinstance(template[key], dict):
+            if "type" in template[key]:
+                leaf = template[key]
+                vartype = leaf["type"]
+                label = key
+                unit = ""
+                items = []
+                if "label" in leaf:
+                    label = leaf["label"]
+                if "unit" in leaf:
+                    unit = leaf["unit"]
+                if "items" in leaf:
+                    items = leaf["items"]
+                var = leaf["tkvar"]
+                if vartype == "number":
+                    widgets.extend(numberWidget(master, label, unit, var, row=row))
+                elif vartype == "text":
+                    widgets.extend(textWidget(master, label, var, row=row))
+                elif vartype == "file":
+                    widgets.extend(pathWidget(master, label, var, row=row, file=True))
+                elif vartype == "directory":
+                    widgets.extend(pathWidget(master, label, var, row=row))
+                elif vartype == "choice":
+                    widgets.extend(choiceWidget(master, label, items, unit, var, row=row))
+                elif vartype == "checkbox":
+                    widgets.extend(checkboxWidget(master, label, var, row=row))
+                elif vartype == "checklist":
+                    widgets.extend(checklistWidget(master, label, items, var, row=row))
                 else:
-                    label = key
-                    if "label" in template[key]:
-                        label = template[key]["label"]
-                    frame = LabelFrame(master=master, text=label, borderwidth=2)
-                    frame.columnconfigure((1), weight=1)
-                    frame.grid(row=row, column=0, columnspan=3, sticky="ew", **PAD)
-                    widgets.append(frame)
-                    _addWidgets(frame, template[key])
-                    row = row + 1
+                    dummy = Label(master=master, text="Dummy")
+                    dummy.grid(row=row, column=0)
+                    widgets.append(dummy)
+                row = row + 1
+            else:
+                label = key
+                if "label" in template[key]:
+                    label = template[key]["label"]
+                frame = LabelFrame(master=master, text=label, borderwidth=2)
+                frame.columnconfigure((1), weight=1)
+                frame.grid(row=row, column=0, columnspan=3, sticky="ew", **PAD)
+                widgets.append(frame)
+                _addWidgets(frame, template[key])
+                row = row + 1
     return widgets
 
 
