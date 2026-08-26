@@ -221,6 +221,7 @@ class DataSource:
         self.project_dir = get_project_directory(config)
         self.cache: dict[DataKey, NDArray] = {}
         self.datatype = datatype
+        self.changed_keys = set()
 
         # TODO: Improve handling of data directory structure:
         # - Extract paths/directory names from constants, e.g. Enum;
@@ -262,6 +263,7 @@ class DataSource:
         return ""
 
     def set(self, key: DataKey, data: NDArray):
+        self.changed_keys.add(key)
         self.cache[key] = data
 
     def get(self, key: DataKey) -> NDArray:
@@ -269,12 +271,13 @@ class DataSource:
             return self.cache[key]
 
         data = self.read_csv(key)
-        self.set(key, data)
+        self.cache[key] = data
         return data
 
     def store(self):
         logger.info("Writing output for data: %s.", self.datatype.value)
-        for key, data in self.cache.items():
+        for key in self.changed_keys:
+            data = self.cache[key]
             self.write_csv(data, key)
 
     def read_csv(self, key: DataKey) -> NDArray:
