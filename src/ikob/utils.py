@@ -157,7 +157,7 @@ def find_preference(naam, mod):
         return ""
 
 
-def single_group(mod, gr):
+def get_single_group(mod, gr):
     if mod == "Auto":
         if "GratisAuto" in gr:
             return "GratisAuto"
@@ -174,7 +174,7 @@ def single_group(mod, gr):
             return "OV"
 
 
-def combined_group(mod, gr):
+def get_combined_group(mod, gr):
     string = ""
     if "Auto" in mod:
         if "GratisAuto" in gr:

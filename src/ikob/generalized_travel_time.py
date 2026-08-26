@@ -14,7 +14,7 @@ from ikob.datasource import (
     read_csv_from_config,
     read_parking_times,
 )
-from ikob.utils import IKOB_INFINITE
+from ikob.utils import IKOB_INFINITE, find_preference, get_combined_group, get_single_group
 
 logger = logging.getLogger(__name__)
 
@@ -258,3 +258,81 @@ def generalized_travel_time(config) -> DataSource:
             generalized_travel_time.set(key, gtr_skim)
 
     return generalized_travel_time
+
+
+def weight_matrix_recipes(
+    group, modality, motive, regime, part_of_day, income, ratio_electric
+) -> list[tuple[str, DataKey, float]]:
+    """Gets the data source name, data key and weight from which a complete weight matrix can be obtained.
+    This lets callers group groups sharing the same underlying matrix before doing any operations with the weight matrix.
+
+    The weight returned is not the weight matrix itself, but a multiplicative factor that should be applied to the weight matrix because
+    of the size of the subgroup to which the entry in the returned list belongs. E.g. for the car modality there is a weight matrix for
+    external combustion and electric vehicles, and they should be weighted according to ratio_electric for a car traveling group.
+
+    E.g. the "GratisOV" part of a group name is irrelevant when determining reach with a modality that's not public transport.
+    """
+    preference = find_preference(group, modality)
+
+    if modality == "Fiets" or modality == "EFiets":
+        preference_bike = "Fiets" if preference == "Fiets" else ""
+        key = DataKey(
+            f"{modality}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference_bike,
+            income=income,
+        )
+        return [("single", key, 1.0)]
+
+    single_group = get_single_group(modality, group)
+    combined_group = get_combined_group(modality, group)
+
+    if modality == "Auto" and "WelAuto" in group or combined_group[0] == "A":
+        subtopic = "" if modality == "Auto" else "combinaties"
+        source = "single" if modality == "Auto" else "combined"
+        string = single_group if modality == "Auto" else combined_group
+        key_fossil = DataKey(
+            f"{string}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference,
+            income=income,
+            subtopic=subtopic,
+            fuel_kind="fossiel",
+        )
+        key_electric = DataKey(
+            f"{string}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference,
+            income=income,
+            subtopic=subtopic,
+            fuel_kind="elektrisch",
+        )
+        return [(source, key_fossil, 1 - ratio_electric), (source, key_electric, ratio_electric)]
+
+    if modality == "Auto" or modality == "OV":
+        key = DataKey(
+            f"{single_group}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference,
+            income=income,
+        )
+        return [("single", key, 1.0)]
+
+    key = DataKey(
+        f"{combined_group}_vk",
+        part_of_day=part_of_day,
+        regime=regime,
+        motive=motive,
+        preference=preference,
+        income=income,
+        subtopic="combinaties",
+    )
+    return [("combined", key, 1.0)]

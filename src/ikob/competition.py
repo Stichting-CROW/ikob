@@ -1,5 +1,4 @@
 import logging
-from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -7,6 +6,7 @@ import numpy.typing as npt
 
 from ikob import utils
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.generalized_travel_time import weight_matrix_recipes
 
 logger = logging.getLogger(__name__)
 
@@ -19,87 +19,6 @@ def compute_income_distributions(citizens_or_destinations: npt.NDArray[np.intege
         out=np.zeros_like(citizens_or_destinations, dtype=utils.FLOAT_DTYPE),
         where=totals > 0,
     )
-
-
-@lru_cache
-def get_weight_matrix(
-    single_weights: DataSource,
-    combined_weights: DataSource,
-    group,
-    modality,
-    motive,
-    regime,
-    part_of_day,
-    income,
-    ratio_electric: float,
-):
-    preference = utils.find_preference(group, modality)
-
-    if modality == "Fiets" or modality == "EFiets":
-        preference_bike = "Fiets" if preference == "Fiets" else ""
-        key = DataKey(
-            f"{modality}_vk",
-            part_of_day=part_of_day,
-            regime=regime,
-            motive=motive,
-            preference=preference_bike,
-            income=income,
-        )
-        return single_weights.get(key)
-
-    single_group = utils.single_group(modality, group)
-    combined_group = utils.combined_group(modality, group)
-
-    if modality == "Auto" and "WelAuto" in group or combined_group[0] == "A":
-        subtopic = "" if modality == "Auto" else "combinaties"
-        weights = single_weights if modality == "Auto" else combined_weights
-        string = single_group if modality == "Auto" else combined_group
-        key = DataKey(
-            f"{string}_vk",
-            part_of_day=part_of_day,
-            regime=regime,
-            motive=motive,
-            preference=preference,
-            income=income,
-            subtopic=subtopic,
-            fuel_kind="fossiel",
-        )
-        matrix_fossil = weights.get(key)
-
-        key = DataKey(
-            f"{string}_vk",
-            part_of_day=part_of_day,
-            regime=regime,
-            motive=motive,
-            preference=preference,
-            income=income,
-            subtopic=subtopic,
-            fuel_kind="elektrisch",
-        )
-        matrix_electric = weights.get(key)
-        return ratio_electric * matrix_electric + (1 - ratio_electric) * matrix_fossil
-
-    if modality == "Auto" or modality == "OV":
-        key = DataKey(
-            f"{single_group}_vk",
-            part_of_day=part_of_day,
-            regime=regime,
-            motive=motive,
-            preference=preference,
-            income=income,
-        )
-        return single_weights.get(key)
-
-    key = DataKey(
-        f"{combined_group}_vk",
-        part_of_day=part_of_day,
-        regime=regime,
-        motive=motive,
-        preference=preference,
-        income=income,
-        subtopic="combinaties",
-    )
-    return combined_weights.get(key)
 
 
 def competition_on_destinations(
@@ -271,8 +190,9 @@ def competition(
                     # - citizens=True  (D7 / competition_on_citizens): `reach` comes from D4 / reachable_destinations and is origin-side reachable opportunities
                     #   (how many jobs/places residents in an origin zone can reach).
 
-                    competition_total = np.zeros(len(citizens_or_destinations), dtype=utils.FLOAT_DTYPE)
-
+                    # Many groups resolve to the same underlying weight matrix (see `_weight_matrix_recipe`).
+                    # sum the per-group scaling factors that share a matrix first and do a single matmul per unique matrix instead of one per group.
+                    weighted_group_contribution_by_key: dict = {}
                     for i_group, group in enumerate(groups):
                         distribution = distribution_matrix[:, i_group]
                         income_distribution = income_distributions[:, i_income_group]
@@ -280,35 +200,33 @@ def competition(
                         income = utils.group_income_level(group)
                         if income_group == income or income_group == "alle":
                             K = electric_percentage.get(income_group) / 100
-                            matrix = get_weight_matrix(
-                                single_weights,
-                                combined_weights,
-                                group,
-                                modality,
-                                motive_name,
-                                regimes,
-                                part_of_day,
-                                income,
-                                K,
+                            # a group's contribution into an income-class result
+                            group_contribution = distribution / np.where(
+                                income_distribution > 0, income_distribution, 1
                             )
 
-                            # Section D6/D7 competition term:
-                            # Compute a scarcity/competition ratio per zone and propagate it through the origin-destination weights.
-                            # - citizens=False (D6 / competition_on_destinations): `citizens_or_destinations` is $A_{ib}$ (jobs/places per
-                            #   destination). Dividing by `reach` discounts destinations with many competing residents.
-                            # - citizens=True  (D7 / competition_on_citizens): `citizens_or_destinations` is $I_{ih}$ (residents per
-                            #   origin). Dividing by `reach` discounts origins with many reachable opportunities.
-                            competition = matrix @ (
-                                citizens_or_destinations.T[i_income_group] / np.where(reach > 0, reach, 1.0)
-                            )
+                            for source, key, weight in weight_matrix_recipes(
+                                group, modality, motive_name, regimes, part_of_day, income, K
+                            ):
+                                group_contribution *= weight
+                                existing = weighted_group_contribution_by_key.get((source, key))
+                                weighted_group_contribution_by_key[(source, key)] = (
+                                    group_contribution if existing is None else existing + group_contribution
+                                )
 
-                            # aggregation to income-class level:
-                            # We sum across all groups whose income level matches `income_group`.
-                            # The `distribution` and `income_distribution` scaling makes this an income-class level
-                            # score rather than a raw per-group score.
-                            competition_total += (
-                                competition * distribution / np.where(income_distribution > 0, income_distribution, 1)
-                            )
+                    # Section D6/D7 competition term:
+                    # Compute a scarcity/competition ratio per zone and propagate it through the origin-destination weights.
+                    # - citizens=False (D6 / competition_on_destinations): `citizens_or_destinations` is $A_{ib}$ (jobs/places per
+                    #   destination). Dividing by `reach` discounts destinations with many competing residents.
+                    # - citizens=True  (D7 / competition_on_citizens): `citizens_or_destinations` is $I_{ih}$ (residents per
+                    #   origin). Dividing by `reach` discounts origins with many reachable opportunities.
+                    competition_vector = citizens_or_destinations.T[i_income_group] / np.where(reach > 0, reach, 1.0)
+
+                    competition_total = np.zeros(len(citizens_or_destinations), dtype=utils.FLOAT_DTYPE)
+                    for (source, key), group_contribution in weighted_group_contribution_by_key.items():
+                        weights_source = single_weights if source == "single" else combined_weights
+                        matrix = weights_source.get(key)
+                        competition_total += (matrix @ competition_vector) * group_contribution
 
                     key = DataKey(
                         id="Totaal",

@@ -5,27 +5,11 @@ from ikob.datasource import DataKey
 
 
 @pytest.mark.parametrize(("ratio_electric"), ([0, 0.3, 1.0]))
-def test_get_weight_matrix_auto_with_electric_ratio(ratio_electric):
-    """Test that get_weight_matrix correctly blends fossil and electric car matrices."""
-    from ikob.competition import get_weight_matrix
+def test_weight_matrix_recipes_auto_with_electric_ratio(ratio_electric):
+    """Auto groups with own car should split into fossil and electric recipes by ratio."""
+    from ikob.competition import weight_matrix_recipes
 
-    fossil_matrix = np.array([[1.0, 2.0], [3.0, 4.0]])
-    electric_matrix = np.array([[10.0, 20.0], [30.0, 40.0]])
-
-    class MockWeights:
-        def get(self, key: DataKey):
-            if key.fuel_kind == "fossiel":
-                return fossil_matrix
-            elif key.fuel_kind == "elektrisch":
-                return electric_matrix
-            return None
-
-    single_weights = MockWeights()
-    combined_weights = MockWeights()
-
-    result = get_weight_matrix(
-        single_weights,  # type: ignore
-        combined_weights,  # type: ignore
+    recipes = weight_matrix_recipes(
         group="WelAuto_vkAuto_laag",
         modality="Auto",
         motive="werk",
@@ -35,75 +19,90 @@ def test_get_weight_matrix_auto_with_electric_ratio(ratio_electric):
         ratio_electric=ratio_electric,
     )
 
-    expected = ratio_electric * electric_matrix + (1 - ratio_electric) * fossil_matrix
-    np.testing.assert_array_equal(result, expected)
+    assert len(recipes) == 2
+    expected_by_fuel_kind = {
+        "fossiel": 1 - ratio_electric,
+        "elektrisch": ratio_electric,
+    }
+    for source, key, weight in recipes:
+        assert source == "single"
+        assert key.id == "Auto_vk"
+        assert key.fuel_kind in expected_by_fuel_kind
+        assert key.income == "laag"
+        assert key.preference == "Auto"
+        assert weight == expected_by_fuel_kind[key.fuel_kind]
 
 
-def test_get_weight_matrix_ov_modality():
-    """Test that get_weight_matrix handles OV (public transport) correctly."""
-    from ikob.competition import get_weight_matrix
+def test_weight_matrix_recipes_combined_modality():
+    """Combined modalities with auto part should resolve to combined-source fossil/electric recipes."""
+    from ikob.competition import weight_matrix_recipes
 
-    single_matrix = np.array([[5, 6], [7, 8]])
-    combined_matrix = np.array([[99, 100], [101, 102]])
-
-    class MockSingleWeights:
-        def get(self, key: DataKey):
-            return single_matrix
-
-    class MockCombinedWeights:
-        def get(self, key: DataKey):
-            return combined_matrix
-
-    single_weights = MockSingleWeights()
-    combined_weights = MockCombinedWeights()
-
-    result = get_weight_matrix(
-        single_weights,  # type: ignore
-        combined_weights,  # type: ignore
-        group="GeenAuto_vkOV_laag",
-        modality="OV",
-        motive="werk",
-        regime="Basis",
-        part_of_day="Spits",
-        income="laag",
-        ratio_electric=0.0,
-    )
-    # OV modality should use single_weights
-    np.testing.assert_array_equal(result, single_matrix)
-
-
-def test_get_weight_matrix_combined_modality():
-    """Test that get_weight_matrix handles combined modalities correctly."""
-    from ikob.competition import get_weight_matrix
-
-    single_matrix = np.array([[1, 2], [3, 4]])
-    combined_matrix = np.array([[9, 10], [11, 12]])
-
-    class MockSingleWeights:
-        def get(self, key: DataKey):
-            return single_matrix
-
-    class MockCombinedWeights:
-        def get(self, key: DataKey):
-            return combined_matrix
-
-    single_weights = MockSingleWeights()
-    combined_weights = MockCombinedWeights()
-
-    # Test with combined modality like AutoOV (car + public transport)
-    result = get_weight_matrix(
-        single_weights,  # type: ignore
-        combined_weights,  # type: ignore
+    recipes = weight_matrix_recipes(
         group="WelAuto_vkOV_laag",
-        modality="AutoOV",
+        modality="Auto_OV",
         motive="werk",
         regime="Basis",
         part_of_day="Spits",
         income="laag",
         ratio_electric=0.0,
     )
-    # Combined modality should use combined_weights
-    np.testing.assert_array_equal(result, combined_matrix)
+
+    assert recipes == [
+        (
+            "combined",
+            DataKey(
+                "Auto_OV_vk",
+                part_of_day="Spits",
+                regime="Basis",
+                motive="werk",
+                preference="OV",
+                income="laag",
+                subtopic="combinaties",
+                fuel_kind="fossiel",
+            ),
+            1.0,
+        ),
+        (
+            "combined",
+            DataKey(
+                "Auto_OV_vk",
+                part_of_day="Spits",
+                regime="Basis",
+                motive="werk",
+                preference="OV",
+                income="laag",
+                subtopic="combinaties",
+                fuel_kind="elektrisch",
+            ),
+            0.0,
+        ),
+    ]
+
+
+def test_weight_matrix_recipes_equivalent_groups_share_recipe():
+    """Groups that only differ in irrelevant tokens should map to identical recipes."""
+    from ikob.competition import weight_matrix_recipes
+
+    recipe_1 = weight_matrix_recipes(
+        group="GratisAuto_laag",
+        modality="Auto_Fiets",
+        motive="werk",
+        regime="Basis",
+        part_of_day="Spits",
+        income="laag",
+        ratio_electric=0.3,
+    )
+    recipe_2 = weight_matrix_recipes(
+        group="GratisAuto_GratisOV_laag",
+        modality="Auto_Fiets",
+        motive="werk",
+        regime="Basis",
+        part_of_day="Spits",
+        income="laag",
+        ratio_electric=0.3,
+    )
+
+    assert recipe_1 == recipe_2
 
 
 # as defined in competition
@@ -178,7 +177,11 @@ def test_competition_on_jobs_per_capita_sensitivity(
         }
     )
 
-    monkeypatch.setattr(comp, "get_weight_matrix", lambda *args, **kwargs: weight_matrix)
+    def _mock_weight_matrix_recipes(_group, _modality, motive, regime, part_of_day, income, _ratio_electric):
+        key = DataKey("Mock_vk", part_of_day=part_of_day, motive=motive, regime=regime, income=income)
+        return [("single", key, 1.0)]
+
+    monkeypatch.setattr(comp, "weight_matrix_recipes", _mock_weight_matrix_recipes)
     monkeypatch.setattr(comp.DataSource, "write_csv", lambda *args, **kwargs: None)
 
     class _Destinations:

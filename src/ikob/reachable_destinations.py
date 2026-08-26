@@ -4,8 +4,8 @@ from pathlib import Path
 import numpy as np
 
 from ikob import utils
-from ikob.competition import get_weight_matrix
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.generalized_travel_time import weight_matrix_recipes
 
 logger = logging.getLogger(__name__)
 
@@ -101,42 +101,45 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                 general_possibility_totals = []
 
                 for modality in modalities:
-                    possibility_sum = np.zeros(len(destinations_segs), dtype=utils.FLOAT_DTYPE)
-
+                    # Many groups resolve to the same underlying weight matrix (see `_weight_matrix_recipe`).
+                    # Since matmul is linear, sum the per-group scaling factors that share a matrix first,
+                    # and do a single matmul per unique matrix instead of one per group.
+                    weighted_group_contribution_by_key: dict = {}
                     for i_group, group in enumerate(groups):
                         distribution = np.asarray(distribution_matrix_transpose[i_group], dtype=utils.FLOAT_DTYPE)
 
                         income = utils.group_income_level(group)
                         if income_group == income or income_group == "alle":
                             K = electric_percentage.get(income_group) / 100
-                            matrix = get_weight_matrix(
-                                single_weights,
-                                combined_weights,
-                                group,
-                                modality,
-                                motive_name,
-                                regime,
-                                part_of_day,
-                                income,
-                                K,
-                            )
-
-                            # section D4: compute reachable opportunities via origin-destination weights and destination totals.
-                            # - `matrix` corresponds to $G_{ghbvm}$
-                            # - `destinations_for_income` corresponds to $A_{ib}$ (chosen by motive)
-                            # The matrix-vector product yields $\sum_b G_{ghbvm} \cdot A_{ib}$ per origin zone $h$.
-                            possibility = matrix @ destinations_for_income
 
                             # D4: apply group size/share in the origin zone.
                             # This corresponds to multiplying by $V_{gh}$ to obtain $B_{ghv}$ for the current group.
                             # Since the 'distribution' is a distribution of the whole target population over groups (e.g. WelAuto_vkAuto_laag, WelAuto_vkFiets_hoog)
                             # and here we need the distribution on a specific income group (e.g. laag), we need to divide by the share of the income group in the total population
-                            possibility = possibility * distribution
-                            possibility = np.divide(possibility, incomes, where=incomes != 0)
-                            possibility[incomes <= 0] = 0
+                            # It's a group's contribution into an income-class result
+                            group_contribution = np.divide(
+                                distribution, incomes, out=np.zeros_like(distribution), where=incomes != 0
+                            )
 
-                            # Sum contributions of all groups that belong to the selected `income_group`, this computes B_{ihv}
-                            possibility_sum += possibility
+                            for source, key, weight in weight_matrix_recipes(
+                                group, modality, motive_name, regime, part_of_day, income, K
+                            ):
+                                group_contribution *= weight
+                                existing = weighted_group_contribution_by_key.get((source, key))
+                                weighted_group_contribution_by_key[(source, key)] = (
+                                    group_contribution if existing is None else existing + group_contribution
+                                )
+
+                    # section D4: compute reachable opportunities via origin-destination weights and destination totals.
+                    # - `matrix` corresponds to $G_{ghbvm}$
+                    # - `destinations_for_income` corresponds to $A_{ib}$ (chosen by motive)
+                    # The matrix-vector product yields $\sum_b G_{ghbvm} \cdot A_{ib}$ per origin zone $h$.
+                    possibility_sum = np.zeros(len(destinations_segs), dtype=utils.FLOAT_DTYPE)
+                    for (source, key), group_contribution in weighted_group_contribution_by_key.items():
+                        weights_source = single_weights if source == "single" else combined_weights
+                        matrix = weights_source.get(key)
+                        # Sum contributions of all groups that belong to the selected `income_group`, this computes B_{ihv}
+                        possibility_sum += (matrix @ destinations_for_income) * group_contribution
 
                     key = DataKey(
                         "Totaal",

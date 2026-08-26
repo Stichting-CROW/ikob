@@ -2,11 +2,62 @@ import logging
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
 from ikob import utils
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.generalized_travel_time import weight_matrix_recipes
 
 logger = logging.getLogger(__name__)
+
+
+def _compute_modality_working_population(
+    modality,
+    groups,
+    income_group,
+    part_of_day,
+    regimes,
+    motive_name,
+    single_weights,
+    combined_weights,
+    citizens_transpose,
+    electric_percentage,
+    fuel_kinds,
+    num_working_population,
+):
+    # This computes the sum over all groups of weight_matrix(modality, group) @ population(group).
+    # The weight matrix of many groups is equal for a given modality. E.g. the "GratisOV" part of a
+    # group name is irrelevant to a modality that doesn't involve OV.
+    # So for each weight matrix (identified by a data source and a data key) we can first sum the population
+    # and then do a single matrix multiplication with the weight matrix.
+
+    # Some modalities are split in multiple sub modalities (specifically the car is split in fossil and electric cars)
+    # each of which comes with a weight.
+
+    weighted_vectors_by_key: dict[tuple[str, DataKey], npt.NDArray] = {}
+    for group_idx, group in enumerate(groups):
+        income = utils.group_income_level(group)
+        if income_group != income and income_group != "alle":
+            continue
+
+        recipes = weight_matrix_recipes(
+            group, modality, motive_name, regimes, part_of_day, income, electric_percentage.get(income_group)
+        )
+
+        for source, key, citizen_weight in recipes:
+            weighted_vector = citizen_weight * citizens_transpose[group_idx]
+            existing = weighted_vectors_by_key.get((source, key))
+            weighted_vectors_by_key[(source, key)] = weighted_vector if existing is None else existing + weighted_vector
+
+    working_population_list = utils.zeros(num_working_population)
+    for (source, key), weighted_vector in weighted_vectors_by_key.items():
+        weights_source = single_weights if source == "single" else combined_weights
+        # Get the transpose because normally the weights are indexed [origin, destination].
+        matrix = weights_source.get(key).T
+        # section D5: $B_{gbv} = \sum_h I_{gh} \cdot G_{ghbvm}$, batched across groups sharing a matrix.
+        working_population_list += matrix @ weighted_vector
+
+    return working_population_list
 
 
 def create_citizens_file(distribution_matrix, working_population):
@@ -98,127 +149,20 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
             for income_group in income_groups:
                 general_possibility_totals = []
                 for modality in modalities:
-                    working_population_list = utils.zeros(len(working_population))
-                    for igroup, group in enumerate(groups):
-                        income = utils.group_income_level(group)
-                        if income_group == income or income_group == "alle":
-                            preference = utils.find_preference(group, modality)
-                            if modality == "Fiets" or modality == "EFiets":
-                                if preference == "Fiets":
-                                    tmp_preference = "Fiets"
-                                else:
-                                    tmp_preference = ""
-
-                                key = DataKey(
-                                    f"{modality}_vk",
-                                    part_of_day=part_of_day,
-                                    preference=tmp_preference,
-                                    income=income,
-                                    regime=regimes,
-                                    motive=motive_name,
-                                )
-                                # Get the transpose because normally the weights are indexed [origin, destination].
-                                bike_matrix = single_weights.get(key).T
-
-                                # section D5: $B_{gbv} = \sum_h I_{gh} \cdot G_{ghbvm}$.
-                                working_population_list += bike_matrix @ citizens_transpose[igroup]
-
-                            elif modality == "Auto":
-                                string = utils.single_group(modality, group)
-                                if "WelAuto" in group:
-                                    for fuel_kind in fuel_kinds:
-                                        key = DataKey(
-                                            f"{string}_vk",
-                                            part_of_day=part_of_day,
-                                            preference=preference,
-                                            income=income,
-                                            regime=regimes,
-                                            motive=motive_name,
-                                            fuel_kind=fuel_kind,
-                                        )
-                                        # Get the transpose because normally the weights are indexed [origin, destination].
-                                        matrix = single_weights.get(key).T
-
-                                        if fuel_kind == "elektrisch":
-                                            K = electric_percentage.get(income_group) / 100
-                                        else:
-                                            K = 1 - electric_percentage.get(income_group) / 100
-
-                                        # section D5: same $\sum_h I_{gh} \cdot G_{ghbvm}$ computation, with fuel share K.
-                                        working_population_list += K * matrix @ citizens_transpose[igroup]
-                                else:
-                                    key = DataKey(
-                                        f"{string}_vk",
-                                        part_of_day=part_of_day,
-                                        preference=preference,
-                                        income=income,
-                                        regime=regimes,
-                                        motive=motive_name,
-                                    )
-                                    # Get the transpose because normally the weights are indexed [origin, destination].
-                                    matrix = single_weights.get(key).T
-
-                                    # section D5: $\sum_h I_{gh} \cdot G_{ghbvm}$ for auto groups without fuel split.
-                                    working_population_list += matrix @ citizens_transpose[igroup]
-
-                            elif modality == "OV":
-                                string = utils.single_group(modality, group)
-                                key = DataKey(
-                                    f"{string}_vk",
-                                    part_of_day=part_of_day,
-                                    preference=preference,
-                                    income=income,
-                                    regime=regimes,
-                                    motive=motive_name,
-                                )
-                                # Get the transpose because normally the weights are indexed [origin, destination].
-                                matrix = single_weights.get(key).T
-
-                                # section D5: $\sum_h I_{gh} \cdot G_{ghbvm}$ for OV.
-                                working_population_list += matrix @ citizens_transpose[igroup]
-                            else:
-                                string = utils.combined_group(modality, group)
-                                logger.debug("de gr is %s", group)
-                                logger.debug("de string is %s", string)
-                                if string[0] == "A":
-                                    # Its a group with auto, so we need to split by fuel kind
-                                    for fuel_kind in fuel_kinds:
-                                        key = DataKey(
-                                            f"{string}_vk",
-                                            part_of_day=part_of_day,
-                                            preference=preference,
-                                            income=income,
-                                            regime=regimes,
-                                            motive=motive_name,
-                                            subtopic="combinaties",
-                                            fuel_kind=fuel_kind,
-                                        )
-                                        # Get the transpose because normally the weights are indexed [origin, destination].
-                                        matrix = combined_weights.get(key).T
-
-                                        if fuel_kind == "elektrisch":
-                                            K = electric_percentage.get(income_group) / 100
-                                        else:
-                                            K = 1 - electric_percentage.get(income_group) / 100
-
-                                        # section D5: combined-mode $\sum_h I_{gh} \cdot G_{ghbvm}$, with fuel share K.
-                                        working_population_list += K * matrix @ citizens_transpose[igroup]
-
-                                else:
-                                    key = DataKey(
-                                        f"{string}_vk",
-                                        part_of_day=part_of_day,
-                                        preference=preference,
-                                        income=income,
-                                        regime=regimes,
-                                        motive=motive_name,
-                                        subtopic="combinaties",
-                                    )
-                                    # Get the transpose because normally the weights are indexed [origin, destination].
-                                    matrix = combined_weights.get(key).T
-
-                                    # section D5: combined-mode $\sum_h I_{gh} \cdot G_{ghbvm}$.
-                                    working_population_list += matrix @ citizens_transpose[igroup]
+                    working_population_list = _compute_modality_working_population(
+                        modality,
+                        groups,
+                        income_group,
+                        part_of_day,
+                        regimes,
+                        motive_name,
+                        single_weights,
+                        combined_weights,
+                        citizens_transpose,
+                        electric_percentage,
+                        fuel_kinds,
+                        len(working_population),
+                    )
 
                     key = DataKey(
                         id="Totaal",

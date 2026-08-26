@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 
+from ikob.datasource import DataKey
+
 
 @pytest.fixture(
     params=[
@@ -61,7 +63,11 @@ def reachable_destinations_setup(request, monkeypatch, segs_capture):
     )
 
     # Use the parametrized weight matrix
-    monkeypatch.setattr(rd, "get_weight_matrix", lambda *args, **kwargs: request.param)
+    def _mock_weight_matrix_recipes(_group, _modality, motive, regime, part_of_day, income, _ratio_electric):
+        key = DataKey("Mock_vk", part_of_day=part_of_day, motive=motive, regime=regime, income=income)
+        return [("single", key, 1.0)]
+
+    monkeypatch.setattr(rd, "weight_matrix_recipes", _mock_weight_matrix_recipes)
 
     class _Weights:
         def get(self, _key):
