@@ -1,4 +1,5 @@
 import logging
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
@@ -21,6 +22,7 @@ def compute_income_distributions(citizens_or_destinations):
     return income_distributions
 
 
+@lru_cache
 def get_weight_matrix(
     single_weights: DataSource,
     combined_weights: DataSource,
