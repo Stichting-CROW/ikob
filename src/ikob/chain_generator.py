@@ -114,19 +114,22 @@ def compute_chain_travel_time(
     )
 
     # Car from origin to hub, then some change time at the hub, then bike / pt from hub destination
-    p_bike = (
-        car_part[:, :, np.newaxis]
-        + change_time_bike[np.newaxis, :, np.newaxis]
-        + bike_part[np.newaxis, :, destination_mask]
-    )
-    p_ride = (
-        car_part[:, :, np.newaxis]
-        + change_time_pt[np.newaxis, :, np.newaxis]
-        + pt_part[np.newaxis, :, destination_mask]
-    )
+    # Loop over hubs to avoid having to hold a 3D array in memory
+    for hub_idx in range(car_part.shape[1]):
+        via_hub = (
+            car_part[:, hub_idx][:, np.newaxis]
+            + change_time_bike[hub_idx]
+            + bike_part[hub_idx, :][np.newaxis, destination_mask]
+        )
+        result_bike[:, destination_mask] = np.minimum(result_bike[:, destination_mask], via_hub)
 
-    result_bike[:, destination_mask] = np.min(p_bike, axis=1)
-    result_ride[:, destination_mask] = np.min(p_ride, axis=1)
+    for hub_idx in range(car_part.shape[1]):
+        via_hub = (
+            car_part[:, hub_idx][:, np.newaxis]
+            + change_time_pt[hub_idx]
+            + pt_part[hub_idx, :][np.newaxis, destination_mask]
+        )
+        result_ride[:, destination_mask] = np.minimum(result_ride[:, destination_mask], via_hub)
 
     result_bike = np.where(result_bike == np.inf, IKOB_INFINITE, result_bike)
     result_ride = np.where(result_ride == np.inf, IKOB_INFINITE, result_ride)
