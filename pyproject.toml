@@ -14,19 +14,19 @@ classifiers = [
     "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
 ]
 dependencies = [
-    "numpy",
-    "openpyxl",
+    "numpy~=2.5.2",
+    "openpyxl~=3.1.5",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pandas",
-    "pytest",
-    "ruff",
+    "pandas~=3.0.5",
+    "pytest~=9.1.1",
+    "ruff~=0.16.4",
 ]
 
 deploy = [
-    "pyinstaller",
+    "pyinstaller~=6.22.2",
 ]
 
 [project.scripts]
