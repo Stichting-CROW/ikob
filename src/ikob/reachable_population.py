@@ -239,15 +239,15 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                     income=income_group,
                     motive=motive_name,
                     index=DataKey.zone_index(num_zones),
+                    header=headstring,
                 )
 
                 origins_total = utils.transpose(general_possibility_totals)
                 origins_total = np.round(origins_total).astype(int)
-                origins.write_csv(origins_total, key, header=headstring)
+                origins.set(key, origins_total)
 
             header = ["laag", "middellaag", "middelhoog", "hoog"]
             for modality in modalities:
-                general_matrix_product = []
                 general_matrix = []
                 for income_group in income_groups:
                     key = DataKey(
@@ -273,8 +273,9 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                     motive=motive_name,
                     modality=modality,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                origins.write_csv(general_total_transpose, key, header=header)
+                origins.set(key, general_total_transpose)
 
                 # Section D5 regional aggregation note:
                 # The PDF defines $B_{irv}$ as a jobs-weighted aggregation over destination zones in a region.
@@ -289,7 +290,8 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                     motive=motive_name,
                     modality=modality,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                origins.write_csv(general_matrix_product, key, header=header)
+                origins.set(key, np.asarray(general_matrix_product))
 
     return origins

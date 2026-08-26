@@ -160,8 +160,9 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                     income=income_group,
                     motive=motive_name,
                     index=DataKey.zone_index(num_zones),
+                    header=headstring,
                 )
-                potencies.write_csv(general_possibility_totals_transposed, key, header=headstring)
+                potencies.set(key, general_possibility_totals_transposed)
 
             header = ["laag", "middellaag", "middelhoog", "hoog"]
             for modality in modalities:
@@ -200,8 +201,9 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                     motive=motive_name,
                     modality=modality,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                potencies.write_csv(general_possibility_totals_transposed, key, header=header)
+                potencies.set(key, general_possibility_totals_transposed)
 
                 # section D4 regional aggregation note:
                 # The PDF defines $B_{irv}$ as a population-weighted aggregation of zone-level reachability
@@ -220,7 +222,8 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                     motive=motive_name,
                     modality=modality,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                potencies.write_csv(general_matrix_product, key, header=header)
+                potencies.set(key, general_matrix_product)
 
     return potencies

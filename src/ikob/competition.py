@@ -333,8 +333,9 @@ def competition(
                     motive=motive_name,
                     group=car_possession_group,
                     index=DataKey.zone_index(num_zones),
+                    header=headstring,
                 )
-                competitions.write_csv(general_totals_transpose, key, header=headstring)
+                competitions.set(key, general_totals_transpose)
 
             header = ["laag", "middellaag", "middelhoog", "hoog"]
             for modality in modalities:
@@ -373,8 +374,9 @@ def competition(
                     modality=modality,
                     group=car_possession_group,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                competitions.write_csv(general_totals_transpose, key, header=header)
+                competitions.set(key, general_totals_transpose)
 
                 key = DataKey(
                     id=f"{competition_filename_suffix}_concproduct",
@@ -384,7 +386,8 @@ def competition(
                     modality=modality,
                     group=car_possession_group,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                competitions.write_csv(general_matrix_product, key, header=header)
+                competitions.set(key, np.asarray(general_matrix_product))
 
     return competitions

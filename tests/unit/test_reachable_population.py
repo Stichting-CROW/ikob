@@ -9,7 +9,7 @@ import pytest
     ],
     ids=["complicated_matrix", "diagonal_matrix"],
 )
-def reachable_population_setup(request, monkeypatch, segs_capture):
+def reachable_population_setup(request, segs_capture):
     """Common setup for reachable population tests.
 
     The setup regards reachable working population by employers"""
@@ -64,14 +64,6 @@ def reachable_population_setup(request, monkeypatch, segs_capture):
         def get(self, _key):
             return request.param
 
-    # Capture csv writes
-    csv_writes = []
-
-    def capture_write_csv(self, data, key, header=None):
-        csv_writes.append({"data": data, "key": key, "header": header})
-
-    monkeypatch.setattr(rp.DataSource, "write_csv", capture_write_csv)
-
     config = {
         "__filename__": "pytest",
         "project": {
@@ -98,7 +90,6 @@ def reachable_population_setup(request, monkeypatch, segs_capture):
 
     return {
         "reachable_populations": reachable_populations,
-        "csv_writes": csv_writes,
         "pod": pod,
         "motive": motive,
         "working_pop_income": working_pop_income,
@@ -141,28 +132,37 @@ def test_reachable_population_totals(modality, income_group, income_index, reach
 @pytest.mark.parametrize("modality", modalities)
 def test_reachable_population_pot_totaal(modality, reachable_population_setup):
     """Pot_totaal csv output shows reachability by income group, independent of distribution over groups."""
+    from ikob.datasource import DataKey
 
-    csv_writes = reachable_population_setup["csv_writes"]
+    reachable_populations = reachable_population_setup["reachable_populations"]
+    pod = reachable_population_setup["pod"]
+    motive = reachable_population_setup["motive"]
     working_pop_income = reachable_population_setup["working_pop_income"]
     jobs_income = reachable_population_setup["jobs_income"]
     weight_matrix = reachable_population_setup["weight_matrix"]
 
-    # Test Pot_totaal csv write (per modality, showing reachability by income group)
-    pot_totaal_writes = [w for w in csv_writes if w["key"].id == "Pot_totaal" and w["key"].modality == modality]
-    assert len(pot_totaal_writes) == 1, f"Expected exactly one Pot_totaal write for modality {modality}"
-
-    pot_totaal_data = pot_totaal_writes[0]["data"]
+    key = DataKey(
+        "Pot_totaal",
+        part_of_day=pod,
+        group="alle groepen",
+        motive=motive,
+        modality=modality,
+    )
+    pot_totaal_data = reachable_populations.get(key)
     pot_totaal_expected = np.array(
         [weight_matrix.T @ working_pop_income[:, i].T for i in range(working_pop_income.shape[1])]
     ).T
-    # Output files get rounded to integers for presentation
+    # Pot_totaal files get rounded to integers for presentation.
     np.testing.assert_array_equal(pot_totaal_data, np.round(pot_totaal_expected))
 
-    # Test Pot_totaalproduct csv write (product of reachability and jobs)
-    pot_product_writes = [w for w in csv_writes if w["key"].id == "Pot_totaalproduct" and w["key"].modality == modality]
-    assert len(pot_product_writes) == 1, f"Expected exactly one Pot_totaalproduct write for modality {modality}"
-
-    pot_product_data = pot_product_writes[0]["data"]
+    key = DataKey(
+        "Pot_totaalproduct",
+        part_of_day=pod,
+        group="alle groepen",
+        motive=motive,
+        modality=modality,
+    )
+    pot_product_data = reachable_populations.get(key)
     # Product should be reachability * jobs per zone and income
-    # Output files get rounded to integers for presentation
+    # Pot_totaalproduct files get rounded to integers for presentation.
     np.testing.assert_array_equal(pot_product_data, np.round(pot_totaal_expected * jobs_income))
