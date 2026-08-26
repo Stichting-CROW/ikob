@@ -58,6 +58,7 @@ def generalized_travel_time(config) -> DataSource:
     pricecap_value = skims_config["pricecap"]["getal"]
     bike_cost_euro_per_km = skims_config["bike_cost_ct_per_km"] / 100
     parking_times = read_parking_times(config)
+    parking_times_array = np.array(parking_times)
 
     if parking_costs:
         parking_cost_array = read_csv_from_config(config, key="geavanceerd", id="parkeerkosten")
@@ -130,7 +131,7 @@ def generalized_travel_time(config) -> DataSource:
                 header=DataKey.zone_header(num_zones),
                 index=DataKey.zone_index(num_zones),
             )
-            generalized_travel_time.set(key, gtr_skim.copy())
+            generalized_travel_time.set(key, gtr_skim)
 
         gtr_skim = np.zeros((num_zones, num_zones))
         for income_level in income_levels:
@@ -151,7 +152,7 @@ def generalized_travel_time(config) -> DataSource:
                     road_pricing=road_pricing,
                     tvom_factor=tvom_factor,
                     additional_costs_eurocent=additional_cost_matrix,
-                    parking_times_array=np.array(parking_times),
+                    parking_times_array=parking_times_array,
                     parking_costs_array_eurocent=parking_cost_array,
                 )
                 if chains:
@@ -185,7 +186,7 @@ def generalized_travel_time(config) -> DataSource:
                     header=DataKey.zone_header(num_zones),
                     index=DataKey.zone_index(num_zones),
                 )
-                generalized_travel_time.set(key, gtr_skim.copy())
+                generalized_travel_time.set(key, gtr_skim)
 
             # Then PT, pt costs are (optionally) computed from travel times and skims_config["OV kosten"]
             # This does tot strictly follow the documentation in IKOB-algorithm.pdf
@@ -200,7 +201,7 @@ def generalized_travel_time(config) -> DataSource:
                 header=DataKey.zone_header(num_zones),
                 index=DataKey.zone_index(num_zones),
             )
-            generalized_travel_time.set(key, gtr_skim.copy())
+            generalized_travel_time.set(key, gtr_skim)
 
             # Dan geen auto (rijbewijs)
             for kind in kind_no_car:
@@ -223,7 +224,7 @@ def generalized_travel_time(config) -> DataSource:
                     header=DataKey.zone_header(num_zones),
                     index=DataKey.zone_index(num_zones),
                 )
-                generalized_travel_time.set(key, gtr_skim.copy())
+                generalized_travel_time.set(key, gtr_skim)
 
             # Free car (no variable costs compared to car) generalized travel time:
             gtr_skim.fill(0)
@@ -250,7 +251,7 @@ def generalized_travel_time(config) -> DataSource:
                 header=DataKey.zone_header(num_zones),
                 index=DataKey.zone_index(num_zones),
             )
-            generalized_travel_time.set(key, gtr_skim.copy())
+            generalized_travel_time.set(key, gtr_skim)
 
             # Free PT generalized travel time:
             gtr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix, IKOB_INFINITE)
@@ -262,6 +263,6 @@ def generalized_travel_time(config) -> DataSource:
                 header=DataKey.zone_header(num_zones),
                 index=DataKey.zone_index(num_zones),
             )
-            generalized_travel_time.set(key, gtr_skim.copy())
+            generalized_travel_time.set(key, gtr_skim)
 
     return generalized_travel_time

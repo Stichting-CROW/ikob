@@ -147,7 +147,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                         modality=modality,
                         is_temporary=True,
                     )
-                    potencies.set(key, possibility_sum.copy())
+                    potencies.set(key, possibility_sum)
                     general_possibility_totals.append(potencies.get(key))
 
                 general_possibility_totals_transposed = utils.transpose(general_possibility_totals)

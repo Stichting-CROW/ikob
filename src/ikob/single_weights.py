@@ -123,7 +123,7 @@ def add_bike_weights(
                         index=DataKey.zone_index(num_zones),
                     )
 
-                weights.set(key, weight_matrix.copy())
+                weights.set(key, weight_matrix)
 
 
 def add_car_weights(
@@ -158,7 +158,7 @@ def add_car_weights(
                 header=DataKey.zone_header(num_zones),
                 index=DataKey.zone_index(num_zones),
             )
-            weights.set(key, weight_matrix.copy())
+            weights.set(key, weight_matrix)
 
 
 def add_no_car_weights(
@@ -192,7 +192,7 @@ def add_no_car_weights(
                 header=DataKey.zone_header(num_zones),
                 index=DataKey.zone_index(num_zones),
             )
-            weights.set(key, weight_matrix.copy())
+            weights.set(key, weight_matrix)
 
 
 def add_pt_weights(
@@ -222,7 +222,7 @@ def add_pt_weights(
             header=DataKey.zone_header(num_zones),
             index=DataKey.zone_index(num_zones),
         )
-        weights.set(key, weight_matrix.copy())
+        weights.set(key, weight_matrix)
 
 
 def add_free_car_weights(
@@ -256,7 +256,7 @@ def add_free_car_weights(
             header=DataKey.zone_header(num_zones),
             index=DataKey.zone_index(num_zones),
         )
-        weights.set(key, weight_matrix.copy())
+        weights.set(key, weight_matrix)
 
 
 def add_free_pt_weights(
@@ -288,4 +288,4 @@ def add_free_pt_weights(
             header=DataKey.zone_header(num_zones),
             index=DataKey.zone_index(num_zones),
         )
-        weights.set(key, weight_matrix.copy())
+        weights.set(key, weight_matrix)

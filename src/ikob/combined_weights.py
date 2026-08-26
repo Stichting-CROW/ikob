@@ -96,7 +96,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                             index=DataKey.zone_index(len(max_matrix)),
                         )
                         # Max weight of taking either pt or the bike
-                        combined_weights.set(key, max_matrix.copy())
+                        combined_weights.set(key, max_matrix)
 
                     for car_kind in car_kinds:
                         if not has_preference(car_kind, "OV", preference):
@@ -140,7 +140,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                     index=DataKey.zone_index(len(max_matrix)),
                                 )
                                 # Max weight of taking either the car or the bike
-                                combined_weights.set(key, max_matrix.copy())
+                                combined_weights.set(key, max_matrix)
                         else:
                             key = DataKey(
                                 f"{car_kind}_vk",
@@ -165,7 +165,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                 index=DataKey.zone_index(len(max_matrix)),
                             )
                             # Max weight of taking either the car or the bike
-                            combined_weights.set(key, max_matrix.copy())
+                            combined_weights.set(key, max_matrix)
 
                 for pt_kind in pt_kinds:
                     for car_kind in car_kinds:
@@ -208,7 +208,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                     index=DataKey.zone_index(len(max_matrix)),
                                 )
                                 # Max weight of taking either the car or pt
-                                combined_weights.set(key, max_matrix.copy())
+                                combined_weights.set(key, max_matrix)
                         else:
                             key = DataKey(
                                 f"{car_kind}_vk",
@@ -233,7 +233,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                 index=DataKey.zone_index(len(max_matrix)),
                             )
                             # Max weight of taking either the car or pt
-                            combined_weights.set(key, max_matrix.copy())
+                            combined_weights.set(key, max_matrix)
 
                 for modality_bike in modalities_bike:
                     for pt_kind in pt_kinds:
@@ -289,7 +289,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                         index=DataKey.zone_index(len(max_matrix)),
                                     )
                                     # Max weight of taking either the car or pt or the bike
-                                    combined_weights.set(key, max_matrix.copy())
+                                    combined_weights.set(key, max_matrix)
                             else:
                                 key = DataKey(
                                     f"{car_kind}_vk",
@@ -314,6 +314,6 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                     index=DataKey.zone_index(len(max_matrix)),
                                 )
                                 # Max weight of taking either the car or pt or the bike
-                                combined_weights.set(key, max_matrix.copy())
+                                combined_weights.set(key, max_matrix)
 
     return combined_weights

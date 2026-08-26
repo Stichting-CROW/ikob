@@ -319,7 +319,7 @@ def competition(
                         group=car_possession_group,
                         is_temporary=True,
                     )
-                    competitions.set(key, competition_total.copy())
+                    competitions.set(key, competition_total)
 
                     general_possibility_totals.append(competitions.get(key))
                     general_totals_transpose = utils.transpose(general_possibility_totals)
