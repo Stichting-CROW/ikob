@@ -86,19 +86,22 @@ def write_csv(matrix, filenaam, index=None, header=None):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
-    matrix = np.array(matrix)
+    matrix = np.asarray(matrix)
     if matrix.ndim == 1:
         # One dimensional data is expected as one row, while
         # np.savetxt writes this by default as one column.
-        matrix = matrix.reshape(1, matrix.shape[0])
+        matrix = matrix.reshape(1, -1)
 
     # Determine format for data
-    data_fmt = "%d" if np.isdtype(matrix.dtype, "integral") else "%.18e"
+    data_fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.6e"
 
     # Add index column if provided
     if len(index.values) > 0:
-        index_col = np.array(index.values).reshape(-1, 1)
-        matrix = np.hstack([index_col, matrix])
+        index_col = np.asarray(index.values)
+        output = np.empty((matrix.shape[0], matrix.shape[1] + 1), dtype=np.result_type(matrix.dtype, np.int64))
+        output[:, 0] = index_col
+        output[:, 1:] = matrix
+        matrix = output
         header = [index.name, *header]
         # Index is always integer, data keeps its original format
         fmt = ["%d"] + [data_fmt] * (matrix.shape[1] - 1)

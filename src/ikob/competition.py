@@ -324,17 +324,18 @@ def competition(
                     competitions.set(key, competition_total)
 
                     general_possibility_totals.append(competitions.get(key))
-                    general_totals_transpose = utils.transpose(general_possibility_totals)
-                    key = DataKey(
-                        id=f"{competition_filename_suffix}_conc",
-                        part_of_day=part_of_day,
-                        subtopic=subtopic_competition,
-                        income=income_group,
-                        motive=motive_name,
-                        group=car_possession_group,
-                        index=DataKey.zone_index(num_zones),
-                    )
-                    competitions.write_csv(general_totals_transpose, key, header=headstring)
+
+                general_totals_transpose = utils.transpose(general_possibility_totals)
+                key = DataKey(
+                    id=f"{competition_filename_suffix}_conc",
+                    part_of_day=part_of_day,
+                    subtopic=subtopic_competition,
+                    income=income_group,
+                    motive=motive_name,
+                    group=car_possession_group,
+                    index=DataKey.zone_index(num_zones),
+                )
+                competitions.write_csv(general_totals_transpose, key, header=headstring)
 
             header = ["laag", "middellaag", "middelhoog", "hoog"]
             for modality in modalities:
