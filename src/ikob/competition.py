@@ -1,26 +1,27 @@
 import logging
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
+import numpy.typing as npt
 
-import ikob.utils as utils
+from ikob import utils
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 
 logger = logging.getLogger(__name__)
 
 
-def compute_income_distributions(citizens_or_destinations):
-    totals = [sum(row) for row in citizens_or_destinations]
-
-    income_distributions = np.zeros((len(citizens_or_destinations), len(citizens_or_destinations[0])))
-    for i in range(len(citizens_or_destinations)):
-        for j in range(len(citizens_or_destinations[0])):
-            if totals[i] > 0:
-                income_distributions[i][j] = citizens_or_destinations[i][j] / totals[i]
-
-    return income_distributions
+def compute_income_distributions(citizens_or_destinations: npt.NDArray[np.integer]):
+    totals = citizens_or_destinations.sum(axis=1, keepdims=True)
+    return np.divide(
+        citizens_or_destinations,
+        totals,
+        out=np.zeros_like(citizens_or_destinations, dtype=utils.FLOAT_DTYPE),
+        where=totals > 0,
+    )
 
 
+@lru_cache
 def get_weight_matrix(
     single_weights: DataSource,
     combined_weights: DataSource,
@@ -242,7 +243,7 @@ def competition(
     for car_possession_group in car_possession_groups:
         distribution_matrix = segs_source.read(
             "Verdeling_over_groepen",
-            type_caster=float,
+            type_caster=utils.FLOAT_DTYPE,
             scenario=scenario,
             group=motive_name,
             modifier="alleen_autobezit" if car_possession_group == "alleen autobezit" else "",
@@ -270,7 +271,7 @@ def competition(
                     # - citizens=True  (D7 / competition_on_citizens): `reach` comes from D4 / reachable_destinations and is origin-side reachable opportunities
                     #   (how many jobs/places residents in an origin zone can reach).
 
-                    competition_total = np.zeros(len(citizens_or_destinations))
+                    competition_total = np.zeros(len(citizens_or_destinations), dtype=utils.FLOAT_DTYPE)
 
                     for i_group, group in enumerate(groups):
                         distribution = distribution_matrix[:, i_group]
@@ -319,20 +320,22 @@ def competition(
                         group=car_possession_group,
                         is_temporary=True,
                     )
-                    competitions.set(key, competition_total.copy())
+                    competitions.set(key, competition_total)
 
                     general_possibility_totals.append(competitions.get(key))
-                    general_totals_transpose = utils.transpose(general_possibility_totals)
-                    key = DataKey(
-                        id=f"{competition_filename_suffix}_conc",
-                        part_of_day=part_of_day,
-                        subtopic=subtopic_competition,
-                        income=income_group,
-                        motive=motive_name,
-                        group=car_possession_group,
-                        index=DataKey.zone_index(num_zones),
-                    )
-                    competitions.write_csv(general_totals_transpose, key, header=headstring)
+
+                general_totals_transpose = utils.transpose(general_possibility_totals)
+                key = DataKey(
+                    id=f"{competition_filename_suffix}_conc",
+                    part_of_day=part_of_day,
+                    subtopic=subtopic_competition,
+                    income=income_group,
+                    motive=motive_name,
+                    group=car_possession_group,
+                    index=DataKey.zone_index(num_zones),
+                    header=headstring,
+                )
+                competitions.set(key, general_totals_transpose)
 
             header = ["laag", "middellaag", "middelhoog", "hoog"]
             for modality in modalities:
@@ -371,8 +374,9 @@ def competition(
                     modality=modality,
                     group=car_possession_group,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                competitions.write_csv(general_totals_transpose, key, header=header)
+                competitions.set(key, general_totals_transpose)
 
                 key = DataKey(
                     id=f"{competition_filename_suffix}_concproduct",
@@ -382,7 +386,8 @@ def competition(
                     modality=modality,
                     group=car_possession_group,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                competitions.write_csv(general_matrix_product, key, header=header)
+                competitions.set(key, np.asarray(general_matrix_product))
 
     return competitions

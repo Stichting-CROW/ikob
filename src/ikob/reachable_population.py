@@ -3,19 +3,14 @@ from pathlib import Path
 
 import numpy as np
 
-import ikob.utils as utils
+from ikob import utils
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 
 logger = logging.getLogger(__name__)
 
 
 def create_citizens_file(distribution_matrix, working_population):
-    citizens_file = []
-    for i in range(len(working_population)):
-        citizens_file.append([])
-        for j in range(len(distribution_matrix[0])):
-            citizens_file[i].append(working_population[i] * distribution_matrix[i][j])
-    return citizens_file
+    return np.asarray(working_population)[:, np.newaxis] * np.asarray(distribution_matrix)
 
 
 def calculate_reachable_population(config, single_weights: DataSource, combined_weights: DataSource) -> DataSource:
@@ -79,8 +74,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
 
     working_population = []
 
-    for i in range(len(traveling_population)):
-        working_population.append(sum(traveling_population[i]))
+    working_population = np.asarray(traveling_population, dtype=utils.FLOAT_DTYPE).sum(axis=1)
 
     # section D5: derive group sizes $I_{gh}$ per origin zone by distributing the origin-zone working population
     # over groups using the SEG distribution matrix.
@@ -90,7 +84,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
     for car_possession_group in car_possession_groups:
         distribution_matrix = segs_source.read(
             "Verdeling_over_groepen",
-            type_caster=float,
+            type_caster=utils.FLOAT_DTYPE,
             scenario=scenario,
             group=motive_name,
             modifier="alleen_autobezit" if car_possession_group == "alleen autobezit" else "",
@@ -245,15 +239,15 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                     income=income_group,
                     motive=motive_name,
                     index=DataKey.zone_index(num_zones),
+                    header=headstring,
                 )
 
                 origins_total = utils.transpose(general_possibility_totals)
                 origins_total = np.round(origins_total).astype(int)
-                origins.write_csv(origins_total, key, header=headstring)
+                origins.set(key, origins_total)
 
             header = ["laag", "middellaag", "middelhoog", "hoog"]
             for modality in modalities:
-                general_matrix_product = []
                 general_matrix = []
                 for income_group in income_groups:
                     key = DataKey(
@@ -269,13 +263,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
 
                     general_matrix.append(total_row)
                 general_total_transpose = utils.transpose(general_matrix)
-                for i in range(len(destinations)):
-                    general_matrix_product.append([])
-                    for j in range(len(destinations[0])):
-                        if destinations[i][j] > 0:
-                            general_matrix_product[i].append(general_total_transpose[i][j] * destinations[i][j])
-                        else:
-                            general_matrix_product[i].append(0)
+                general_matrix_product = general_total_transpose * destinations
 
                 general_total_transpose = np.round(general_total_transpose).astype(int)
                 key = DataKey(
@@ -285,8 +273,9 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                     motive=motive_name,
                     modality=modality,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                origins.write_csv(general_total_transpose, key, header=header)
+                origins.set(key, general_total_transpose)
 
                 # Section D5 regional aggregation note:
                 # The PDF defines $B_{irv}$ as a jobs-weighted aggregation over destination zones in a region.
@@ -301,7 +290,8 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                     motive=motive_name,
                     modality=modality,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                origins.write_csv(general_matrix_product, key, header=header)
+                origins.set(key, np.asarray(general_matrix_product))
 
     return origins

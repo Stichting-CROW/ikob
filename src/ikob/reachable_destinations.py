@@ -3,7 +3,7 @@ from pathlib import Path
 
 import numpy as np
 
-import ikob.utils as utils
+from ikob import utils
 from ikob.competition import get_weight_matrix
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 
@@ -71,7 +71,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
 
     traveling_population_totals = [sum(bbpk) for bbpk in traveling_population]
 
-    income_distributions = np.zeros((len(traveling_population), len(traveling_population[0])))
+    income_distributions = np.zeros((len(traveling_population), len(traveling_population[0])), dtype=utils.FLOAT_DTYPE)
     for i in range(len(traveling_population)):
         for j in range(len(traveling_population[0])):
             if traveling_population_totals[i] > 0:
@@ -84,7 +84,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
     for car_possession_group in car_possession_groups:
         distribution_matrix = segs_source.read(
             "Verdeling_over_groepen",
-            type_caster=float,
+            type_caster=utils.FLOAT_DTYPE,
             scenario=scenario,
             group=motive_name,
             modifier="alleen_autobezit" if car_possession_group == "alleen autobezit" else "",
@@ -95,16 +95,16 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
 
         for part_of_day in part_of_days:
             for i_income_group, income_group in enumerate(income_groups):
-                destinations_for_income = np.array(destinations[i_income_group])
+                destinations_for_income = np.asarray(destinations[i_income_group], dtype=utils.FLOAT_DTYPE)
 
-                incomes = np.array(income_distributions_transposed[i_income_group])
+                incomes = np.asarray(income_distributions_transposed[i_income_group], dtype=utils.FLOAT_DTYPE)
                 general_possibility_totals = []
 
                 for modality in modalities:
-                    possibility_sum = np.zeros(len(destinations_segs))
+                    possibility_sum = np.zeros(len(destinations_segs), dtype=utils.FLOAT_DTYPE)
 
                     for i_group, group in enumerate(groups):
-                        distribution = np.array(distribution_matrix_transpose[i_group])
+                        distribution = np.asarray(distribution_matrix_transpose[i_group], dtype=utils.FLOAT_DTYPE)
 
                         income = utils.group_income_level(group)
                         if income_group == income or income_group == "alle":
@@ -147,7 +147,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                         modality=modality,
                         is_temporary=True,
                     )
-                    potencies.set(key, possibility_sum.copy())
+                    potencies.set(key, possibility_sum)
                     general_possibility_totals.append(potencies.get(key))
 
                 general_possibility_totals_transposed = utils.transpose(general_possibility_totals)
@@ -160,8 +160,9 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                     income=income_group,
                     motive=motive_name,
                     index=DataKey.zone_index(num_zones),
+                    header=headstring,
                 )
-                potencies.write_csv(general_possibility_totals_transposed, key, header=headstring)
+                potencies.set(key, general_possibility_totals_transposed)
 
             header = ["laag", "middellaag", "middelhoog", "hoog"]
             for modality in modalities:
@@ -200,8 +201,9 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                     motive=motive_name,
                     modality=modality,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                potencies.write_csv(general_possibility_totals_transposed, key, header=header)
+                potencies.set(key, general_possibility_totals_transposed)
 
                 # section D4 regional aggregation note:
                 # The PDF defines $B_{irv}$ as a population-weighted aggregation of zone-level reachability
@@ -220,7 +222,8 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                     motive=motive_name,
                     modality=modality,
                     index=DataKey.zone_index(num_zones),
+                    header=header,
                 )
-                potencies.write_csv(general_matrix_product, key, header=header)
+                potencies.set(key, general_matrix_product)
 
     return potencies

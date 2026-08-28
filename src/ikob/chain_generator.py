@@ -29,16 +29,16 @@ class Hubs:
             logger.warning("Hub data is empty.")
             valid = False
 
-        if not hub_content_raw.shape[1] == 5:
+        if hub_content_raw.shape[1] != 5:
             logger.warning(f"Hub data should have 5 columns but has {hub_content_raw.shape[1]}.")
             valid = False
 
-        if not all([zone.is_integer() for zone in hub_content_raw[:, 0]]):
+        if not all(zone.is_integer() for zone in hub_content_raw[:, 0]):
             logger.warning("The first column of the hub data (the zone numbers) should contain only integers.")
             valid = False
 
         if not (
-            all([pay_for_pt.is_integer() for pay_for_pt in hub_content_raw[:, 4]])
+            all(pay_for_pt.is_integer() for pay_for_pt in hub_content_raw[:, 4])
             and np.all(np.logical_or(hub_content_raw[:, 4] == 1, hub_content_raw[:, 4] == 0))
         ):
             logger.warning("The fourth column of the hub data (wether to pay for pt) should contain either 0 or 1.")
@@ -76,8 +76,8 @@ def compute_chain_travel_time(
     destination_mask[destination_list - 1] = True  # Zones in config use 1 based indexing
 
     # Initialize with true infinite values to overwrite these with gtt even if those are above IKOB_INFINITE
-    result_bike = np.full((num_zones, num_zones), np.inf)
-    result_ride = np.full((num_zones, num_zones), np.inf)
+    result_bike = np.full((num_zones, num_zones), np.inf, dtype=utils.FLOAT_DTYPE)
+    result_ride = np.full((num_zones, num_zones), np.inf, dtype=utils.FLOAT_DTYPE)
 
     # Hubs have their own transfer time that includes the parking time
     hub_parking_times = parking_times.copy()
@@ -103,7 +103,9 @@ def compute_chain_travel_time(
             road_pricing=road_pricing,
             tvom_factor=tvom_factor,
             additional_costs_eurocent=additional_costs,
-            parking_costs_array_eurocent=np.zeros(num_zones),  # parking costs are in the hub_cost
+            parking_costs_array_eurocent=np.zeros(
+                num_zones, dtype=utils.FLOAT_DTYPE
+            ),  # parking costs are in the hub_cost
             parking_times_array=hub_parking_times,
         )[:, hub_zones]
         + hub_costs[np.newaxis, :] * tvom_factor
@@ -182,7 +184,7 @@ def chain_generator(generalized_travel_time: DataSource, config: dict):
     if config["geavanceerd"]["additionele_kosten"]["gebruiken"]:
         additional_cost_matrix = read_csv_from_config(config, key="geavanceerd", id="additionele_kosten")
     else:
-        additional_cost_matrix = np.zeros((num_zones, num_zones))
+        additional_cost_matrix = np.zeros((num_zones, num_zones), dtype=utils.FLOAT_DTYPE)
 
     hubs = Hubs(read_csv_from_config(config, key="ketens", id="chains", has_index_column=False))
     if hubs.num_hubs == 0:
@@ -191,8 +193,9 @@ def chain_generator(generalized_travel_time: DataSource, config: dict):
         destination_list = read_csv_from_config(
             config, key="ketens", id="bestemmingslijst", type_caster=int, has_index_column=False
         )
+        destination_list = np.asarray(destination_list, dtype=np.int32)
     else:
-        destination_list = np.linspace(1, num_zones, num_zones, dtype=int)
+        destination_list = np.linspace(1, num_zones, num_zones, dtype=np.int32)
 
     for pod in part_of_day:
         car_time = skims_reader.read("Auto_Tijd", pod)
@@ -232,7 +235,7 @@ def chain_generator(generalized_travel_time: DataSource, config: dict):
                     road_pricing=road_pricing,
                     bike_cost_euro_per_km=bike_cost_euro_per_km,
                     additional_costs=additional_cost_matrix,
-                    parking_times=np.array(parking_times),
+                    parking_times=np.asarray(parking_times, dtype=utils.FLOAT_DTYPE),
                     destination_list=destination_list,
                 )
 

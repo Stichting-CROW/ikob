@@ -1,6 +1,4 @@
 import os
-
-# ruff: noqa: F403,F405
 from tkinter import *
 from tkinter import filedialog, ttk
 

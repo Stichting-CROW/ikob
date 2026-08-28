@@ -3,7 +3,6 @@ import argparse
 import logging
 import sys
 import threading
-import traceback
 from tkinter import BooleanVar, Button, Frame, StringVar, Tk, Widget, filedialog, messagebox
 
 from ikob.combined_weights import calculate_combined_weights
@@ -163,7 +162,7 @@ class ConfigApp(Tk):
 
         try:
             run_scripts(project_file, skip_steps, write_weights=False)
-        except BaseException as err:
+        except BaseException as err:  # noqa: BLE001
             msg = f"An error occurred: {err}"
             messagebox.showerror(title="FOUT", message=msg)
         else:
@@ -186,7 +185,7 @@ class ConfigApp(Tk):
                     title="Fout",
                     message="Het bestand bevat geen geldige configuratie.",
                 )
-            except IOError:
+            except OSError:
                 messagebox.showerror(title="Fout", message="Het bestand kan niet worden geladen.")
 
 
@@ -213,12 +212,8 @@ def main():
         App = ConfigApp()
         App.mainloop()
     else:
-        try:
-            run_scripts(args.project)
-        except BaseException:
-            logger.error(traceback.format_exc())
-        else:
-            logger.info("Alle steps successfully executed.")
+        run_scripts(args.project)
+        logger.info("Alle steps successfully executed.")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,4 @@
 import logging
-import math
 
 import numpy as np
 
@@ -19,20 +18,12 @@ def calculate_weights(generalized_travel_time, modality, preference, decay_curve
     A weight of 0 means a movement with a lot of resistance (a long & expensive movement).
     """
     alpha, omega, scaling = work_constants(modality, preference, decay_curve_name)
-    n = len(generalized_travel_time)
-    weight_matrix = np.zeros((n, n))
 
-    for r in range(len(generalized_travel_time)):
-        for k in range(len(generalized_travel_time)):
-            if generalized_travel_time[r][k] < 180:
-                travel_time = (1.0 / (1 + math.exp((-omega + generalized_travel_time[r][k]) * alpha))) * scaling
-            else:
-                travel_time = 0.0
-
-            if travel_time < 0.001:
-                travel_time = 0.0
-
-            weight_matrix[r, k] = travel_time
+    mask = generalized_travel_time < 180
+    # Only exponentiate the in-range values; otherwise huge gtt (e.g. IKOB_INFINITE) overflows exp.
+    exponent = np.where(mask, (generalized_travel_time - omega) * alpha, 0.0)
+    weight_matrix = np.where(mask, scaling / (1 + np.exp(exponent)), 0.0)
+    weight_matrix[weight_matrix < 0.001] = 0.0
     return weight_matrix
 
 
@@ -123,7 +114,7 @@ def add_bike_weights(
                         index=DataKey.zone_index(num_zones),
                     )
 
-                weights.set(key, weight_matrix.copy())
+                weights.set(key, weight_matrix)
 
 
 def add_car_weights(
@@ -158,7 +149,7 @@ def add_car_weights(
                 header=DataKey.zone_header(num_zones),
                 index=DataKey.zone_index(num_zones),
             )
-            weights.set(key, weight_matrix.copy())
+            weights.set(key, weight_matrix)
 
 
 def add_no_car_weights(
@@ -192,7 +183,7 @@ def add_no_car_weights(
                 header=DataKey.zone_header(num_zones),
                 index=DataKey.zone_index(num_zones),
             )
-            weights.set(key, weight_matrix.copy())
+            weights.set(key, weight_matrix)
 
 
 def add_pt_weights(
@@ -222,7 +213,7 @@ def add_pt_weights(
             header=DataKey.zone_header(num_zones),
             index=DataKey.zone_index(num_zones),
         )
-        weights.set(key, weight_matrix.copy())
+        weights.set(key, weight_matrix)
 
 
 def add_free_car_weights(
@@ -256,7 +247,7 @@ def add_free_car_weights(
             header=DataKey.zone_header(num_zones),
             index=DataKey.zone_index(num_zones),
         )
-        weights.set(key, weight_matrix.copy())
+        weights.set(key, weight_matrix)
 
 
 def add_free_pt_weights(
@@ -288,4 +279,4 @@ def add_free_pt_weights(
             header=DataKey.zone_header(num_zones),
             index=DataKey.zone_index(num_zones),
         )
-        weights.set(key, weight_matrix.copy())
+        weights.set(key, weight_matrix)

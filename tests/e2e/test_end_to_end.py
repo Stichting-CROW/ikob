@@ -25,7 +25,7 @@ def is_equal_csv(result: pathlib.Path, reference: pathlib.Path) -> bool:
     reference_frame = file_to_frame(reference)
 
     try:
-        pd.testing.assert_frame_equal(result_frame, reference_frame, rtol=1e-5, atol=1e-8)
+        pd.testing.assert_frame_equal(result_frame, reference_frame, rtol=5e-3)
         return True
     except AssertionError as err:
         logger.warning(f"File {result} differs from reference:\n{err}")

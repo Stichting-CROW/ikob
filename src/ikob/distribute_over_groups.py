@@ -1,4 +1,3 @@
-import itertools
 import logging
 from pathlib import Path
 
@@ -104,9 +103,7 @@ def distribute_population_over_groups(config):
 
     if artificial:
         artificial_car_possession_segs = read_csv_from_config(config, key="geavanceerd", id="kunstmab", type_caster=int)
-        min_car_possession = list(
-            itertools.starmap(min, zip(car_possessions_per_household_segs, artificial_car_possession_segs))
-        )
+        min_car_possession = list(map(min, car_possessions_per_household_segs, artificial_car_possession_segs))
 
     # Read SEGS input files. See tables 1-3 of IKOB-algorithm.pdf
     no_license_segs = segs_source.read("GeenRijbewijs")

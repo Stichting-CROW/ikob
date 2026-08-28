@@ -9,17 +9,19 @@ logger = logging.getLogger(__name__)
 
 # This is used throughout the code as a pseudo infinite travel time that's still outputted as a number
 IKOB_INFINITE = 9999.0
+FLOAT_DTYPE = np.float32
+INT_DTYPE = np.int32
 
 
 def zeros(lengte):
-    return np.zeros(lengte)
+    return np.zeros(lengte, dtype=FLOAT_DTYPE)
 
 
 def transpose(matrix):
-    return np.array(matrix).T
+    return np.asarray(matrix).T
 
 
-def read_csv(filenaam, type_caster=float, has_index_column=True):
+def read_csv(filenaam, type_caster: type = FLOAT_DTYPE, has_index_column=True):
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
@@ -44,11 +46,11 @@ def read_csv(filenaam, type_caster=float, has_index_column=True):
 
 
 def read_csv_int(filenaam, has_index_column=True):
-    return read_csv(filenaam, type_caster=int, has_index_column=has_index_column)
+    return read_csv(filenaam, type_caster=INT_DTYPE, has_index_column=has_index_column)
 
 
 def read_csv_float(filenaam, has_index_column=True):
-    return read_csv(filenaam, type_caster=float, has_index_column=has_index_column)
+    return read_csv(filenaam, type_caster=FLOAT_DTYPE, has_index_column=has_index_column)
 
 
 def _check_index_column(matrix: npt.NDArray, filenaam):
@@ -62,7 +64,7 @@ def _check_index_column(matrix: npt.NDArray, filenaam):
     for idx in index_column:
         if abs(round(idx) - idx) > 1e-5:
             raise ValueError(f"Csv file {filenaam} has an invalid index column because index {idx} is not integer.")
-        idx = int(round(idx))
+        idx = round(idx)
         if idx - prev_index != 1:
             raise ValueError(f"Csv file {filenaam} has an invalid index column because the index is not sequential.")
         prev_index = idx
@@ -78,23 +80,30 @@ class CsvIndex:
         return cls("zone", list(range(1, num_zones + 1)))
 
 
-def write_csv(matrix, filenaam, index=CsvIndex(), header=[]):
+def write_csv(matrix, filenaam, index=None, header=None):
+    if header is None:
+        header = []
+    if index is None:
+        index = CsvIndex()
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
-    matrix = np.array(matrix)
+    matrix = np.asarray(matrix)
     if matrix.ndim == 1:
         # One dimensional data is expected as one row, while
         # np.savetxt writes this by default as one column.
-        matrix = matrix.reshape(1, matrix.shape[0])
+        matrix = matrix.reshape(1, -1)
 
     # Determine format for data
-    data_fmt = "%d" if np.isdtype(matrix.dtype, "integral") else "%.18e"
+    data_fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.3e"
 
     # Add index column if provided
     if len(index.values) > 0:
-        index_col = np.array(index.values).reshape(-1, 1)
-        matrix = np.hstack([index_col, matrix])
+        index_col = np.asarray(index.values)
+        output = np.empty((matrix.shape[0], matrix.shape[1] + 1), dtype=np.result_type(matrix.dtype, np.int64))
+        output[:, 0] = index_col
+        output[:, 1:] = matrix
+        matrix = output
         header = [index.name, *header]
         # Index is always integer, data keeps its original format
         fmt = ["%d"] + [data_fmt] * (matrix.shape[1] - 1)
