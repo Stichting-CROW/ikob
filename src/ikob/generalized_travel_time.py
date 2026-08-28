@@ -38,7 +38,6 @@ def generalized_travel_time(config) -> DataSource:
     motive_name = project_config["motief"]["naam"]
     motive_tvom = project_config["motief"]["TVOM"]
     chains = ketens_config["chains"]["gebruiken"]
-    ketens_config["bestemmingslijst"]["gebruiken"]
     hub_name = ketens_config["chains"]["naam hub"]
     pt_cost_file = skims_config["OV kostenbestand"]["gebruiken"]
     tvom_dict = tvom_config[TvomType.WORK] if motive_tvom == TvomType.WORK else tvom_config[TvomType.OTHER]
