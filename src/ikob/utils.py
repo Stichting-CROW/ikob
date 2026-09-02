@@ -95,7 +95,7 @@ def write_csv(matrix, filenaam, index=None, header=None):
         matrix = matrix.reshape(1, -1)
 
     # Determine format for data
-    data_fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.3e"
+    data_fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.6e"
 
     # Add index column if provided
     if len(index.values) > 0:
