@@ -6,7 +6,7 @@ import numpy.typing as npt
 from ikob import utils
 from ikob.configuration_definition import TvomType
 from ikob.datasource import DataKey, DataSource, SkimsSource, read_csv_from_config, read_parking_times
-from ikob.utils import IKOB_INFINITE, costs_public_transport
+from ikob.utils import IKOB_INFINITE, INT_DTYPE, costs_public_transport
 
 logger = logging.getLogger(__name__)
 
@@ -196,9 +196,9 @@ def chain_generator(generalized_travel_time: DataSource, config: dict):
         destination_list = read_csv_from_config(
             config, key="ketens", id="bestemmingslijst", type_caster=int, has_index_column=False
         )
-        destination_list = np.asarray(destination_list, dtype=np.int32)
+        destination_list = np.asarray(destination_list, dtype=INT_DTYPE)
     else:
-        destination_list = np.linspace(1, num_zones, num_zones, dtype=np.int32)
+        destination_list = np.arange(1, num_zones + 1, dtype=INT_DTYPE)
 
     for pod in part_of_day:
         car_time = skims_reader.read("Auto_Tijd", pod)

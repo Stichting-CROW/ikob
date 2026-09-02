@@ -95,18 +95,23 @@ def write_csv(matrix, filenaam, index=None, header=None):
         matrix = matrix.reshape(1, -1)
 
     # Determine format for data
-    data_fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.3e"
+    data_fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.6e"
 
     # Add index column if provided
     if len(index.values) > 0:
         index_col = np.asarray(index.values)
-        output = np.empty((matrix.shape[0], matrix.shape[1] + 1), dtype=np.result_type(matrix.dtype, np.int64))
-        output[:, 0] = index_col
-        output[:, 1:] = matrix
-        matrix = output
+        # We need to use a struct type to avoid promoting the dtype when combining with index column int dtype
+        struct_dtype = np.dtype(
+            [("index", INT_DTYPE)] + [(f"column {i}", matrix.dtype) for i in range(matrix.shape[1])]
+        )
+        combined = np.empty(matrix.shape[0], dtype=struct_dtype)
+        combined["index"] = index_col
+        for i in range(matrix.shape[1]):
+            combined[f"column {i}"] = matrix[:, i]
+        matrix = combined
         header = [index.name, *header]
         # Index is always integer, data keeps its original format
-        fmt = ["%d"] + [data_fmt] * (matrix.shape[1] - 1)
+        fmt = ["%d"] + [data_fmt] * (len(struct_dtype.names) - 1)
     else:
         fmt = data_fmt
 
