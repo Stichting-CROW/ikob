@@ -354,17 +354,12 @@ def competition(
                     general_matrix.append(competitions.get(key))
                 general_totals_transpose = utils.transpose(general_matrix)
 
-                for i in range(len(citizens_or_destinations)):
-                    general_matrix_product.append([])
-                    for j in range(len(citizens_or_destinations[0])):
-                        if (citizens and (destinations[i][j] > 0)) or (
-                            (not citizens) and (traveling_population[i, j] > 0)
-                        ):
-                            general_matrix_product[i].append(
-                                general_totals_transpose[i][j] * citizens_or_destinations[i][j]
-                            )
-                        else:
-                            general_matrix_product[i].append(0)
+                # Note that if citizens_or_destinations is citizens, then the condition is on destinations
+                if citizens:
+                    condition = destinations > 0
+                else:
+                    condition = traveling_population > 0
+                general_matrix_product = np.where(condition, general_totals_transpose * citizens_or_destinations, 0)
 
                 key = DataKey(
                     id=f"{competition_filename_suffix}_conc",
@@ -388,6 +383,6 @@ def competition(
                     index=DataKey.zone_index(num_zones),
                     header=header,
                 )
-                competitions.set(key, np.asarray(general_matrix_product))
+                competitions.set(key, general_matrix_product)
 
     return competitions
