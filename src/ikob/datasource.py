@@ -138,7 +138,14 @@ class SegsSource:
         return path / filename
 
     def read(
-        self, id: str, jaar="", type_caster: type = int, scenario="", group="", modifier="", has_index_column=True
+        self,
+        id: str,
+        jaar="",
+        type_caster: type = utils.INT_DTYPE,
+        scenario="",
+        group="",
+        modifier="",
+        has_index_column=True,
     ):
         # TODO: This is a temporary fix. The 'Verdeling_over_groepen*'
         # files are written to disk as SEGS files. These were originally
