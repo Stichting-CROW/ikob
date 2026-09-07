@@ -142,7 +142,7 @@ class FileValidator:
             )
             return -1, False
 
-        num_zones = len(pt_time_matrix)
+        num_zones = pt_time_matrix.shape[0]
         if len(parking_cost_array) != num_zones:
             logger.warning(f"The parking costs is expected to be of length equal to the number of zones, {num_zones}")
             return num_zones, False

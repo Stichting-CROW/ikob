@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from scipy import sparse
 
 from ikob.configuration_definition import DecayCurveName
 from ikob.constants import work_constants
@@ -19,12 +20,14 @@ def calculate_weights(generalized_travel_time, modality, preference, decay_curve
     """
     alpha, omega, scaling = work_constants(modality, preference, decay_curve_name)
 
-    mask = generalized_travel_time < 180
-    # Only exponentiate the in-range values; otherwise huge gtt (e.g. IKOB_INFINITE) overflows exp.
-    exponent = np.where(mask, (generalized_travel_time - omega) * alpha, 0.0)
-    weight_matrix = np.where(mask, scaling / (1 + np.exp(exponent)), 0.0)
-    weight_matrix[weight_matrix < 0.001] = 0.0
-    return weight_matrix
+    # Build a sparse matrix directly from in-range entries.
+    rows, cols = np.nonzero(generalized_travel_time < 180)
+    if rows.size == 0:
+        return sparse.csr_matrix(generalized_travel_time.shape, dtype=np.float64)
+
+    values = scaling / (1 + np.exp((generalized_travel_time[rows, cols] - omega) * alpha))
+    keep = values >= 0.01
+    return sparse.csr_matrix((values[keep], (rows[keep], cols[keep])), shape=generalized_travel_time.shape)
 
 
 def calculate_single_weights(config, generalized_travel_time: DataSource) -> DataSource:
