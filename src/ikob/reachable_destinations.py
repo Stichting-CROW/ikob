@@ -132,7 +132,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                             # Since the 'distribution' is a distribution of the whole target population over groups (e.g. WelAuto_vkAuto_laag, WelAuto_vkFiets_hoog)
                             # and here we need the distribution on a specific income group (e.g. laag), we need to divide by the share of the income group in the total population
                             possibility = possibility * distribution
-                            possibility = np.divide(possibility, incomes, where=incomes != 0)
+                            np.divide(possibility, incomes, where=incomes != 0, out=possibility)
                             possibility[incomes <= 0] = 0
 
                             # Sum contributions of all groups that belong to the selected `income_group`, this computes B_{ihv}
