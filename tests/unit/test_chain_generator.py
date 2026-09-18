@@ -3,6 +3,7 @@ import numpy as np
 from ikob.chain_generator import Hubs, chain_generator, compute_chain_travel_time
 from ikob.datasource import DataKey, DataSource, DataType
 from ikob.utils import IKOB_INFINITE
+from ikob.zone_id_store import ZoneIdStore, ZoneIdStoreSingleton
 
 
 def _make_hubs(zones, hub_costs, pt_transfer, bike_transfer, pay_for_pt):
@@ -270,6 +271,8 @@ def test_computed_keys(monkeypatch):
     num_zones = 5
     rng = np.random.default_rng(99)
 
+    # ZoneIdStoreSingleton._instance = ZoneIdStore([str(i) for i in range(num_zones)])
+
     skims_data = {
         "Auto_Tijd": rng.random((num_zones, num_zones)) * 30,
         "Auto_Afstand": rng.random((num_zones, num_zones)) * 30,
@@ -278,20 +281,23 @@ def test_computed_keys(monkeypatch):
         "OV_Afstand": rng.random((num_zones, num_zones)) * 30,
     }
 
-    def fake_skims_source(_skims_dir):
+    def fake_skims_source(config, skims_dir):
         class _Reader:
-            def read(self, id, dagdeel, type_caster=float, default=None, has_index_column=False):
+            def read(self, id, dagdeel, type_caster=float, default=None, has_id_column=False):
                 if id in skims_data:
                     return np.array(skims_data[id], dtype=type_caster)
                 if default is not None:
                     return default
                 raise FileNotFoundError(f"Skim {id}/{dagdeel} not found, with no default.")
 
+            def read_parking_times(self, config):
+                return np.zeros((num_zones, 3))
+
         return _Reader()
 
     hub_data = np.array([[2, 50, 5, 3, 1], [4, 80, 6, 4, 1]], dtype=float)
 
-    def fake_read_csv_from_config(config, key, id, type_caster=float, has_index_column=False):
+    def fake_read_csv_from_config(config, key, id, type_caster=float, has_id_column=False):
         if key == "ketens" and id == "chains":
             return hub_data
         if key == "ketens" and id == "bestemmingslijst":
@@ -300,7 +306,6 @@ def test_computed_keys(monkeypatch):
 
     monkeypatch.setattr(cg, "SkimsSource", fake_skims_source)
     monkeypatch.setattr(cg, "read_csv_from_config", fake_read_csv_from_config)
-    monkeypatch.setattr(cg, "read_parking_times", lambda _config: np.zeros((num_zones, 3)))
 
     config = _make_config()
 

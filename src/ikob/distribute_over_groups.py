@@ -4,7 +4,6 @@ from pathlib import Path
 import numpy as np
 import numpy.typing as npt
 
-from ikob import utils
 from ikob.datasource import SegsSource, read_csv_from_config
 
 logger = logging.getLogger(__name__)
@@ -246,13 +245,5 @@ def distribute_population_over_groups(config):
         group=motive_name,
         modifier="alleen_autobezit",
         header=header,
-        index=utils.CsvIndex.zone_index(len(total_survey)),
     )
-    segs_source.write_csv(
-        total_survey,
-        "Verdeling_over_groepen",
-        scenario=scenario,
-        group=motive_name,
-        header=header,
-        index=utils.CsvIndex.zone_index(len(total_survey)),
-    )
+    segs_source.write_csv(total_survey, "Verdeling_over_groepen", scenario=scenario, group=motive_name, header=header)

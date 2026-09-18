@@ -59,15 +59,12 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
             groups.append(f"{base_group}_{income_group}")
 
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
-    headstring = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
 
     segs_source = SegsSource(config)
 
     traveling_population = segs_source.read(traveling_population_path.name, scenario=scenario)
     destinations_segs = segs_source.read(destinations_path.name, scenario=scenario)
     destinations = utils.transpose(destinations_segs)
-
-    num_zones = len(destinations_segs)
 
     traveling_population_totals = [sum(bbpk) for bbpk in traveling_population]
 
@@ -88,7 +85,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
             scenario=scenario,
             group=motive_name,
             modifier="alleen_autobezit" if car_possession_group == "alleen autobezit" else "",
-            has_index_column=True,
+            has_id_column=True,
         )
 
         distribution_matrix_transpose = utils.transpose(distribution_matrix)
@@ -159,12 +156,9 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                     group=car_possession_group,
                     income=income_group,
                     motive=motive_name,
-                    index=DataKey.zone_index(num_zones),
-                    header=headstring,
                 )
                 potencies.set(key, general_possibility_totals_transposed)
 
-            header = ["laag", "middellaag", "middelhoog", "hoog"]
             for modality in modalities:
                 general_matrix_product = []
                 general_matrix = []
@@ -200,8 +194,6 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                     group=car_possession_group,
                     motive=motive_name,
                     modality=modality,
-                    index=DataKey.zone_index(num_zones),
-                    header=header,
                 )
                 potencies.set(key, general_possibility_totals_transposed)
 
@@ -221,8 +213,6 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                     group=car_possession_group,
                     motive=motive_name,
                     modality=modality,
-                    index=DataKey.zone_index(num_zones),
-                    header=header,
                 )
                 potencies.set(key, general_matrix_product)
 

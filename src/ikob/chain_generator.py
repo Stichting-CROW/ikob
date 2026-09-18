@@ -5,7 +5,7 @@ import numpy.typing as npt
 
 from ikob import utils
 from ikob.configuration_definition import TvomType
-from ikob.datasource import DataKey, DataSource, SkimsSource, read_csv_from_config, read_parking_times
+from ikob.datasource import DataKey, DataSource, SkimsSource, read_csv_from_config
 from ikob.utils import IKOB_INFINITE, INT_DTYPE, costs_public_transport
 
 logger = logging.getLogger(__name__)
@@ -31,10 +31,6 @@ class Hubs:
 
         if hub_content_raw.shape[1] != 5:
             logger.warning(f"Hub data should have 5 columns but has {hub_content_raw.shape[1]}.")
-            valid = False
-
-        if not all(zone.is_integer() for zone in hub_content_raw[:, 0]):
-            logger.warning("The first column of the hub data (the zone numbers) should contain only integers.")
             valid = False
 
         if not (
@@ -180,21 +176,21 @@ def chain_generator(generalized_travel_time: DataSource, config: dict):
     fuel_kinds = ["fossiel", "elektrisch"]
 
     skims_dir = config["project"]["paden"]["skims_directory"]
-    skims_reader = SkimsSource(skims_dir)
+    skims_reader = SkimsSource(config, skims_dir)
 
-    parking_times = read_parking_times(config)
+    parking_times = skims_reader.read_parking_times(config)
     num_zones = len(parking_times)
     if config["geavanceerd"]["additionele_kosten"]["gebruiken"]:
         additional_cost_matrix = read_csv_from_config(config, key="geavanceerd", id="additionele_kosten")
     else:
         additional_cost_matrix = np.zeros((num_zones, num_zones), dtype=utils.FLOAT_DTYPE)
 
-    hubs = Hubs(read_csv_from_config(config, key="ketens", id="chains", has_index_column=False))
+    hubs = Hubs(read_csv_from_config(config, key="ketens", id="chains", has_id_column=False))
     if hubs.num_hubs == 0:
         logger.warning("Chain generator called but no hubs found in file at config['ketens']['chains'].")
     if config["ketens"]["bestemmingslijst"]["gebruiken"]:
         destination_list = read_csv_from_config(
-            config, key="ketens", id="bestemmingslijst", type_caster=int, has_index_column=False
+            config, key="ketens", id="bestemmingslijst", type_caster=int, has_id_column=False
         )
         destination_list = np.asarray(destination_list, dtype=INT_DTYPE)
     else:
@@ -249,8 +245,6 @@ def chain_generator(generalized_travel_time: DataSource, config: dict):
                     hub_name=hub_name,
                     motive=motive_name,
                     regime=regime,
-                    index=DataKey.zone_index(len(result_bike)),
-                    header=DataKey.zone_header(len(result_bike)),
                 )
                 generalized_travel_time.set(key, result_bike)
 
@@ -261,7 +255,5 @@ def chain_generator(generalized_travel_time: DataSource, config: dict):
                     hub_name=hub_name,
                     motive=motive_name,
                     regime=regime,
-                    index=DataKey.zone_index(len(result_ride)),
-                    header=DataKey.zone_header(len(result_ride)),
                 )
                 generalized_travel_time.set(key, result_ride)
