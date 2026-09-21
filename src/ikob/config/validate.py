@@ -8,7 +8,7 @@ import numpy as np
 from ikob import utils
 from ikob.chain_generator import Hubs
 from ikob.configuration_definition import default_config, default_configuration_definition
-from ikob.datasource import SegsSource, SkimsSource, read_csv_from_config, read_parking_times
+from ikob.datasource import SegsSource, SkimsSource, read_csv_from_config
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class FileValidator:
         valid = True
         if self.config["ketens"]["chains"]["gebruiken"]:
             try:
-                hubs_raw = read_csv_from_config(self.config, key="ketens", id="chains", has_index_column=False)
+                hubs_raw = read_csv_from_config(self.config, key="ketens", id="chains", has_id_column=False)
 
             except Exception as e:
                 logger.warning("A problem occurred while attempting to load the hub file: \n", exc_info=e)
@@ -48,7 +48,7 @@ class FileValidator:
         if self.config["ketens"]["bestemmingslijst"]["gebruiken"]:
             try:
                 destination_list = read_csv_from_config(
-                    self.config, key="ketens", id="bestemmingslijst", type_caster=int, has_index_column=False
+                    self.config, key="ketens", id="bestemmingslijst", type_caster=int, has_id_column=False
                 )
 
             except Exception as e:
@@ -66,14 +66,13 @@ class FileValidator:
     def _skims_files_validation(self):
         part_of_day = self.config["skims"]["dagsoort"]
 
-        skims_dir = self.config["project"]["paden"]["skims_directory"]
-        skims_reader = SkimsSource(skims_dir)
+        skims_reader = SkimsSource(self.config)
         parking_costs = self.config["geavanceerd"]["parkeerkosten"]["gebruiken"]
 
         num_zones = -1
 
         try:
-            parking_times = read_parking_times(self.config)
+            parking_times = skims_reader.read_parking_times()
             if parking_costs:
                 parking_cost_array = read_csv_from_config(self.config, key="geavanceerd", id="parkeerkosten")
             else:

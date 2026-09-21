@@ -220,7 +220,6 @@ def competition(
 
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
     income_groups = ["laag", "middellaag", "middelhoog", "hoog"]
-    headstring = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
 
     segs_source = SegsSource(config)
 
@@ -238,8 +237,6 @@ def competition(
     else:
         citizens_or_destinations = destinations
 
-    num_zones = len(citizens_or_destinations)
-
     for car_possession_group in car_possession_groups:
         distribution_matrix = segs_source.read(
             "Verdeling_over_groepen",
@@ -247,7 +244,7 @@ def competition(
             scenario=scenario,
             group=motive_name,
             modifier="alleen_autobezit" if car_possession_group == "alleen autobezit" else "",
-            has_index_column=True,
+            has_id_column=True,
         )
 
         for part_of_day in part_of_days:
@@ -332,12 +329,10 @@ def competition(
                     income=income_group,
                     motive=motive_name,
                     group=car_possession_group,
-                    index=DataKey.zone_index(num_zones),
-                    header=headstring,
+                    header=modalities,
                 )
                 competitions.set(key, general_totals_transpose)
 
-            header = ["laag", "middellaag", "middelhoog", "hoog"]
             for modality in modalities:
                 general_matrix_product = []
                 general_matrix = []
@@ -368,8 +363,7 @@ def competition(
                     motive=motive_name,
                     modality=modality,
                     group=car_possession_group,
-                    index=DataKey.zone_index(num_zones),
-                    header=header,
+                    header=income_groups,
                 )
                 competitions.set(key, general_totals_transpose)
 
@@ -380,8 +374,7 @@ def competition(
                     motive=motive_name,
                     modality=modality,
                     group=car_possession_group,
-                    index=DataKey.zone_index(num_zones),
-                    header=header,
+                    header=income_groups,
                 )
                 competitions.set(key, general_matrix_product)
 

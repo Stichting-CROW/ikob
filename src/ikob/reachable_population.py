@@ -63,14 +63,11 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
 
     income_groups = ["laag", "middellaag", "middelhoog", "hoog"]
-    headstring = modalities
 
     segs_source = SegsSource(config)
 
     traveling_population = segs_source.read(traveling_population_path.name, scenario=scenario)
     destinations = segs_source.read(destinations_path.name, scenario=scenario)
-
-    num_zones = len(traveling_population)
 
     working_population = []
 
@@ -88,7 +85,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
             scenario=scenario,
             group=motive_name,
             modifier="alleen_autobezit" if car_possession_group == "alleen autobezit" else "",
-            has_index_column=True,
+            has_id_column=True,
         )
 
         citizens = create_citizens_file(distribution_matrix, working_population)
@@ -238,15 +235,13 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                     group=car_possession_group,
                     income=income_group,
                     motive=motive_name,
-                    index=DataKey.zone_index(num_zones),
-                    header=headstring,
+                    header=modalities,
                 )
 
                 origins_total = utils.transpose(general_possibility_totals)
                 origins_total = np.round(origins_total).astype(int)
                 origins.set(key, origins_total)
 
-            header = ["laag", "middellaag", "middelhoog", "hoog"]
             for modality in modalities:
                 general_matrix = []
                 for income_group in income_groups:
@@ -272,8 +267,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                     group=car_possession_group,
                     motive=motive_name,
                     modality=modality,
-                    index=DataKey.zone_index(num_zones),
-                    header=header,
+                    header=income_groups,
                 )
                 origins.set(key, general_total_transpose)
 
@@ -289,8 +283,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                     group=car_possession_group,
                     motive=motive_name,
                     modality=modality,
-                    index=DataKey.zone_index(num_zones),
-                    header=header,
+                    header=income_groups,
                 )
                 origins.set(key, np.asarray(general_matrix_product))
 

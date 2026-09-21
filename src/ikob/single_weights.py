@@ -90,7 +90,6 @@ def add_bike_weights(
                 key = DataKey("Fiets", part_of_day=part_of_day, regime=regimes, motive=motive_name, income=income)
                 gtr_skim = generalized_travel_time.get(key)
                 weight_matrix = calculate_weights(gtr_skim, modality, preference, decay_curve_name=decay_curve)
-                num_zones = len(weight_matrix)
 
                 if preference == "Auto":
                     key = DataKey(
@@ -99,8 +98,6 @@ def add_bike_weights(
                         regime=regimes,
                         motive=motive_name,
                         income=income,
-                        header=DataKey.zone_header(num_zones),
-                        index=DataKey.zone_index(num_zones),
                     )
                 else:
                     key = DataKey(
@@ -110,8 +107,6 @@ def add_bike_weights(
                         regime=regimes,
                         motive=motive_name,
                         preference=preference,
-                        header=DataKey.zone_header(num_zones),
-                        index=DataKey.zone_index(num_zones),
                     )
 
                 weights.set(key, weight_matrix)
@@ -137,7 +132,6 @@ def add_car_weights(
             gtr_skim = generalized_travel_time.get(key)
 
             weight_matrix = calculate_weights(gtr_skim, "Auto", preference, decay_curve)
-            num_zones = len(weight_matrix)
             key = DataKey(
                 "Auto_vk",
                 part_of_day=part_of_day,
@@ -146,8 +140,6 @@ def add_car_weights(
                 motive=motive_name,
                 preference=preference,
                 fuel_kind=fuel_kind,
-                header=DataKey.zone_header(num_zones),
-                index=DataKey.zone_index(num_zones),
             )
             weights.set(key, weight_matrix)
 
@@ -172,7 +164,6 @@ def add_no_car_weights(
             gtr_skim = generalized_travel_time.get(key)
 
             weight_matrix = calculate_weights(gtr_skim, "Auto", preference, decay_curve)
-            num_zones = len(weight_matrix)
             key = DataKey(
                 f"{no_car_kind}_vk",
                 part_of_day=part_of_day,
@@ -180,8 +171,6 @@ def add_no_car_weights(
                 regime=regimes,
                 preference=preference,
                 motive=motive_name,
-                header=DataKey.zone_header(num_zones),
-                index=DataKey.zone_index(num_zones),
             )
             weights.set(key, weight_matrix)
 
@@ -202,7 +191,6 @@ def add_pt_weights(
         gtr_skim = generalized_travel_time.get(key)
 
         weight_matrix = calculate_weights(gtr_skim, "OV", preference, decay_curve)
-        num_zones = len(weight_matrix)
         key = DataKey(
             "OV_vk",
             part_of_day=part_of_day,
@@ -210,8 +198,6 @@ def add_pt_weights(
             income=income,
             regime=regimes,
             motive=motive_name,
-            header=DataKey.zone_header(num_zones),
-            index=DataKey.zone_index(num_zones),
         )
         weights.set(key, weight_matrix)
 
@@ -233,7 +219,6 @@ def add_free_car_weights(
     gtr_skim = generalized_travel_time.get(key)
 
     weight_matrix = calculate_weights(gtr_skim, "Auto", "Auto", decay_curve)
-    num_zones = len(weight_matrix)
     # Can only have preference for the car or neutral if the car is free
     free_car_preferences = ["Neutraal", "Auto"]
     for preference in free_car_preferences:
@@ -244,8 +229,6 @@ def add_free_car_weights(
             income=income,
             regime=regimes,
             motive=motive_name,
-            header=DataKey.zone_header(num_zones),
-            index=DataKey.zone_index(num_zones),
         )
         weights.set(key, weight_matrix)
 
@@ -265,7 +248,6 @@ def add_free_pt_weights(
     gtr_skim = generalized_travel_time.get(key)
 
     weight_matrix = calculate_weights(gtr_skim, "OV", "OV", decay_curve)
-    num_zones = len(weight_matrix)
     # Can only have preference for the public transport or neutral if the public transport is free
     special_pt_kinds = ["Neutraal", "OV"]
     for special_pt_kind in special_pt_kinds:
@@ -276,7 +258,5 @@ def add_free_pt_weights(
             income=income,
             regime=regimes,
             motive=motive_name,
-            header=DataKey.zone_header(num_zones),
-            index=DataKey.zone_index(num_zones),
         )
         weights.set(key, weight_matrix)
