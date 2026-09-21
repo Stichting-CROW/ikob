@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import numpy as np
 import numpy.typing as npt
@@ -6,23 +7,56 @@ import numpy.typing as npt
 from ikob import utils
 from ikob.configuration_definition import TvomType
 from ikob.datasource import DataKey, DataSource, SkimsSource, read_csv_from_config
-from ikob.utils import IKOB_INFINITE, INT_DTYPE, costs_public_transport
+from ikob.id_store import ZoneIdStoreSingleton
+from ikob.utils import FLOAT_DTYPE, IKOB_INFINITE, costs_public_transport
 
 logger = logging.getLogger(__name__)
 
 
 class Hubs:
-    def __init__(self, hubs: npt.NDArray):
-        self.validate(hubs)
-        self.zone_indices: npt.NDArray[np.integer] = hubs[:, 0].astype(int) - 1  # Zones in config use 1 based indexing
-        self.hub_costs_cents: npt.NDArray[np.floating] = hubs[:, 1]
-        self.pt_transfer_times: npt.NDArray[np.floating] = hubs[:, 2]
-        self.bike_transfer_times: npt.NDArray[np.floating] = hubs[:, 3]
-        self.pay_for_pt: npt.NDArray[np.bool_] = hubs[:, 4].astype(bool)
-        self.num_hubs: int = len(hubs)
+    def __init__(
+        self,
+        zone_indices: list[int],
+        hub_costs_cents: npt.NDArray[FLOAT_DTYPE],
+        pt_transfer_times: npt.NDArray[FLOAT_DTYPE],
+        bike_transfer_times: npt.NDArray[FLOAT_DTYPE],
+        pay_for_pt: npt.NDArray[np.bool_],
+        num_hubs: int,
+    ):
+        self.zone_indices = zone_indices
+        self.hub_costs_cents = hub_costs_cents
+        self.pt_transfer_times = pt_transfer_times
+        self.bike_transfer_times = bike_transfer_times
+        self.pay_for_pt = pay_for_pt
+        self.num_hubs = num_hubs
+
+    @classmethod
+    def build_from_config(cls, config):
+        """Build a Hubs object from the config, return the validation result and the Hubs object if validation was successful"""
+        hub_raw = cls._read_hubs_from_file(config)
+
+        zone_id_store = ZoneIdStoreSingleton.get_instance(config)
+
+        zone_indices: list[int] = [zone_id_store.id_to_idx[zone_id] for zone_id in hub_raw[:, 0]]
+        hub_costs_cents: npt.NDArray[FLOAT_DTYPE] = hub_raw[:, 1].astype(FLOAT_DTYPE)
+        pt_transfer_times: npt.NDArray[FLOAT_DTYPE] = hub_raw[:, 2].astype(FLOAT_DTYPE)
+        bike_transfer_times: npt.NDArray[FLOAT_DTYPE] = hub_raw[:, 3].astype(FLOAT_DTYPE)
+        pay_for_pt: npt.NDArray[np.bool_] = hub_raw[:, 4].astype(int).astype(bool)
+        num_hubs: int = len(hub_raw)
+
+        return cls(
+            zone_indices,
+            hub_costs_cents,
+            pt_transfer_times,
+            bike_transfer_times,
+            pay_for_pt,
+            num_hubs,
+        )
 
     @staticmethod
-    def validate(hub_content_raw):
+    def validate(config):
+        hub_content_raw = Hubs._read_hubs_from_file(config)
+
         valid = True
 
         if hub_content_raw.shape[0] == 0:
@@ -33,14 +67,39 @@ class Hubs:
             logger.warning(f"Hub data should have 5 columns but has {hub_content_raw.shape[1]}.")
             valid = False
 
-        if not (
-            all(pay_for_pt.is_integer() for pay_for_pt in hub_content_raw[:, 4])
-            and np.all(np.logical_or(hub_content_raw[:, 4] == 1, hub_content_raw[:, 4] == 0))
-        ):
-            logger.warning("The fourth column of the hub data (wether to pay for pt) should contain either 0 or 1.")
+        try:
+            hub_content_raw[:, 1:3].astype(FLOAT_DTYPE)
+        except ValueError:
+            logger.warning(
+                "Columns 2-4 of the hub data (in order: price of hub, PT transfer time, bike transfer time) should contain numbers."
+            )
+            valid = False
+        try:
+            # We must first convert to int bc the string 0 gets cast to True
+            hub_content_raw[:, 4].astype(int).astype(bool)
+        except ValueError:
+            logger.warning("The fifth column of the hub data (wether to pay for pt) should contain either 0 or 1.")
             valid = False
 
         return valid
+
+    @staticmethod
+    def read_destinations_from_file(config) -> npt.NDArray:
+        destination_list_path = Path(config["ketens"]["bestemmingslijst"]["bestand"])
+        destination_list_id = np.loadtxt(destination_list_path, dtype=str, skiprows=1, delimiter=",")
+
+        zone_id_store = ZoneIdStoreSingleton.get_instance(config)
+
+        destination_list_idx = np.asarray(
+            [zone_id_store.id_to_idx[destination_id] for destination_id in destination_list_id]
+        ).astype(int)
+
+        return destination_list_idx
+
+    @staticmethod
+    def _read_hubs_from_file(config):
+        hubs_path = Path(config["ketens"]["chains"]["bestand"])
+        return np.loadtxt(hubs_path, dtype=str, skiprows=1, delimiter=",")
 
 
 def compute_chain_travel_time(
@@ -69,7 +128,7 @@ def compute_chain_travel_time(
     # Only compute chain travel times for zones in the destination_list.
     # This allows a user to investigate hub locations to improve travel times to only a subset of the total zones.
     destination_mask = np.zeros(num_zones, dtype=bool)
-    destination_mask[destination_list - 1] = True  # Zones in config use 1 based indexing
+    destination_mask[destination_list] = True
 
     # Initialize with true infinite values to overwrite these with gtt even if those are above IKOB_INFINITE
     result_bike = np.full((num_zones, num_zones), np.inf, dtype=utils.FLOAT_DTYPE)
@@ -184,16 +243,15 @@ def chain_generator(generalized_travel_time: DataSource, config: dict):
     else:
         additional_cost_matrix = np.zeros((num_zones, num_zones), dtype=utils.FLOAT_DTYPE)
 
-    hubs = Hubs(read_csv_from_config(config, key="ketens", id="chains", has_id_column=False))
+    hubs = Hubs.build_from_config(config)
     if hubs.num_hubs == 0:
         logger.warning("Chain generator called but no hubs found in file at config['ketens']['chains'].")
+
+    zone_id_store = ZoneIdStoreSingleton.get_instance(config)
     if config["ketens"]["bestemmingslijst"]["gebruiken"]:
-        destination_list = read_csv_from_config(
-            config, key="ketens", id="bestemmingslijst", type_caster=int, has_id_column=False
-        )
-        destination_list = np.asarray(destination_list, dtype=INT_DTYPE)
+        destination_list_idx = Hubs.read_destinations_from_file(config)
     else:
-        destination_list = np.arange(1, num_zones + 1, dtype=INT_DTYPE)
+        destination_list_idx = np.arange(zone_id_store.num_zones)
 
     for pod in part_of_day:
         car_time = skims_reader.read("Auto_Tijd", pod)
@@ -234,7 +292,7 @@ def chain_generator(generalized_travel_time: DataSource, config: dict):
                     bike_cost_euro_per_km=bike_cost_euro_per_km,
                     additional_costs=additional_cost_matrix,
                     parking_times=np.asarray(parking_times, dtype=utils.FLOAT_DTYPE),
-                    destination_list=destination_list,
+                    destination_list=destination_list_idx,
                 )
 
                 key = DataKey(

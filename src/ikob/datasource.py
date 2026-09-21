@@ -34,7 +34,9 @@ def get_temporary_directory(config) -> pathlib.Path:
     return project_dir / "tussenresultaten"
 
 
-def read_csv_from_config(config, key: str, id: str, type_caster: type = utils.FLOAT_DTYPE, has_id_column=True):
+def read_csv_from_config(
+    config, key: str, id: str, type_caster: type = utils.FLOAT_DTYPE, has_id_column=True, has_id_header=False
+):
     """Read key from id section in the configuration file."""
     csv_path = config[key][id]
     if isinstance(csv_path, dict):
@@ -51,6 +53,7 @@ def read_csv_from_config(config, key: str, id: str, type_caster: type = utils.FL
             csv_path,
             type_caster,
             has_id_column=has_id_column,
+            has_id_header=has_id_header,
             id_store=ZoneIdStoreSingleton.get_instance(config),
         )
     except FileNotFoundError:
@@ -85,6 +88,7 @@ class SkimsSource:
                 path,
                 type_caster=type_caster,
                 has_id_column=has_id_column,
+                has_id_header=True,
                 id_store=ZoneIdStoreSingleton.get_instance(self.config),
             )
         if default is None:
@@ -159,6 +163,7 @@ class SegsSource:
         group="",
         modifier="",
         has_id_column=True,
+        has_id_header=False,
         id_store: IdStore | None = None,
     ):
         # TODO: This is a temporary fix. The 'Verdeling_over_groepen*'
@@ -182,6 +187,7 @@ class SegsSource:
                 path,
                 type_caster=type_caster,
                 has_id_column=has_id_column,
+                has_id_header=False,
                 id_store=id_store if id_store is not None else ZoneIdStoreSingleton.get_instance(self.config),
             )
         except FileNotFoundError:
@@ -238,12 +244,16 @@ class DataKey:
 class DataSource:
     OUTPUT_PATH = "OUTPUT.md"
 
-    def __init__(self, config, datatype: DataType):
+    def __init__(self, config, datatype: DataType, has_zone_id_header=False):
         self.config = config
         self.project_dir = get_project_directory(config)
         self.cache: dict[DataKey, NDArray] = {}
         self.datatype = datatype
         self.changed_keys = set()
+        # Some data sources store / read zone to zone matrices
+        # These have a zone id header that needs to be mapped to an internal index when reading
+        # When this flag is set, each file is read as such
+        self.has_zone_id_header = has_zone_id_header
 
         # TODO: Improve handling of data directory structure:
         # - Extract paths/directory names from constants, e.g. Enum;
@@ -304,7 +314,9 @@ class DataSource:
 
     def read_csv(self, key: DataKey) -> NDArray:
         path = self._make_file_path(key).with_suffix(".csv")
-        return utils.read_csv(path, id_store=ZoneIdStoreSingleton.get_instance(self.config))
+        return utils.read_csv(
+            path, id_store=ZoneIdStoreSingleton.get_instance(self.config), has_id_header=self.has_zone_id_header
+        )
 
     def write_csv(self, data, key: DataKey):
         assert isinstance(key, DataKey)

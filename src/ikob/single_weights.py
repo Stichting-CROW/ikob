@@ -50,7 +50,7 @@ def calculate_single_weights(config, generalized_travel_time: DataSource) -> Dat
     # Vaste waarden
     incomes = ["hoog", "middelhoog", "middellaag", "laag"]
 
-    weights = DataSource(config, DataType.WEIGHTS)
+    weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 
     for part_of_day in part_of_days:
         for income in incomes:

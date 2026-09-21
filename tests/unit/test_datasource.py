@@ -20,7 +20,7 @@ def test_get_falls_back_to_read_csv_on_cache_miss(tmp_path):
         "skims": {"dagsoort": ["ochtend"]},
     }
 
-    source = DataSource(config=config, datatype=DataType.WEIGHTS)
+    source = DataSource(config=config, datatype=DataType.POTENCY)
     key = DataKey(id="some_id", part_of_day="ochtend")
 
     csv_path = source._make_file_path(key).with_suffix(".csv")

@@ -66,7 +66,7 @@ def generalized_travel_time(config) -> DataSource:
 
     skims_reader = SkimsSource(config)
 
-    generalized_travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME)
+    generalized_travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
 
     parking_times = skims_reader.read_parking_times()
     parking_times_array = np.asarray(parking_times, dtype=utils.FLOAT_DTYPE)

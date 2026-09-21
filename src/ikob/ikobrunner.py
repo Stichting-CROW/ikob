@@ -47,7 +47,7 @@ def run_scripts(project_file, skip_steps: list[bool] | None = None, write_weight
     if not skip_steps[0]:
         travel_time = generalized_travel_time(config)
     else:
-        travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME)
+        travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
 
     if not skip_steps[1]:
         # TODO: Pass temporary SEGS output as arguments too.
@@ -56,12 +56,12 @@ def run_scripts(project_file, skip_steps: list[bool] | None = None, write_weight
     if not skip_steps[2]:
         single_weights = calculate_single_weights(config, travel_time)
     else:
-        single_weights = DataSource(config, DataType.WEIGHTS)
+        single_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 
     if not skip_steps[3]:
         combined_weights = calculate_combined_weights(config, single_weights)
     else:
-        combined_weights = DataSource(config, DataType.WEIGHTS)
+        combined_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 
     if not skip_steps[4]:
         reachable_destinations = calculate_reachable_destinations(config, single_weights, combined_weights)

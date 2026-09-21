@@ -35,32 +35,24 @@ class FileValidator:
         valid = True
         if self.config["ketens"]["chains"]["gebruiken"]:
             try:
-                hubs_raw = read_csv_from_config(self.config, key="ketens", id="chains", has_id_column=False)
+                valid = Hubs.validate(self.config)
+                if not valid:
+                    logger.warning("Validating the hubs config failed.")
+                    valid = False
+                Hubs.build_from_config(self.config)
 
             except Exception as e:
                 logger.warning("A problem occurred while attempting to load the hub file: \n", exc_info=e)
                 return False
 
-            if not Hubs.validate(hubs_raw):
-                logger.warning("A problem occurred while validating hub data")
-                valid = False
-
         if self.config["ketens"]["bestemmingslijst"]["gebruiken"]:
             try:
-                destination_list = read_csv_from_config(
-                    self.config, key="ketens", id="bestemmingslijst", type_caster=int, has_id_column=False
-                )
+                Hubs.read_destinations_from_file(self.config)
 
             except Exception as e:
                 logger.warning("A problem occurred while attempting to load the hub destination list: \n", exc_info=e)
                 return False
 
-            for destination_zone in destination_list:
-                if not 1 <= destination_zone <= num_zones:
-                    logger.warning(
-                        f"Destination zone {destination_zone} in hub destination list is not between 1 and the total number of zones {num_zones}"
-                    )
-                    valid = False
         return valid
 
     def _skims_files_validation(self):

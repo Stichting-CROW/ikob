@@ -24,35 +24,62 @@ def transpose(matrix):
 
 
 def read_csv(
-    filenaam,
+    filename,
     type_caster: type = FLOAT_DTYPE,
     has_id_column: bool = True,
+    has_id_header: bool = False,
     id_store: IdStore | None = None,
 ) -> npt.NDArray:
     """Return the matrix / vector in the csv in the given type
 
-    If has_id_column is provided the first column is taken to be a column of row id's,
+    If has_id_column is true the first column is taken to be a column of row id's,
     an IdStore is required to map the ids to a consistent internal representation regardless of the order of the rows in the input file.
+    Similarly, if has_id_header is true the header row is taken to be a list of column id's to be mapped to a consistent internal id.
 
     """
-    if not isinstance(filenaam, pathlib.Path):
-        filenaam = pathlib.Path(filenaam)
+    if not isinstance(filename, pathlib.Path):
+        filename = pathlib.Path(filename)
 
     if has_id_column:
         if id_store is None:
             raise ValueError(
-                f"Unable to correctly read file with id column {filenaam} as no zone id store is provided for the mapping from zone id to internal index."
+                f"Unable to correctly read file with id column {filename} as no id store is provided for the mapping from id to internal index."
             )
-        matrix, ids = read_csv_with_id_values(filenaam, type_caster)
-        id_store.validate_exact_ids(ids, str(filenaam))
-        return id_store.align_rows_to_skim_zone_ids(ids, matrix)
+        matrix, ids, header = read_csv_with_id_values(filename, type_caster)
+        id_store.validate_exact_ids(ids, str(filename))
+        if has_id_header:
+            if header is None:
+                raise ValueError(f"File {filename} was loaded as having an id header, but it has no header.")
+            matrix_header = header[1:]  # The first entry is the header of the index column
+            id_store.validate_exact_ids(matrix_header, str(filename))
+            matrix = id_store.reorder_columns_to_internal_idx(matrix_header, matrix)
+        return id_store.reorder_rows_to_internal_idx(ids, matrix)
 
     # First, attempt to read without header.
     # If this fails, read with skipping the header.
     try:
-        matrix = np.loadtxt(filenaam, dtype=type_caster, delimiter=",")
+        matrix = np.loadtxt(filename, dtype=type_caster, delimiter=",")
+        has_header = False
     except ValueError:
-        matrix = np.loadtxt(filenaam, dtype=type_caster, skiprows=1, delimiter=",")
+        matrix = np.loadtxt(filename, dtype=type_caster, skiprows=1, delimiter=",")
+        has_header = True
+
+    if has_id_header:
+        if not has_header:
+            raise ValueError(f"File {filename} was loaded as having an id header but it has no header.")
+        if id_store is None:
+            raise ValueError(
+                f"Unable to correctly read file with id header {filename} as no id store is provided for the mapping from id to internal index."
+            )
+
+        with filename.open("r") as f:
+            matrix_header = None
+            for raw_line in f:
+                matrix_header = raw_line.strip().split(",")[1:]  # The first entry is the header of the index column
+                break
+            if matrix_header is None:
+                raise ValueError(f"File {filename} was loaded as having an id header but it has no header.")
+            matrix = id_store.reorder_columns_to_internal_idx(matrix_header, matrix)
 
     # If the matrix is really an array, return it as such
     if len(matrix.shape) == 2:
@@ -75,8 +102,8 @@ def _can_cast_all(values: list[str], type_caster: type) -> bool:
     return True
 
 
-def read_csv_with_id_values(filenaam, type_caster: type = FLOAT_DTYPE) -> tuple[npt.NDArray, list[str]]:
-    """Read csv data with an index/id column and return (ids, values).
+def read_csv_with_id_values(filenaam, type_caster: type) -> tuple[npt.NDArray, list[str], list[str] | None]:
+    """Read csv data with an index/id column and return (values, id's, headers).
 
     The first column is treated as ids and kept as strings.
     Remaining columns are cast to type_caster.
@@ -85,16 +112,10 @@ def read_csv_with_id_values(filenaam, type_caster: type = FLOAT_DTYPE) -> tuple[
         filenaam = pathlib.Path(filenaam)
 
     first_non_empty_line = ""
-    second_non_empty_line = ""
     with filenaam.open("r") as f:
         for raw_line in f:
             line = raw_line.strip()
-            if not line:
-                continue
-            if not first_non_empty_line:
-                first_non_empty_line = line
-                continue
-            second_non_empty_line = line
+            first_non_empty_line = line
             break
 
     if not first_non_empty_line:
@@ -105,8 +126,7 @@ def read_csv_with_id_values(filenaam, type_caster: type = FLOAT_DTYPE) -> tuple[
         raise ValueError(f"CSV file {filenaam} must contain at least an id column and one value column.")
 
     has_header = not _can_cast_all(first_parts[1:], type_caster)
-    if has_header and second_non_empty_line == "":
-        raise ValueError(f"CSV file {filenaam} has no data rows.")
+    header = first_parts if has_header else None
 
     # The number of value columns is the total number of columns - 1
     num_value_columns = len(first_parts) - 1
@@ -114,28 +134,23 @@ def read_csv_with_id_values(filenaam, type_caster: type = FLOAT_DTYPE) -> tuple[
     skiprows = 1 if has_header else 0
     usecols = tuple(range(1, num_value_columns + 1))
 
-    try:
-        matrix = np.loadtxt(
-            filenaam,
-            dtype=type_caster,
-            delimiter=",",
-            skiprows=skiprows,
-            usecols=usecols,
-            ndmin=2,
-        )
-        ids_array = np.loadtxt(
-            filenaam,
-            dtype=str,
-            delimiter=",",
-            skiprows=skiprows,
-            usecols=(0,),
-            ndmin=1,
-            encoding="utf-8-sig",
-        )
-    except ValueError as exc:
-        raise ValueError(
-            f"CSV file {filenaam} has inconsistent row widths or values that cannot be cast to {type_caster}."
-        ) from exc
+    matrix = np.loadtxt(
+        filenaam,
+        dtype=type_caster,
+        delimiter=",",
+        skiprows=skiprows,
+        usecols=usecols,
+        ndmin=2,
+    )
+    ids_array = np.loadtxt(
+        filenaam,
+        dtype=str,
+        delimiter=",",
+        skiprows=skiprows,
+        usecols=(0,),
+        ndmin=1,
+        encoding="utf-8-sig",
+    )
 
     # If the matrix is really an array, return it as such
     if len(matrix.shape) == 2:
@@ -144,7 +159,7 @@ def read_csv_with_id_values(filenaam, type_caster: type = FLOAT_DTYPE) -> tuple[
         elif len(matrix[:, 0]) == 1:
             matrix = matrix[0]
 
-    return matrix, ids_array.tolist()
+    return matrix, ids_array.tolist(), header
 
 
 def _check_index_column(matrix: npt.NDArray, filenaam):
@@ -192,7 +207,7 @@ def write_csv(matrix, filenaam, index: CsvIdColumn, header: list[str]):
         index_col = np.asarray(index.values)
         # We need to use a struct type to avoid promoting the dtype when combining with index column int dtype
         struct_dtype = np.dtype(
-            [("id column", str)] + [(f"data column {i}", matrix.dtype) for i in range(matrix.shape[1])]
+            [("id column", index_col.dtype)] + [(f"data column {i}", matrix.dtype) for i in range(matrix.shape[1])]
         )
         combined = np.empty(matrix.shape[0], dtype=struct_dtype)
         combined["id column"] = index_col
@@ -326,7 +341,7 @@ def compute_car_gtt(
     additional_costs_eurocent: npt.NDArray,
     parking_times_array: npt.NDArray,
     parking_costs_array_eurocent: npt.NDArray,
-):
+) -> npt.NDArray:
     parking_time_matrix = parking_times_array[:, 0][:, np.newaxis] + parking_times_array[:, 1][np.newaxis, :]
     return (
         car_time

@@ -19,18 +19,23 @@ class IdStore:
         self.id_to_idx = {zone_id: idx for idx, zone_id in enumerate(self.zone_ids)}
         self.num_zones = len(self.zone_ids)
 
-    def validate_exact_ids(self, row_ids: list[str], source_name: str):
+    def validate_exact_ids(self, ids: list[str], source_name: str):
         reference = set(self.zone_ids)
-        current = set(row_ids)
+        current = set(ids)
         missing_ids = reference - current
         extra_ids = current - reference
         if missing_ids or extra_ids:
             raise ValueError(f"id mismatch for {source_name}. Missing ids: {missing_ids}, extra ids: {extra_ids}")
 
-    def align_rows_to_skim_zone_ids(self, row_ids: list[str], values: NDArray) -> NDArray:
+    def reorder_rows_to_internal_idx(self, row_ids: list[str], values: NDArray) -> NDArray:
         row_id_to_idx = {row_id: row_idx for row_idx, row_id in enumerate(row_ids)}
         reordered_row_idx = [row_id_to_idx[zone_id] for zone_id in self.zone_ids]
         return values[reordered_row_idx]
+
+    def reorder_columns_to_internal_idx(self, col_ids: list[str], values: NDArray) -> NDArray:
+        col_id_to_idx = {col_id: col_idx for col_idx, col_id in enumerate(col_ids)}
+        reordered_col_idx = [col_id_to_idx[zone_id] for zone_id in self.zone_ids]
+        return values[:, reordered_col_idx]
 
 
 class ZoneIdStoreSingleton:
