@@ -304,10 +304,7 @@ class DataSource:
 
     def read_csv(self, key: DataKey) -> NDArray:
         path = self._make_file_path(key).with_suffix(".csv")
-        id_store = ZoneIdStoreSingleton.get_instance(self.config)
-        matrix, ids = utils.read_csv(path, id_store=id_store)
-        matrix = id_store.align_rows_to_skim_zone_ids(ids, matrix)
-        return matrix
+        return utils.read_csv(path, id_store=ZoneIdStoreSingleton.get_instance(self.config))
 
     def write_csv(self, data, key: DataKey):
         assert isinstance(key, DataKey)
