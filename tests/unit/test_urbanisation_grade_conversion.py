@@ -3,16 +3,20 @@ import pathlib
 import numpy as np
 import pytest
 
-from ikob.datasource import read_parking_times
+from ikob.datasource import SkimsSource
+from ikob.id_store import ZoneIdStoreSingleton
 from ikob.ikobconfig import get_config_from_args
 from ikob.urbanization_grade_to_parking_times import urbanization_grade_to_parking_times
-from ikob.utils import read_csv_int
+from ikob.utils import INT_DTYPE, read_csv
 
 
 def test_stedelijkheid_converter():
     segs_dir = pathlib.Path("tests/vlaanderen/SEGS")
-    reference = read_csv_int(segs_dir / "Parkeerzoektijd.csv")
-    stedelijkheid = read_csv_int(segs_dir / "Stedelijkheidsgraad.csv")
+    config = get_config_from_args("tests/vlaanderen/vlaanderen.json")
+    id_store = ZoneIdStoreSingleton.get_instance(config)
+
+    reference = read_csv(segs_dir / "Parkeerzoektijd.csv", type_caster=INT_DTYPE, id_store=id_store)
+    stedelijkheid = read_csv(segs_dir / "Stedelijkheidsgraad.csv", type_caster=INT_DTYPE, id_store=id_store)
     parkeerzoektijden = urbanization_grade_to_parking_times(stedelijkheid)
     assert np.all(parkeerzoektijden == reference)
 
@@ -21,19 +25,23 @@ def test_generate_parkeerzoektijden():
     case = "vlaanderen"
     project_dir = pathlib.Path("tests") / case
     project_file = project_dir.joinpath(f"{case}.json")
-    reference = read_csv_int(project_dir / "SEGS" / "Parkeerzoektijd.csv")
+    config = get_config_from_args(project_file)
+    id_store = ZoneIdStoreSingleton.get_instance(config)
+
+    reference = read_csv(project_dir / "SEGS" / "Parkeerzoektijd.csv", type_caster=INT_DTYPE, id_store=id_store)
+
+    skims = SkimsSource(config)
 
     # Read test file on disk given in configuration file.
-    config = get_config_from_args(project_file)
-    assert np.all(reference == read_parking_times(config))
+    assert np.all(reference == skims.read_parking_times())
 
     # Remove path from config and fall back to expected location.
     del config["skims"]["parkeerzoektijden_bestand"]
-    assert np.all(reference == read_parking_times(config))
+    assert np.all(reference == skims.read_parking_times())
 
     # Set config to unknown path, trigger conversion on the fly.
     config["skims"]["parkeerzoektijden_bestand"] = "unset"
-    assert np.all(reference == read_parking_times(config))
+    assert np.all(reference == skims.read_parking_times())
 
 
 def test_assert_failed_parkeerzoektijden_conversion():
@@ -47,5 +55,7 @@ def test_assert_failed_parkeerzoektijden_conversion():
     config["skims"]["parkeerzoektijden_bestand"] = "unset"
     config["project"]["paden"]["segs_directory"] = "unset"
 
+    skims = SkimsSource(config)
+
     with pytest.raises(AssertionError):
-        _ = read_parking_times(config)
+        _ = skims.read_parking_times()
