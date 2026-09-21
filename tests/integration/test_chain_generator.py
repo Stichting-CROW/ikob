@@ -28,22 +28,22 @@ def _setup(monkeypatch, cg, gtt, num_zones, car_time, car_dist, bike_time, bike_
         "OV_Afstand": pt_dist,
     }
 
-    def fake_skims_source(_skims_dir):
+    def fake_skims_source(config):
         class _Reader:
-            def read(self, id, dagdeel, type_caster=float, default=None, has_index_column=False):
+            def read(self, id, dagdeel, type_caster=float, default=None, has_id_column=False):
                 if id in skims_data:
                     return np.array(skims_data[id], dtype=type_caster)
                 if default is not None:
                     return default
                 raise FileNotFoundError(f"Skim {id}/{dagdeel} not found, with no default.")
 
+            def read_parking_times(self):
+                return parking_times
+
         return _Reader()
 
     monkeypatch.setattr(cg, "SkimsSource", fake_skims_source)
     monkeypatch.setattr(gtt, "SkimsSource", fake_skims_source)
-    monkeypatch.setattr(gtt, "SegsSource", lambda _config: None)
-    monkeypatch.setattr(gtt, "read_parking_times", lambda _config: parking_times)
-    monkeypatch.setattr(cg, "read_parking_times", lambda _config: parking_times)
 
 
 def _make_config():
@@ -108,7 +108,7 @@ def test_chain_time_equals_sum_of_parts(monkeypatch, hub_zone, income, fuel):
 
     hub_data = np.array([[hub_zone, 0, 0, 0, 1]], dtype=float)
 
-    def fake_read_csv(config, key, id, type_caster=float, has_index_column=False):
+    def fake_read_csv(config, key, id, type_caster=float, has_id_column=False):
         if key == "ketens" and id == "chains":
             return hub_data
         if key == "skims" and id == "parkeerzoektijden_bestand":

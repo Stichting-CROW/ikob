@@ -59,14 +59,8 @@ def setup_generalized_travel_time_input(monkeypatch, gtt):
         ("OV_Afstand", pod): pt_dist,
     }
 
-    def fake_skims_source(_skims_dir):
-        class _Reader:
-            def read(self, id: str, dagdeel: str, type_caster=float, default=None, has_index_column=False):
-                return np.array(skims_data[(id, dagdeel)], dtype=type_caster)
-
-        return _Reader()
-
     # The first entry of each row is the zone number
+    # TODO: UPDATE SO THAT STRINGS CAN BE USED IN THE PARKING TIMES AND HUB COMPUTATION
     parking_times = np.array(
         [
             [0, 1, 2],
@@ -75,15 +69,23 @@ def setup_generalized_travel_time_input(monkeypatch, gtt):
         ]
     )
 
-    def fake_read_csv_from_config(config, key: str, id: str, type_caster=float, has_index_column=False):
+    def fake_skims_source(config):
+        class _Reader:
+            def read(self, id: str, dagdeel: str, type_caster=float, default=None, has_id_column=False):
+                return np.array(skims_data[(id, dagdeel)], dtype=type_caster)
+
+            def read_parking_times(self):
+                return parking_times
+
+        return _Reader()
+
+    def fake_read_csv_from_config(config, key: str, id: str, type_caster=float, has_id_column=False):
         # Only used to infer the number of zones when parking costs are disabled.
         if key == "skims" and id == "parkeerzoektijden_bestand":
             return np.zeros(3)
         raise AssertionError(f"Unexpected read_csv_from_config call: key={key!r}, id={id!r}")
 
     monkeypatch.setattr(gtt, "SkimsSource", fake_skims_source)
-    monkeypatch.setattr(gtt, "SegsSource", lambda _config: None)
-    monkeypatch.setattr(gtt, "read_parking_times", lambda _config: parking_times)
     monkeypatch.setattr(gtt, "read_csv_from_config", fake_read_csv_from_config)
 
     tvom = TvomType.WORK
@@ -288,7 +290,7 @@ def test_generalized_travel_time_includes_additional_and_parking_costs(monkeypat
     parking_costs = np.array([100.0, 300.0, 500.0])
     additional_costs = np.array([[0.0, 50.0, 25.0], [100.0, 0.0, 75.0], [60.0, 80.0, 90.0]])
 
-    def fake_read_csv_from_config(config, key: str, id: str, type_caster=float, has_index_column=False):
+    def fake_read_csv_from_config(config, key: str, id: str, type_caster=float, has_id_column=False):
         if key == "skims" and id == "parkeerzoektijden_bestand":
             return np.zeros(2)
         if key == "geavanceerd" and id == "parkeerkosten":

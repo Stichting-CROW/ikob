@@ -1,6 +1,7 @@
 import pathlib
 
 from ikob.distribute_over_groups import distribute_population_over_groups
+from ikob.id_store import IdStore, ZoneIdStoreSingleton
 from ikob.ikobconfig import get_config_from_args
 from tests.e2e.test_end_to_end import compare_directories, remove_directory
 
@@ -16,6 +17,8 @@ def test_group_distribution():
     case = "eb-eindhoven"
     project_dir = pathlib.Path(f"tests/{case}/")
     config = get_config_from_args(project_dir / f"{case}.json")
+
+    ZoneIdStoreSingleton._instance = IdStore([str(i) for i in range(1, 1207)])
 
     distribute_population_over_groups(config)
 
