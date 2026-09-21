@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from ikob.datasource import DataKey
+from ikob.id_store import IdStore
 
 
 def _simple_matrices(num_zones):
@@ -106,17 +107,21 @@ def test_chain_time_equals_sum_of_parts(monkeypatch, hub_zone, income, fuel):
     config = _make_config()
     _setup(monkeypatch, cg, gtt, num_zones, car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist)
 
-    hub_data = np.array([[hub_zone, 0, 0, 0, 1]], dtype=float)
+    def fake_hubs_build_from_config(cls, config):
+        del cls, config
+        return cg.Hubs(
+            zone_indices=[hub_zone - 1],
+            hub_costs_cents=np.asarray([0], dtype=float),
+            pt_transfer_times=np.asarray([0], dtype=float),
+            bike_transfer_times=np.asarray([0], dtype=float),
+            pay_for_pt=np.asarray([1], dtype=bool),
+            num_hubs=1,
+        )
 
-    def fake_read_csv(config, key, id, type_caster=float, has_id_column=False):
-        if key == "ketens" and id == "chains":
-            return hub_data
-        if key == "skims" and id == "parkeerzoektijden_bestand":
-            return np.zeros(num_zones)
-        raise AssertionError(f"Unexpected read_csv_from_config: key={key!r}, id={id!r}")
-
-    monkeypatch.setattr(cg, "read_csv_from_config", fake_read_csv)
-    monkeypatch.setattr(gtt, "read_csv_from_config", fake_read_csv)
+    monkeypatch.setattr(cg.Hubs, "build_from_config", classmethod(fake_hubs_build_from_config))
+    monkeypatch.setattr(
+        cg.ZoneIdStoreSingleton, "get_instance", lambda _config: IdStore([str(i) for i in range(num_zones)])
+    )
 
     datasource = gtt.generalized_travel_time(config)
 

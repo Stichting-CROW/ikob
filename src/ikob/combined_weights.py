@@ -52,7 +52,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
     pt_kinds = ["OV", "GratisOV"]
     fuel_kinds = ["fossiel", "elektrisch"]
 
-    combined_weights = DataSource(config, DataType.WEIGHTS)
+    combined_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 
     for part_of_day in part_of_days:
         for income in incomes:

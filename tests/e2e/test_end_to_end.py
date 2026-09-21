@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 def file_to_frame(path: pathlib.Path) -> pd.DataFrame:
     if path.suffix == ".csv":
         try:
-            return pd.read_csv(path, dtype=float, header=None)
+            return pd.read_csv(path, header=None, index_col="zone")
         except ValueError:
-            return pd.read_csv(path, dtype=float)
+            return pd.read_csv(path, index_col="zone")
     raise ValueError(f"Calling file to frame with unknown extension {path.suffix}. Must be .csv")
 
 
