@@ -195,9 +195,8 @@ def write_csv(matrix, filenaam, index: CsvIdColumn, header: list[str]):
 
     matrix = np.asarray(matrix)
     if matrix.ndim == 1:
-        # One dimensional data is expected as one row, while
-        # np.savetxt writes this by default as one column.
-        matrix = matrix.reshape(1, -1)
+        matrix = matrix.reshape(-1, 1)
+        header = [filenaam.name]
 
     # Determine format for data
     data_fmt = "%d" if np.issubdtype(matrix.dtype, np.integer) else "%.6e"
@@ -211,6 +210,7 @@ def write_csv(matrix, filenaam, index: CsvIdColumn, header: list[str]):
         )
         combined = np.empty(matrix.shape[0], dtype=struct_dtype)
         combined["id column"] = index_col
+
         for i in range(matrix.shape[1]):
             combined[f"data column {i}"] = matrix[:, i]
         matrix = combined

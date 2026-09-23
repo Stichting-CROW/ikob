@@ -224,7 +224,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                         income=income_group,
                         motive=motive_name,
                         modality=modality,
-                        is_temporary=True,
+                        is_intermediate=True,
                     )
                     origins.set(key, working_population_list)
                     general_possibility_totals.append(origins.get(key))

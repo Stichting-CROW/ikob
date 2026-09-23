@@ -222,7 +222,7 @@ class DataKey:
     The optional header field is used only when writing data and is used to add semantic information to the data written.
     When not specified a zone header is used.
 
-    The temporary field is to indicate that the data stored at this key is not meant to be persisted and only used to store a temporary result for further computation.
+    The is_intermediate field is to indicate that the data stored at this key is not meant to be persisted and only used to store an intermediate result for further computation.
     """
 
     id: str
@@ -238,7 +238,7 @@ class DataKey:
     fuel_kind: str = ""
 
     header: list[str] | None = field(default=None, compare=False)
-    is_temporary: bool = field(default=False, compare=False)
+    is_intermediate: bool = field(default=False, compare=False)
 
 
 class DataSource:
@@ -306,11 +306,11 @@ class DataSource:
         self.cache[key] = data
         return data
 
-    def store(self):
+    def store(self, write_intermediate_results):
         logger.info("Writing output for data: %s.", self.datatype.value)
         for key in self.changed_keys:
             data = self.cache[key]
-            self.write_csv(data, key)
+            self.write_csv(data, key, write_intermediate_results)
 
     def read_csv(self, key: DataKey) -> NDArray:
         path = self._make_file_path(key).with_suffix(".csv")
@@ -318,9 +318,9 @@ class DataSource:
             path, id_store=ZoneIdStoreSingleton.get_instance(self.config), has_id_header=self.has_zone_id_header
         )
 
-    def write_csv(self, data, key: DataKey):
+    def write_csv(self, data, key: DataKey, write_intermediate_results: bool = False):
         assert isinstance(key, DataKey)
-        if key.is_temporary:
+        if key.is_intermediate and not write_intermediate_results:
             return
         path = self._make_file_path(key).with_suffix(".csv")
 

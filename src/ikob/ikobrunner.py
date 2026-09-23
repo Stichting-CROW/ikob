@@ -19,7 +19,12 @@ from ikob.single_weights import calculate_single_weights
 logger = logging.getLogger(__name__)
 
 
-def run_scripts(project_file, skip_steps: list[bool] | None = None, write_weights: bool = False):
+def run_scripts(
+    project_file,
+    skip_steps: list[bool] | None = None,
+    write_weights: bool = False,
+    write_intermediate_results: bool = False,
+):
     """
     Run through all steps for a given project.
 
@@ -29,9 +34,11 @@ def run_scripts(project_file, skip_steps: list[bool] | None = None, write_weight
     Do note that at the very least naming has changed and output is not written to disk after each step any more.
 
     Args:
-        project_file: the path to a JSON project config
-        skip_steps: a list of bools to skip that index step
-        write_weights: skip writing out weights results
+        project_file: The path to a JSON project config
+        skip_steps: A list of bools to skip that index step
+        write_weights: Skip writing out weights results
+        write_intermediate_results: Write intermediate results so that a future run can continue on steps computed by this run.
+                                    These intermediate results do not contain useful results.
     """
     logger.info("Reading project file: %s.", project_file)
     config = get_config_from_args(project_file)
@@ -102,7 +109,7 @@ def run_scripts(project_file, skip_steps: list[bool] | None = None, write_weight
         sources_to_save.extend([single_weights, combined_weights])
 
     for container in sources_to_save:
-        container.store()
+        container.store(write_intermediate_results)
 
     DataSource.write_output_md(config)
 
