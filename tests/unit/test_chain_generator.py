@@ -2,13 +2,8 @@ import numpy as np
 
 from ikob.chain_generator import Hubs, chain_generator, compute_chain_travel_time
 from ikob.datasource import DataKey, DataSource, DataType
+from ikob.id_store import IdStore
 from ikob.utils import IKOB_INFINITE
-
-
-def _make_hubs(zones, hub_costs, pt_transfer, bike_transfer, pay_for_pt):
-    """Build a Hubs object from plain lists."""
-    data = np.column_stack([zones, hub_costs, pt_transfer, bike_transfer, pay_for_pt])
-    return Hubs(data)
 
 
 def _skim_matrices(n=4):
@@ -31,8 +26,14 @@ def test_parking_time_at_hub_is_ignored():
     car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist = _skim_matrices(n)
     pt_cost = pt_dist * 0.10
 
-    hub_zone = 2
-    hubs = _make_hubs(zones=[hub_zone], hub_costs=[100], pt_transfer=[5], bike_transfer=[3], pay_for_pt=[1])
+    hubs = Hubs(
+        zone_indices=[1],
+        hub_costs_cents=np.asarray([100]),
+        pt_transfer_times=np.asarray([5]),
+        bike_transfer_times=np.asarray([3]),
+        pay_for_pt=np.asarray([1]),
+        num_hubs=1,
+    )
 
     kwargs = {
         "hubs": hubs,
@@ -47,7 +48,7 @@ def test_parking_time_at_hub_is_ignored():
         "road_pricing": 0.01,
         "bike_cost_euro_per_km": 0.02,
         "additional_costs": np.zeros((n, n)),
-        "destination_list": np.linspace(1, n, n, dtype=int),
+        "destination_list": np.arange(n),
     }
 
     # parking_times without any parking search time
@@ -68,7 +69,14 @@ def test_no_hubs():
     """With no hubs, the chain travel time is infinite"""
     n = 4
     car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist = _skim_matrices(n)
-    hubs = _make_hubs(zones=[], hub_costs=[], pt_transfer=[], bike_transfer=[], pay_for_pt=[])
+    hubs = Hubs(
+        zone_indices=[],
+        hub_costs_cents=np.asarray([]),
+        pt_transfer_times=np.asarray([]),
+        bike_transfer_times=np.asarray([]),
+        pay_for_pt=np.asarray([]),
+        num_hubs=0,
+    )
 
     pt_cost = pt_dist * 0.08
 
@@ -86,7 +94,7 @@ def test_no_hubs():
         bike_cost_euro_per_km=0.02,
         additional_costs=np.zeros((n, n)),
         parking_times=np.zeros((n, 3)),
-        destination_list=np.linspace(1, n, n, dtype=int),
+        destination_list=np.arange(n),
     )
 
     np.testing.assert_allclose(IKOB_INFINITE, result_bike)
@@ -99,7 +107,7 @@ def test_no_pt_costs():
     car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist = _skim_matrices(n)
     pt_cost = pt_dist * 0.10
 
-    hub_zone = 2
+    hub_zone = 1
     common = {
         "car_time": car_time,
         "car_dist": car_dist,
@@ -112,15 +120,29 @@ def test_no_pt_costs():
         "bike_cost_euro_per_km": 0.02,
         "additional_costs": np.zeros((n, n)),
         "parking_times": np.zeros((n, 3)),
-        "destination_list": np.linspace(1, n, n, dtype=int),
+        "destination_list": np.arange(n),
     }
 
     # pay_for_pt=0 with real pt_cost
-    hubs_no_pay = _make_hubs(zones=[hub_zone], hub_costs=[100], pt_transfer=[5], bike_transfer=[3], pay_for_pt=[0])
+    hubs_no_pay = Hubs(
+        zone_indices=[hub_zone],
+        hub_costs_cents=np.array([100]),
+        pt_transfer_times=np.array([5]),
+        bike_transfer_times=np.array([3]),
+        pay_for_pt=np.array([0]),
+        num_hubs=1,
+    )
     _, result_ride_no_pay = compute_chain_travel_time(hubs=hubs_no_pay, pt_cost=pt_cost, **common)
 
     # pay_for_pt=1 with zero pt_cost
-    hubs_pay = _make_hubs(zones=[hub_zone], hub_costs=[100], pt_transfer=[5], bike_transfer=[3], pay_for_pt=[1])
+    hubs_pay = Hubs(
+        zone_indices=[hub_zone],
+        hub_costs_cents=np.array([100]),
+        pt_transfer_times=np.array([5]),
+        bike_transfer_times=np.array([3]),
+        pay_for_pt=np.array([1]),
+        num_hubs=1,
+    )
     _, result_ride_zero_cost = compute_chain_travel_time(hubs=hubs_pay, pt_cost=np.zeros_like(pt_cost), **common)
 
     np.testing.assert_allclose(result_ride_no_pay, result_ride_zero_cost)
@@ -130,19 +152,18 @@ def test_minimum_across_hubs():
     """With two hubs, element-wise minimum is taken correctly."""
     n = 4
     car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist = _skim_matrices(n)
-    hub_costs1 = 50
-    hub_costs3 = 80
-    pt_transfer1 = 4
-    pt_transfer3 = 6
-    bike_transfer1 = 2
-    bike_transfer3 = 3
-    pay_for_pt = 1
-    hubs = _make_hubs(
-        zones=[1, 3],
-        hub_costs=[hub_costs1, hub_costs3],
-        pt_transfer=[pt_transfer1, pt_transfer3],
-        bike_transfer=[bike_transfer1, bike_transfer3],
-        pay_for_pt=[pay_for_pt, pay_for_pt],
+    zone_indices = [0, 2]
+    hub_costs_cents = np.array([50, 80])
+    pt_transfer_times = np.array([4, 6])
+    bike_transfer_times = np.array([2, 3])
+    pay_for_pt = np.array([1, 1])
+    hubs = Hubs(
+        zone_indices=zone_indices,
+        hub_costs_cents=hub_costs_cents,
+        pt_transfer_times=pt_transfer_times,
+        bike_transfer_times=bike_transfer_times,
+        pay_for_pt=pay_for_pt,
+        num_hubs=2,
     )
 
     pt_cost = pt_dist * 0.08
@@ -159,19 +180,20 @@ def test_minimum_across_hubs():
         "bike_cost_euro_per_km": 0.02,
         "additional_costs": np.zeros((n, n)),
         "parking_times": np.zeros((n, 3)),
-        "destination_list": np.linspace(1, n, n, dtype=int),
+        "destination_list": np.arange(n),
     }
 
     result_bike, result_ride = compute_chain_travel_time(hubs, **input_dict)
 
     # Result is <= single-hub results
-    for zone in [1, 3]:
-        single = _make_hubs(
-            zones=[zone],
-            hub_costs=[hub_costs1 if zone == 1 else hub_costs3],
-            pt_transfer=[pt_transfer1 if zone == 1 else pt_transfer3],
-            bike_transfer=[bike_transfer1 if zone == 1 else bike_transfer3],
-            pay_for_pt=[1],
+    for hub_i in range(2):
+        single = Hubs(
+            zone_indices=[zone_indices[hub_i]],
+            hub_costs_cents=np.atleast_1d(hub_costs_cents[hub_i]),
+            pt_transfer_times=np.atleast_1d(pt_transfer_times[hub_i]),
+            bike_transfer_times=np.atleast_1d(bike_transfer_times[hub_i]),
+            pay_for_pt=np.atleast_1d(pay_for_pt[hub_i]),
+            num_hubs=1,
         )
         sb, sr = compute_chain_travel_time(single, **input_dict)
         assert np.all(result_bike <= sb + 1e-10)
@@ -182,19 +204,18 @@ def test_destination_list():
     """Destinations not in the destinations list have an "infinite" travel time via the hub"""
     n = 4
     car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist = _skim_matrices(n)
-    hub_costs1 = 50
-    hub_costs3 = 80
-    pt_transfer1 = 4
-    pt_transfer3 = 6
-    bike_transfer1 = 2
-    bike_transfer3 = 3
-    pay_for_pt = 1
-    hubs = _make_hubs(
-        zones=[1, 3],
-        hub_costs=[hub_costs1, hub_costs3],
-        pt_transfer=[pt_transfer1, pt_transfer3],
-        bike_transfer=[bike_transfer1, bike_transfer3],
-        pay_for_pt=[pay_for_pt, pay_for_pt],
+    zone_indices = [0, 2]
+    hub_costs_cents = np.array([50, 80])
+    pt_transfer_times = np.array([4, 6])
+    bike_transfer_times = np.array([2, 3])
+    pay_for_pt = np.array([1, 1])
+    hubs = Hubs(
+        zone_indices=zone_indices,
+        hub_costs_cents=hub_costs_cents,
+        pt_transfer_times=pt_transfer_times,
+        bike_transfer_times=bike_transfer_times,
+        pay_for_pt=pay_for_pt,
+        num_hubs=2,
     )
 
     pt_cost = pt_dist * 0.08
@@ -213,7 +234,7 @@ def test_destination_list():
         bike_cost_euro_per_km=0.02,
         additional_costs=np.zeros((n, n)),
         parking_times=np.zeros((n, 3)),
-        destination_list=np.array([1, 2, 4]),
+        destination_list=np.array([0, 1, 3]),
     )
     assert np.allclose(result_bike[:, 2], IKOB_INFINITE)
     assert not np.any(np.isclose(result_bike[:, [0, 1, 3]], IKOB_INFINITE))
@@ -278,33 +299,40 @@ def test_computed_keys(monkeypatch):
         "OV_Afstand": rng.random((num_zones, num_zones)) * 30,
     }
 
-    def fake_skims_source(_skims_dir):
+    def fake_skims_source(config):
         class _Reader:
-            def read(self, id, dagdeel, type_caster=float, default=None, has_index_column=False):
+            def read(self, id, dagdeel, type_caster=float, default=None, has_zone_id_header=False):
                 if id in skims_data:
-                    return np.array(skims_data[id], dtype=type_caster)
+                    return np.asarray(skims_data[id], dtype=type_caster)
                 if default is not None:
                     return default
                 raise FileNotFoundError(f"Skim {id}/{dagdeel} not found, with no default.")
 
+            def read_parking_times(self):
+                return np.zeros((num_zones, 3))
+
         return _Reader()
 
-    hub_data = np.array([[2, 50, 5, 3, 1], [4, 80, 6, 4, 1]], dtype=float)
-
-    def fake_read_csv_from_config(config, key, id, type_caster=float, has_index_column=False):
-        if key == "ketens" and id == "chains":
-            return hub_data
-        if key == "ketens" and id == "bestemmingslijst":
-            return np.linspace(1, num_zones, num_zones, dtype=int)
-        raise AssertionError(f"Unexpected read_csv_from_config call: key={key!r}, id={id!r}")
+    def fake_hubs_build_from_config(cls, config):
+        del cls, config
+        return Hubs(
+            zone_indices=[1, 3],
+            hub_costs_cents=np.asarray([50, 80], dtype=float),
+            pt_transfer_times=np.asarray([5, 6], dtype=float),
+            bike_transfer_times=np.asarray([3, 4], dtype=float),
+            pay_for_pt=np.asarray([1, 1], dtype=bool),
+            num_hubs=2,
+        )
 
     monkeypatch.setattr(cg, "SkimsSource", fake_skims_source)
-    monkeypatch.setattr(cg, "read_csv_from_config", fake_read_csv_from_config)
-    monkeypatch.setattr(cg, "read_parking_times", lambda _config: np.zeros((num_zones, 3)))
+    monkeypatch.setattr(cg.Hubs, "build_from_config", classmethod(fake_hubs_build_from_config))
+    monkeypatch.setattr(
+        cg.ZoneIdStoreSingleton, "get_instance", lambda _config: IdStore([str(i) for i in range(num_zones)])
+    )
 
     config = _make_config()
 
-    datasource = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME)
+    datasource = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
     datasource.cache = {}
 
     chain_generator(datasource, config)
@@ -325,3 +353,23 @@ def test_computed_keys(monkeypatch):
                 assert key in datasource.cache, f"Missing key: {key}"
                 matrix = datasource.cache[key]
                 assert matrix.shape == (num_zones, num_zones)
+
+
+def test_hubs_build_from_config_parses_string_zero_one_pay_for_pt(tmp_path, monkeypatch):
+    # TODO: COMMIT CHANGES
+    import ikob.chain_generator as cg
+
+    hubs_path = tmp_path / "hubs.csv"
+    hubs_path.write_text(
+        "Zone,Tarief,Overstap_OV,Overstap+Fiets,Betalenvoor OV?\nz2,31415,-15,2,0\nz5,27182,5,2,1\n",
+        encoding="utf-8",
+    )
+
+    config = _make_config()
+    config["ketens"]["chains"]["bestand"] = str(hubs_path)
+
+    monkeypatch.setattr(cg.ZoneIdStoreSingleton, "get_instance", lambda _config: IdStore(["z2", "z5"]))
+
+    hubs = cg.Hubs.build_from_config(config)
+
+    np.testing.assert_array_equal(hubs.pay_for_pt, np.array([False, True], dtype=bool))

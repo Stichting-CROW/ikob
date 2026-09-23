@@ -9,10 +9,8 @@ from ikob.datasource import (
     DataKey,
     DataSource,
     DataType,
-    SegsSource,
     SkimsSource,
     read_csv_from_config,
-    read_parking_times,
 )
 from ikob.utils import IKOB_INFINITE
 
@@ -56,7 +54,21 @@ def generalized_travel_time(config) -> DataSource:
     pricecap = skims_config["pricecap"]["gebruiken"]
     pricecap_value = skims_config["pricecap"]["getal"]
     bike_cost_euro_per_km = skims_config["bike_cost_ct_per_km"] / 100
-    parking_times = read_parking_times(config)
+
+    income_levels = ["laag", "middellaag", "middelhoog", "hoog"]
+    pt_km_price = pt_km_price / 100
+    starting_rate = starting_rate / 100
+    var_fossil = var_fossil / 100
+    var_electric = var_electric / 100
+    road_pricing_fossil = road_pricing_fossil / 100
+    road_pricing_electric = road_pricing_electric / 100
+    fuel_kinds = ["fossiel", "elektrisch"]
+
+    skims_reader = SkimsSource(config)
+
+    generalized_travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
+
+    parking_times = skims_reader.read_parking_times()
     parking_times_array = np.asarray(parking_times, dtype=utils.FLOAT_DTYPE)
 
     if parking_costs:
@@ -68,22 +80,6 @@ def generalized_travel_time(config) -> DataSource:
         additional_cost_matrix = read_csv_from_config(config, key="geavanceerd", id="additionele_kosten")
     else:
         additional_cost_matrix = np.zeros((len(parking_times), len(parking_times)), dtype=utils.FLOAT_DTYPE)
-
-    income_levels = ["laag", "middellaag", "middelhoog", "hoog"]
-    pt_km_price = pt_km_price / 100
-    starting_rate = starting_rate / 100
-    var_fossil = var_fossil / 100
-    var_electric = var_electric / 100
-    road_pricing_fossil = road_pricing_fossil / 100
-    road_pricing_electric = road_pricing_electric / 100
-    fuel_kinds = ["fossiel", "elektrisch"]
-
-    SegsSource(config)
-
-    skims_dir = config["project"]["paden"]["skims_directory"]
-    skims_reader = SkimsSource(skims_dir)
-
-    generalized_travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME)
 
     if chains:
         chain_generator(generalized_travel_time, config)
@@ -127,8 +123,6 @@ def generalized_travel_time(config) -> DataSource:
                 regime=regime,
                 motive=motive_name,
                 income=income_level,
-                header=DataKey.zone_header(num_zones),
-                index=DataKey.zone_index(num_zones),
             )
             generalized_travel_time.set(key, gtr_skim)
 
@@ -182,8 +176,6 @@ def generalized_travel_time(config) -> DataSource:
                     income=income_level,
                     regime=regime,
                     motive=motive_name,
-                    header=DataKey.zone_header(num_zones),
-                    index=DataKey.zone_index(num_zones),
                 )
                 generalized_travel_time.set(key, gtr_skim)
 
@@ -197,8 +189,6 @@ def generalized_travel_time(config) -> DataSource:
                 income=income_level,
                 motive=motive_name,
                 regime=regime,
-                header=DataKey.zone_header(num_zones),
-                index=DataKey.zone_index(num_zones),
             )
             generalized_travel_time.set(key, gtr_skim)
 
@@ -216,8 +206,6 @@ def generalized_travel_time(config) -> DataSource:
                     income=income_level,
                     motive=motive_name,
                     regime=regime,
-                    header=DataKey.zone_header(num_zones),
-                    index=DataKey.zone_index(num_zones),
                 )
                 generalized_travel_time.set(key, gtr_skim)
 
@@ -239,8 +227,6 @@ def generalized_travel_time(config) -> DataSource:
                 income=income_level,
                 motive=motive_name,
                 regime=regime,
-                header=DataKey.zone_header(num_zones),
-                index=DataKey.zone_index(num_zones),
             )
             generalized_travel_time.set(key, gtr_skim)
 
@@ -251,8 +237,6 @@ def generalized_travel_time(config) -> DataSource:
                 part_of_day=pod,
                 motive=motive_name,
                 regime=regime,
-                header=DataKey.zone_header(num_zones),
-                index=DataKey.zone_index(num_zones),
             )
             generalized_travel_time.set(key, gtr_skim)
 
