@@ -315,7 +315,7 @@ def competition(
                         motive=motive_name,
                         modality=modality,
                         group=car_possession_group,
-                        is_temporary=True,
+                        is_intermediate=True,
                     )
                     competitions.set(key, competition_total)
 

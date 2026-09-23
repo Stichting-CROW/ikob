@@ -301,7 +301,7 @@ def test_computed_keys(monkeypatch):
 
     def fake_skims_source(config):
         class _Reader:
-            def read(self, id, dagdeel, type_caster=float, default=None, has_id_column=False):
+            def read(self, id, dagdeel, type_caster=float, default=None, has_zone_id_header=False):
                 if id in skims_data:
                     return np.asarray(skims_data[id], dtype=type_caster)
                 if default is not None:
@@ -332,7 +332,7 @@ def test_computed_keys(monkeypatch):
 
     config = _make_config()
 
-    datasource = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_id_header=True)
+    datasource = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
     datasource.cache = {}
 
     chain_generator(datasource, config)

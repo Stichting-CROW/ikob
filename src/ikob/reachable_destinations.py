@@ -142,7 +142,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                         group=car_possession_group,
                         motive=motive_name,
                         modality=modality,
-                        is_temporary=True,
+                        is_intermediate=True,
                     )
                     potencies.set(key, possibility_sum)
                     general_possibility_totals.append(potencies.get(key))
