@@ -163,7 +163,6 @@ class SegsSource:
         group="",
         modifier="",
         has_id_column=True,
-        has_id_header=False,
         id_store: IdStore | None = None,
     ):
         # TODO: This is a temporary fix. The 'Verdeling_over_groepen*'

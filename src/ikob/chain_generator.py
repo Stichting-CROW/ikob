@@ -68,7 +68,7 @@ class Hubs:
             valid = False
 
         try:
-            hub_content_raw[:, 1:3].astype(FLOAT_DTYPE)
+            hub_content_raw[:, 1:4].astype(FLOAT_DTYPE)
         except ValueError:
             logger.warning(
                 "Columns 2-4 of the hub data (in order: price of hub, PT transfer time, bike transfer time) should contain numbers."
@@ -76,7 +76,9 @@ class Hubs:
             valid = False
         try:
             # We must first convert to int bc the string 0 gets cast to True
-            hub_content_raw[:, 4].astype(int).astype(bool)
+            pay_for_pt_int = hub_content_raw[:, 4].astype(int)
+            if (pay_for_pt_int < 0).any() or (pay_for_pt_int > 1).any():
+                logger.warning("The fifth column of the hub data (wether to pay for pt) should contain either 0 or 1.")
         except ValueError:
             logger.warning("The fifth column of the hub data (wether to pay for pt) should contain either 0 or 1.")
             valid = False
