@@ -106,7 +106,7 @@ def distribute_population_over_groups(config):
         min_car_possession = list(map(min, car_possessions_per_household_segs, artificial_car_possession_segs))
 
     # Read SEGS input files. See tables 1-3 of IKOB-algorithm.pdf
-    urbanization_grade_id_store = IdStore(["1", "2", "3", "4", "5"])
+    urbanization_grade_id_store = IdStore.from_zone_ids(["1", "2", "3", "4", "5"])
     no_license_segs = segs_source.read("GeenRijbewijs", id_store=urbanization_grade_id_store)
     no_car_segs = segs_source.read("GeenAuto", id_store=urbanization_grade_id_store)
     with_car_segs = segs_source.read("WelAuto", id_store=urbanization_grade_id_store)

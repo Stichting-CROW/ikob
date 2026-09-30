@@ -18,7 +18,7 @@ def test_group_distribution():
     project_dir = pathlib.Path(f"tests/{case}/")
     config = get_config_from_args(project_dir / f"{case}.json")
 
-    ZoneIdStoreSingleton._instance = IdStore([str(i) for i in range(1, 1207)])
+    ZoneIdStoreSingleton._instance = IdStore.from_zone_ids([str(i) for i in range(1, 1207)])
 
     distribute_population_over_groups(config)
 

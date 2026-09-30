@@ -327,7 +327,9 @@ def test_computed_keys(monkeypatch):
     monkeypatch.setattr(cg, "SkimsSource", fake_skims_source)
     monkeypatch.setattr(cg.Hubs, "build_from_config", classmethod(fake_hubs_build_from_config))
     monkeypatch.setattr(
-        cg.ZoneIdStoreSingleton, "get_instance", lambda _config: IdStore([str(i) for i in range(num_zones)])
+        cg.ZoneIdStoreSingleton,
+        "get_instance",
+        lambda _config: IdStore.from_zone_ids([str(i) for i in range(num_zones)]),
     )
 
     config = _make_config()
@@ -367,7 +369,7 @@ def test_hubs_build_from_config_parses_string_zero_one_pay_for_pt(tmp_path, monk
     config = _make_config()
     config["ketens"]["chains"]["bestand"] = str(hubs_path)
 
-    monkeypatch.setattr(cg.ZoneIdStoreSingleton, "get_instance", lambda _config: IdStore(["z2", "z5"]))
+    monkeypatch.setattr(cg.ZoneIdStoreSingleton, "get_instance", lambda _config: IdStore.from_zone_ids(["z2", "z5"]))
 
     hubs = cg.Hubs.build_from_config(config)
 

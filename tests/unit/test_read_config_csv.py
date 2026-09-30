@@ -21,7 +21,7 @@ def matrix_csv(tmp_path):
 
 
 def test_reads_parking_costs_as_1d_array(single_column_csv):
-    ZoneIdStoreSingleton._instance = IdStore(["z1", "z2", "z3"])
+    ZoneIdStoreSingleton._instance = IdStore.from_zone_ids(["z1", "z2", "z3"])
 
     config = {
         "geavanceerd": {
@@ -33,7 +33,7 @@ def test_reads_parking_costs_as_1d_array(single_column_csv):
 
 
 def test_reads_kunstmab_as_1d_array(single_column_csv):
-    ZoneIdStoreSingleton._instance = IdStore(["z1", "z2", "z3"])
+    ZoneIdStoreSingleton._instance = IdStore.from_zone_ids(["z1", "z2", "z3"])
 
     config = {
         "geavanceerd": {
@@ -45,7 +45,7 @@ def test_reads_kunstmab_as_1d_array(single_column_csv):
 
 
 def test_reads_additional_cost_as_2d_matrix(matrix_csv):
-    ZoneIdStoreSingleton._instance = IdStore(["z1", "z2", "z3"])
+    ZoneIdStoreSingleton._instance = IdStore.from_zone_ids(["z1", "z2", "z3"])
 
     config = {
         "geavanceerd": {

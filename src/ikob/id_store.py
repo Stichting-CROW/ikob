@@ -1,11 +1,12 @@
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 
 import numpy as np
 from numpy.typing import NDArray
 
 
-@dataclass
+@dataclass(frozen=True)
 class IdStore:
     """A mapping for (zone) ID to (zone) index in the matrices used throughout the code
 
@@ -13,31 +14,39 @@ class IdStore:
     files with different id's such as urbanization grades.
     """
 
-    zone_ids: list[str]
-    zone_source: str = ""
+    _zone_ids: tuple[str, ...]
+    # MappingProxyType is essentially an immutable dict
+    _id_to_idx: MappingProxyType[str, int]
+    _num_zones: int
+    _zone_source: str = ""
 
-    def __post_init__(self):
-        self.id_to_idx = {zone_id: idx for idx, zone_id in enumerate(self.zone_ids)}
-        self.num_zones = len(self.zone_ids)
+    @classmethod
+    def from_zone_ids(cls, zone_ids: list[str], zone_source=""):
+        id_to_idx = {zone_id: idx for idx, zone_id in enumerate(zone_ids)}
+        num_zones = len(zone_ids)
+        return cls(tuple(zone_ids), MappingProxyType(id_to_idx.copy()), num_zones, zone_source)
 
     def validate_exact_ids(self, ids: list[str], source_name: str):
-        reference = set(self.zone_ids)
+        reference = set(self._zone_ids)
+        if any(ids.count(id) > 1 for id in self._zone_ids):
+            raise ValueError(f"Duplicate id's found in {source_name}.")
+
         current = set(ids)
         missing_ids = reference - current
         extra_ids = current - reference
         if missing_ids or extra_ids:
             msg = f"id mismatch for {source_name}. Missing ids: {missing_ids}, extra ids: {extra_ids}"
-            msg += ("\nid's have been read from " + self.zone_source) if self.zone_source else ""
+            msg += ("\nid's have been read from " + self._zone_source) if self._zone_source else ""
             raise ValueError(msg)
 
     def reorder_rows_to_internal_idx(self, row_ids: list[str], values: NDArray) -> NDArray:
         row_id_to_idx = {row_id: row_idx for row_idx, row_id in enumerate(row_ids)}
-        reordered_row_idx = [row_id_to_idx[zone_id] for zone_id in self.zone_ids]
+        reordered_row_idx = [row_id_to_idx[zone_id] for zone_id in self._zone_ids]
         return values[reordered_row_idx]
 
     def reorder_columns_to_internal_idx(self, col_ids: list[str], values: NDArray) -> NDArray:
         col_id_to_idx = {col_id: col_idx for col_idx, col_id in enumerate(col_ids)}
-        reordered_col_idx = [col_id_to_idx[zone_id] for zone_id in self.zone_ids]
+        reordered_col_idx = [col_id_to_idx[zone_id] for zone_id in self._zone_ids]
         return values[:, reordered_col_idx]
 
 
@@ -79,4 +88,4 @@ class ZoneIdStoreSingleton:
             encoding="utf-8-sig",
         )
 
-        return IdStore(ids_array.tolist(), zone_source="first column of Auto_Tijd skim file")
+        return IdStore.from_zone_ids(ids_array.tolist(), zone_source="first column of Auto_Tijd skim file")

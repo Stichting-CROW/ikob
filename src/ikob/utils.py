@@ -78,7 +78,7 @@ def read_csv(
     if len(matrix.shape) == 2:
         if len(matrix[0, :]) == 1:
             matrix = matrix[:, 0]
-        if len(matrix[:, 0]) == 1:
+        elif len(matrix[:, 0]) == 1:
             matrix = matrix[0]
     return matrix
 
