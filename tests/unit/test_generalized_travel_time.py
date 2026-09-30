@@ -60,12 +60,11 @@ def setup_generalized_travel_time_input(monkeypatch, gtt):
     }
 
     # The first entry of each row is the zone number
-    # TODO: UPDATE SO THAT STRINGS CAN BE USED IN THE PARKING TIMES AND HUB COMPUTATION
     parking_times = np.array(
         [
-            [0, 1, 2],
-            [1, 3, 4],
-            [2, 4, 6],
+            [1, 2],
+            [3, 4],
+            [4, 6],
         ]
     )
 
