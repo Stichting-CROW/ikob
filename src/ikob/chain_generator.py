@@ -37,7 +37,7 @@ class Hubs:
 
         zone_id_store = ZoneIdStoreSingleton.get_instance(config)
 
-        zone_indices: list[int] = [zone_id_store.id_to_idx[zone_id] for zone_id in hub_raw[:, 0]]
+        zone_indices: list[int] = [zone_id_store._id_to_idx[zone_id] for zone_id in hub_raw[:, 0]]
         hub_costs_cents: npt.NDArray[FLOAT_DTYPE] = hub_raw[:, 1].astype(FLOAT_DTYPE)
         pt_transfer_times: npt.NDArray[FLOAT_DTYPE] = hub_raw[:, 2].astype(FLOAT_DTYPE)
         bike_transfer_times: npt.NDArray[FLOAT_DTYPE] = hub_raw[:, 3].astype(FLOAT_DTYPE)
@@ -93,7 +93,7 @@ class Hubs:
         zone_id_store = ZoneIdStoreSingleton.get_instance(config)
 
         destination_list_idx = np.asarray(
-            [zone_id_store.id_to_idx[destination_id] for destination_id in destination_list_id]
+            [zone_id_store._id_to_idx[destination_id] for destination_id in destination_list_id]
         ).astype(int)
 
         return destination_list_idx
@@ -253,7 +253,7 @@ def chain_generator(generalized_travel_time: DataSource, config: dict):
     if config["ketens"]["bestemmingslijst"]["gebruiken"]:
         destination_list_idx = Hubs.read_destinations_from_file(config)
     else:
-        destination_list_idx = np.arange(zone_id_store.num_zones)
+        destination_list_idx = np.arange(zone_id_store._num_zones)
 
     for pod in part_of_day:
         car_time = skims_reader.read("Auto_Tijd", pod)

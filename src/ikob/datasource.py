@@ -195,7 +195,7 @@ class SegsSource:
             )
 
     def write_csv(self, data, id, header, group="", jaar="", modifier="", scenario=""):
-        index = utils.CsvIdColumn.from_zone_ids(ZoneIdStoreSingleton.get_instance(self.config).zone_ids)
+        index = utils.CsvIdColumn.from_zone_ids(ZoneIdStoreSingleton.get_instance(self.config)._zone_ids)
 
         path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".csv")
         return utils.write_csv(data, path, header=header, index=index)
@@ -325,8 +325,8 @@ class DataSource:
 
         id_store = ZoneIdStoreSingleton.get_instance(self.config)
 
-        header = key.header if key.header is not None else id_store.zone_ids
-        index = utils.CsvIdColumn.from_zone_ids(id_store.zone_ids)
+        header = key.header if key.header is not None else id_store._zone_ids
+        index = utils.CsvIdColumn.from_zone_ids(id_store._zone_ids)
 
         utils.write_csv(data, path, header=header, index=index)
 
