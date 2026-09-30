@@ -30,18 +30,16 @@ def test_generate_parkeerzoektijden():
 
     reference = read_csv(project_dir / "SEGS" / "Parkeerzoektijd.csv", type_caster=INT_DTYPE, id_store=id_store)
 
-    skims = SkimsSource(config)
-
     # Read test file on disk given in configuration file.
-    assert np.all(reference == skims.read_parking_times())
+    assert np.all(reference == SkimsSource(config).read_parking_times())
 
     # Remove path from config and fall back to expected location.
     del config["skims"]["parkeerzoektijden_bestand"]
-    assert np.all(reference == skims.read_parking_times())
+    assert np.all(reference == SkimsSource(config).read_parking_times())
 
     # Set config to unknown path, trigger conversion on the fly.
     config["skims"]["parkeerzoektijden_bestand"] = "unset"
-    assert np.all(reference == skims.read_parking_times())
+    assert np.all(reference == SkimsSource(config).read_parking_times())
 
 
 def test_assert_failed_parkeerzoektijden_conversion():
