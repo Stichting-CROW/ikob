@@ -57,16 +57,9 @@ def read_csv(
 
     # First, attempt to read without header.
     # If this fails, read with skipping the header.
-    try:
-        matrix = np.loadtxt(filename, dtype=type_caster, delimiter=",")
-        has_header = False
-    except ValueError:
-        matrix = np.loadtxt(filename, dtype=type_caster, skiprows=1, delimiter=",")
-        has_header = True
+    matrix = np.loadtxt(filename, dtype=type_caster, skiprows=1, delimiter=",")
 
     if has_id_header:
-        if not has_header:
-            raise ValueError(f"File {filename} was loaded as having an id header but it has no header.")
         if id_store is None:
             raise ValueError(
                 f"Unable to correctly read file with id header {filename} as no id store is provided for the mapping from id to internal index."
@@ -90,18 +83,6 @@ def read_csv(
     return matrix
 
 
-def _can_cast_all(values: list[str], type_caster: type) -> bool:
-    for value in values:
-        text = value.strip()
-        if text == "":
-            return False
-        try:
-            type_caster(text)
-        except (TypeError, ValueError):
-            return False
-    return True
-
-
 def read_csv_with_id_values(filenaam, type_caster: type) -> tuple[npt.NDArray, list[str], list[str] | None]:
     """Read csv data with an index/id column and return (values, id's, headers).
 
@@ -111,33 +92,27 @@ def read_csv_with_id_values(filenaam, type_caster: type) -> tuple[npt.NDArray, l
     if not isinstance(filenaam, pathlib.Path):
         filenaam = pathlib.Path(filenaam)
 
-    first_non_empty_line = ""
+    header_line = ""
     with filenaam.open("r") as f:
         for raw_line in f:
             line = raw_line.strip()
-            first_non_empty_line = line
+            header_line = line
             break
 
-    if not first_non_empty_line:
+    if not header_line:
         raise ValueError(f"CSV file {filenaam} is empty.")
 
-    first_parts = [part.strip() for part in first_non_empty_line.split(",")]
-    if len(first_parts) < 2:
+    header = [part.strip() for part in header_line.split(",")]
+    if len(header) < 2:
         raise ValueError(f"CSV file {filenaam} must contain at least an id column and one value column.")
 
-    has_header = not _can_cast_all(first_parts[1:], type_caster)
-    header = first_parts if has_header else None
-
     # The number of value columns is the total number of columns - 1
-    num_value_columns = len(first_parts) - 1
+    num_value_columns = len(header) - 1
 
-    skiprows = 1 if has_header else 0
     usecols = tuple(range(1, num_value_columns + 1))
 
-    matrix = np.loadtxt(filenaam, dtype=type_caster, delimiter=",", skiprows=skiprows, usecols=usecols, ndmin=2)
-    ids_array = np.loadtxt(
-        filenaam, dtype=str, delimiter=",", skiprows=skiprows, usecols=(0,), ndmin=1, encoding="utf-8-sig"
-    )
+    matrix = np.loadtxt(filenaam, dtype=type_caster, delimiter=",", skiprows=1, usecols=usecols, ndmin=2)
+    ids_array = np.loadtxt(filenaam, dtype=str, delimiter=",", skiprows=1, usecols=(0,), ndmin=1, encoding="utf-8-sig")
 
     # If the matrix is really an array, return it as such
     if len(matrix.shape) == 2:

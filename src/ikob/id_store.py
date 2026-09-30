@@ -14,6 +14,7 @@ class IdStore:
     """
 
     zone_ids: list[str]
+    zone_source: str = ""
 
     def __post_init__(self):
         self.id_to_idx = {zone_id: idx for idx, zone_id in enumerate(self.zone_ids)}
@@ -25,7 +26,9 @@ class IdStore:
         missing_ids = reference - current
         extra_ids = current - reference
         if missing_ids or extra_ids:
-            raise ValueError(f"id mismatch for {source_name}. Missing ids: {missing_ids}, extra ids: {extra_ids}")
+            msg = f"id mismatch for {source_name}. Missing ids: {missing_ids}, extra ids: {extra_ids}"
+            msg += ("\nid's have been read from " + self.zone_source) if self.zone_source else ""
+            raise ValueError(msg)
 
     def reorder_rows_to_internal_idx(self, row_ids: list[str], values: NDArray) -> NDArray:
         row_id_to_idx = {row_id: row_idx for row_idx, row_id in enumerate(row_ids)}
@@ -76,4 +79,4 @@ class ZoneIdStoreSingleton:
             encoding="utf-8-sig",
         )
 
-        return IdStore(ids_array.tolist())
+        return IdStore(ids_array.tolist(), zone_source="first column of Auto_Tijd skim file")
