@@ -7,7 +7,7 @@ from tkinter import BooleanVar, Button, Frame, StringVar, Tk, Widget, filedialog
 
 from ikob.combined_weights import calculate_combined_weights
 from ikob.competition import competition_on_citizens, competition_on_destinations
-from ikob.config import validate, widgets
+from ikob.config import widgets
 from ikob.datasource import DataSource, DataType
 from ikob.distribute_over_groups import distribute_population_over_groups
 from ikob.generalized_travel_time import generalized_travel_time
@@ -41,9 +41,8 @@ def run_scripts(
                                     These intermediate results do not contain useful end results.
     """
     logger.info("Reading project file: %s.", project_file)
-    config = get_config_from_args(project_file)
+    config, valid = get_config_from_args(project_file)
 
-    valid = validate.FileValidator(config).validate_input_files()
     if not valid:
         raise ValueError("Invalid input files, see console warnings.")
 

@@ -52,6 +52,7 @@ def get_config_from_args(project=None):
 
 def load_config(filename):
     config = None
+    valid = False
     try:
         with open(filename) as json_file:
             config = json.load(json_file)
@@ -73,8 +74,8 @@ def load_config(filename):
                 raise ValueError(msg)
 
         config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
-        validate.FileValidator(config).validate_input_files()
-    return config
+        valid = validate.FileValidator(config).validate_input_files()
+    return config, valid
 
 
 def saveConfig(filename, config):
@@ -123,7 +124,7 @@ class ConfigApp(tk.Tk):
         )
         if filename:
             try:
-                read_config = load_config(filename)
+                read_config, _ = load_config(filename)
             except ValueError:
                 messagebox.showerror(
                     title="Fout",

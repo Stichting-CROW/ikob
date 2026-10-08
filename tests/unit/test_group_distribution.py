@@ -16,7 +16,7 @@ def test_group_distribution():
     """
     case = "eb-eindhoven"
     project_dir = pathlib.Path(f"tests/{case}/")
-    config = get_config_from_args(project_dir / f"{case}.json")
+    config, _ = get_config_from_args(project_dir / f"{case}.json")
 
     ZoneIdStoreSingleton._instance = IdStore.from_zone_ids([str(i) for i in range(1, 1207)])
 
