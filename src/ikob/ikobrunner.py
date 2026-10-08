@@ -23,6 +23,7 @@ def run_scripts(
     project_file,
     skip_steps: list[bool] | None = None,
     write_weights: bool = False,
+    write_travel_time: bool = False,
     write_intermediate_results: bool = False,
 ):
     """
@@ -36,7 +37,8 @@ def run_scripts(
     Args:
         project_file: The path to a JSON project config
         skip_steps: A list of bools to skip that index step
-        write_weights: Skip writing out weights results
+        write_weights: Skip writing weights results (slow for large projects)
+        write_travel_time: Skip writing travel time results (slow for large projects)
         write_intermediate_results: Write intermediate results so that a future run can continue on steps computed by this run.
                                     These intermediate results do not contain useful end results.
     """
@@ -98,7 +100,6 @@ def run_scripts(
     # should persist.
     logger.info("Writing output to disk...")
     sources_to_save = [
-        travel_time,
         reachable_destinations,
         reachable_population,
         competition_citizens,
@@ -106,6 +107,8 @@ def run_scripts(
     ]
     if write_weights:
         sources_to_save.extend([single_weights, combined_weights])
+    if write_travel_time:
+        sources_to_save.extend([travel_time])
 
     for container in sources_to_save:
         container.store(write_intermediate_results)

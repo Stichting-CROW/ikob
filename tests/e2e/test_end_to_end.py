@@ -97,7 +97,7 @@ def test_end_to_end():
     remove_directory(project_dir / "vlaanderen")
 
     # End-to-end test should not skip any steps: all scripts should pass.
-    run_scripts(project, write_weights=True)
+    run_scripts(project, write_weights=True, write_travel_time=True)
 
     for result_dir in compare_dirs:
         reference_dir = project_dir / "reference" / result_dir.stem
@@ -121,7 +121,9 @@ def test_end_to_end_skipping_steps():
     for i in range(8):
         skip_steps = [*[True] * i, *[False] * (8 - i)]
         logger.warning(skip_steps)
-        run_scripts(project, skip_steps=skip_steps, write_weights=True, write_intermediate_results=True)
+        run_scripts(
+            project, skip_steps=skip_steps, write_weights=True, write_intermediate_results=True, write_travel_time=True
+        )
 
         for result_dir in compare_dirs:
             reference_dir = project_dir / "reference" / result_dir.stem
