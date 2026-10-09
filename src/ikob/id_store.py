@@ -23,20 +23,29 @@ class IdStore:
 
     @classmethod
     def from_zone_ids(cls, zone_ids: list[str], zone_source=""):
+        duplicates = {id for id in zone_ids if zone_ids.count(id) > 1}
+        if any(duplicates):
+            raise ValueError(
+                "Duplicate id's found in "
+                + (zone_source if zone_source != "" else "zone ids provided to id store constructor")
+                + f"\nduplicates: {duplicates}"
+            )
+
         id_to_idx = {zone_id: idx for idx, zone_id in enumerate(zone_ids)}
         num_zones = len(zone_ids)
         return cls(tuple(zone_ids), MappingProxyType(id_to_idx.copy()), num_zones, zone_source)
 
     def validate_exact_ids(self, ids: list[str], source_name: str):
         reference = set(self._zone_ids)
-        if any(ids.count(id) > 1 for id in self._zone_ids):
-            raise ValueError(f"Duplicate id's found in {source_name}.")
+        duplicates = {id for id in ids if ids.count(id) > 1}
+        if any(duplicates):
+            raise ValueError(f"Duplicate id's found in {source_name}. Duplicates: {duplicates}")
 
         current = set(ids)
         missing_ids = reference - current
         extra_ids = current - reference
         if missing_ids or extra_ids:
-            msg = f"id mismatch for {source_name}. Missing ids: {missing_ids}, extra ids: {extra_ids}"
+            msg = f"id mismatch for {source_name}.\nMissing ids: {missing_ids}\nextra ids: {extra_ids}"
             msg += ("\nid's have been read from " + self._zone_source) if self._zone_source else ""
             raise ValueError(msg)
 
