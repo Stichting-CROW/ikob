@@ -3,9 +3,6 @@
 import logging
 from pathlib import Path
 
-import numpy as np
-
-from ikob import utils
 from ikob.chain_generator import Hubs
 from ikob.configuration_definition import default_config, default_configuration_definition
 from ikob.datasource import SegsSource, SkimsSource, read_csv_from_config
@@ -18,11 +15,12 @@ class FileValidator:
         self.config = config
 
     def validate_input_files(self):
-        logger.info("validating input files")
-        num_zones, valid = self._skims_files_validation()
-        if valid:
-            valid &= self._motive_files_validation(num_zones)
-            valid &= self._chain_files_validation(num_zones)
+        logger.info("validating input files (continues on error until all files have been validated)")
+        # This mainly reads in a bunch of files from to config to see if it works, validation of the zone ids is done in the id store
+        valid = self._motive_files_validation()
+        valid &= self._chain_files_validation()
+        # Validate skims at last because they may load slowly
+        valid &= self._skims_files_validation()
 
         if not valid:
             # This is only an error when we are trying to run ikob right now when loading / saving config a warning is good.
@@ -31,7 +29,7 @@ class FileValidator:
             )
         return valid
 
-    def _chain_files_validation(self, num_zones):
+    def _chain_files_validation(self):
         valid = True
         if self.config["ketens"]["chains"]["gebruiken"]:
             try:
@@ -61,106 +59,36 @@ class FileValidator:
         skims_reader = SkimsSource(self.config)
         parking_costs = self.config["geavanceerd"]["parkeerkosten"]["gebruiken"]
 
-        num_zones = -1
+        all_valid = True
 
         try:
-            parking_times = skims_reader.read_parking_times()
+            skims_reader.read_parking_times()
             if parking_costs:
-                parking_cost_array = read_csv_from_config(self.config, key="geavanceerd", id="parkeerkosten")
-            else:
-                parking_cost_array = utils.zeros(len(parking_times))
+                read_csv_from_config(self.config, key="geavanceerd", id="parkeerkosten")
         except Exception as e:
             logger.warning(
                 "A problem occurred while attempting to load the skims files: \n",
                 exc_info=e,
             )
-            return num_zones, False
+            all_valid = False
 
-        all_valid = True
         for pod in part_of_day:
             try:
-                car_time_matrix = skims_reader.read("Auto_Tijd", pod)
-                car_distance_matrix = skims_reader.read("Auto_Afstand", pod)
+                skims_reader.read("Auto_Tijd", pod)
+                skims_reader.read("Auto_Afstand", pod)
                 bike_time_matrix = skims_reader.read("Fiets_Tijd", pod)
-                bike_distance_matrix = skims_reader.read("Fiets_Afstand", pod, default=bike_time_matrix)
-                pt_time_matrix = skims_reader.read("OV_Tijd", pod)
+                skims_reader.read("Fiets_Afstand", pod, default=bike_time_matrix)
+                skims_reader.read("OV_Tijd", pod)
             except Exception as e:
                 logger.warning(
                     "A problem occurred while attempting to load the skims files: \n",
                     exc_info=e,
                 )
-                return num_zones, False
+                all_valid = False
 
-            num_zones, valid = self._check_size_assumptions(
-                car_time_matrix,
-                car_distance_matrix,
-                bike_time_matrix,
-                bike_distance_matrix,
-                pt_time_matrix,
-                parking_cost_array,
-                parking_times,
-                old_num_zones=num_zones,
-            )
-            all_valid &= valid
-            if not valid:
-                logger.warning(f"Invalid skims files for part of day {pod}")
+        return all_valid
 
-        return num_zones, all_valid
-
-    def _check_size_assumptions(
-        self,
-        car_time_matrix: np.ndarray,
-        car_distance_matrix: np.ndarray,
-        bike_time_matrix: np.ndarray,
-        bike_distance_matrix: np.ndarray,
-        pt_time_matrix: np.ndarray,
-        parking_cost_array: np.ndarray,
-        parking_times: np.ndarray | list[list[int]],
-        old_num_zones: int,
-    ) -> tuple[int, bool]:
-        """The shapes of all skims matrices should be the same, and equal to the number of zones in both dimensions
-
-        The skims arrays are expected to have the number of zones as length"""
-        if not (
-            car_time_matrix.shape
-            == car_distance_matrix.shape
-            == bike_time_matrix.shape
-            == bike_distance_matrix.shape
-            == pt_time_matrix.shape
-            and pt_time_matrix.shape[0] == pt_time_matrix.shape[1]
-        ):
-            logger.warning(
-                "The shapes of all skims matrices should be the same, and equal to the number of zones in both dimensions"
-            )
-            logger.warning(
-                "Shapes of the skims matrices:\n"
-                f"car time matrix: {car_distance_matrix.shape}\n"
-                f"car distance matrix: {car_distance_matrix.shape}\n"
-                f"bike time matrix: {bike_time_matrix.shape}\n"
-                f"bike distance matrix: {bike_distance_matrix.shape}\n"
-                f"pt time matrix: {pt_time_matrix}"
-            )
-            return -1, False
-
-        num_zones = len(pt_time_matrix)
-        if len(parking_cost_array) != num_zones:
-            logger.warning(f"The parking costs is expected to be of length equal to the number of zones, {num_zones}")
-            return num_zones, False
-
-        if not (len(parking_times) == num_zones and len(parking_times[0]) == 2):
-            logger.warning(
-                "The parking times array is expected to contain 2 values for each zone (the arrival search time and the departure search time). "
-                f"The expected shape is (shape {(num_zones, 2)}), but found shape ({len(parking_times)}, {len(parking_times[0])})"
-            )
-            return num_zones, False
-
-        if old_num_zones != -1 and num_zones != old_num_zones:
-            logger.warning("The number of zones should be the same for different parts of the day")
-            return num_zones, False
-
-        return num_zones, True
-
-    def _motive_files_validation(self, num_zones):
+    def _motive_files_validation(self):
         motive = self.config["project"]["motief"]
         scenario = self.config["project"]["verstedelijkingsscenario"]
 
@@ -170,23 +98,17 @@ class FileValidator:
         segs_source = SegsSource(self.config)
 
         valid = True
-        valid &= self._is_valid_motive_file(segs_source, traveling_population_path.name, scenario, num_zones)
-        valid &= self._is_valid_motive_file(segs_source, destinations_path.name, scenario, num_zones)
+        valid &= self._is_valid_motive_file(segs_source, traveling_population_path.name, scenario)
+        valid &= self._is_valid_motive_file(segs_source, destinations_path.name, scenario)
         return valid
 
-    def _is_valid_motive_file(self, segs_source: SegsSource, filename, scenario, num_zones):
+    def _is_valid_motive_file(self, segs_source: SegsSource, filename, scenario):
         try:
-            content = segs_source.read(filename, scenario=scenario)
+            segs_source.read(filename, scenario=scenario)
         except Exception as e:
             logger.warning(
                 "A problem occurred while attempting to load the motive's traveling population files: \n",
                 exc_info=e,
-            )
-            return False
-        expected_shape = (num_zones, 4)
-        if content.shape != expected_shape:
-            logger.warning(
-                f"The content of {filename} should have shape {expected_shape} (#zones x #income_classes), but has shape {content.shape}"
             )
             return False
         return True
