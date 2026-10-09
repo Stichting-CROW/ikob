@@ -33,6 +33,7 @@ class Hubs:
     @classmethod
     def build_from_config(cls, config):
         """Build a Hubs object from the config, return the validation result and the Hubs object if validation was successful"""
+
         hub_raw = cls._read_hubs_from_file(config)
 
         zone_id_store = ZoneIdStoreSingleton.get_instance(config)
@@ -55,18 +56,35 @@ class Hubs:
 
     @staticmethod
     def validate(config):
-        hub_content_raw = Hubs._read_hubs_from_file(config)
-
         valid = True
+        use_chains = config["ketens"]["chains"]["gebruiken"]
+        use_destination_list = config["ketens"]["bestemmingslijst"]["gebruiken"]
+
+        if use_chains:
+            valid &= Hubs._validate_hubs_file(config)
+
+        if use_destination_list:
+            valid &= Hubs._validate_destinations_file(config)
+            if not use_chains:
+                logger.warning(
+                    "Usage of a hub destination list is set to true in the config, but the usage of hubs itself is set to false. "
+                )
+
+        return valid
+
+    @staticmethod
+    def _validate_hubs_file(config):
+        hub_content_raw = Hubs._read_hubs_from_file(config)
 
         if hub_content_raw.shape[0] == 0:
             logger.warning("Hub data is empty.")
-            valid = False
+            return False
 
         if hub_content_raw.shape[1] != 5:
             logger.warning(f"Hub data should have 5 columns but has {hub_content_raw.shape[1]}.")
-            valid = False
+            return False
 
+        valid = True
         try:
             hub_content_raw[:, 1:4].astype(FLOAT_DTYPE)
         except ValueError:
@@ -78,17 +96,41 @@ class Hubs:
             # We must first convert to int bc the string 0 gets cast to True
             pay_for_pt_int = hub_content_raw[:, 4].astype(int)
             if (pay_for_pt_int < 0).any() or (pay_for_pt_int > 1).any():
-                logger.warning("The fifth column of the hub data (wether to pay for pt) should contain either 0 or 1.")
+                logger.warning("The fifth column of the hub data (whether to pay for pt) should contain either 0 or 1.")
+                valid = False
         except ValueError:
-            logger.warning("The fifth column of the hub data (wether to pay for pt) should contain either 0 or 1.")
+            logger.warning("The fifth column of the hub data (whether to pay for pt) should contain either 0 or 1.")
             valid = False
 
         return valid
 
     @staticmethod
+    def _validate_destinations_file(config):
+        destination_list_path = Path(config["ketens"]["bestemmingslijst"]["bestand"])
+        # Reading the full file implicitly asserts that the header row and data row have the same number of entries
+        try:
+            destination_file_full = np.loadtxt(destination_list_path, dtype=str, skiprows=0, delimiter=",", ndmin=2)
+        except Exception as e:
+            logger.warning("An exception occurred while reading the destination file", exc_info=e)
+            return False
+
+        if len(destination_file_full) != 2:
+            logger.warning("Destinations file should contain two rows. One header row and one row of zone id's.")
+            return False
+
+        # Try to read the file using its standard interface to check for any zone mapping issues
+        try:
+            Hubs.read_destinations_from_file(config)
+        except Exception as e:
+            logger.warning("An exception occurred while loading the destination file", exc_info=e)
+            return False
+
+        return True
+
+    @staticmethod
     def read_destinations_from_file(config) -> npt.NDArray:
         destination_list_path = Path(config["ketens"]["bestemmingslijst"]["bestand"])
-        destination_list_id = np.loadtxt(destination_list_path, dtype=str, skiprows=1, delimiter=",")
+        destination_list_id = np.loadtxt(destination_list_path, dtype=str, skiprows=1, delimiter=",", ndmin=1)
 
         zone_id_store = ZoneIdStoreSingleton.get_instance(config)
 
@@ -101,7 +143,7 @@ class Hubs:
     @staticmethod
     def _read_hubs_from_file(config):
         hubs_path = Path(config["ketens"]["chains"]["bestand"])
-        return np.loadtxt(hubs_path, dtype=str, skiprows=1, delimiter=",")
+        return np.loadtxt(hubs_path, dtype=str, skiprows=1, delimiter=",", ndmin=2)
 
 
 def compute_chain_travel_time(
