@@ -1,6 +1,7 @@
 import logging
 import pathlib
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 import numpy as np
 import numpy.typing as npt
@@ -23,6 +24,7 @@ def transpose(matrix):
     return np.asarray(matrix).T
 
 
+@lru_cache
 def read_csv(
     filename,
     type_caster: type = FLOAT_DTYPE,
@@ -35,8 +37,8 @@ def read_csv(
     If has_id_column is true the first column is taken to be a column of row id's,
     an IdStore is required to map the ids to a consistent internal representation regardless of the order of the rows in the input file.
     Similarly, if has_id_header is true the header row is taken to be a list of column id's to be mapped to a consistent internal id.
-
     """
+
     if not isinstance(filename, pathlib.Path):
         filename = pathlib.Path(filename)
 
