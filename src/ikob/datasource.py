@@ -74,9 +74,7 @@ class SkimsSource:
         self,
         id: str,
         dagdeel: str,
-        type_caster: type = utils.FLOAT_DTYPE,
         default: npt.NDArray | None = None,
-        has_id_column=True,
     ) -> npt.NDArray:
         """Read skims from disk.
 
@@ -87,14 +85,14 @@ class SkimsSource:
         if os.path.exists(path):
             return utils.read_csv(
                 path,
-                type_caster=type_caster,
-                has_id_column=has_id_column,
+                type_caster=utils.FLOAT_DTYPE,
+                has_id_column=True,
                 has_id_header=True,
                 id_store=ZoneIdStoreSingleton.get_instance(self.config),
             )
         if default is None:
             raise FileNotFoundError(f"Skim file {path} not found, with no default.")
-        logger.warning(f"Skim file {path} not found, using default.")
+        logger.info(f"Skim file {path} not found, using default.")
         return default
 
     def read_parking_times(self):
@@ -113,7 +111,6 @@ class SkimsSource:
         )
 
         if parking_time_path.exists():
-            logger.info("Reading parking times from: '%s'", parking_time_path)
             return utils.read_csv(parking_time_path, type_caster=utils.INT_DTYPE, id_store=id_store)
 
         urbanization_path = segs_dir / "Stedelijkheidsgraad.csv"
