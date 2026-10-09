@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from types import MappingProxyType
 
@@ -6,7 +6,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, unsafe_hash=True)
 class IdStore:
     """A mapping for (zone) ID to (zone) index in the matrices used throughout the code
 
@@ -14,11 +14,12 @@ class IdStore:
     files with different id's such as urbanization grades.
     """
 
-    _zone_ids: tuple[str, ...]
+    # All the other fields get generated from the zone_ids, so we only need this in the hash
+    _zone_ids: tuple[str, ...] = field(hash=True)
     # MappingProxyType is essentially an immutable dict
-    _id_to_idx: MappingProxyType[str, int]
-    _num_zones: int
-    _zone_source: str = ""
+    _id_to_idx: MappingProxyType[str, int] = field(hash=False)
+    _num_zones: int = field(hash=False)
+    _zone_source: str = field(hash=False)
 
     @classmethod
     def from_zone_ids(cls, zone_ids: list[str], zone_source=""):
