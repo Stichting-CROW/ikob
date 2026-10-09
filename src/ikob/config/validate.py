@@ -6,6 +6,7 @@ from pathlib import Path
 from ikob.chain_generator import Hubs
 from ikob.configuration_definition import default_config, default_configuration_definition
 from ikob.datasource import SegsSource, SkimsSource, read_csv_from_config
+from ikob.id_store import IdStore
 
 logger = logging.getLogger(__name__)
 
@@ -17,17 +18,60 @@ class FileValidator:
     def validate_input_files(self):
         logger.info("validating input files (continues on error until all files have been validated)")
         # This mainly reads in a bunch of files from to config to see if it works, validation of the zone ids is done in the id store
-        valid = Hubs.validate(self.config)
+        valid = True
+
+        logger.info("Validating chain files..")
+        valid &= Hubs.validate(self.config)
+        logger.info("done")
+
+        logger.info("Validating segs files..")
+        valid &= self._segs_files_validation()
+        logger.info("done")
+
+        logger.info("Validating motive files..")
         valid &= self._motive_files_validation()
+        logger.info("done")
+
+        logger.info("Validating skims files..")
         # Validate skims at last because they may load slowly
         valid &= self._skims_files_validation()
+        logger.info("done")
 
         if not valid:
-            # This is only an error when we are trying to run ikob right now when loading / saving config a warning is good.
+            # This is only an error when we are trying to run ikob right now, an error can be thrown based on the return value of this method.
+            # When loading / saving config a warning is sufficient.
             logger.warning(
                 "Unable to run ikob with the current config + input directory.",
             )
         return valid
+
+    def _segs_files_validation(self):
+        all_valid = True
+        segs_source = SegsSource(self.config)
+
+        # split segs by the type of ids because those require different id stores to read.
+        # Motive files are segs files, but are validated separately in _motive_files_validation()
+        segs_with_zone_ids = ["CBS_autos_per_huishouden", "Stedelijkheidsgraad"]
+        segs_with_urbanization_ids = ["GeenRijbewijs", "GeenAuto", "WelAuto", "Voorkeuren", "VoorkeurenGeenAuto"]
+
+        for zone_segs in segs_with_zone_ids:
+            try:
+                segs_source.read(zone_segs)
+            except Exception as e:
+                logger.warning(f"A problem occurred while attempting to load the segs file {zone_segs}: \n", exc_info=e)
+                all_valid = False
+
+        urbanization_grade_id_store = IdStore.from_zone_ids(["1", "2", "3", "4", "5"])
+        for urbanization_segs in segs_with_urbanization_ids:
+            try:
+                segs_source.read(urbanization_segs, id_store=urbanization_grade_id_store)
+            except Exception as e:
+                logger.warning(
+                    f"A problem occurred while attempting to load the segs file {urbanization_segs}: \n", exc_info=e
+                )
+                all_valid = False
+
+        return all_valid
 
     def _skims_files_validation(self):
         part_of_day = self.config["skims"]["dagsoort"]
