@@ -1,9 +1,141 @@
 import numpy as np
+import pytest
+from pytest import LogCaptureFixture
 
 from ikob.chain_generator import Hubs, chain_generator, compute_chain_travel_time
 from ikob.datasource import DataKey, DataSource, DataType
-from ikob.id_store import IdStore
+from ikob.id_store import IdStore, ZoneIdStoreSingleton
 from ikob.utils import IKOB_INFINITE
+
+
+def _hubs_config(tmp_path, content):
+    hubs_path = tmp_path / "hubs.csv"
+    hubs_path.write_text(content)
+    ZoneIdStoreSingleton._instance = IdStore.from_zone_ids(["1", "2", "3"])
+    return {
+        "ketens": {
+            "chains": {"bestand": str(hubs_path), "gebruiken": True},
+            "bestemmingslijst": {"gebruiken": False},
+        }
+    }
+
+
+def _destination_config(tmp_path, content):
+    config = _hubs_config(
+        tmp_path,
+        "zone_id,cost,pt_time,bike_time,pay_for_pt\n1,100,5,3,0\n2,250,7,4,1\n",
+    )
+    destination_path = tmp_path / "destinations.csv"
+    destination_path.write_text(content)
+    config["ketens"]["bestemmingslijst"] = {
+        "gebruiken": True,
+        "bestand": str(destination_path),
+    }
+    return config
+
+
+@pytest.mark.parametrize(
+    "content, expected_result, expected_log",
+    [
+        (
+            "zone_id,cost,pt_time,bike_time,pay_for_pt\n",
+            False,
+            "Hub data is empty.",
+        ),
+        (
+            "zone_id,cost,pt_time,bike_time\n1,100,5,3\n2,250,7,4\n",
+            False,
+            "Hub data should have 5 columns but has 4.",
+        ),
+        (
+            "",
+            False,
+            "Hub data is empty.",
+        ),
+        (
+            "zone_id,cost,pt_time,bike_time,pay_for_pt\n1,cost,5,3,0\n2,250,7,4,1\n",
+            False,
+            "Columns 2-4 of the hub data (in order: price of hub, PT transfer time, bike transfer time) should contain numbers.",
+        ),
+        (
+            "zone_id,cost,pt_time,bike_time,pay_for_pt\n1,100,5,3,2\n2,250,7,4,1\n",
+            False,
+            "The fifth column of the hub data (whether to pay for pt) should contain either 0 or 1.",
+        ),
+        (
+            "zone_id,cost,pt_time,bike_time,pay_for_pt\n1,100,5,3,0",
+            True,
+            None,
+        ),
+        (
+            "zone_id,cost,pt_time,bike_time,pay_for_pt\n1,100,5,3,0\n2,250,7,4,1\n",
+            True,
+            None,
+        ),
+    ],
+    ids=[
+        "empty",
+        "wrong_column_count",
+        "empty_file",
+        "non_numeric_cost",
+        "pay_for_pt_no_boolean",
+        "valid_1_hub",
+        "valid_2_hubs",
+    ],
+)
+def test_hubs_validate_checks_hub_data(tmp_path, caplog: LogCaptureFixture, content, expected_result, expected_log):
+    config = _hubs_config(tmp_path, content)
+
+    assert Hubs.validate(config) is expected_result
+
+    if expected_log is None:
+        assert not caplog.records
+    else:
+        assert [record.message for record in caplog.records] == [expected_log]
+
+
+@pytest.mark.parametrize(
+    "content, expected_result, expected_log",
+    [
+        (
+            "zone_id,zone_id\n1,2\n",
+            True,
+            None,
+        ),
+        (
+            "zone_id\n1\n",
+            True,
+            None,
+        ),
+        (
+            "zone_id1,zone_id2",
+            False,
+            "Destinations file should contain two rows. One header row and one row of zone id's.",
+        ),
+        (
+            "zone_id1,zone_id2\n1",
+            False,
+            "An exception occurred while reading the destination file",
+        ),
+        (
+            "",
+            False,
+            "Destinations file should contain two rows. One header row and one row of zone id's.",
+        ),
+    ],
+    ids=["valid", "single_zone", "header_only", "row_length_does_not_match_header", "empty_file"],
+)
+def test_hubs_validate_checks_destination_data(
+    tmp_path, caplog: LogCaptureFixture, content, expected_result, expected_log
+):
+    config = _destination_config(tmp_path, content)
+
+    assert Hubs.validate(config) is expected_result
+
+    if expected_log is None:
+        assert not caplog.records
+    else:
+        assert [record.message for record in caplog.records] == [expected_log]
 
 
 def _skim_matrices(n=4):
