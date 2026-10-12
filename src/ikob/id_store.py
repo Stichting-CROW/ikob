@@ -34,7 +34,7 @@ class IdStore:
         num_zones = len(zone_ids)
         return cls(tuple(zone_ids), MappingProxyType(id_to_idx.copy()), num_zones, zone_source)
 
-    def validate_exact_ids(self, ids: list[str], source_name: str):
+    def _validate_exact_ids(self, ids: list[str], source_name: str):
         reference = set(self._zone_ids)
         duplicates = {id for id in ids if ids.count(id) > 1}
         if any(duplicates):
@@ -48,12 +48,16 @@ class IdStore:
             msg += ("\nid's have been read from " + self._zone_source) if self._zone_source else ""
             raise ValueError(msg)
 
-    def reorder_rows_to_internal_idx(self, row_ids: list[str], values: NDArray) -> NDArray:
+    def reorder_rows_to_internal_idx(self, row_ids: list[str], values: NDArray, source_name: str) -> NDArray:
+        self._validate_exact_ids(row_ids, source_name)
+
         row_id_to_idx = {row_id: row_idx for row_idx, row_id in enumerate(row_ids)}
         reordered_row_idx = [row_id_to_idx[zone_id] for zone_id in self._zone_ids]
         return values[reordered_row_idx]
 
-    def reorder_columns_to_internal_idx(self, col_ids: list[str], values: NDArray) -> NDArray:
+    def reorder_columns_to_internal_idx(self, col_ids: list[str], values: NDArray, source_name: str) -> NDArray:
+        self._validate_exact_ids(col_ids, source_name)
+
         col_id_to_idx = {col_id: col_idx for col_idx, col_id in enumerate(col_ids)}
         reordered_col_idx = [col_id_to_idx[zone_id] for zone_id in self._zone_ids]
         return values[:, reordered_col_idx]

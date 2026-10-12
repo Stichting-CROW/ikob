@@ -33,7 +33,7 @@ class FileValidator:
         part_of_day = self.config["skims"]["dagsoort"]
 
         skims_reader = SkimsSource(self.config)
-        parking_costs = self.config["geavanceerd"]["parkeerkosten"]["gebruiken"]
+        use_parking_costs = self.config["geavanceerd"]["parkeerkosten"]["gebruiken"]
 
         all_valid = True
 
@@ -44,7 +44,7 @@ class FileValidator:
                     f"The parking times array is expected to contain 2 values for each zone (the arrival search time and the departure search time), but it contains. {len(parking_times[0])}"
                 )
                 all_valid = False
-            if parking_costs:
+            if use_parking_costs:
                 parking_costs = read_csv_from_config(self.config, key="geavanceerd", id="parkeerkosten")
                 if len(parking_costs.shape) != 1:
                     logger.warning(
@@ -94,11 +94,12 @@ class FileValidator:
             content = segs_source.read(filename, scenario=scenario)
             if content.shape[1] != 4:
                 logger.warning(
-                    f"Motive file is expected to have shape (#zones x 4 = #income_classes), but has shape {content.shape}"
+                    f"Motive file {filename} is expected to have shape (#zones x 4 = #income_classes), but has shape {content.shape}"
                 )
+                return False
         except Exception as e:
             logger.warning(
-                "A problem occurred while attempting to load the motive's traveling population files: \n",
+                f"A problem occurred while attempting to load the motive file {filename}: \n",
                 exc_info=e,
             )
             return False

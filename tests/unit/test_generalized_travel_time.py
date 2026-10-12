@@ -59,7 +59,6 @@ def setup_generalized_travel_time_input(monkeypatch, gtt):
         ("OV_Afstand", pod): pt_dist,
     }
 
-    # The first entry of each row is the zone number
     parking_times = np.array(
         [
             [1, 2],

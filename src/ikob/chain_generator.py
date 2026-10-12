@@ -32,7 +32,7 @@ class Hubs:
 
     @classmethod
     def build_from_config(cls, config):
-        """Build a Hubs object from the config, return the validation result and the Hubs object if validation was successful"""
+        """Build a Hubs object from the config"""
 
         hub_raw = cls._read_hubs_from_file(config)
 

@@ -36,7 +36,7 @@ def run_scripts(
     Args:
         project_file: The path to a JSON project config
         skip_steps: A list of bools to skip that index step
-        write_weights: Skip writing out weights results
+        write_weights: Write out weights results
         write_intermediate_results: Write intermediate results so that a future run can continue on steps computed by this run.
                                     These intermediate results do not contain useful end results.
     """
