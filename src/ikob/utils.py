@@ -46,14 +46,12 @@ def read_csv(
                 f"Unable to correctly read file with id column {filename} as no id store is provided for the mapping from id to internal index."
             )
         matrix, ids, header = read_csv_with_id_values(filename, type_caster)
-        id_store.validate_exact_ids(ids, str(filename))
         if has_id_header:
             if header is None:
                 raise ValueError(f"File {filename} was loaded as having an id header, but it has no header.")
             matrix_header = header[1:]  # The first entry is the header of the index column
-            id_store.validate_exact_ids(matrix_header, str(filename))
-            matrix = id_store.reorder_columns_to_internal_idx(matrix_header, matrix)
-        return id_store.reorder_rows_to_internal_idx(ids, matrix)
+            matrix = id_store.reorder_columns_to_internal_idx(matrix_header, matrix, str(filename))
+        return id_store.reorder_rows_to_internal_idx(ids, matrix, str(filename))
 
     # First, attempt to read without header.
     # If this fails, read with skipping the header.
@@ -72,7 +70,7 @@ def read_csv(
                 break
             if matrix_header is None:
                 raise ValueError(f"File {filename} was loaded as having an id header but it has no header.")
-            matrix = id_store.reorder_columns_to_internal_idx(matrix_header, matrix)
+            matrix = id_store.reorder_columns_to_internal_idx(matrix_header, matrix, str(filename))
 
     # If the matrix is really an array, return it as such
     if len(matrix.shape) == 2:
