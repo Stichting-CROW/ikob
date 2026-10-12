@@ -305,7 +305,7 @@ class DataSource:
         self.cache[key] = data
         return data
 
-    def store(self, write_intermediate_results):
+    def store(self, write_intermediate_results: bool = False):
         logger.info("Writing output for data: %s.", self.datatype.value)
         for key in self.changed_keys:
             data = self.cache[key]
