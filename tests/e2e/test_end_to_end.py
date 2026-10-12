@@ -12,10 +12,7 @@ logger = logging.getLogger(__name__)
 
 def _file_to_frame(path: pathlib.Path) -> pd.DataFrame:
     if path.suffix == ".csv":
-        try:
-            return pd.read_csv(path, header=None, index_col="zone")
-        except ValueError:
-            return pd.read_csv(path, index_col="zone")
+        return pd.read_csv(path, index_col="zone")
     raise ValueError(f"Calling file to frame with unknown extension {path.suffix}. Must be .csv")
 
 
@@ -121,7 +118,6 @@ def test_end_to_end_skipping_steps():
 
     for i in range(8):
         skip_steps = [*[True] * i, *[False] * (8 - i)]
-        logger.warning(skip_steps)
         run_scripts(project, skip_steps=skip_steps, write_weights=True, write_intermediate_results=True)
 
         for result_dir in compare_dirs:
