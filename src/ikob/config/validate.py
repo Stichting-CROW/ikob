@@ -3,9 +3,12 @@
 import logging
 from pathlib import Path
 
+import numpy as np
+
 from ikob.chain_generator import Hubs
 from ikob.configuration_definition import default_config, default_configuration_definition
 from ikob.datasource import SegsSource, SkimsSource, read_csv_from_config
+from ikob.utils import FLOAT_DTYPE
 
 logger = logging.getLogger(__name__)
 
@@ -31,27 +34,73 @@ class FileValidator:
 
     def _chain_files_validation(self):
         valid = True
-        if self.config["ketens"]["chains"]["gebruiken"]:
-            try:
-                valid = Hubs.validate(self.config)
-                if not valid:
-                    logger.warning("Validating the hubs config failed.")
-                    valid = False
-                Hubs.build_from_config(self.config)
+        use_chains = self.config["ketens"]["chains"]["gebruiken"]
+        use_destination_list = self.config["ketens"]["bestemmingslijst"]["gebruiken"]
 
-            except Exception as e:
-                logger.warning("A problem occurred while attempting to load the hub file: \n", exc_info=e)
-                return False
+        if use_chains:
+            valid &= self._validate_hubs_file()
 
-        if self.config["ketens"]["bestemmingslijst"]["gebruiken"]:
-            try:
-                Hubs.read_destinations_from_file(self.config)
-
-            except Exception as e:
-                logger.warning("A problem occurred while attempting to load the hub destination list: \n", exc_info=e)
-                return False
+        if use_destination_list:
+            valid &= self._validate_destinations_file()
+            if not use_chains:
+                logger.warning(
+                    "Usage of a hub destination list is set to true in the config, but the usage of hubs itself is set to false. "
+                )
 
         return valid
+
+    def _validate_hubs_file(self):
+        hub_content_raw = Hubs._read_hubs_from_file(self.config)
+
+        if hub_content_raw.shape[0] == 0:
+            logger.warning("Hub data is empty.")
+            return False
+
+        if hub_content_raw.shape[1] != 5:
+            logger.warning(f"Hub data should have 5 columns but has {hub_content_raw.shape[1]}.")
+            return False
+
+        valid = True
+        try:
+            hub_content_raw[:, 1:4].astype(FLOAT_DTYPE)
+        except ValueError:
+            logger.warning(
+                "Columns 2-4 of the hub data (in order: price of hub, PT transfer time, bike transfer time) should contain numbers."
+            )
+            valid = False
+        try:
+            # We must first convert to int bc the string 0 gets cast to True
+            pay_for_pt_int = hub_content_raw[:, 4].astype(int)
+            if (pay_for_pt_int < 0).any() or (pay_for_pt_int > 1).any():
+                logger.warning("The fifth column of the hub data (whether to pay for pt) should contain either 0 or 1.")
+                valid = False
+        except ValueError:
+            logger.warning("The fifth column of the hub data (whether to pay for pt) should contain either 0 or 1.")
+            valid = False
+
+        return valid
+
+    def _validate_destinations_file(self):
+        destination_list_path = Path(self.config["ketens"]["bestemmingslijst"]["bestand"])
+        # Reading the full file implicitly asserts that the header row and data row have the same number of entries
+        try:
+            destination_file_full = np.loadtxt(destination_list_path, dtype=str, skiprows=0, delimiter=",", ndmin=2)
+        except Exception as e:
+            logger.warning("An exception occurred while reading the destination file", exc_info=e)
+            return False
+
+        if len(destination_file_full) != 2:
+            logger.warning("Destinations file should contain two rows. One header row and one row of zone id's.")
+            return False
+
+        # Try to read the file using its standard interface to check for any zone mapping issues
+        try:
+            Hubs.read_destinations_from_file(self.config)
+        except Exception as e:
+            logger.warning("An exception occurred while loading the destination file", exc_info=e)
+            return False
+
+        return True
 
     def _skims_files_validation(self):
         part_of_day = self.config["skims"]["dagsoort"]

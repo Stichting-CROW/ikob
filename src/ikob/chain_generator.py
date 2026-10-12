@@ -33,6 +33,7 @@ class Hubs:
     @classmethod
     def build_from_config(cls, config):
         """Build a Hubs object from the config, return the validation result and the Hubs object if validation was successful"""
+
         hub_raw = cls._read_hubs_from_file(config)
 
         zone_id_store = ZoneIdStoreSingleton.get_instance(config)
@@ -54,41 +55,9 @@ class Hubs:
         )
 
     @staticmethod
-    def validate(config):
-        hub_content_raw = Hubs._read_hubs_from_file(config)
-
-        valid = True
-
-        if hub_content_raw.shape[0] == 0:
-            logger.warning("Hub data is empty.")
-            valid = False
-
-        if hub_content_raw.shape[1] != 5:
-            logger.warning(f"Hub data should have 5 columns but has {hub_content_raw.shape[1]}.")
-            valid = False
-
-        try:
-            hub_content_raw[:, 1:4].astype(FLOAT_DTYPE)
-        except ValueError:
-            logger.warning(
-                "Columns 2-4 of the hub data (in order: price of hub, PT transfer time, bike transfer time) should contain numbers."
-            )
-            valid = False
-        try:
-            # We must first convert to int bc the string 0 gets cast to True
-            pay_for_pt_int = hub_content_raw[:, 4].astype(int)
-            if (pay_for_pt_int < 0).any() or (pay_for_pt_int > 1).any():
-                logger.warning("The fifth column of the hub data (wether to pay for pt) should contain either 0 or 1.")
-        except ValueError:
-            logger.warning("The fifth column of the hub data (wether to pay for pt) should contain either 0 or 1.")
-            valid = False
-
-        return valid
-
-    @staticmethod
     def read_destinations_from_file(config) -> npt.NDArray:
         destination_list_path = Path(config["ketens"]["bestemmingslijst"]["bestand"])
-        destination_list_id = np.loadtxt(destination_list_path, dtype=str, skiprows=1, delimiter=",")
+        destination_list_id = np.loadtxt(destination_list_path, dtype=str, skiprows=1, delimiter=",", ndmin=1)
 
         zone_id_store = ZoneIdStoreSingleton.get_instance(config)
 
@@ -101,7 +70,7 @@ class Hubs:
     @staticmethod
     def _read_hubs_from_file(config):
         hubs_path = Path(config["ketens"]["chains"]["bestand"])
-        return np.loadtxt(hubs_path, dtype=str, skiprows=1, delimiter=",")
+        return np.loadtxt(hubs_path, dtype=str, skiprows=1, delimiter=",", ndmin=2)
 
 
 def compute_chain_travel_time(

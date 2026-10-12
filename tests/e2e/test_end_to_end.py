@@ -97,6 +97,7 @@ def test_end_to_end():
     remove_directory(project_dir / "vlaanderen")
 
     # End-to-end test should not skip any steps: all scripts should pass.
+
     run_scripts(project, write_weights=True)
 
     for result_dir in compare_dirs:
