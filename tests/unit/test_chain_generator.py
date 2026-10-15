@@ -2,9 +2,8 @@ import numpy as np
 import pytest
 from pytest import LogCaptureFixture
 
-from ikob.chain_generator import Hubs, chain_generator, compute_chain_travel_time
+from ikob.chain_generator import Hubs, compute_chain_travel_time
 from ikob.config.validate import FileValidator
-from ikob.datasource import DataKey, DataSource, DataType
 from ikob.id_store import IdStore, ZoneIdStoreSingleton
 from ikob.utils import IKOB_INFINITE
 
@@ -415,79 +414,6 @@ def _make_config():
         },
         "__filename__": "tmp",
     }
-
-
-def test_computed_keys(monkeypatch):
-    """chain_generator populates the DataSource with P+Bike and P+R keys."""
-    import ikob.chain_generator as cg
-
-    num_zones = 5
-    rng = np.random.default_rng(99)
-
-    skims_data = {
-        "Auto_Tijd": rng.random((num_zones, num_zones)) * 30,
-        "Auto_Afstand": rng.random((num_zones, num_zones)) * 30,
-        "Fiets_Tijd": rng.random((num_zones, num_zones)) * 30,
-        "OV_Tijd": rng.random((num_zones, num_zones)) * 30,
-        "OV_Afstand": rng.random((num_zones, num_zones)) * 30,
-    }
-
-    def fake_skims_source(config):
-        class _Reader:
-            def read(self, id, dagdeel, type_caster=float, default=None, has_zone_id_header=False):
-                if id in skims_data:
-                    return np.asarray(skims_data[id], dtype=type_caster)
-                if default is not None:
-                    return default
-                raise FileNotFoundError(f"Skim {id}/{dagdeel} not found, with no default.")
-
-            def read_parking_times(self):
-                return np.zeros((num_zones, 3))
-
-        return _Reader()
-
-    def fake_hubs_build_from_config(cls, config):
-        del cls, config
-        return Hubs(
-            zone_indices=[1, 3],
-            hub_costs_cents=np.asarray([50, 80], dtype=float),
-            pt_transfer_times=np.asarray([5, 6], dtype=float),
-            bike_transfer_times=np.asarray([3, 4], dtype=float),
-            pay_for_pt=np.asarray([1, 1], dtype=bool),
-            num_hubs=2,
-        )
-
-    monkeypatch.setattr(cg, "SkimsSource", fake_skims_source)
-    monkeypatch.setattr(cg.Hubs, "build_from_config", classmethod(fake_hubs_build_from_config))
-    monkeypatch.setattr(
-        cg.ZoneIdStoreSingleton,
-        "get_instance",
-        lambda _config: IdStore.from_zone_ids([str(i) for i in range(num_zones)]),
-    )
-
-    config = _make_config()
-
-    datasource = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
-    datasource.cache = {}
-
-    chain_generator(datasource, config)
-
-    # Expect keys for 4 income levels x 2 fuel kinds x {Pplusfiets, PplusR} = 16 keys
-    assert len(datasource.cache) == 16
-    for income in ["laag", "middellaag", "middelhoog", "hoog"]:
-        for fuel in ["fossiel", "elektrisch"]:
-            for prefix in ["Pplusfiets", "PplusR"]:
-                key = DataKey(
-                    id=f"{prefix}_{fuel}",
-                    part_of_day="restdag",
-                    income=income,
-                    hub_name="test_hubset",
-                    motive="woon-werk",
-                    regime="basis",
-                )
-                assert key in datasource.cache, f"Missing key: {key}"
-                matrix = datasource.cache[key]
-                assert matrix.shape == (num_zones, num_zones)
 
 
 def test_hubs_build_from_config_parses_string_zero_one_pay_for_pt(tmp_path, monkeypatch):

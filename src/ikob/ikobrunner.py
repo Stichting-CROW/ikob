@@ -14,7 +14,7 @@ from ikob.generalized_travel_time import generalized_travel_time
 from ikob.ikobconfig import get_config_from_args, load_config
 from ikob.reachable_destinations import calculate_reachable_destinations
 from ikob.reachable_population import calculate_reachable_population
-from ikob.single_weights import calculate_single_weights
+from ikob.single_weights import calculate_single_weights, calculate_single_weights_on_demand
 
 logger = logging.getLogger(__name__)
 
@@ -52,19 +52,36 @@ def run_scripts(
     if not skip_steps:
         skip_steps = [False] * 8
 
-    if not skip_steps[0]:
-        travel_time = generalized_travel_time(config)
+    single_weights: DataSource | None = None
+    if not skip_steps[0] and not skip_steps[2]:
+        # if we are not skipping step 0 (travel time) and 2 (single weight matrix)
+        # we can combine the two steps and directly compute the weight matrices from the input
+
+        # The travel time is still returned here because we might need to write write these results to disk
+        # The travel time only contains data write_travel_time is true
+        single_weights, travel_time = calculate_single_weights_on_demand(config, write_travel_time)
+    elif not skip_steps[0]:
+        # if step 0 is not skipped, but step 2 is, compute the travel time as normal
+        travel_time = generalized_travel_time(config, write_travel_time=write_travel_time)
     else:
+        # if step 0 is skipped as well, we create an empty data source that will read from disk
         travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
 
     if not skip_steps[1]:
         # TODO: Pass temporary SEGS output as arguments too.
         distribute_population_over_groups(config)
 
-    if not skip_steps[2]:
-        single_weights = calculate_single_weights(config, travel_time)
-    else:
+    if skip_steps[2]:
         single_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
+    elif skip_steps[0]:
+        # if we do not skip step 2, but we did skip 0, then the travel time must be available
+        # otherwise we cannot compute the single weights from the travel time result
+        if travel_time is None:
+            raise RuntimeError("Travel-time data is unavailable while step 0 is skipped.")
+        single_weights = calculate_single_weights(config, travel_time)
+
+    if single_weights is None:
+        raise RuntimeError("Single weights are unavailable for the selected pipeline steps.")
 
     if not skip_steps[3]:
         combined_weights = calculate_combined_weights(config, single_weights)
@@ -107,7 +124,7 @@ def run_scripts(
     ]
     if write_weights:
         sources_to_save.extend([single_weights, combined_weights])
-    if write_travel_time:
+    if write_travel_time and travel_time is not None:
         sources_to_save.extend([travel_time])
 
     for container in sources_to_save:
