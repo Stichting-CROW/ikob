@@ -1,4 +1,5 @@
 import pytest
+from scipy import sparse
 
 
 def test_has_preference_rules():
@@ -42,8 +43,6 @@ def test_has_preference_rules():
 )
 def test_combined_modalities_use_elementwise_max(modality_key, modalities, preference, income, fuel_kind):
     """Test that combined modalities compute the elementwise maximum of their component modalities."""
-    import numpy as np
-
     import ikob.combined_weights as cw
     from ikob.configuration_definition import DecayCurveName, TvomType
     from ikob.datasource import DataKey
@@ -53,10 +52,10 @@ def test_combined_modalities_use_elementwise_max(modality_key, modalities, prefe
     motive = "werk or something else"
     regime = "Basis"
 
-    bike = np.array([[1.0, 0.0, 0.5], [0.0, 0.0, 0.2], [0.3, 0.1, 0.4]])
-    pt = np.array([[0.0, 1.0, 0.3], [0.0, 0.0, 0.5], [0.2, 0.6, 0.1]])
-    car_fossil = np.array([[0.0, 0.0, 0.2], [1.0, 0.0, 0.4], [0.1, 0.3, 0.7]])
-    car_electric = np.array([[0.0, 0.0, 0.1], [0.0, 1.0, 0.6], [0.4, 0.2, 0.5]])
+    bike = sparse.csr_matrix([[1.0, 0.0, 0.5], [0.0, 0.0, 0.2], [0.3, 0.1, 0.4]])
+    pt = sparse.csr_matrix([[0.0, 1.0, 0.3], [0.0, 0.0, 0.5], [0.2, 0.6, 0.1]])
+    car_fossil = sparse.csr_matrix([[0.0, 0.0, 0.2], [1.0, 0.0, 0.4], [0.1, 0.3, 0.7]])
+    car_electric = sparse.csr_matrix([[0.0, 0.0, 0.1], [0.0, 1.0, 0.6], [0.4, 0.2, 0.5]])
     car = car_fossil if fuel_kind == "fossiel" else car_electric
 
     class _FakeSingleWeights:
@@ -114,6 +113,10 @@ def test_combined_modalities_use_elementwise_max(modality_key, modalities, prefe
     modality_matrices = {"bike": bike, "pt": pt, "car": car}
     matrices_to_max = [modality_matrices[m] for m in modalities]
 
-    expected = np.maximum.reduce(matrices_to_max)
+    expected = matrices_to_max[0]
+    for matrix in matrices_to_max[1:]:
+        expected = expected.maximum(matrix)
 
-    np.testing.assert_allclose(out, expected)
+    assert sparse.issparse(out)
+    assert (out != expected).nnz == 0
+    assert key not in combined.cache

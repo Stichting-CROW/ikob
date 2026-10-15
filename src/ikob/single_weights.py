@@ -57,8 +57,9 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource):
 
     if key.id == "Fiets":
         modality = "E-fiets" if project_config["fiets of E-fiets"]["E-fiets"] else "Fiets"
-        for preference in ("Auto", "Fiets"):
-            store("Fiets_vk", "" if preference == "Auto" else preference, modality=modality)
+        # The empty preference is only used for modality bike, this is to keep behavior identical to old code.
+        for preference in ("", "Fiets"):
+            store("Fiets_vk", preference, modality=modality)
 
     elif key.id.startswith("Auto_"):
         fuel_kind = key.id.removeprefix("Auto_")
