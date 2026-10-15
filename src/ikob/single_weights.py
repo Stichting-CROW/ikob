@@ -6,7 +6,7 @@ from scipy import sparse
 from ikob.configuration_definition import DecayCurveName
 from ikob.constants import work_constants
 from ikob.datasource import DataKey, DataSource, DataType
-from ikob.utils import FLOAT_DTYPE
+from ikob.generalized_travel_time import generalized_travel_time
 
 logger = logging.getLogger(__name__)
 
@@ -24,13 +24,87 @@ def calculate_weights(generalized_travel_time, modality, preference, decay_curve
     # Build a sparse matrix directly from in-range entries.
     rows, cols = np.nonzero(generalized_travel_time < 180)
     if rows.size == 0:
-        return sparse.csr_matrix(generalized_travel_time.shape, dtype=FLOAT_DTYPE)
+        return sparse.csr_matrix(generalized_travel_time.shape, dtype=np.float64)
 
     values = scaling / (1 + np.exp((generalized_travel_time[rows, cols] - omega) * alpha))
     keep = values >= 0.001
     return sparse.csr_matrix(
-        (values[keep], (rows[keep], cols[keep])), shape=generalized_travel_time.shape, dtype=FLOAT_DTYPE
+        (values[keep], (rows[keep], cols[keep])), shape=generalized_travel_time.shape, dtype=np.float64
     )
+
+
+def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource):
+    """Convert one GTT matrix to all single-weight matrices that use it."""
+    project_config = config["project"]
+    decay_curve = project_config["motief"]["reistijdvervalscurve"]
+    regimes = project_config["beprijzingsregime"]
+    motive_name = project_config["motief"]["naam"]
+
+    def store(weight_id, preference, income=key.income, fuel_kind="", modality="Auto", weight_matrix=None):
+        weight_key = DataKey(
+            weight_id,
+            part_of_day=key.part_of_day,
+            income=income,
+            regime=regimes,
+            motive=motive_name,
+            preference=preference,
+            fuel_kind=fuel_kind,
+        )
+
+        if weight_matrix is None:
+            weight_matrix = calculate_weights(travel_time, modality, preference, decay_curve)
+        weights.set(weight_key, weight_matrix)
+
+    if key.id == "Fiets":
+        modality = "E-fiets" if project_config["fiets of E-fiets"]["E-fiets"] else "Fiets"
+        for preference in ("Auto", "Fiets"):
+            store("Fiets_vk", "" if preference == "Auto" else preference, modality=modality)
+
+    elif key.id.startswith("Auto_"):
+        fuel_kind = key.id.removeprefix("Auto_")
+        for preference in ALL_PREFERENCES:
+            store("Auto_vk", preference, fuel_kind=fuel_kind)
+
+    elif key.id in ("GeenAuto", "GeenRijbewijs"):
+        for preference in ("Neutraal", "OV", "Fiets"):
+            store(f"{key.id}_vk", preference)
+
+    elif key.id == "OV":
+        for preference in ALL_PREFERENCES:
+            store("OV_vk", preference, modality="OV")
+
+    elif key.id == "GratisAuto":
+        # The free car weights always use the car preference, even though the preference stored at the key
+        # might be neutral. This is to keep behavior identical to old code.
+        weight_matrix = calculate_weights(travel_time, "Auto", "Auto", decay_curve)
+        for preference in ("Neutraal", "Auto"):
+            store("GratisAuto_vk", preference, weight_matrix=weight_matrix)
+
+    elif key.id == "GratisOV":
+        # The free PT weights always use the PT preference, even though the preference stored at the key
+        # might be neutral. This is to keep behavior identical to old code.
+        weight_matrix = calculate_weights(travel_time, "OV", "OV", decay_curve)
+        # Here we have to loop over the income classes as well because the travel time computation
+        # Only computes the free PT travel time once (as it's not dependent on the )
+        for income in ("hoog", "middelhoog", "middellaag", "laag"):
+            for preference in ("Neutraal", "OV"):
+                store("GratisOV_vk", preference, income=income, weight_matrix=weight_matrix)
+
+
+def calculate_single_weights_on_demand(config, write_travel_time: bool = False):
+    """Compute GTTs and consume each one immediately as sparse weights."""
+    weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
+
+    def consume(key, travel_time):
+        consume_travel_time(config, key, travel_time, weights)
+
+    # The returned travel time will be empty if write_travel_time is false
+    travel_time = generalized_travel_time(
+        config,
+        on_travel_time=consume,
+        write_travel_time=write_travel_time,
+    )
+    return weights, travel_time
 
 
 def calculate_single_weights(config, generalized_travel_time: DataSource) -> DataSource:
@@ -44,14 +118,12 @@ def calculate_single_weights(config, generalized_travel_time: DataSource) -> Dat
 
     logger.info("Starting step: Weights (travel time decay curves) for car, PT, bike, and E-bike.")
 
-    project_config = config["project"]
     skims_config = config["skims"]
 
     # Ophalen van instellingen
     part_of_days = skims_config["dagsoort"]
-    motive_name = project_config["motief"]["naam"]
-    decay_curve = project_config["motief"]["reistijdvervalscurve"]
-    regimes = project_config["beprijzingsregime"]
+    motive_name = config["project"]["motief"]["naam"]
+    regimes = config["project"]["beprijzingsregime"]
 
     # Vaste waarden
     incomes = ["hoog", "middelhoog", "middellaag", "laag"]
@@ -60,209 +132,38 @@ def calculate_single_weights(config, generalized_travel_time: DataSource) -> Dat
 
     for part_of_day in part_of_days:
         for income in incomes:
-            add_bike_weights(
-                part_of_day, regimes, motive_name, decay_curve, income, generalized_travel_time, weights, config
-            )
-            add_car_weights(part_of_day, regimes, motive_name, decay_curve, income, generalized_travel_time, weights)
-            add_no_car_weights(part_of_day, regimes, motive_name, decay_curve, income, generalized_travel_time, weights)
-            add_free_car_weights(
-                part_of_day, regimes, motive_name, decay_curve, income, generalized_travel_time, weights
-            )
-            add_pt_weights(part_of_day, regimes, motive_name, decay_curve, income, generalized_travel_time, weights)
-            add_free_pt_weights(
-                part_of_day, regimes, motive_name, decay_curve, income, generalized_travel_time, weights
-            )
+            # bike
+            key = DataKey("Fiets", part_of_day=part_of_day, regime=regimes, motive=motive_name, income=income)
+            travel_time = generalized_travel_time.get(key)
+            consume_travel_time(weights.config, key, travel_time, weights)
+
+            # car
+            for fuel_kind in ("fossiel", "elektrisch"):
+                key = DataKey(
+                    f"Auto_{fuel_kind}", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name
+                )
+                travel_time = generalized_travel_time.get(key)
+                consume_travel_time(weights.config, key, travel_time, weights)
+            # no car
+            for no_car_kind in ("GeenAuto", "GeenRijbewijs"):
+                key = DataKey(no_car_kind, part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name)
+                travel_time = generalized_travel_time.get(key)
+                consume_travel_time(weights.config, key, travel_time, weights)
+
+            # free car
+            key = DataKey("GratisAuto", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name)
+            travel_time = generalized_travel_time.get(key)
+            consume_travel_time(weights.config, key, travel_time, weights)
+
+            # public transport
+            key = DataKey("OV", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name)
+            travel_time = generalized_travel_time.get(key)
+
+            consume_travel_time(weights.config, key, travel_time, weights)
+
+        # pree public transport
+        key = DataKey("GratisOV", part_of_day=part_of_day, regime=regimes, motive=motive_name)
+        travel_time = generalized_travel_time.get(key)
+        consume_travel_time(weights.config, key, travel_time, weights)
 
     return weights
-
-
-def add_bike_weights(
-    part_of_day: str,
-    regimes: str,
-    motive_name: str,
-    decay_curve: DecayCurveName,
-    income: str,
-    generalized_travel_time: DataSource,
-    weights: DataSource,
-    config,
-):
-    """Add bike weights to the weights DataSource. Weights are further split on preference and type of bike."""
-
-    project_config = config["project"]
-    modalities_bike = ["E-fiets"] if project_config["fiets of E-fiets"]["E-fiets"] else ["Fiets"]
-    for preference in ALL_PREFERENCES:
-        for modality in modalities_bike:
-            if preference == "Auto" or preference == "Fiets":
-                key = DataKey("Fiets", part_of_day=part_of_day, regime=regimes, motive=motive_name, income=income)
-                gtr_skim = generalized_travel_time.get(key)
-                weight_matrix = calculate_weights(gtr_skim, modality, preference, decay_curve_name=decay_curve)
-
-                if preference == "Auto":
-                    key = DataKey(
-                        "Fiets_vk",
-                        part_of_day=part_of_day,
-                        regime=regimes,
-                        motive=motive_name,
-                        income=income,
-                    )
-                else:
-                    key = DataKey(
-                        "Fiets_vk",
-                        part_of_day=part_of_day,
-                        income=income,
-                        regime=regimes,
-                        motive=motive_name,
-                        preference=preference,
-                    )
-
-                weights.set(key, weight_matrix)
-
-
-def add_car_weights(
-    part_of_day: str,
-    regimes: str,
-    motive_name: str,
-    decay_curve: DecayCurveName,
-    income: str,
-    generalized_travel_time: DataSource,
-    weights: DataSource,
-):
-    """Add car weights to the weights DataSource. Weights are further split on preference and type of car."""
-
-    fuel_kinds = ["fossiel", "elektrisch"]
-    for preference in ALL_PREFERENCES:
-        for fuel_kind in fuel_kinds:
-            key = DataKey(
-                f"Auto_{fuel_kind}", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name
-            )
-            gtr_skim = generalized_travel_time.get(key)
-
-            weight_matrix = calculate_weights(gtr_skim, "Auto", preference, decay_curve)
-            key = DataKey(
-                "Auto_vk",
-                part_of_day=part_of_day,
-                income=income,
-                regime=regimes,
-                motive=motive_name,
-                preference=preference,
-                fuel_kind=fuel_kind,
-            )
-            weights.set(key, weight_matrix)
-
-
-def add_no_car_weights(
-    part_of_day: str,
-    regimes: str,
-    motive_name: str,
-    decay_curve: DecayCurveName,
-    income: str,
-    generalized_travel_time: DataSource,
-    weights: DataSource,
-):
-    """Add no car weights to the weights DataSource. Weights are further split on preference and type of car."""
-
-    no_car_kinds = ["GeenAuto", "GeenRijbewijs"]
-    # Can't have a preference for car when you don't have a car
-    no_car_preferences = ["Neutraal", "OV", "Fiets"]
-    for preference in no_car_preferences:
-        for no_car_kind in no_car_kinds:
-            key = DataKey(f"{no_car_kind}", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name)
-            gtr_skim = generalized_travel_time.get(key)
-
-            weight_matrix = calculate_weights(gtr_skim, "Auto", preference, decay_curve)
-            key = DataKey(
-                f"{no_car_kind}_vk",
-                part_of_day=part_of_day,
-                income=income,
-                regime=regimes,
-                preference=preference,
-                motive=motive_name,
-            )
-            weights.set(key, weight_matrix)
-
-
-def add_pt_weights(
-    part_of_day: str,
-    regimes: str,
-    motive_name: str,
-    decay_curve: DecayCurveName,
-    income: str,
-    generalized_travel_time: DataSource,
-    weights: DataSource,
-):
-    """Add public transport weights to the weights DataSource. Weights are further split on preference."""
-
-    for preference in ALL_PREFERENCES:
-        key = DataKey("OV", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name)
-        gtr_skim = generalized_travel_time.get(key)
-
-        weight_matrix = calculate_weights(gtr_skim, "OV", preference, decay_curve)
-        key = DataKey(
-            "OV_vk",
-            part_of_day=part_of_day,
-            preference=preference,
-            income=income,
-            regime=regimes,
-            motive=motive_name,
-        )
-        weights.set(key, weight_matrix)
-
-
-def add_free_car_weights(
-    part_of_day,
-    regimes,
-    motive_name: str,
-    decay_curve: DecayCurveName,
-    income,
-    generalized_travel_time: DataSource,
-    weights: DataSource,
-):
-    """Add free car weights to the weights DataSource. Weights are further split on preference.
-
-    The type of car does not matter, as the car is free."""
-
-    key = DataKey("GratisAuto", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name)
-    gtr_skim = generalized_travel_time.get(key)
-
-    weight_matrix = calculate_weights(gtr_skim, "Auto", "Auto", decay_curve)
-    # Can only have preference for the car or neutral if the car is free
-    free_car_preferences = ["Neutraal", "Auto"]
-    for preference in free_car_preferences:
-        key = DataKey(
-            "GratisAuto_vk",
-            part_of_day=part_of_day,
-            preference=preference,
-            income=income,
-            regime=regimes,
-            motive=motive_name,
-        )
-        weights.set(key, weight_matrix)
-
-
-def add_free_pt_weights(
-    part_of_day,
-    regimes,
-    motive_name: str,
-    decay_curve: DecayCurveName,
-    income,
-    generalized_travel_time: DataSource,
-    weights: DataSource,
-):
-    """Add free public transport weights to the weights DataSource. Weights are further split on preference."""
-
-    key = DataKey("GratisOV", part_of_day=part_of_day, regime=regimes, motive=motive_name)
-    gtr_skim = generalized_travel_time.get(key)
-
-    weight_matrix = calculate_weights(gtr_skim, "OV", "OV", decay_curve)
-    # Can only have preference for the public transport or neutral if the public transport is free
-    special_pt_kinds = ["Neutraal", "OV"]
-    for special_pt_kind in special_pt_kinds:
-        key = DataKey(
-            "GratisOV_vk",
-            part_of_day=part_of_day,
-            preference=special_pt_kind,
-            income=income,
-            regime=regimes,
-            motive=motive_name,
-        )
-        weights.set(key, weight_matrix)

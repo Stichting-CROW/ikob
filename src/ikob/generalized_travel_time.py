@@ -1,9 +1,10 @@
 import logging
+from collections.abc import Callable
 
 import numpy as np
 
 from ikob import utils
-from ikob.chain_generator import chain_generator
+from ikob.chain_generator import build_chain_travel_time_calculator
 from ikob.configuration_definition import TvomType
 from ikob.datasource import (
     DataKey,
@@ -17,11 +18,17 @@ from ikob.utils import IKOB_INFINITE
 logger = logging.getLogger(__name__)
 
 
-def generalized_travel_time(config) -> DataSource:
+def generalized_travel_time(
+    config, on_travel_time: Callable | None = None, write_travel_time: bool = True
+) -> DataSource | None:
     """
     Compute generalized (experienced) travel time from time and costs.
 
     Corresponds to section D1 in IKOB-algorithm.pdf
+
+    If on_travel_time is provided, this method will be called when a travel time matrix is computed
+    A caller can use this to immediately transform the travel time results to weight matrices
+    without having to store the large travel time matrices
     """
 
     logger.info("Starting step: Compute generalized travel time from time and costs.")
@@ -66,7 +73,13 @@ def generalized_travel_time(config) -> DataSource:
 
     skims_reader = SkimsSource(config)
 
-    generalized_travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
+    travel_time_output = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
+
+    def publish(key, matrix):
+        if on_travel_time is not None:
+            on_travel_time(key, matrix)
+        if write_travel_time:
+            travel_time_output.set(key, matrix)
 
     parking_times = skims_reader.read_parking_times()
     parking_times_array = np.asarray(parking_times, dtype=utils.FLOAT_DTYPE)
@@ -81,8 +94,9 @@ def generalized_travel_time(config) -> DataSource:
     else:
         additional_cost_matrix = np.zeros((len(parking_times), len(parking_times)), dtype=utils.FLOAT_DTYPE)
 
-    if chains:
-        chain_generator(generalized_travel_time, config)
+    chain_calculator = (
+        build_chain_travel_time_calculator(config, parking_times_array, additional_cost_matrix) if chains else None
+    )
 
     num_zones = None
     for pod in part_of_day:
@@ -124,7 +138,7 @@ def generalized_travel_time(config) -> DataSource:
                 motive=motive_name,
                 income=income_level,
             )
-            generalized_travel_time.set(key, gtr_skim)
+            publish(key, gtr_skim)
 
         gtr_skim = np.zeros((num_zones, num_zones), dtype=utils.FLOAT_DTYPE)
         for income_level in income_levels:
@@ -149,26 +163,45 @@ def generalized_travel_time(config) -> DataSource:
                     parking_costs_array_eurocent=parking_cost_array,
                 )
                 if chains:
-                    key = DataKey(
-                        id=f"Pplusfiets_{fuel_kind}",
-                        part_of_day=pod,
-                        income=income_level,
-                        hub_name=hub_name,
-                        motive=motive_name,
-                        regime=regime,
+                    if chain_calculator is None:
+                        raise RuntimeError("Chain travel-time calculator is unavailable while chains are enabled.")
+                    chain_bike, chain_ride = chain_calculator.compute(
+                        car_time=car_time_matrix,
+                        car_dist=car_distance_matrix,
+                        bike_time=bike_time_matrix,
+                        bike_dist=bike_distance_matrix,
+                        pt_time=pt_time_matrix,
+                        pt_cost=pt_cost_matrix,
+                        tvom_factor=tvom_factor,
+                        var_car_rate=var_car_rate,
+                        road_pricing=road_pricing,
+                        bike_cost_euro_per_km=bike_cost_euro_per_km,
                     )
-                    gtr_park_and_bike_skim = generalized_travel_time.get(key)
-                    bestskim = np.minimum(gtr_skim, gtr_park_and_bike_skim)
-                    key = DataKey(
-                        id=f"PplusR_{fuel_kind}",
-                        part_of_day=pod,
-                        income=income_level,
-                        hub_name=hub_name,
-                        motive=motive_name,
-                        regime=regime,
-                    )
-                    gtr_park_and_ride_skim = generalized_travel_time.get(key)
-                    gtr_skim = np.minimum(bestskim, gtr_park_and_ride_skim)
+                    if write_travel_time:
+                        travel_time_output.set(
+                            DataKey(
+                                id=f"Pplusfiets_{fuel_kind}",
+                                part_of_day=pod,
+                                income=income_level,
+                                hub_name=hub_name,
+                                motive=motive_name,
+                                regime=regime,
+                            ),
+                            chain_bike,
+                        )
+                        travel_time_output.set(
+                            DataKey(
+                                id=f"PplusR_{fuel_kind}",
+                                part_of_day=pod,
+                                income=income_level,
+                                hub_name=hub_name,
+                                motive=motive_name,
+                                regime=regime,
+                            ),
+                            chain_ride,
+                        )
+                    gtr_skim = np.minimum(gtr_skim, chain_bike)
+                    gtr_skim = np.minimum(gtr_skim, chain_ride)
 
                 key = DataKey(
                     id=f"Auto_{fuel_kind}",
@@ -177,7 +210,7 @@ def generalized_travel_time(config) -> DataSource:
                     regime=regime,
                     motive=motive_name,
                 )
-                generalized_travel_time.set(key, gtr_skim)
+                publish(key, gtr_skim)
 
             # Then PT, pt costs are (optionally) computed from travel times and skims_config["OV kosten"]
             # This does tot strictly follow the documentation in IKOB-algorithm.pdf
@@ -190,7 +223,7 @@ def generalized_travel_time(config) -> DataSource:
                 motive=motive_name,
                 regime=regime,
             )
-            generalized_travel_time.set(key, gtr_skim)
+            publish(key, gtr_skim)
 
             # Dan geen auto (rijbewijs)
             tvom_factor = tvom_dict.get(income_level)
@@ -207,7 +240,7 @@ def generalized_travel_time(config) -> DataSource:
                     motive=motive_name,
                     regime=regime,
                 )
-                generalized_travel_time.set(key, gtr_skim)
+                publish(key, gtr_skim)
 
             # Free car (no variable costs compared to car) generalized travel time:
             tvom_factor = tvom_dict.get(income_level)
@@ -228,7 +261,7 @@ def generalized_travel_time(config) -> DataSource:
                 motive=motive_name,
                 regime=regime,
             )
-            generalized_travel_time.set(key, gtr_skim)
+            publish(key, gtr_skim)
 
             # Free PT generalized travel time:
             gtr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix, IKOB_INFINITE)
@@ -238,6 +271,6 @@ def generalized_travel_time(config) -> DataSource:
                 motive=motive_name,
                 regime=regime,
             )
-            generalized_travel_time.set(key, gtr_skim)
+            publish(key, gtr_skim)
 
-    return generalized_travel_time
+    return travel_time_output if write_travel_time else None
