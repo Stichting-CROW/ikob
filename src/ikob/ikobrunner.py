@@ -84,7 +84,7 @@ def run_scripts(
         raise RuntimeError("Single weights are unavailable for the selected pipeline steps.")
 
     if not skip_steps[3]:
-        combined_weights = calculate_combined_weights(config, single_weights)
+        combined_weights = calculate_combined_weights(config, single_weights, write_weights=write_weights)
     else:
         combined_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 
