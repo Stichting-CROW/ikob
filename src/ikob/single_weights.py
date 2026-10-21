@@ -7,6 +7,7 @@ from ikob.configuration_definition import DecayCurveName
 from ikob.constants import work_constants
 from ikob.datasource import DataKey, DataSource, DataType
 from ikob.generalized_travel_time import generalized_travel_time
+from ikob.utils import FLOAT_DTYPE
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,12 @@ def calculate_weights(generalized_travel_time, modality, preference, decay_curve
     # Build a sparse matrix directly from in-range entries.
     rows, cols = np.nonzero(generalized_travel_time < 180)
     if rows.size == 0:
-        return sparse.csr_matrix(generalized_travel_time.shape, dtype=np.float64)
+        return sparse.csr_matrix(generalized_travel_time.shape, dtype=FLOAT_DTYPE)
 
     values = scaling / (1 + np.exp((generalized_travel_time[rows, cols] - omega) * alpha))
     keep = values >= 0.001
     return sparse.csr_matrix(
-        (values[keep], (rows[keep], cols[keep])), shape=generalized_travel_time.shape, dtype=np.float64
+        (values[keep], (rows[keep], cols[keep])), shape=generalized_travel_time.shape, dtype=FLOAT_DTYPE
     )
 
 
@@ -85,20 +86,21 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource):
         # might be neutral. This is to keep behavior identical to old code.
         weight_matrix = calculate_weights(travel_time, "OV", "OV", decay_curve)
         # Here we have to loop over the income classes as well because the travel time computation
-        # Only computes the free PT travel time once (as it's not dependent on the )
+        # Only computes the free PT travel time once (as it's not dependent on the income group)
+        # Note that the free car weights are dependent, because there are still costs associated with free car travel counterintuitively
+        # see generalized_travel_time.py for details
         for income in ("hoog", "middelhoog", "middellaag", "laag"):
             for preference in ("Neutraal", "OV"):
                 store("GratisOV_vk", preference, income=income, weight_matrix=weight_matrix)
 
 
-def calculate_single_weights_on_demand(config, write_travel_time: bool = False):
+def calculate_single_weights_on_demand(config, write_travel_time: bool = False) -> tuple[DataSource, DataSource | None]:
     """Compute GTTs and consume each one immediately as sparse weights."""
     weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 
     def consume(key, travel_time):
         consume_travel_time(config, key, travel_time, weights)
 
-    # The returned travel time will be empty if write_travel_time is false
     travel_time = generalized_travel_time(
         config,
         on_travel_time=consume,
@@ -135,7 +137,7 @@ def calculate_single_weights(config, generalized_travel_time: DataSource) -> Dat
             # bike
             key = DataKey("Fiets", part_of_day=part_of_day, regime=regimes, motive=motive_name, income=income)
             travel_time = generalized_travel_time.get(key)
-            consume_travel_time(weights.config, key, travel_time, weights)
+            consume_travel_time(config, key, travel_time, weights)
 
             # car
             for fuel_kind in ("fossiel", "elektrisch"):
@@ -143,27 +145,27 @@ def calculate_single_weights(config, generalized_travel_time: DataSource) -> Dat
                     f"Auto_{fuel_kind}", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name
                 )
                 travel_time = generalized_travel_time.get(key)
-                consume_travel_time(weights.config, key, travel_time, weights)
+                consume_travel_time(config, key, travel_time, weights)
             # no car
             for no_car_kind in ("GeenAuto", "GeenRijbewijs"):
                 key = DataKey(no_car_kind, part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name)
                 travel_time = generalized_travel_time.get(key)
-                consume_travel_time(weights.config, key, travel_time, weights)
+                consume_travel_time(config, key, travel_time, weights)
 
             # free car
             key = DataKey("GratisAuto", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name)
             travel_time = generalized_travel_time.get(key)
-            consume_travel_time(weights.config, key, travel_time, weights)
+            consume_travel_time(config, key, travel_time, weights)
 
             # public transport
             key = DataKey("OV", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name)
             travel_time = generalized_travel_time.get(key)
 
-            consume_travel_time(weights.config, key, travel_time, weights)
+            consume_travel_time(config, key, travel_time, weights)
 
         # pree public transport
         key = DataKey("GratisOV", part_of_day=part_of_day, regime=regimes, motive=motive_name)
         travel_time = generalized_travel_time.get(key)
-        consume_travel_time(weights.config, key, travel_time, weights)
+        consume_travel_time(config, key, travel_time, weights)
 
     return weights
