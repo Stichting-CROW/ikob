@@ -33,7 +33,8 @@ def test_calculate_weights_threshold_and_monotonicity(modality, preference):
     assert weights[0, 0] > weights[0, 1]
 
 
-def test_calculate_single_weights_writes_expected_keys():
+@pytest.mark.parametrize("selected_income", [None, "laag"])
+def test_calculate_single_weights_writes_expected_keys(selected_income):
     import ikob.single_weights as sw
     from ikob.configuration_definition import DecayCurveName, TvomType
     from ikob.datasource import DataKey
@@ -75,7 +76,12 @@ def test_calculate_single_weights_writes_expected_keys():
     }
 
     # Act
-    weights = sw.calculate_single_weights(config, _FakeGTT())  # type: ignore
+    weights = sw.calculate_single_weights(config, _FakeGTT(), selected_income=selected_income)  # type: ignore
+
+    expected_incomes = (
+        {selected_income} if selected_income is not None else {"laag", "middellaag", "middelhoog", "hoog"}
+    )
+    assert {key.income for key in weights.cache} == expected_incomes
 
     # Assert
     # A set of representative keys that must be produced.

@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from ikob import utils
 from ikob.datasource import DataKey
 
 
@@ -110,24 +111,18 @@ def test_get_weight_matrix_combined_modality():
 modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
 
 
-@pytest.mark.parametrize("modality", modalities)
-@pytest.mark.parametrize(
-    ("income_group", "income_index"), (("laag", 0), ("middellaag", 1), ("middelhoog", 2), ("hoog", 3))
-)
-@pytest.mark.parametrize(
-    "weight_matrix",
-    [
+@pytest.fixture(
+    params=[
         np.array([[0.8, 0.15, 0.05], [0.2, 0.7, 0.1], [0.1, 0.2, 0.5]]),
         np.eye(3) * 0.8,
     ],
     ids=["complicated_matrix", "diagonal_matrix"],
 )
-def test_competition_on_jobs_per_capita_sensitivity(
-    modality, income_group, income_index, monkeypatch, segs_capture, weight_matrix
-):
+def competition_input(request, monkeypatch, segs_capture):
     import ikob.competition as comp
     from ikob.datasource import DataKey
 
+    weight_matrix = request.param
     # Prepare
     pod = "Restdag"
     motive = "werk or somethings else"
@@ -219,18 +214,28 @@ def test_competition_on_jobs_per_capita_sensitivity(
         "geavanceerd": {"welke_groepen": [which_groups]},
     }
 
-    # Act
-    competitions = comp.competition_on_destinations(config, _Weights(), _Weights(), _Destinations())  # type: ignore
+    return config, _Weights(), _Destinations(), weight_matrix, jobs_income_reachable, jobs_income_present
+
+
+@pytest.mark.parametrize("modality", modalities)
+@pytest.mark.parametrize(
+    ("income_group", "income_index"), (("laag", 0), ("middellaag", 1), ("middelhoog", 2), ("hoog", 3))
+)
+def test_competition_on_jobs_per_capita_sensitivity(modality, income_group, income_index, competition_input):
+    from ikob.competition import competition_on_destinations
+
+    config, weights, destinations, weight_matrix, jobs_income_reachable, jobs_income_present = competition_input
+    competitions = competition_on_destinations(config, weights, weights, destinations)
 
     # Assert
     key = DataKey(
-        id="Totaal",
-        part_of_day=pod,
+        id=utils.INCOME_VECTOR_RESULT_ID,
+        part_of_day=config["skims"]["dagsoort"][0],
         subtopic="bestemmingen",
         income=income_group,
-        motive=motive,
+        motive=config["project"]["motief"]["naam"],
         modality=modality,
-        group=which_groups,
+        group=config["geavanceerd"]["welke_groepen"][0],
     )
     total = competitions.get(key)
 
@@ -241,3 +246,19 @@ def test_competition_on_jobs_per_capita_sensitivity(
         0.0,
     )
     np.testing.assert_allclose(total, expected)
+
+
+@pytest.mark.parametrize("selected_income", [None, "laag"], ids=["all-incomes", "single-income"])
+@pytest.mark.parametrize("citizens", [True, False], ids=["citizens", "destinations"])
+def test_competition_selected_income(competition_input, selected_income, citizens):
+    from ikob.competition import competition
+
+    config, weights, destinations, *_ = competition_input
+    competitions = competition(
+        config, weights, weights, destinations, citizens=citizens, selected_income=selected_income
+    )
+
+    incomes = {key.income for key in competitions.cache if key.id == utils.INCOME_VECTOR_RESULT_ID}
+    assert incomes == (
+        {selected_income} if selected_income is not None else {"laag", "middellaag", "middelhoog", "hoog"}
+    )
