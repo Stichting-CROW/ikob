@@ -3,6 +3,7 @@ import logging
 import numpy as np
 from scipy import sparse
 
+from ikob import utils
 from ikob.datasource import DataKey, DataSource, DataType
 
 logger = logging.getLogger(__name__)
@@ -100,6 +101,119 @@ def calculate_combined_weights(
     if write_weights:
         _materialize_combined_weights(config, single_weights, combined_weights, selected_income=selected_income)
     return combined_weights
+
+
+def get_weight_matrix(
+    single_weights: DataSource,
+    combined_weights: DataSource,
+    group,
+    modality,
+    motive,
+    regime,
+    part_of_day,
+    income,
+    ratio_electric: float,
+):
+    weights, key, electric_key = weight_matrix_request(
+        single_weights,
+        combined_weights,
+        group,
+        modality,
+        motive,
+        regime,
+        part_of_day,
+        income,
+        ratio_electric,
+    )
+    return load_weight_matrix(weights, key, electric_key, ratio_electric)
+
+
+def load_weight_matrix(weights: DataSource, key: DataKey, electric_key: DataKey | None, ratio_electric: float):
+    matrix = weights.get(key)
+    if electric_key is None or electric_key == 0:
+        return matrix
+    matrix_electric = weights.get(electric_key)
+    return ratio_electric * matrix_electric + (1 - ratio_electric) * matrix
+
+
+def weight_matrix_request(
+    single_weights: DataSource,
+    combined_weights: DataSource,
+    group,
+    modality,
+    motive,
+    regime,
+    part_of_day,
+    income,
+    ratio_electric: float,
+):
+    preference = utils.find_preference(group, modality)
+
+    if modality == "Fiets" or modality == "EFiets":
+        preference_bike = "Fiets" if preference == "Fiets" else ""
+        key = DataKey(
+            f"{modality}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference_bike,
+            income=income,
+        )
+        return single_weights, key, None
+
+    single_group = utils.single_group(modality, group)
+    combined_group = utils.combined_group(modality, group)
+
+    if modality == "Auto" and "WelAuto" in group or combined_group[0] == "A":
+        subtopic = "" if modality == "Auto" else "combinaties"
+        weights = single_weights if modality == "Auto" else combined_weights
+        string = single_group if modality == "Auto" else combined_group
+        key = DataKey(
+            f"{string}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference,
+            income=income,
+            subtopic=subtopic,
+            fuel_kind="fossiel",
+        )
+        if ratio_electric == 0:
+            return weights, key, None
+        electric_key = DataKey(
+            f"{string}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference,
+            income=income,
+            subtopic=subtopic,
+            fuel_kind="elektrisch",
+        )
+        fossil_key = key
+        return weights, fossil_key, electric_key
+
+    if modality == "Auto" or modality == "OV":
+        key = DataKey(
+            f"{single_group}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference,
+            income=income,
+        )
+        return single_weights, key, None
+
+    key = DataKey(
+        f"{combined_group}_vk",
+        part_of_day=part_of_day,
+        regime=regime,
+        motive=motive,
+        preference=preference,
+        income=income,
+        subtopic="combinaties",
+    )
+    return combined_weights, key, None
 
 
 def _materialize_combined_weights(

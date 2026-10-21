@@ -7,7 +7,7 @@ from ikob.datasource import DataKey
 @pytest.mark.parametrize(("ratio_electric"), ([0, 0.3, 1.0]))
 def test_get_weight_matrix_auto_with_electric_ratio(ratio_electric):
     """Test that get_weight_matrix correctly blends fossil and electric car matrices."""
-    from ikob.competition import get_weight_matrix
+    from ikob.combined_weights import get_weight_matrix
 
     fossil_matrix = np.array([[1.0, 2.0], [3.0, 4.0]])
     electric_matrix = np.array([[10.0, 20.0], [30.0, 40.0]])
@@ -41,7 +41,7 @@ def test_get_weight_matrix_auto_with_electric_ratio(ratio_electric):
 
 def test_get_weight_matrix_ov_modality():
     """Test that get_weight_matrix handles OV (public transport) correctly."""
-    from ikob.competition import get_weight_matrix
+    from ikob.combined_weights import get_weight_matrix
 
     single_matrix = np.array([[5, 6], [7, 8]])
     combined_matrix = np.array([[99, 100], [101, 102]])
@@ -74,7 +74,7 @@ def test_get_weight_matrix_ov_modality():
 
 def test_get_weight_matrix_combined_modality():
     """Test that get_weight_matrix handles combined modalities correctly."""
-    from ikob.competition import get_weight_matrix
+    from ikob.combined_weights import get_weight_matrix
 
     single_matrix = np.array([[1, 2], [3, 4]])
     combined_matrix = np.array([[9, 10], [11, 12]])
@@ -95,7 +95,7 @@ def test_get_weight_matrix_combined_modality():
         single_weights,  # type: ignore
         combined_weights,  # type: ignore
         group="WelAuto_vkOV_laag",
-        modality="AutoOV",
+        modality="Auto_OV",
         motive="werk",
         regime="Basis",
         part_of_day="Spits",
@@ -178,7 +178,7 @@ def test_competition_on_jobs_per_capita_sensitivity(
         }
     )
 
-    monkeypatch.setattr(comp, "get_weight_matrix", lambda *args, **kwargs: weight_matrix)
+    monkeypatch.setattr(comp, "load_weight_matrix", lambda *args, **kwargs: weight_matrix)
     monkeypatch.setattr(comp.DataSource, "write_csv", lambda *args, **kwargs: None)
 
     class _Destinations:

@@ -24,6 +24,7 @@ def _work_constants(modality, preference):
     elif modality == "EFiets":
         alpha = 0.175
         omega = 35
+
     if preference == "Auto":
         if modality == "Auto":
             omega = 50
