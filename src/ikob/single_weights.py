@@ -7,6 +7,7 @@ from ikob.configuration_definition import DecayCurveName
 from ikob.constants import work_constants
 from ikob.datasource import DataKey, DataSource, DataType
 from ikob.generalized_travel_time import generalized_travel_time
+from ikob.utils import FLOAT_DTYPE
 
 logger = logging.getLogger(__name__)
 
@@ -24,12 +25,12 @@ def calculate_weights(generalized_travel_time, modality, preference, decay_curve
     # Build a sparse matrix directly from in-range entries.
     rows, cols = np.nonzero(generalized_travel_time < 180)
     if rows.size == 0:
-        return sparse.csr_matrix(generalized_travel_time.shape, dtype=np.float64)
+        return sparse.csr_matrix(generalized_travel_time.shape, dtype=FLOAT_DTYPE)
 
     values = scaling / (1 + np.exp((generalized_travel_time[rows, cols] - omega) * alpha))
     keep = values >= 0.001
     return sparse.csr_matrix(
-        (values[keep], (rows[keep], cols[keep])), shape=generalized_travel_time.shape, dtype=np.float64
+        (values[keep], (rows[keep], cols[keep])), shape=generalized_travel_time.shape, dtype=FLOAT_DTYPE
     )
 
 
@@ -86,7 +87,9 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource):
         # might be neutral. This is to keep behavior identical to old code.
         weight_matrix = calculate_weights(travel_time, "OV", "OV", decay_curve)
         # Here we have to loop over the income classes as well because the travel time computation
-        # Only computes the free PT travel time once (as it's not dependent on the )
+        # Only computes the free PT travel time once (as it's not dependent on the income group)
+        # Note that the free car weights are dependent, because there are still costs associated with car free car travel counterintuitively
+        # see generalized_travel_time.py for details
         for income in ("hoog", "middelhoog", "middellaag", "laag"):
             for preference in ("Neutraal", "OV"):
                 store("GratisOV_vk", preference, income=income, weight_matrix=weight_matrix)

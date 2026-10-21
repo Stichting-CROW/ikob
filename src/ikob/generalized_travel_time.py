@@ -140,6 +140,16 @@ def generalized_travel_time(
             )
             publish(key, gtr_skim)
 
+        # Free PT generalized travel time:
+        gtr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix, IKOB_INFINITE)
+        key = DataKey(
+            id="GratisOV",
+            part_of_day=pod,
+            motive=motive_name,
+            regime=regime,
+        )
+        publish(key, gtr_skim)
+
         gtr_skim = np.zeros((num_zones, num_zones), dtype=utils.FLOAT_DTYPE)
         for income_level in income_levels:
             tvom_factor = tvom_dict.get(income_level)
@@ -258,16 +268,6 @@ def generalized_travel_time(
                 id="GratisAuto",
                 part_of_day=pod,
                 income=income_level,
-                motive=motive_name,
-                regime=regime,
-            )
-            publish(key, gtr_skim)
-
-            # Free PT generalized travel time:
-            gtr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix, IKOB_INFINITE)
-            key = DataKey(
-                id="GratisOV",
-                part_of_day=pod,
                 motive=motive_name,
                 regime=regime,
             )
