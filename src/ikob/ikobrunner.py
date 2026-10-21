@@ -60,12 +60,15 @@ def run_scripts(
 
         # The travel time is still returned here because we might need to write write these results to disk
         # The travel time only contains data write_travel_time is true
-        single_weights, travel_time = calculate_single_weights_on_demand(config, write_travel_time)
+        single_weights, travel_time = calculate_single_weights_on_demand(config, write_travel_time=write_travel_time)
     elif not skip_steps[0]:
-        # if step 0 is not skipped, but step 2 is, compute the travel time as normal
-        travel_time = generalized_travel_time(config, write_travel_time=write_travel_time)
+        # if step 0 is not skipped, but step 2 is, we only need to compute the travel time if we want to write the results,
+        # since the computation can continue with the step 2 results read from disk
+        if write_travel_time:
+            travel_time = generalized_travel_time(config, write_travel_time=write_travel_time)
+        else:
+            travel_time = None
     else:
-        # if step 0 is skipped as well, we create an empty data source that will read from disk
         travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
 
     if not skip_steps[1]:
@@ -82,7 +85,7 @@ def run_scripts(
         single_weights = calculate_single_weights(config, travel_time)
 
     if single_weights is None:
-        raise RuntimeError("Single weights are unavailable for the selected pipeline steps.")
+        raise RuntimeError(f"Single weights are unavailable for the selected pipeline steps: {skip_steps}")
 
     if not skip_steps[3]:
         combined_weights = calculate_combined_weights(config, single_weights)
