@@ -28,7 +28,9 @@ def generalized_travel_time(
 
     If on_travel_time is provided, this method will be called when a travel time matrix is computed
     A caller can use this to immediately transform the travel time results to weight matrices
-    without having to store the large travel time matrices
+    without having to store the large travel time matrices.
+
+    if write_travel_time is true the travel time results are written to a datasource which is returned.
     """
 
     logger.info("Starting step: Compute generalized travel time from time and costs.")
@@ -139,6 +141,16 @@ def generalized_travel_time(
                 income=income_level,
             )
             publish(key, gtr_skim)
+
+        # Free PT generalized travel time:
+        gtr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix, IKOB_INFINITE)
+        key = DataKey(
+            id="GratisOV",
+            part_of_day=pod,
+            motive=motive_name,
+            regime=regime,
+        )
+        publish(key, gtr_skim)
 
         gtr_skim = np.zeros((num_zones, num_zones), dtype=utils.FLOAT_DTYPE)
         for income_level in income_levels:
@@ -258,16 +270,6 @@ def generalized_travel_time(
                 id="GratisAuto",
                 part_of_day=pod,
                 income=income_level,
-                motive=motive_name,
-                regime=regime,
-            )
-            publish(key, gtr_skim)
-
-            # Free PT generalized travel time:
-            gtr_skim = np.where(pt_time_matrix > 0.5, pt_time_matrix, IKOB_INFINITE)
-            key = DataKey(
-                id="GratisOV",
-                part_of_day=pod,
                 motive=motive_name,
                 regime=regime,
             )
