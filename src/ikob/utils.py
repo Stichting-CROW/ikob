@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 # This is used throughout the code as a pseudo infinite travel time that's still outputted as a number
 IKOB_INFINITE = 9999.0
+INCOME_VECTOR_RESULT_ID = "Totaal"
 FLOAT_DTYPE = np.float32
 INT_DTYPE = np.int32
 
@@ -32,7 +33,7 @@ def read_csv(
     has_id_header: bool = False,
     id_store: IdStore | None = None,
 ) -> npt.NDArray:
-    """Return the matrix / vector in the csv in the given type
+    """Read and retain an input CSV for reuse across calculation stages.
 
     If has_id_column is true the first column is taken to be a column of row id's,
     an IdStore is required to map the ids to a consistent internal representation regardless of the order of the rows in the input file.

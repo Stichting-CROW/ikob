@@ -19,7 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 def generalized_travel_time(
-    config, on_travel_time: Callable | None = None, write_travel_time: bool = True
+    config,
+    on_travel_time: Callable | None = None,
+    write_travel_time: bool = True,
+    *,
+    selected_income: str | None = None,
 ) -> DataSource | None:
     """
     Compute generalized (experienced) travel time from time and costs.
@@ -62,7 +66,7 @@ def generalized_travel_time(
     pricecap_value = skims_config["pricecap"]["getal"]
     bike_cost_euro_per_km = skims_config["bike_cost_ct_per_km"] / 100
 
-    income_levels = ["laag", "middellaag", "middelhoog", "hoog"]
+    income_levels = [selected_income] if selected_income is not None else ["laag", "middellaag", "middelhoog", "hoog"]
     pt_km_price = pt_km_price / 100
     starting_rate = starting_rate / 100
     var_fossil = var_fossil / 100

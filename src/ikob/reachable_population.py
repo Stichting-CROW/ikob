@@ -1,10 +1,12 @@
 import logging
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
 
 from ikob import utils
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.output_tables import assemble_income_tables
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +15,14 @@ def create_citizens_file(distribution_matrix, working_population):
     return np.asarray(working_population)[:, np.newaxis] * np.asarray(distribution_matrix)
 
 
-def calculate_reachable_population(config, single_weights: DataSource, combined_weights: DataSource) -> DataSource:
+def calculate_reachable_population(
+    config,
+    single_weights: DataSource,
+    combined_weights: DataSource,
+    *,
+    selected_income: str | None = None,
+    results: DataSource | None = None,
+) -> DataSource:
     """
     From combined weights to number of citizens that can reach the destination in a zone.
 
@@ -31,7 +40,6 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
     regimes = project_config["beprijzingsregime"]
     motive_name = project_config["motief"]["naam"]
     traveling_population_path = Path(project_config["motief"]["reizende populatie"])
-    destinations_path = Path(project_config["motief"]["bestemmingsplaatsen"])
     car_possession_groups = advanced_config["welke_groepen"]
     income_groups = project_config["welke_inkomensgroepen"]
     fuel_kinds = ["fossiel", "elektrisch"]
@@ -67,7 +75,6 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
     segs_source = SegsSource(config)
 
     traveling_population = segs_source.read(traveling_population_path.name, scenario=scenario)
-    destinations = segs_source.read(destinations_path.name, scenario=scenario)
 
     working_population = []
 
@@ -76,7 +83,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
     # section D5: derive group sizes $I_{gh}$ per origin zone by distributing the origin-zone working population
     # over groups using the SEG distribution matrix.
 
-    origins = DataSource(config, DataType.ORIGINS)
+    origins = results if results is not None else DataSource(config, DataType.ORIGINS)
 
     for car_possession_group in car_possession_groups:
         distribution_matrix = segs_source.read(
@@ -93,6 +100,8 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
 
         for part_of_day in part_of_days:
             for income_group in income_groups:
+                if selected_income is not None and income_group != selected_income:
+                    continue
                 general_possibility_totals = []
                 for modality in modalities:
                     working_population_list = utils.zeros(len(working_population))
@@ -218,7 +227,7 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                                     working_population_list += matrix @ citizens_transpose[igroup]
 
                     key = DataKey(
-                        id="Totaal",
+                        id=utils.INCOME_VECTOR_RESULT_ID,
                         part_of_day=part_of_day,
                         group=car_possession_group,
                         income=income_group,
@@ -242,49 +251,20 @@ def calculate_reachable_population(config, single_weights: DataSource, combined_
                 origins_total = np.round(origins_total).astype(int)
                 origins.set(key, origins_total)
 
-            for modality in modalities:
-                general_matrix = []
-                for income_group in income_groups:
-                    key = DataKey(
-                        "Totaal",
-                        part_of_day=part_of_day,
-                        income=income_group,
-                        motive=motive_name,
-                        group=car_possession_group,
-                        modality=modality,
-                        subtopic="",
-                    )
-                    total_row = origins.get(key)
-
-                    general_matrix.append(total_row)
-                general_total_transpose = utils.transpose(general_matrix)
-                general_matrix_product = general_total_transpose * destinations
-
-                general_total_transpose = np.round(general_total_transpose).astype(int)
-                key = DataKey(
-                    id="Pot_totaal",
-                    part_of_day=part_of_day,
-                    group=car_possession_group,
-                    motive=motive_name,
-                    modality=modality,
-                    header=income_groups,
-                )
-                origins.set(key, general_total_transpose)
-
-                # Section D5 regional aggregation note:
-                # The PDF defines $B_{irv}$ as a jobs-weighted aggregation over destination zones in a region.
-                # Here `Pot_totaalproduct` prepares the numerator term $B_{ibv} \cdot A_{ib}$ by multiplying
-                # the destination-level reach (`general_total_transpose`) by the number of jobs/pupil-places
-                # in that destination zone (`destinations`).
-
-                key = DataKey(
-                    id="Pot_totaalproduct",
-                    part_of_day=part_of_day,
-                    group=car_possession_group,
-                    motive=motive_name,
-                    modality=modality,
-                    header=income_groups,
-                )
-                origins.set(key, np.asarray(general_matrix_product))
-
+    if selected_income is None:
+        assemble_population_outputs(config, origins)
     return origins
+
+
+def assemble_population_outputs(config, origins: DataSource):
+    project = config["project"]
+    destinations = SegsSource(config).read(
+        Path(project["motief"]["bestemmingsplaatsen"]).name, scenario=project["verstedelijkingsscenario"]
+    )
+    for key, values in assemble_income_tables(origins, ["laag", "middellaag", "middelhoog", "hoog"]):
+        # Rename the per income group result for output
+        total_id = "Pot_totaal"
+        origins.set(replace(key, id=total_id), np.round(values).astype(int))
+        # Section D5 of the algorithm region result is a destinations-weighted average of reachability
+        # Store the per-zone numerator contribution here. Regional summation and division by total population could happen later.
+        origins.set(replace(key, id=f"{total_id}product"), values * destinations)

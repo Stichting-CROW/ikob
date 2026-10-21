@@ -34,7 +34,7 @@ def calculate_weights(generalized_travel_time, modality, preference, decay_curve
     )
 
 
-def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource):
+def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource, *, selected_income: str | None = None):
     """Convert one GTT matrix to all single-weight matrices that use it."""
     project_config = config["project"]
     decay_curve = project_config["motief"]["reistijdvervalscurve"]
@@ -88,30 +88,39 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource):
         weight_matrix = calculate_weights(travel_time, "OV", "OV", decay_curve)
         # Here we have to loop over the income classes as well because the travel time computation
         # Only computes the free PT travel time once (as it's not dependent on the income group)
-        # Note that the free car weights are dependent, because there are still costs associated with car free car travel counterintuitively
+        # The weights are not dependent on the income group either, but for ease of implementation
+        # we create a key with income group for each income to point to this weight matrix
+        # so this weight matrix behaves the same as the others.
+
+        # Note that the free car travel time is dependent on income class,
+        # because there are still costs associated with car free car travel counterintuitively.
         # see generalized_travel_time.py for details
-        for income in ("hoog", "middelhoog", "middellaag", "laag"):
+        incomes = [selected_income] if selected_income is not None else ["hoog", "middelhoog", "middellaag", "laag"]
+        for income in incomes:
             for preference in ("Neutraal", "OV"):
                 store("GratisOV_vk", preference, income=income, weight_matrix=weight_matrix)
 
 
-def calculate_single_weights_on_demand(config, write_travel_time: bool = False):
+def calculate_single_weights_on_demand(config, write_travel_time: bool = False, *, selected_income: str | None = None):
     """Compute GTTs and consume each one immediately as sparse weights."""
     weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 
     def consume(key, travel_time):
-        consume_travel_time(config, key, travel_time, weights)
+        consume_travel_time(config, key, travel_time, weights, selected_income=selected_income)
 
     # The returned travel time will be empty if write_travel_time is false
     travel_time = generalized_travel_time(
         config,
         on_travel_time=consume,
         write_travel_time=write_travel_time,
+        selected_income=selected_income,
     )
     return weights, travel_time
 
 
-def calculate_single_weights(config, generalized_travel_time: DataSource) -> DataSource:
+def calculate_single_weights(
+    config, generalized_travel_time: DataSource, *, selected_income: str | None = None
+) -> DataSource:
     """
     From experienced travel time to the computation of weights
 
@@ -130,7 +139,7 @@ def calculate_single_weights(config, generalized_travel_time: DataSource) -> Dat
     regimes = config["project"]["beprijzingsregime"]
 
     # Vaste waarden
-    incomes = ["hoog", "middelhoog", "middellaag", "laag"]
+    incomes = [selected_income] if selected_income is not None else ["hoog", "middelhoog", "middellaag", "laag"]
 
     weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 
@@ -168,6 +177,6 @@ def calculate_single_weights(config, generalized_travel_time: DataSource) -> Dat
         # pree public transport
         key = DataKey("GratisOV", part_of_day=part_of_day, regime=regimes, motive=motive_name)
         travel_time = generalized_travel_time.get(key)
-        consume_travel_time(weights.config, key, travel_time, weights)
+        consume_travel_time(weights.config, key, travel_time, weights, selected_income=selected_income)
 
     return weights

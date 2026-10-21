@@ -93,14 +93,18 @@ def has_preference(kind_car, kind_pt, preference):
         return True
 
 
-def calculate_combined_weights(config, single_weights: DataSource, write_weights: bool = False) -> DataSource:
+def calculate_combined_weights(
+    config, single_weights: DataSource, write_weights: bool = False, *, selected_income: str | None = None
+) -> DataSource:
     combined_weights = CombinedWeightsSource(config, single_weights)
     if write_weights:
-        _materialize_combined_weights(config, single_weights, combined_weights)
+        _materialize_combined_weights(config, single_weights, combined_weights, selected_income=selected_income)
     return combined_weights
 
 
-def _materialize_combined_weights(config, single_weights: DataSource, combined_weights: DataSource) -> None:
+def _materialize_combined_weights(
+    config, single_weights: DataSource, combined_weights: DataSource, *, selected_income: str | None = None
+) -> None:
     """
     From weights for single travel modes to combined weights.
 
@@ -118,7 +122,7 @@ def _materialize_combined_weights(config, single_weights: DataSource, combined_w
     regimes = project_config["beprijzingsregime"]
     part_of_days = skims_config["dagsoort"]
 
-    incomes = ["hoog", "middelhoog", "middellaag", "laag"]
+    incomes = [selected_income] if selected_income is not None else ["hoog", "middelhoog", "middellaag", "laag"]
     preferences = ["Auto", "Neutraal", "Fiets", "OV"]
     modalities_bike = ["Fiets"]
     car_kinds = ["Auto", "GeenAuto", "GeenRijbewijs", "GratisAuto"]

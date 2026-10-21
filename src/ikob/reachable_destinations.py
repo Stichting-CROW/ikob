@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -6,11 +7,19 @@ import numpy as np
 from ikob import utils
 from ikob.competition import get_weight_matrix
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.output_tables import assemble_income_tables
 
 logger = logging.getLogger(__name__)
 
 
-def calculate_reachable_destinations(config, single_weights: DataSource, combined_weights: DataSource) -> DataSource:
+def calculate_reachable_destinations(
+    config,
+    single_weights: DataSource,
+    combined_weights: DataSource,
+    *,
+    selected_income: str | None = None,
+    results: DataSource | None = None,
+) -> DataSource:
     """
     From (combined) weights to reachable destinations per zone.
 
@@ -76,7 +85,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
 
     income_distributions_transposed = utils.transpose(income_distributions)
 
-    potencies = DataSource(config, DataType.DESTINATIONS)
+    potencies = results if results is not None else DataSource(config, DataType.DESTINATIONS)
 
     for car_possession_group in car_possession_groups:
         distribution_matrix = segs_source.read(
@@ -92,6 +101,8 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
 
         for part_of_day in part_of_days:
             for i_income_group, income_group in enumerate(income_groups):
+                if selected_income is not None and income_group != selected_income:
+                    continue
                 destinations_for_income = np.asarray(destinations[i_income_group], dtype=utils.FLOAT_DTYPE)
 
                 incomes = np.asarray(income_distributions_transposed[i_income_group], dtype=utils.FLOAT_DTYPE)
@@ -136,7 +147,7 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                             possibility_sum += possibility
 
                     key = DataKey(
-                        "Totaal",
+                        utils.INCOME_VECTOR_RESULT_ID,
                         part_of_day=part_of_day,
                         income=income_group,
                         group=car_possession_group,
@@ -160,63 +171,20 @@ def calculate_reachable_destinations(config, single_weights: DataSource, combine
                 )
                 potencies.set(key, general_possibility_totals_transposed)
 
-            for modality in modalities:
-                general_matrix_product = []
-                general_matrix = []
-                for income_group in income_groups:
-                    key = DataKey(
-                        "Totaal",
-                        part_of_day=part_of_day,
-                        income=income_group,
-                        group=car_possession_group,
-                        motive=motive_name,
-                        modality=modality,
-                    )
-                    totals_row = potencies.get(key)
-                    general_matrix.append(totals_row)
-                if len(income_groups) > 1:
-                    general_possibility_totals_transposed = utils.transpose(general_matrix)
-                else:
-                    general_possibility_totals_transposed = general_matrix
-                for i in range(len(traveling_population)):
-                    general_matrix_product.append([])
-                    for j in range(len(traveling_population[0])):
-                        if traveling_population[i][j] > 0:
-                            general_matrix_product[i].append(
-                                general_possibility_totals_transposed[i][j] * traveling_population[i][j]
-                            )
-                        else:
-                            general_matrix_product[i].append(0)
-
-                general_possibility_totals_transposed = np.round(general_possibility_totals_transposed).astype(int)
-                key = DataKey(
-                    "Ontpl_totaal",
-                    part_of_day=part_of_day,
-                    group=car_possession_group,
-                    motive=motive_name,
-                    modality=modality,
-                    header=income_groups,
-                )
-                potencies.set(key, general_possibility_totals_transposed)
-
-                # section D4 regional aggregation note:
-                # The PDF defines $B_{irv}$ as a population-weighted aggregation of zone-level reachability
-                # $B_{ihv}$ over the zones $h$ that belong to a region $r$:
-                #   $B_{irv} = (\sum_{h \in r} B_{ihv} \cdot I_{ih}) / (\sum_{h \in r} I_{ih})$.
-                # This function does not explicitly group zones into regions or compute that weighted average.
-                # Instead, `Ontpl_totaalproduct` prepares the numerator term $B_{ihv} \cdot I_{ih}$ by
-                # multiplying the per-zone reachability by the (income-class) population per zone.
-                # The denominator $\sum_{h \in r} I_{ih}$ and the sum in the numerator would need to be applied in a later aggregation step.
-
-                general_matrix_product = np.round(general_matrix_product).astype(int)
-                key = DataKey(
-                    "Ontpl_totaalproduct",
-                    part_of_day=part_of_day,
-                    group=car_possession_group,
-                    motive=motive_name,
-                    modality=modality,
-                    header=income_groups,
-                )
-                potencies.set(key, general_matrix_product)
-
+    if selected_income is None:
+        assemble_destination_outputs(config, potencies)
     return potencies
+
+
+def assemble_destination_outputs(config, potencies: DataSource):
+    project = config["project"]
+    population = SegsSource(config).read(
+        Path(project["motief"]["reizende populatie"]).name, scenario=project["verstedelijkingsscenario"]
+    )
+    for key, values in assemble_income_tables(potencies, project["welke_inkomensgroepen"]):
+        # Rename the per income group result for output
+        total_id = "Ontpl_totaal"
+        potencies.set(replace(key, id=total_id), np.round(values).astype(int))
+        # Section D4 of the algorithm region result is a population-weighted average of reachability
+        # Store the per-zone numerator contribution here. Regional summation and division by total population could happen later.
+        potencies.set(replace(key, id=f"{total_id}product"), np.round(values * population).astype(int))

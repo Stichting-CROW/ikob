@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -6,6 +7,7 @@ import numpy.typing as npt
 
 from ikob import utils
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.output_tables import assemble_income_tables
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +103,13 @@ def get_weight_matrix(
 
 
 def competition_on_destinations(
-    config, single_weights: DataSource, combined_weights: DataSource, origins: DataSource
+    config,
+    single_weights: DataSource,
+    combined_weights: DataSource,
+    origins: DataSource,
+    *,
+    selected_income: str | None = None,
+    results: DataSource | None = None,
 ) -> DataSource:
     """
     For every zone it's determined if the zone has a (dis)advantage compared to other zones in reaching destinations.
@@ -112,11 +120,25 @@ def competition_on_destinations(
     destinations with many competing residents.
     """
     logger.info("Starting step: Compute competition on destinations")
-    return competition(config, single_weights, combined_weights, origins, citizens=False)
+    return competition(
+        config,
+        single_weights,
+        combined_weights,
+        origins,
+        citizens=False,
+        selected_income=selected_income,
+        results=results,
+    )
 
 
 def competition_on_citizens(
-    config, single_weights: DataSource, combined_weights: DataSource, origins: DataSource
+    config,
+    single_weights: DataSource,
+    combined_weights: DataSource,
+    origins: DataSource,
+    *,
+    selected_income: str | None = None,
+    results: DataSource | None = None,
 ) -> DataSource:
     """
     For every zone it's determined if the zone has a (dis)advantage compared to other zones in attracting citizens.
@@ -127,11 +149,26 @@ def competition_on_citizens(
     origins with many competing jobs/destinations.
     """
     logger.info("Starting step: Compute competition on citizens")
-    return competition(config, single_weights, combined_weights, origins, citizens=True)
+    return competition(
+        config,
+        single_weights,
+        combined_weights,
+        origins,
+        citizens=True,
+        selected_income=selected_income,
+        results=results,
+    )
 
 
 def competition(
-    config, single_weights: DataSource, combined_weights: DataSource, origins: DataSource, citizens: bool = True
+    config,
+    single_weights: DataSource,
+    combined_weights: DataSource,
+    origins: DataSource,
+    citizens: bool = True,
+    *,
+    selected_income: str | None = None,
+    results: DataSource | None = None,
 ) -> DataSource:
     if citizens:
         msg = "Competition for citizens."
@@ -228,7 +265,7 @@ def competition(
     subtopic_competition = "inwoners" if citizens else "bestemmingen"
     # Matches the suffix in potential_companies.py and employment_opportunities.py
     competition_filename_suffix = "Pot" if citizens else "Ontpl"
-    competitions = DataSource(config, DataType.COMPETITION)
+    competitions = results if results is not None else DataSource(config, DataType.COMPETITION)
 
     if citizens:
         citizens_or_destinations = traveling_population
@@ -247,11 +284,13 @@ def competition(
 
         for part_of_day in part_of_days:
             for i_income_group, income_group in enumerate(income_groups):
+                if selected_income is not None and income_group != selected_income:
+                    continue
                 general_possibility_totals = []
 
                 for modality in modalities:
                     key = DataKey(
-                        "Totaal",
+                        utils.INCOME_VECTOR_RESULT_ID,
                         part_of_day=part_of_day,
                         motive=motive_name,
                         modality=modality,
@@ -306,7 +345,7 @@ def competition(
                             )
 
                     key = DataKey(
-                        id="Totaal",
+                        id=utils.INCOME_VECTOR_RESULT_ID,
                         part_of_day=part_of_day,
                         subtopic=subtopic_competition,
                         income=income_group,
@@ -331,49 +370,29 @@ def competition(
                 )
                 competitions.set(key, general_totals_transpose)
 
-            for modality in modalities:
-                general_matrix_product = []
-                general_matrix = []
-                for income_group in income_groups:
-                    key = DataKey(
-                        "Totaal",
-                        part_of_day=part_of_day,
-                        motive=motive_name,
-                        modality=modality,
-                        income=income_group,
-                        subtopic=subtopic_competition,
-                        group=car_possession_group,
-                    )
-                    general_matrix.append(competitions.get(key))
-                general_totals_transpose = utils.transpose(general_matrix)
-
-                # Note that if citizens_or_destinations is citizens, then the condition is on destinations
-                if citizens:
-                    condition = destinations > 0
-                else:
-                    condition = traveling_population > 0
-                general_matrix_product = np.where(condition, general_totals_transpose * citizens_or_destinations, 0)
-
-                key = DataKey(
-                    id=f"{competition_filename_suffix}_conc",
-                    part_of_day=part_of_day,
-                    subtopic=subtopic_competition,
-                    motive=motive_name,
-                    modality=modality,
-                    group=car_possession_group,
-                    header=income_groups,
-                )
-                competitions.set(key, general_totals_transpose)
-
-                key = DataKey(
-                    id=f"{competition_filename_suffix}_concproduct",
-                    part_of_day=part_of_day,
-                    subtopic=subtopic_competition,
-                    motive=motive_name,
-                    modality=modality,
-                    group=car_possession_group,
-                    header=income_groups,
-                )
-                competitions.set(key, general_matrix_product)
-
+    if selected_income is None:
+        assemble_competition_outputs(config, competitions, citizens=citizens)
     return competitions
+
+
+def assemble_competition_outputs(config, competitions: DataSource, *, citizens: bool):
+    project = config["project"]
+    segs = SegsSource(config)
+    population = segs.read(
+        Path(project["motief"]["reizende populatie"]).name, scenario=project["verstedelijkingsscenario"]
+    )
+    destinations = segs.read(
+        Path(project["motief"]["bestemmingsplaatsen"]).name, scenario=project["verstedelijkingsscenario"]
+    )
+    multiplier = population if citizens else destinations
+    condition = destinations > 0 if citizens else population > 0
+    prefix = "Pot" if citizens else "Ontpl"
+    for key, values in assemble_income_tables(competitions, ["laag", "middellaag", "middelhoog", "hoog"]):
+        # Rename the per income group result for output
+        competitions.set(replace(key, id=f"{prefix}_conc"), values)
+        # D6/D7 regional aggregation weights each zone by jobs (Ontpl) or residents (Pot).
+        # Store the per-zone numerator contribution; regional summation and division happen later.
+
+        # Sections D6/D7 of the algorithm region result is a population/destination-weighted average of reachability
+        # Store the per-zone numerator contribution here. Regional summation and division by total population could happen later.
+        competitions.set(replace(key, id=f"{prefix}_concproduct"), np.where(condition, values * multiplier, 0))
