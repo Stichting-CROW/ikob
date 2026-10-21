@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 # This is used throughout the code as a pseudo infinite travel time that's still outputted as a number
 IKOB_INFINITE = 9999.0
+INCOME_VECTOR_RESULT_ID = "Totaal"
 FLOAT_DTYPE = np.float32
 INT_DTYPE = np.int32
 
