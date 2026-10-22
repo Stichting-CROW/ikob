@@ -22,6 +22,10 @@ class IdStore:
 
     @classmethod
     def from_zone_ids(cls, zone_ids: list[str], zone_source=""):
+        if not zone_ids:
+            raise ValueError(
+                "Empty zone IDs provided to id store constructor" + (f" from {zone_source}" if zone_source else "")
+            )
         duplicates = {id for id in zone_ids if zone_ids.count(id) > 1}
         if any(duplicates):
             raise ValueError(
@@ -51,12 +55,24 @@ class IdStore:
     def reorder_rows_to_internal_idx(self, row_ids: list[str], values: NDArray, source_name: str) -> NDArray:
         self._validate_exact_ids(row_ids, source_name)
 
+        if len(row_ids) != values.shape[0]:
+            raise ValueError(
+                f"Number of row IDs ({len(row_ids)}) does not match the number of rows in values ({values.shape[0]}) "
+                f"for {source_name}"
+            )
+
         row_id_to_idx = {row_id: row_idx for row_idx, row_id in enumerate(row_ids)}
         reordered_row_idx = [row_id_to_idx[zone_id] for zone_id in self._zone_ids]
         return values[reordered_row_idx]
 
     def reorder_columns_to_internal_idx(self, col_ids: list[str], values: NDArray, source_name: str) -> NDArray:
         self._validate_exact_ids(col_ids, source_name)
+
+        if len(col_ids) != values.shape[1]:
+            raise ValueError(
+                f"Number of column IDs ({len(col_ids)}) does not match the number of columns in values ({values.shape[1]}) "
+                f"for {source_name}"
+            )
 
         col_id_to_idx = {col_id: col_idx for col_idx, col_id in enumerate(col_ids)}
         reordered_col_idx = [col_id_to_idx[zone_id] for zone_id in self._zone_ids]
