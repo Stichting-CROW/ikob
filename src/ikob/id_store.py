@@ -1,3 +1,4 @@
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from types import MappingProxyType
@@ -26,8 +27,9 @@ class IdStore:
             raise ValueError(
                 "Empty zone IDs provided to id store constructor" + (f" from {zone_source}" if zone_source else "")
             )
-        duplicates = {id for id in zone_ids if zone_ids.count(id) > 1}
-        if any(duplicates):
+
+        duplicates = {zone_id for zone_id, count in Counter(zone_ids).items() if count > 1}
+        if duplicates:
             raise ValueError(
                 "Duplicate id's found in "
                 + (zone_source if zone_source != "" else "zone ids provided to id store constructor")
@@ -40,8 +42,8 @@ class IdStore:
 
     def _validate_exact_ids(self, ids: list[str], source_name: str):
         reference = set(self._zone_ids)
-        duplicates = {id for id in ids if ids.count(id) > 1}
-        if any(duplicates):
+        duplicates = {zone_id for zone_id, count in Counter(ids).items() if count > 1}
+        if duplicates:
             raise ValueError(f"Duplicate id's found in {source_name}. Duplicates: {duplicates}")
 
         current = set(ids)
