@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 
 import numpy.typing as npt
 from numpy.typing import NDArray
+from scipy import sparse
 
 from ikob import utils
 from ikob.id_store import IdStore, ZoneIdStoreSingleton
@@ -246,7 +247,7 @@ class DataSource:
     def __init__(self, config, datatype: DataType, has_zone_id_header=False):
         self.config = config
         self.project_dir = get_project_directory(config)
-        self.cache: dict[DataKey, NDArray] = {}
+        self.cache: dict[DataKey, NDArray | sparse.csr_matrix] = {}
         self.datatype = datatype
         self.changed_keys = set()
         # Some data sources store / read zone to zone matrices
@@ -293,11 +294,11 @@ class DataSource:
             return "resultaten"
         return ""
 
-    def set(self, key: DataKey, data: NDArray):
+    def set(self, key: DataKey, data: NDArray | sparse.csr_matrix):
         self.changed_keys.add(key)
         self.cache[key] = data
 
-    def get(self, key: DataKey) -> NDArray:
+    def get(self, key: DataKey) -> NDArray | sparse.csr_matrix:
         if key in self.cache:
             return self.cache[key]
 
@@ -321,6 +322,10 @@ class DataSource:
         assert isinstance(key, DataKey)
         if key.is_intermediate and not write_intermediate_results:
             return
+
+        if sparse.issparse(data):
+            data = data.toarray()
+
         path = self._make_file_path(key).with_suffix(".csv")
 
         id_store = ZoneIdStoreSingleton.get_instance(self.config)
