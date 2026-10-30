@@ -3,11 +3,11 @@ import argparse
 import logging
 import sys
 import threading
-from tkinter import BooleanVar, Button, Frame, StringVar, Tk, Widget, filedialog, messagebox
+from tkinter import BooleanVar, Button, Frame, LabelFrame, StringVar, Tk, Widget, filedialog, messagebox
 
 from ikob.combined_weights import calculate_combined_weights
 from ikob.competition import competition_on_citizens, competition_on_destinations
-from ikob.config import validate, widgets
+from ikob.config import widgets
 from ikob.datasource import DataSource, DataType
 from ikob.distribute_over_groups import distribute_population_over_groups
 from ikob.generalized_travel_time import generalized_travel_time
@@ -23,6 +23,7 @@ def run_scripts(
     project_file,
     skip_steps: list[bool] | None = None,
     write_weights: bool = False,
+    write_travel_time: bool = False,
     write_intermediate_results: bool = False,
 ):
     """
@@ -36,14 +37,15 @@ def run_scripts(
     Args:
         project_file: The path to a JSON project config
         skip_steps: A list of bools to skip that index step
-        write_weights: Write out weights results
+        write_weights: Write out weights results (slow for large projects)
+        write_travel_time: Write out travel time results (slow for large projects)
         write_intermediate_results: Write intermediate results so that a future run can continue on steps computed by this run.
                                     These intermediate results do not contain useful end results.
+                                    To continue on weights or travel time steps that output should be enabled too.
     """
     logger.info("Reading project file: %s.", project_file)
-    config = get_config_from_args(project_file)
+    config, valid = get_config_from_args(project_file)
 
-    valid = validate.FileValidator(config).validate_input_files()
     if not valid:
         raise ValueError("Invalid input files, see console warnings.")
 
@@ -99,7 +101,6 @@ def run_scripts(
     # should persist.
     logger.info("Writing output to disk...")
     sources_to_save = [
-        travel_time,
         reachable_destinations,
         reachable_population,
         competition_citizens,
@@ -107,6 +108,8 @@ def run_scripts(
     ]
     if write_weights:
         sources_to_save.extend([single_weights, combined_weights])
+    if write_travel_time:
+        sources_to_save.extend([travel_time])
 
     for container in sources_to_save:
         container.store(write_intermediate_results)
@@ -135,6 +138,9 @@ class ConfigApp(Tk):
         self.title("IKOB Runner")
         self._checks = [BooleanVar(value=True) for _ in self.stappen]
         self._configvar = StringVar()
+        self._write_weights = BooleanVar(value=False)
+        self._write_travel_time = BooleanVar(value=False)
+        self._write_intermediate_results = BooleanVar(value=False)
         self.run_button = None
         self.create_widgets()
 
@@ -150,8 +156,33 @@ class ConfigApp(Tk):
         labels = [stap for stap in self.stappen]
         self.widgets.extend(widgets.checklistWidget(frame, "Stappen", labels, self._checks, row=1, itemsperrow=1))
 
+        # Add optional output checkboxes
+        output_frame = LabelFrame(master=frame, text="Extra output (slow for large projects)", borderwidth=2, padx=5)
+        output_frame.grid(row=2, column=0, columnspan=3, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
+        self.widgets.append(output_frame)
+
+        self.widgets.extend(
+            widgets.checkboxWidget(output_frame, "Write weights", self._write_weights, row=0, column=0, cspan=1)
+        )
+        self.widgets.extend(
+            widgets.checkboxWidget(output_frame, "Write travel time", self._write_travel_time, row=0, column=1, cspan=1)
+        )
+        from tkinter import Checkbutton
+
+        cb = Checkbutton(
+            master=output_frame,
+            text="Write intermediate results so that a future run can continue on steps computed by this run.\n"
+            "These intermediate results do not contain useful end results.\n"
+            "To continue on weights or travel time steps that output should be enabled too.",
+            variable=self._write_intermediate_results,
+            anchor="w",
+            justify="left",
+        )
+        cb.grid(row=1, column=0, columnspan=2, sticky="w", padx=8)
+        self.widgets.append(cb)
+
         button = Button(master=frame, text="Start", command=lambda: threading.Thread(target=self.run_cmd).start())
-        button.grid(row=2, column=2, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
+        button.grid(row=3, column=2, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
         self.run_button = button
         self.widgets.append(button)
 
@@ -168,7 +199,13 @@ class ConfigApp(Tk):
         self.run_button.configure(state="disabled")
 
         try:
-            run_scripts(project_file, skip_steps, write_weights=False)
+            run_scripts(
+                project_file,
+                skip_steps,
+                write_weights=self._write_weights.get(),
+                write_travel_time=self._write_travel_time.get(),
+                write_intermediate_results=self._write_intermediate_results.get(),
+            )
         except BaseException as err:  # noqa: BLE001
             msg = f"An error occurred: {err}"
             messagebox.showerror(title="FOUT", message=msg)

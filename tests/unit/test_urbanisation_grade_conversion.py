@@ -12,7 +12,7 @@ from ikob.utils import INT_DTYPE, read_csv
 
 def test_stedelijkheid_converter():
     segs_dir = pathlib.Path("tests/vlaanderen/SEGS")
-    config = get_config_from_args("tests/vlaanderen/vlaanderen.json")
+    config, _ = get_config_from_args("tests/vlaanderen/vlaanderen.json")
     id_store = ZoneIdStoreSingleton.get_instance(config)
 
     reference = read_csv(segs_dir / "Parkeerzoektijd.csv", type_caster=INT_DTYPE, id_store=id_store)
@@ -25,7 +25,7 @@ def test_generate_parkeerzoektijden():
     case = "vlaanderen"
     project_dir = pathlib.Path("tests") / case
     project_file = project_dir.joinpath(f"{case}.json")
-    config = get_config_from_args(project_file)
+    config, _ = get_config_from_args(project_file)
     id_store = ZoneIdStoreSingleton.get_instance(config)
 
     reference = read_csv(project_dir / "SEGS" / "Parkeerzoektijd.csv", type_caster=INT_DTYPE, id_store=id_store)
@@ -49,7 +49,7 @@ def test_assert_failed_parkeerzoektijden_conversion():
 
     # Overwrite SEGS directory to trigger failure in converting
     # parkeerzoektijden as stedelijkheidsgraad is not present.
-    config = get_config_from_args(project_file)
+    config, _ = get_config_from_args(project_file)
     config["skims"]["parkeerzoektijden_bestand"] = "unset"
     config["project"]["paden"]["segs_directory"] = "unset"
 
