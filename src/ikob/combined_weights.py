@@ -1,10 +1,17 @@
 import logging
 
-import numpy as np
+from scipy import sparse
 
 from ikob.datasource import DataKey, DataSource, DataType
 
 logger = logging.getLogger(__name__)
+
+
+def sparse_elementwise_max(left, right) -> sparse.csr_matrix:
+    """Return elementwise max, converting the input to a sparse matrix if necessary and returning a CSR matrix."""
+    left_sparse = left if sparse.issparse(left) else sparse.csr_matrix(left)
+    right_sparse = right if sparse.issparse(right) else sparse.csr_matrix(right)
+    return left_sparse.maximum(right_sparse).tocsr()
 
 
 def has_preference(kind_car, kind_pt, preference):
@@ -83,7 +90,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                         )
                         pt_matrix = single_weights.get(key)
 
-                        max_matrix = np.maximum(bike_matrix, pt_matrix)
+                        max_matrix = sparse_elementwise_max(bike_matrix, pt_matrix)
                         key = DataKey(
                             f"{pt_kind}_{modality_bike}_vk",
                             part_of_day=part_of_day,
@@ -124,7 +131,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                 )
                                 car_matrix = single_weights.get(key)
 
-                                max_matrix = np.maximum(bike_matrix, car_matrix)
+                                max_matrix = sparse_elementwise_max(bike_matrix, car_matrix)
                                 key = DataKey(
                                     f"{car_kind}_{modality_bike}_vk",
                                     part_of_day=part_of_day,
@@ -148,7 +155,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                             )
                             car_matrix = single_weights.get(key)
 
-                            max_matrix = np.maximum(bike_matrix, car_matrix)
+                            max_matrix = sparse_elementwise_max(bike_matrix, car_matrix)
                             key = DataKey(
                                 f"{car_kind}_{modality_bike}_vk",
                                 part_of_day=part_of_day,
@@ -188,7 +195,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                     fuel_kind=fuel_kind,
                                 )
                                 car_matrix = single_weights.get(key)
-                                max_matrix = np.maximum(pt_matrix, car_matrix)
+                                max_matrix = sparse_elementwise_max(pt_matrix, car_matrix)
                                 key = DataKey(
                                     f"{car_kind}_{pt_kind}_vk",
                                     part_of_day=part_of_day,
@@ -212,7 +219,7 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                             )
                             car_matrix = single_weights.get(key)
 
-                            max_matrix = np.maximum(pt_matrix, car_matrix)
+                            max_matrix = sparse_elementwise_max(pt_matrix, car_matrix)
                             key = DataKey(
                                 f"{car_kind}_{pt_kind}_vk",
                                 part_of_day=part_of_day,
@@ -265,8 +272,9 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                     )
                                     car_matrix = single_weights.get(key)
 
-                                    max_matrix = np.maximum(car_matrix, bike_matrix)
-                                    np.maximum(max_matrix, pt_matrix, out=max_matrix)
+                                    max_matrix = sparse_elementwise_max(
+                                        sparse_elementwise_max(car_matrix, bike_matrix), pt_matrix
+                                    )
                                     key = DataKey(
                                         f"{car_kind}_{pt_kind}_{modality_bike}_vk",
                                         part_of_day=part_of_day,
@@ -290,8 +298,9 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                 )
                                 car_matrix = single_weights.get(key)
 
-                                max_matrix = np.maximum(car_matrix, bike_matrix)
-                                np.maximum(max_matrix, pt_matrix, out=max_matrix)
+                                max_matrix = sparse_elementwise_max(
+                                    sparse_elementwise_max(car_matrix, bike_matrix), pt_matrix
+                                )
                                 key = DataKey(
                                     f"{car_kind}_{pt_kind}_{modality_bike}_vk",
                                     part_of_day=part_of_day,
