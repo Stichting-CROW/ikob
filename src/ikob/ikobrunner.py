@@ -3,7 +3,7 @@ import argparse
 import logging
 import sys
 import threading
-from tkinter import BooleanVar, Button, Frame, LabelFrame, StringVar, Tk, Widget, filedialog, messagebox
+from tkinter import BooleanVar, Button, Checkbutton, Frame, LabelFrame, StringVar, Tk, Widget, filedialog, messagebox
 
 from ikob.combined_weights import calculate_combined_weights
 from ikob.competition import competition_on_citizens, competition_on_destinations
@@ -39,7 +39,7 @@ def run_scripts(
         skip_steps: A list of bools to skip that index step
         write_weights: Write out weights results (slow for large projects)
         write_travel_time: Write out travel time results (slow for large projects)
-        write_intermediate_results: Write intermediate results so that a future run can continue on steps computed by this run.
+        write_intermediate_results: Write all intermediate results so that a future run can continue on steps computed by this run.
                                     These intermediate results do not contain useful end results.
                                     To continue on weights or travel time steps that output should be enabled too.
     """
@@ -109,7 +109,7 @@ def run_scripts(
     if write_weights:
         sources_to_save.extend([single_weights, combined_weights])
     if write_travel_time:
-        sources_to_save.extend([travel_time])
+        sources_to_save.append(travel_time)
 
     for container in sources_to_save:
         container.store(write_intermediate_results)
@@ -167,11 +167,10 @@ class ConfigApp(Tk):
         self.widgets.extend(
             widgets.checkboxWidget(output_frame, "Write travel time", self._write_travel_time, row=0, column=1, cspan=1)
         )
-        from tkinter import Checkbutton
 
         cb = Checkbutton(
             master=output_frame,
-            text="Write intermediate results so that a future run can continue on steps computed by this run.\n"
+            text="Write all intermediate results so that a future run can continue on steps computed by this run.\n"
             "These intermediate results do not contain useful end results.\n"
             "To continue on weights or travel time steps that output should be enabled too.",
             variable=self._write_intermediate_results,

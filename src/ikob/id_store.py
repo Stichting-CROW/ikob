@@ -7,7 +7,7 @@ import numpy as np
 from numpy.typing import NDArray
 
 
-@dataclass(frozen=True, unsafe_hash=True)
+@dataclass(frozen=True)
 class IdStore:
     """A mapping for (zone) ID to (zone) index in the matrices used throughout the code
 
