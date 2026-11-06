@@ -51,30 +51,30 @@ def get_config_from_args(project=None):
 
 
 def load_config(filename):
-    config = None
     try:
         with open(filename) as json_file:
             config = json.load(json_file)
     except BaseException as e:  # noqa: BLE001
         raise OSError(f"Kan niet lezen uit: '{filename}' with error:\n'{e}'.")
-    if config:
-        if not validate.validate_config(config):
-            msg = "Loaded config file: '%s' is incompatible with current IKOB."
-            logger.warning(msg, filename)
 
-            config = validate.try_fix_incompatible_configuration(config)
+    if not validate.validate_config(config):
+        msg = "Loaded config file: '%s' is incompatible with current IKOB."
+        logger.warning(msg, filename)
 
-            if validate.validate_config(config):
-                msg = "Automatically recovered from incompatible config file."
-                logger.info(msg)
-            else:
-                msg = "Configuration has irrecoverable incompatible format."
-                logger.error(msg)
-                raise ValueError(msg)
+        config = validate.try_fix_incompatible_configuration(config)
 
-        config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
-        validate.FileValidator(config).validate_input_files()
-    return config
+        if validate.validate_config(config):
+            msg = "Automatically recovered from incompatible config file."
+            logger.info(msg)
+        else:
+            msg = "Configuration has irrecoverable incompatible format."
+            logger.error(msg)
+            raise ValueError(msg)
+
+    config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
+
+    valid = validate.FileValidator(config).validate_input_files()
+    return config, valid
 
 
 def saveConfig(filename, config):
@@ -123,7 +123,7 @@ class ConfigApp(tk.Tk):
         )
         if filename:
             try:
-                read_config = load_config(filename)
+                read_config, _ = load_config(filename)
             except ValueError:
                 messagebox.showerror(
                     title="Fout",

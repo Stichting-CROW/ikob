@@ -12,7 +12,7 @@ def test_config_with_parking_cost_file():
 
     # Check if the first step runs OK with parking file provided.
     skip_steps = [False, *[True] * 7]
-    run_scripts(project, skip_steps=skip_steps, write_weights=False)
+    run_scripts(project, skip_steps=skip_steps, write_weights=False, write_travel_time=True)
 
     dir_to_compare = "basis/werk/ervarenreistijd"
     reference_dir = project_dir / "reference" / dir_to_compare
