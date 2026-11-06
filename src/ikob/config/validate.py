@@ -32,7 +32,7 @@ class FileValidator:
         valid &= self._motive_files_validation()
         logger.info("done")
 
-        logger.info("Validating skims files..")
+        logger.info("Validating skims files (this may take some minutes for large projects)..")
         # Validate skims at last because they may load slowly
         valid &= self._skims_files_validation()
         logger.info("done")
@@ -106,10 +106,15 @@ class FileValidator:
         for pod in part_of_day:
             try:
                 skims_reader.read("Auto_Tijd", pod)
+                logger.info("1/5 skim matrices validated")
                 skims_reader.read("Auto_Afstand", pod)
+                logger.info("2/5 skim matrices validated")
                 bike_time_matrix = skims_reader.read("Fiets_Tijd", pod)
+                logger.info("3/5 skim matrices validated")
                 skims_reader.read("Fiets_Afstand", pod, default=bike_time_matrix)
+                logger.info("4/5 skim matrices validated")
                 skims_reader.read("OV_Tijd", pod)
+                logger.info("5/5 skim matrices validated")
             except Exception as e:
                 logger.warning(
                     "A problem occurred while attempting to load the skims files: \n",
