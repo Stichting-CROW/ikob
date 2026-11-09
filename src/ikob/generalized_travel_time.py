@@ -26,11 +26,13 @@ def generalized_travel_time(
 
     Corresponds to section D1 in IKOB-algorithm.pdf
 
-    If on_travel_time is provided, this method will be called when a travel time matrix is computed
+    If on_travel_time is provided, this method will be called when a travel time matrix is computed.
+    Note that the chain (P&R) travel time is only used to augment the car travel time matrix, so it's not sent to on_travel_time.
     A caller can use this to immediately transform the travel time results to weight matrices
     without having to store the large travel time matrices.
 
-    if write_travel_time is true the travel time results are written to a datasource which is returned.
+    If write_travel_time is true the travel time results are written to a datasource which is returned.
+    The chain (P&R) travel time results are written to data source as well if write_travel_time is true.
     """
 
     logger.info("Starting step: Compute generalized travel time from time and costs.")
