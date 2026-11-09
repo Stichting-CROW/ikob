@@ -58,8 +58,8 @@ def run_scripts(
         # if we are not skipping step 0 (travel time) and 2 (single weight matrix)
         # we can combine the two steps and directly compute the weight matrices from the input
 
-        # The travel time is still returned here because we might need to write write these results to disk
-        # The travel time only contains data write_travel_time is true
+        # The travel time is still returned here because we might need to write these results to disk
+        # The travel time only contains data when write_travel_time is true
         single_weights, travel_time = calculate_single_weights_on_demand(config, write_travel_time=write_travel_time)
     elif not skip_steps[0]:
         # if step 0 is not skipped, but step 2 is, we only need to compute the travel time if we want to write the results,

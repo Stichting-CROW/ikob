@@ -87,8 +87,9 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource):
         weight_matrix = calculate_weights(travel_time, "OV", "OV", decay_curve)
         # Here we have to loop over the income classes as well because the travel time computation
         # Only computes the free PT travel time once (as it's not dependent on the income group)
-        # Note that the free car weights are dependent, because there are still costs associated with free car travel counterintuitively
-        # see generalized_travel_time.py for details
+        # Note that the free car weights are dependent on the income classes,
+        # because there are still costs associated with free car travel counterintuitively.
+        # See generalized_travel_time.py for detail.
         for income in ("hoog", "middelhoog", "middellaag", "laag"):
             for preference in ("Neutraal", "OV"):
                 store("GratisOV_vk", preference, income=income, weight_matrix=weight_matrix)
@@ -163,7 +164,7 @@ def calculate_single_weights(config, generalized_travel_time: DataSource) -> Dat
 
             consume_travel_time(config, key, travel_time, weights)
 
-        # pree public transport
+        # free public transport
         key = DataKey("GratisOV", part_of_day=part_of_day, regime=regimes, motive=motive_name)
         travel_time = generalized_travel_time.get(key)
         consume_travel_time(config, key, travel_time, weights)
