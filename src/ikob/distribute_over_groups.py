@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 
 from ikob.datasource import SegsSource, read_csv_from_config
-from ikob.id_store import IdStore
+from ikob.utils import URBANIZATION_GRADE_ID_STORE
 
 logger = logging.getLogger(__name__)
 
@@ -106,17 +106,16 @@ def distribute_population_over_groups(config):
         min_car_possession = list(map(min, car_possessions_per_household_segs, artificial_car_possession_segs))
 
     # Read SEGS input files. See tables 1-3 of IKOB-algorithm.pdf
-    urbanization_grade_id_store = IdStore.from_zone_ids(["1", "2", "3", "4", "5"])
-    no_license_segs = segs_source.read("GeenRijbewijs", id_store=urbanization_grade_id_store)
-    no_car_segs = segs_source.read("GeenAuto", id_store=urbanization_grade_id_store)
-    with_car_segs = segs_source.read("WelAuto", id_store=urbanization_grade_id_store)
+    no_license_segs = segs_source.read("GeenRijbewijs", id_store=URBANIZATION_GRADE_ID_STORE)
+    no_car_segs = segs_source.read("GeenAuto", id_store=URBANIZATION_GRADE_ID_STORE)
+    with_car_segs = segs_source.read("WelAuto", id_store=URBANIZATION_GRADE_ID_STORE)
 
     # Validate that the car possession data is consistent
     _validate_car_possession_segs(with_car_segs, no_car_segs, no_license_segs, income_levels)
 
     # Tables 6-7 of IKOB-algorithm.pdf
-    preferences_segs = segs_source.read("Voorkeuren", id_store=urbanization_grade_id_store)
-    preferences_no_car_segs = segs_source.read("VoorkeurenGeenAuto", id_store=urbanization_grade_id_store)
+    preferences_segs = segs_source.read("Voorkeuren", id_store=URBANIZATION_GRADE_ID_STORE)
+    preferences_no_car_segs = segs_source.read("VoorkeurenGeenAuto", id_store=URBANIZATION_GRADE_ID_STORE)
 
     header = []
     for ink in income_levels:

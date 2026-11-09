@@ -6,7 +6,7 @@ from pathlib import Path
 from ikob.chain_generator import Hubs
 from ikob.configuration_definition import default_config, default_configuration_definition
 from ikob.datasource import SegsSource, SkimsSource, read_csv_from_config
-from ikob.id_store import IdStore
+from ikob.utils import URBANIZATION_GRADE_ID_STORE
 
 logger = logging.getLogger(__name__)
 
@@ -61,10 +61,9 @@ class FileValidator:
                 logger.warning(f"A problem occurred while attempting to load the segs file {zone_segs}: \n", exc_info=e)
                 all_valid = False
 
-        urbanization_grade_id_store = IdStore.from_zone_ids(["1", "2", "3", "4", "5"])
         for urbanization_segs in segs_with_urbanization_ids:
             try:
-                segs_source.read(urbanization_segs, id_store=urbanization_grade_id_store)
+                segs_source.read(urbanization_segs, id_store=URBANIZATION_GRADE_ID_STORE)
             except Exception as e:
                 logger.warning(
                     f"A problem occurred while attempting to load the segs file {urbanization_segs}: \n", exc_info=e
@@ -103,18 +102,19 @@ class FileValidator:
             )
             all_valid = False
 
-        for pod in part_of_day:
+        total_skims = len(part_of_day) * 5
+        for i, pod in enumerate(part_of_day):
             try:
                 skims_reader.read("Auto_Tijd", pod)
-                logger.info("1/5 skim matrices validated")
+                logger.info(f"{i + 1}/{total_skims} skim matrices validated")
                 skims_reader.read("Auto_Afstand", pod)
-                logger.info("2/5 skim matrices validated")
+                logger.info(f"{i + 2}/{total_skims} skim matrices validated")
                 bike_time_matrix = skims_reader.read("Fiets_Tijd", pod)
-                logger.info("3/5 skim matrices validated")
+                logger.info(f"{i + 3}/{total_skims} skim matrices validated")
                 skims_reader.read("Fiets_Afstand", pod, default=bike_time_matrix)
-                logger.info("4/5 skim matrices validated")
+                logger.info(f"{i + 4}/{total_skims} skim matrices validated")
                 skims_reader.read("OV_Tijd", pod)
-                logger.info("5/5 skim matrices validated")
+                logger.info(f"{i + 5}/{total_skims} skim matrices validated")
             except Exception as e:
                 logger.warning(
                     "A problem occurred while attempting to load the skims files: \n",
