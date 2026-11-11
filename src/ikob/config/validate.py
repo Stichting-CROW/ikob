@@ -66,6 +66,10 @@ class FileValidator:
                 bike_time_matrix = skims_reader.read("Fiets_Tijd", pod)
                 skims_reader.read("Fiets_Afstand", pod, default=bike_time_matrix)
                 skims_reader.read("OV_Tijd", pod)
+                if self.config["skims"]["OV kostenbestand"]["gebruiken"]:
+                    skims_reader.read("OV_Kosten", pod)
+                else:
+                    skims_reader.read("OV_Afstand", pod)
             except Exception as e:
                 logger.warning(
                     "A problem occurred while attempting to load the skims files: \n",
