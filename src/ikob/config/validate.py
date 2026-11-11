@@ -70,6 +70,14 @@ class FileValidator:
                 )
                 all_valid = False
 
+        if self.config["geavanceerd"]["kunstmab"]["gebruiken"]:
+            try:
+                read_csv_from_config(self.config, key="geavanceerd", id="kunstmab", type_caster=int)
+            except Exception as e:
+                logger.warning(
+                    "A problem occurred while attempting to load the artificial car possession file: \n", exc_info=e
+                )
+                all_valid = False
         return all_valid
 
     def _skims_files_validation(self):
@@ -102,25 +110,42 @@ class FileValidator:
             )
             all_valid = False
 
-        total_skims = len(part_of_day) * 5
+        num_skim_files = 6
+        total_skims = len(part_of_day) * num_skim_files
         for i, pod in enumerate(part_of_day):
             try:
                 skims_reader.read("Auto_Tijd", pod)
-                logger.info(f"{i + 1}/{total_skims} skim matrices validated")
+                logger.info(f"{i * num_skim_files + 1}/{total_skims} skim matrices validated")
+
                 skims_reader.read("Auto_Afstand", pod)
-                logger.info(f"{i + 2}/{total_skims} skim matrices validated")
+                logger.info(f"{i * num_skim_files + 2}/{total_skims} skim matrices validated")
+
                 bike_time_matrix = skims_reader.read("Fiets_Tijd", pod)
-                logger.info(f"{i + 3}/{total_skims} skim matrices validated")
+                logger.info(f"{i * num_skim_files + 3}/{total_skims} skim matrices validated")
+
                 skims_reader.read("Fiets_Afstand", pod, default=bike_time_matrix)
-                logger.info(f"{i + 4}/{total_skims} skim matrices validated")
+                logger.info(f"{i * num_skim_files + 4}/{total_skims} skim matrices validated")
+
                 skims_reader.read("OV_Tijd", pod)
-                logger.info(f"{i + 5}/{total_skims} skim matrices validated")
+                logger.info(f"{i * num_skim_files + 5}/{total_skims} skim matrices validated")
+
+                if self.config["skims"]["OV kostenbestand"]["gebruiken"]:
+                    skims_reader.read("OV_Kosten", pod)
+                else:
+                    skims_reader.read("OV_Afstand", pod)
+                logger.info(f"{i * num_skim_files + 6}/{total_skims} skim matrices validated")
+
             except Exception as e:
                 logger.warning(
                     "A problem occurred while attempting to load the skims files: \n",
                     exc_info=e,
                 )
                 all_valid = False
+
+        if self.config["geavanceerd"]["additionele_kosten"]["gebruiken"]:
+            logger.info("Validating additional cost matrix")
+            read_csv_from_config(self.config, key="geavanceerd", id="additionele_kosten")
+            logger.info("Done")
 
         return all_valid
 

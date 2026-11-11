@@ -17,8 +17,12 @@ def config():
             },
             "verstedelijkingsscenario": "2023",
         },
-        "skims": {"dagsoort": ["Ochtend", "Restdag"]},
-        "geavanceerd": {"parkeerkosten": {"gebruiken": False}},
+        "skims": {"dagsoort": ["Ochtend", "Restdag"], "OV kostenbestand": {"gebruiken": False}},
+        "geavanceerd": {
+            "parkeerkosten": {"gebruiken": False},
+            "additionele_kosten": {"gebruiken": False},
+            "kunstmab": {"gebruiken": False},
+        },
     }
 
 
@@ -126,7 +130,12 @@ def test_skims_validation_checks_parking_times(config, monkeypatch, caplog, park
         (OSError("Cannot read parking costs"), False, True),
         (OSError("Cannot read parking costs"), True, False),
     ],
-    ids=["disabled", "valid", "invalid-shape", "read-error"],
+    ids=[
+        "valid",
+        "invalid-shape",
+        "disabled",
+        "read-error",
+    ],
 )
 def test_skims_validation_checks_parking_costs(config, monkeypatch, caplog, parking_costs, use_costs, expected):
     config["geavanceerd"]["parkeerkosten"]["gebruiken"] = use_costs
@@ -164,5 +173,6 @@ def test_skims_validation_continues_with_next_period_after_read_error(config, mo
         call("Fiets_Tijd", "Restdag"),
         call("Fiets_Afstand", "Restdag", default=ANY),
         call("OV_Tijd", "Restdag"),
+        call("OV_Afstand", "Restdag"),
     ]
     assert "Cannot read skim" in caplog.text
