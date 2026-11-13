@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 
+from ikob import utils
+
 
 @pytest.fixture(
     params=[
@@ -89,6 +91,8 @@ def reachable_population_setup(request, segs_capture):
     reachable_populations = rp.calculate_reachable_population(config, _Weights(), _Weights())  # type: ignore
 
     return {
+        "config": config,
+        "weights": _Weights(),
         "reachable_populations": reachable_populations,
         "pod": pod,
         "motive": motive,
@@ -100,6 +104,19 @@ def reachable_population_setup(request, segs_capture):
 
 # As defined in reachable_population
 modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
+
+
+@pytest.mark.parametrize("selected_income", [None, "laag"], ids=["all-incomes", "single-income"])
+def test_reachable_population_selected_income(selected_income, reachable_population_setup):
+    from ikob.reachable_population import calculate_reachable_population
+
+    setup = reachable_population_setup
+    results = calculate_reachable_population(
+        setup["config"], setup["weights"], setup["weights"], selected_income=selected_income
+    )
+
+    incomes = {key.income for key in results.cache if key.id == utils.INCOME_VECTOR_RESULT_ID}
+    assert incomes == ({"laag"} if selected_income is not None else {"laag", "middellaag", "middelhoog", "hoog"})
 
 
 @pytest.mark.parametrize("modality", modalities)
@@ -117,7 +134,7 @@ def test_reachable_population_totals(modality, income_group, income_index, reach
     weight_matrix = reachable_population_setup["weight_matrix"]
 
     key = DataKey(
-        "Totaal",
+        utils.INCOME_VECTOR_RESULT_ID,
         part_of_day=pod,
         income=income_group,
         group="alle groepen",

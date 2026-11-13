@@ -6,14 +6,14 @@ import threading
 from tkinter import BooleanVar, Button, Checkbutton, Frame, LabelFrame, StringVar, Tk, Widget, filedialog, messagebox
 
 from ikob.combined_weights import calculate_combined_weights
-from ikob.competition import competition_on_citizens, competition_on_destinations
+from ikob.competition import assemble_competition_outputs, competition_on_citizens, competition_on_destinations
 from ikob.config import widgets
 from ikob.datasource import DataSource, DataType
 from ikob.distribute_over_groups import distribute_population_over_groups
 from ikob.generalized_travel_time import generalized_travel_time
 from ikob.ikobconfig import get_config_from_args, load_config
-from ikob.reachable_destinations import calculate_reachable_destinations
-from ikob.reachable_population import calculate_reachable_population
+from ikob.reachable_destinations import assemble_destination_outputs, calculate_reachable_destinations
+from ikob.reachable_population import assemble_population_outputs, calculate_reachable_population
 from ikob.single_weights import calculate_single_weights, calculate_single_weights_on_demand
 
 logger = logging.getLogger(__name__)
@@ -28,6 +28,9 @@ def run_scripts(
 ):
     """
     Run through all steps for a given project.
+
+    Process one income class through all selected stages before releasing its matrices.
+    Assemble cross-income output tables from the retained result vectors afterwards.
 
     For details about the all the steps taken see documentation/IKOB-algorithm.pdf.
     In de docstring of each specific step the relevant section of the documentation is referenced.
@@ -53,6 +56,60 @@ def run_scripts(
     if not skip_steps:
         skip_steps = [False] * 8
 
+    # This used to be step 2, but now that we process each income group separately,
+    # it make more sense to do the distribution once before hand
+    if not skip_steps[1]:
+        distribute_population_over_groups(config)
+
+    reachable_destinations = DataSource(config, DataType.DESTINATIONS)
+    reachable_population = DataSource(config, DataType.ORIGINS)
+    competition_destinations = DataSource(config, DataType.COMPETITION)
+    competition_citizens = DataSource(config, DataType.COMPETITION)
+
+    for income in ["laag", "middellaag", "middelhoog", "hoog"]:
+        logger.info("Processing income class: %s", income)
+        _run_income(
+            config,
+            income,
+            skip_steps,
+            reachable_destinations,
+            reachable_population,
+            competition_destinations,
+            competition_citizens,
+            write_weights=write_weights,
+            write_travel_time=write_travel_time,
+            write_intermediate_results=write_intermediate_results,
+        )
+
+    # Since we run the steps per income group, we cannot assemble results that combine income groups during the normal steps
+    if not skip_steps[4]:
+        assemble_destination_outputs(config, reachable_destinations)
+    if not skip_steps[5]:
+        assemble_population_outputs(config, reachable_population)
+    if not skip_steps[6]:
+        assemble_competition_outputs(config, competition_destinations, citizens=False)
+    if not skip_steps[7]:
+        assemble_competition_outputs(config, competition_citizens, citizens=True)
+
+    logger.info("All simulations are completed. Writing output to disk...")
+    for source in [reachable_destinations, reachable_population, competition_citizens, competition_destinations]:
+        source.store(write_intermediate_results)
+    DataSource.write_output_md(config)
+
+
+def _run_income(
+    config,
+    income: str,
+    skip_steps: list[bool],
+    reachable_destinations: DataSource,
+    reachable_population: DataSource,
+    competition_destinations: DataSource,
+    competition_citizens: DataSource,
+    *,
+    write_weights: bool,
+    write_travel_time: bool,
+    write_intermediate_results: bool,
+):
     single_weights: DataSource | None = None
     if not skip_steps[0] and not skip_steps[2]:
         # if we are not skipping step 0 (travel time) and 2 (single weight matrix)
@@ -60,20 +117,18 @@ def run_scripts(
 
         # The travel time is still returned here because we might need to write these results to disk
         # The travel time only contains data when write_travel_time is true
-        single_weights, travel_time = calculate_single_weights_on_demand(config, write_travel_time=write_travel_time)
+        single_weights, travel_time = calculate_single_weights_on_demand(
+            config, write_travel_time=write_travel_time, selected_income=income
+        )
     elif not skip_steps[0]:
         # if step 0 is not skipped, but step 2 is, we only need to compute the travel time if we want to write the results,
         # since the computation can continue with the step 2 results read from disk
         if write_travel_time:
-            travel_time = generalized_travel_time(config, write_travel_time=write_travel_time)
+            travel_time = generalized_travel_time(config, write_travel_time=write_travel_time, selected_income=income)
         else:
             travel_time = None
     else:
         travel_time = DataSource(config, DataType.GENERALIZED_TRAVEL_TIME, has_zone_id_header=True)
-
-    if not skip_steps[1]:
-        # TODO: Pass temporary SEGS output as arguments too.
-        distribute_population_over_groups(config)
 
     if skip_steps[2]:
         single_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
@@ -82,59 +137,56 @@ def run_scripts(
         # otherwise we cannot compute the single weights from the travel time result
         if travel_time is None:
             raise RuntimeError("Travel-time data is unavailable while step 0 is skipped.")
-        single_weights = calculate_single_weights(config, travel_time)
+        single_weights = calculate_single_weights(config, travel_time, selected_income=income)
 
     if single_weights is None:
         raise RuntimeError(f"Single weights are unavailable for the selected pipeline steps: {skip_steps}")
 
     if not skip_steps[3]:
-        combined_weights = calculate_combined_weights(config, single_weights, write_weights=write_weights)
+        combined_weights = calculate_combined_weights(
+            config, single_weights, write_weights=write_weights, selected_income=income
+        )
     else:
         combined_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 
     if not skip_steps[4]:
-        reachable_destinations = calculate_reachable_destinations(config, single_weights, combined_weights)
-    else:
-        reachable_destinations = DataSource(config, DataType.DESTINATIONS)
+        calculate_reachable_destinations(
+            config, single_weights, combined_weights, selected_income=income, results=reachable_destinations
+        )
 
     if not skip_steps[5]:
-        reachable_population = calculate_reachable_population(config, single_weights, combined_weights)
-    else:
-        reachable_population = DataSource(config, DataType.ORIGINS)
+        calculate_reachable_population(
+            config, single_weights, combined_weights, selected_income=income, results=reachable_population
+        )
 
     if not skip_steps[6]:
-        competition_destinations = competition_on_destinations(
-            config, single_weights, combined_weights, reachable_destinations
+        competition_on_destinations(
+            config,
+            single_weights,
+            combined_weights,
+            reachable_destinations,
+            selected_income=income,
+            results=competition_destinations,
         )
-    else:
-        competition_destinations = DataSource(config, DataType.COMPETITION)
 
     if not skip_steps[7]:
-        competition_citizens = competition_on_citizens(config, single_weights, combined_weights, reachable_population)
-    else:
-        competition_citizens = DataSource(config, DataType.COMPETITION)
+        competition_on_citizens(
+            config,
+            single_weights,
+            combined_weights,
+            reachable_population,
+            selected_income=income,
+            results=competition_citizens,
+        )
 
-    logger.info("All simulations are completed.")
-
-    # TODO: For now all files are written to disk to assert their contents in
-    # end-to-end testing. Ultimately only files that are essential outputs
-    # should persist.
-    logger.info("Writing output to disk...")
-    sources_to_save = [
-        reachable_destinations,
-        reachable_population,
-        competition_citizens,
-        competition_destinations,
-    ]
     if write_weights:
-        sources_to_save.extend([single_weights, combined_weights])
-    if write_travel_time and travel_time is not None:
-        sources_to_save.extend([travel_time])
-
-    for container in sources_to_save:
-        container.store(write_intermediate_results)
-
-    DataSource.write_output_md(config)
+        single_weights.store(write_intermediate_results)
+        combined_weights.store(write_intermediate_results)
+    if write_travel_time:
+        if travel_time is None:
+            logger.warning("Travel time is None while write_travel_time is true. Unable to write travel time results.")
+        else:
+            travel_time.store(write_intermediate_results)
 
 
 # User interface

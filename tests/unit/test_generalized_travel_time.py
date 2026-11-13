@@ -149,7 +149,8 @@ def setup_generalized_travel_time_input(monkeypatch, gtt):
 
 @pytest.mark.parametrize("use_chains", [False, True], ids=["without-chains", "with-chains"])
 @pytest.mark.parametrize("write_travel_time", [False, True], ids=["do-not-write", "do-write"])
-def test_generalized_travel_time_computed_keys(monkeypatch, use_chains, write_travel_time):
+@pytest.mark.parametrize("selected_income", [None, "laag"], ids=["all-incomes", "single-income"])
+def test_generalized_travel_time_computed_keys(monkeypatch, use_chains, write_travel_time, selected_income):
     import ikob.generalized_travel_time as gtt
     from ikob.chain_generator import ChainTravelTimeCalculator, Hubs
     from ikob.datasource import DataKey
@@ -172,10 +173,13 @@ def test_generalized_travel_time_computed_keys(monkeypatch, use_chains, write_tr
         ),
     )
 
-    datasource = gtt.generalized_travel_time(config, write_travel_time=write_travel_time)
+    datasource = gtt.generalized_travel_time(
+        config, write_travel_time=write_travel_time, selected_income=selected_income
+    )
 
     expected_keys = {DataKey(id="GratisOV", part_of_day=pod, regime=regime, motive=motive)}
-    for income in ["laag", "middellaag", "middelhoog", "hoog"]:
+    incomes = [selected_income] if selected_income is not None else ["laag", "middellaag", "middelhoog", "hoog"]
+    for income in incomes:
         for mode in ["Fiets", "Auto_fossiel", "Auto_elektrisch", "OV", "GeenAuto", "GeenRijbewijs", "GratisAuto"]:
             expected_keys.add(DataKey(id=mode, part_of_day=pod, regime=regime, motive=motive, income=income))
         if use_chains:
