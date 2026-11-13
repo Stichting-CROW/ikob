@@ -25,30 +25,31 @@ class FileValidator:
         self.config = config
 
     def validate_input_files(self, allow_extra_ids: bool = True):
+        """Read in a bunch of files from to config to see if it does not fail.
+
+        The id store does the validation of zone ids.
+        Also construct the zone id store from reading the input files that specify zone ids."""
+
         logger.info("validating input files (continues on error until all files have been validated)")
-        # This mainly reads in a bunch of files from to config to see if it works, validation of the zone ids is done in the id store
-        valid_ids = self._initialize_zone_id_store(allow_extra_ids)
-        if not valid_ids:
-            raise ValueError("Unable to initialize zone id store. See warnings.")
 
-        valid = True
+        valid = self._initialize_zone_id_store(allow_extra_ids)
+        if valid:
+            logger.info("Validating chain files..")
+            valid &= Hubs.validate(self.config)
+            logger.info("done")
 
-        logger.info("Validating chain files..")
-        valid &= Hubs.validate(self.config)
-        logger.info("done")
+            logger.info("Validating segs files..")
+            valid &= self._segs_files_validation()
+            logger.info("done")
 
-        logger.info("Validating segs files..")
-        valid &= self._segs_files_validation()
-        logger.info("done")
+            logger.info("Validating motive files..")
+            valid &= self._motive_files_validation()
+            logger.info("done")
 
-        logger.info("Validating motive files..")
-        valid &= self._motive_files_validation()
-        logger.info("done")
-
-        logger.info("Validating skims files (this may take some minutes for large projects)..")
-        # Validate skims at last because they may load slowly
-        valid &= self._skims_files_validation()
-        logger.info("done")
+            logger.info("Validating skims files (this may take some minutes for large projects)..")
+            # Validate skims at last because they may load slowly
+            valid &= self._skims_files_validation()
+            logger.info("done")
 
         if not valid:
             # This is only an error when we are trying to run ikob right now, an error can be thrown based on the return value of this method.

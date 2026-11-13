@@ -15,7 +15,7 @@ def test_group_distribution(monkeypatch):
     in other end-to-end tests. In specific, this example does show 0.0/0.0
     divisions resulting in ``nan`` rather than ``inf`` (which were covered).
     """
-    monkeypatch.setattr(FileValidator, "validate_input_files", lambda self: True)
+    monkeypatch.setattr(FileValidator, "validate_input_files", lambda *args, **kwargs: True)
     ZoneIdStoreSingleton._instance = IdStore.from_zone_ids([str(i) for i in range(1, 1207)])
     case = "eb-eindhoven"
     project_dir = pathlib.Path(f"tests/{case}/")

@@ -34,7 +34,7 @@ def _project_filename(project_name, make_safe=True):
     return filename + ".json"
 
 
-def get_config_from_args(project=None):
+def get_config_from_args(project=None, allow_extra_zone_ids: bool = True):
     """
     Leest een configuratiebestand die is opgegeven in de 'command line'.
     Resultaat: Een geldige, ingeladen configuratie.
@@ -42,15 +42,15 @@ def get_config_from_args(project=None):
             ValueError - Als het opgegeven bestand geen geldige configuratie bevat.
     """
     if project:
-        return load_config(project)
+        return load_config(project, allow_extra_zone_ids)
 
     parser = argparse.ArgumentParser()
     parser.add_argument("project", type=str, help="Het .json project bestand.")
     args = parser.parse_args()
-    return load_config(args.project)
+    return load_config(args.project, allow_extra_zone_ids)
 
 
-def load_config(filename):
+def load_config(filename, allow_extra_zone_ids: bool = True):
     try:
         with open(filename) as json_file:
             config = json.load(json_file)
@@ -73,7 +73,7 @@ def load_config(filename):
 
     config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
 
-    valid = validate.FileValidator(config).validate_input_files()
+    valid = validate.FileValidator(config).validate_input_files(allow_extra_zone_ids)
     return config, valid
 
 
