@@ -127,6 +127,54 @@ def _to_dense(matrix):
     return matrix.toarray() if sparse.issparse(matrix) else np.asarray(matrix)
 
 
+def test_materialized_combined_weights_match_on_the_fly():
+    from itertools import product
+
+    from ikob.combined_weights import calculate_combined_weights
+    from ikob.datasource import DataKey, DataSource, DataType
+
+    config = {
+        "__filename__": "pytest",
+        "project": {
+            "motief": {"naam": "werk"},
+            "beprijzingsregime": "Basis",
+            "paden": {"output_directory": "out"},
+        },
+        "skims": {"dagsoort": ["Ochtend", "Restdag"]},
+    }
+    single_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
+    incomes = ["hoog", "middelhoog", "middellaag", "laag"]
+    preferences = ["Auto", "Neutraal", "Fiets", "OV"]
+    modalities = ["Auto", "GeenAuto", "GeenRijbewijs", "GratisAuto", "OV", "GratisOV", "Fiets"]
+    rng = np.random.default_rng(42)
+
+    for part_of_day, income, modality in product(config["skims"]["dagsoort"], incomes, modalities):
+        component_preferences = ["", "Fiets"] if modality == "Fiets" else preferences
+        fuel_kinds = ["fossiel", "elektrisch"] if modality == "Auto" else [""]
+        for preference, fuel_kind in product(component_preferences, fuel_kinds):
+            key = DataKey(
+                f"{modality}_vk",
+                part_of_day=part_of_day,
+                regime="Basis",
+                motive="werk",
+                income=income,
+                preference=preference,
+                fuel_kind=fuel_kind,
+            )
+            single_weights.set(key, sparse.csr_matrix(rng.integers(0, 5, size=(3, 3)) / 4))
+
+    materialized = calculate_combined_weights(config, single_weights, write_weights=True)
+    on_the_fly = calculate_combined_weights(config, single_weights)
+
+    assert materialized.cache
+    for key, expected in materialized.cache.items():
+        np.testing.assert_allclose(
+            _to_dense(on_the_fly.get(key)),
+            _to_dense(expected),
+            err_msg=f"Combined weights differ for {key}",
+        )
+
+
 @pytest.mark.parametrize("left_sparse", [False, True])
 @pytest.mark.parametrize("right_sparse", [False, True])
 def test_elementwise_max_matches_np_maximum(left_sparse, right_sparse):
