@@ -147,6 +147,57 @@ def setup_generalized_travel_time_input(monkeypatch, gtt):
     )
 
 
+@pytest.mark.parametrize("use_chains", [False, True], ids=["without-chains", "with-chains"])
+@pytest.mark.parametrize("write_travel_time", [False, True], ids=["do-not-write", "do-write"])
+def test_generalized_travel_time_datasource(monkeypatch, use_chains, write_travel_time):
+    import ikob.generalized_travel_time as gtt
+    from ikob.chain_generator import ChainTravelTimeCalculator, Hubs
+    from ikob.datasource import DataKey
+
+    config, pod, regime, motive, *_ = setup_generalized_travel_time_input(monkeypatch, gtt)
+    config["ketens"]["chains"].update({"gebruiken": use_chains, "naam hub": "test_hubset"})
+    hubs = Hubs(
+        zone_indices=[1],
+        hub_costs_cents=np.array([50.0]),
+        pt_transfer_times=np.array([5.0]),
+        bike_transfer_times=np.array([3.0]),
+        pay_for_pt=np.array([True]),
+        num_hubs=1,
+    )
+    monkeypatch.setattr(
+        gtt,
+        "build_chain_travel_time_calculator",
+        lambda config, parking_times, additional_costs: ChainTravelTimeCalculator(
+            hubs, additional_costs, parking_times, np.arange(3)
+        ),
+    )
+
+    datasource = gtt.generalized_travel_time(config, write_travel_time=write_travel_time)
+
+    expected_keys = {DataKey(id="GratisOV", part_of_day=pod, regime=regime, motive=motive)}
+    for income in ["laag", "middellaag", "middelhoog", "hoog"]:
+        for mode in ["Fiets", "Auto_fossiel", "Auto_elektrisch", "OV", "GeenAuto", "GeenRijbewijs", "GratisAuto"]:
+            expected_keys.add(DataKey(id=mode, part_of_day=pod, regime=regime, motive=motive, income=income))
+        if use_chains:
+            for fuel in ["fossiel", "elektrisch"]:
+                for prefix in ["Pplusfiets", "PplusR"]:
+                    expected_keys.add(
+                        DataKey(
+                            id=f"{prefix}_{fuel}",
+                            part_of_day=pod,
+                            regime=regime,
+                            motive=motive,
+                            income=income,
+                            hub_name="test_hubset",
+                        )
+                    )
+    if write_travel_time:
+        assert datasource is not None
+        assert set(datasource.cache) == expected_keys
+    else:
+        assert datasource is None
+
+
 def test_generalized_travel_time_fiets(monkeypatch):
     import ikob.generalized_travel_time as gtt
     from ikob.datasource import DataKey

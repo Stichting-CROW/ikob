@@ -16,7 +16,7 @@ def _simple_matrices(num_zones):
     return car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist
 
 
-def _setup(monkeypatch, cg, gtt, num_zones, car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist):
+def _setup(monkeypatch, gtt, num_zones, car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist):
     parking_times = np.zeros((num_zones, 3))
     parking_times[:, 0] = np.arange(num_zones)
 
@@ -43,7 +43,6 @@ def _setup(monkeypatch, cg, gtt, num_zones, car_time, car_dist, bike_time, bike_
 
         return _Reader()
 
-    monkeypatch.setattr(cg, "SkimsSource", fake_skims_source)
     monkeypatch.setattr(gtt, "SkimsSource", fake_skims_source)
 
 
@@ -105,7 +104,7 @@ def test_chain_time_equals_sum_of_parts(monkeypatch, hub_zone, income, fuel):
     car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist = _simple_matrices(num_zones)
 
     config = _make_config()
-    _setup(monkeypatch, cg, gtt, num_zones, car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist)
+    _setup(monkeypatch, gtt, num_zones, car_time, car_dist, bike_time, bike_dist, pt_time, pt_dist)
 
     def fake_hubs_build_from_config(cls, config):
         del cls, config

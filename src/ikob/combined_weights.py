@@ -7,6 +7,59 @@ from ikob.datasource import DataKey, DataSource, DataType
 logger = logging.getLogger(__name__)
 
 
+def component_preference(component, preference):
+    if component == "Fiets":
+        return "Fiets" if preference == "Fiets" else ""
+    return preference
+
+
+class CombinedWeightsSource(DataSource):
+    """Compute combined weights from single weights when they are requested."""
+
+    def __init__(self, config, single_weights: DataSource):
+        super().__init__(config, DataType.WEIGHTS, has_zone_id_header=True)
+        self.single_weights = single_weights
+
+    def get(self, key: DataKey):
+
+        if key in self.cache:
+            # If the _materialize_combined_weights() the cache is filled
+            return self.cache[key]
+
+        components = key.id.removesuffix("_vk").split("_")
+        if (
+            key.subtopic != "combinaties"
+            or not components
+            or any(
+                component not in {"Auto", "GeenAuto", "GeenRijbewijs", "GratisAuto", "OV", "GratisOV", "Fiets"}
+                for component in components
+            )
+        ):
+            raise ValueError(f"Key not meant for combined weights source given to combined weights source. Key {key}")
+
+        result = None
+        for component in components:
+            component_key = DataKey(
+                f"{component}_vk",
+                part_of_day=key.part_of_day,
+                regime=key.regime,
+                motive=key.motive,
+                preference=component_preference(component, key.preference),
+                income=key.income,
+                fuel_kind=key.fuel_kind if component == "Auto" else "",
+            )
+            try:
+                matrix = self.single_weights.get(component_key)
+            except (FileNotFoundError, OSError) as error:
+                raise KeyError(f"Missing single weight {component_key} required for combined weight {key}") from error
+            result = matrix if result is None else sparse_elementwise_max(result, matrix)
+
+        if result is None:
+            raise KeyError(f"Cannot compute combined weight key: {key}")
+        # Do not cache the results here to save on memory usage at the cost of some performance
+        return result
+
+
 def sparse_elementwise_max(left, right) -> sparse.csr_matrix:
     """Return elementwise max, converting the input to a sparse matrix if necessary and returning a CSR matrix."""
     left_sparse = left if sparse.issparse(left) else sparse.csr_matrix(left)
@@ -34,7 +87,14 @@ def has_preference(kind_car, kind_pt, preference):
         return True
 
 
-def calculate_combined_weights(config, single_weights: DataSource) -> DataSource:
+def calculate_combined_weights(config, single_weights: DataSource, write_weights: bool = False) -> DataSource:
+    combined_weights = CombinedWeightsSource(config, single_weights)
+    if write_weights:
+        _materialize_combined_weights(config, single_weights, combined_weights)
+    return combined_weights
+
+
+def _materialize_combined_weights(config, single_weights: DataSource, combined_weights: DataSource) -> None:
     """
     From weights for single travel modes to combined weights.
 
@@ -58,8 +118,6 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
     car_kinds = ["Auto", "GeenAuto", "GeenRijbewijs", "GratisAuto"]
     pt_kinds = ["OV", "GratisOV"]
     fuel_kinds = ["fossiel", "elektrisch"]
-
-    combined_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 
     for part_of_day in part_of_days:
         for income in incomes:
@@ -312,5 +370,3 @@ def calculate_combined_weights(config, single_weights: DataSource) -> DataSource
                                 )
                                 # Max weight of taking either the car or pt or the bike
                                 combined_weights.set(key, max_matrix)
-
-    return combined_weights
