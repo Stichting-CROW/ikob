@@ -22,6 +22,10 @@ class CombinedWeightsSource(DataSource):
 
     def get(self, key: DataKey):
 
+        if key in self.cache:
+            # If the _materialize_combined_weights() the cache is filled
+            return self.cache[key]
+
         components = key.id.removesuffix("_vk").split("_")
         if (
             key.subtopic != "combinaties"
