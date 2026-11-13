@@ -2,22 +2,35 @@
 
 import logging
 from pathlib import Path
+from typing import NamedTuple
 
+from ikob import utils
 from ikob.chain_generator import Hubs
 from ikob.configuration_definition import default_config, default_configuration_definition
-from ikob.datasource import SegsSource, SkimsSource, read_csv_from_config
+from ikob.datasource import SegsSource, SkimsSource, configured_csv_path, read_csv_from_config
+from ikob.id_store import IdStore, ZoneIdStoreSingleton
 from ikob.utils import URBANIZATION_GRADE_ID_STORE
 
 logger = logging.getLogger(__name__)
+
+
+class ZoneIdInputFile(NamedTuple):
+    path: Path
+    has_id_header: bool
+    optional: bool = False
 
 
 class FileValidator:
     def __init__(self, config):
         self.config = config
 
-    def validate_input_files(self):
+    def validate_input_files(self, allow_extra_ids: bool = True):
         logger.info("validating input files (continues on error until all files have been validated)")
         # This mainly reads in a bunch of files from to config to see if it works, validation of the zone ids is done in the id store
+        valid_ids = self._initialize_zone_id_store(allow_extra_ids)
+        if not valid_ids:
+            raise ValueError("Unable to initialize zone id store. See warnings.")
+
         valid = True
 
         logger.info("Validating chain files..")
@@ -178,6 +191,113 @@ class FileValidator:
             )
             return False
         return True
+
+    def _zone_id_input_files(self) -> list[ZoneIdInputFile]:
+        project = self.config["project"]
+        paths = project["paden"]
+        skims_reader = SkimsSource(self.config)
+        segs_dir = paths["segs_directory"]
+        skims = self.config["skims"]
+        advanced = self.config["geavanceerd"]
+        input_files: list[ZoneIdInputFile] = []
+
+        skim_ids = ["Auto_Tijd", "Auto_Afstand", "Fiets_Tijd", "Fiets_Afstand", "OV_Tijd"]
+        ov_file = "OV_Kosten" if skims["OV kostenbestand"]["gebruiken"] else "OV_Afstand"
+        skim_ids.append(ov_file)
+        for part_of_day in skims["dagsoort"]:
+            input_files.extend(
+                ZoneIdInputFile(skims_reader.path_for(skim_id, part_of_day), True, optional=skim_id == "Fiets_Afstand")
+                for skim_id in skim_ids
+            )
+
+        input_files.extend(
+            ZoneIdInputFile(SegsSource.path_for(segs_dir, filename), False)
+            for filename in ("CBS_autos_per_huishouden", "Stedelijkheidsgraad")
+        )
+        scenario = project["verstedelijkingsscenario"]
+        motive = project["motief"]
+        input_files.extend(
+            ZoneIdInputFile(SegsSource.path_for(segs_dir, Path(motive[key]).name, scenario=scenario), False)
+            for key in ("reizende populatie", "bestemmingsplaatsen")
+        )
+        input_files.append(ZoneIdInputFile(SkimsSource.parking_times_path(self.config), False, optional=True))
+
+        for key in ("kunstmab", "parkeerkosten", "additionele_kosten"):
+            if not advanced[key]["gebruiken"]:
+                continue
+            configured_path = configured_csv_path(self.config, "geavanceerd", key)
+            if configured_path is None:
+                raise ValueError(f"Enabled input geavanceerd.{key} has an empty file path.")
+            input_files.append(ZoneIdInputFile(configured_path, False))
+
+        return input_files
+
+    def _initialize_zone_id_store(self, allow_extra_ids: bool = True) -> bool:
+        ZoneIdStoreSingleton.clear_instance()
+
+        common_ids, valid = self._determine_common_ids()
+
+        ZoneIdStoreSingleton.set_instance(
+            IdStore.from_zone_ids(
+                common_ids,
+                zone_source="intersection of full-zone input files",
+                allow_extra_ids=allow_extra_ids,
+            )
+        )
+        return valid
+
+    def _determine_common_ids(self) -> tuple[list[str], bool]:
+
+        inputs = self._zone_id_input_files()
+        common_ids = None
+        zone_id_order = []
+        discovery_valid = True
+
+        if len(inputs) == 0:
+            logger.warning("Tried to get zone ids from input files, but list of files is empty")
+            discovery_valid = False
+            return [], False
+
+        for input in inputs:
+            path = input.path
+            has_id_header = input.has_id_header
+
+            if not path.is_file():
+                if input.optional:
+                    continue
+                logger.warning(f"Tried to get zone ids from {path}, but {path} is not a file.")
+                discovery_valid = False
+                continue
+            try:
+                row_ids, header_ids = utils.read_zone_ids(path, has_id_header=has_id_header)
+            except Exception as e:
+                logger.warning("Unable to collect zone IDs from %s: ", path, exc_info=e)
+                discovery_valid = False
+                continue
+
+            file_ids = [row_ids] if header_ids is None else [row_ids, header_ids]
+
+            for ids in file_ids:
+                ids = set(ids)
+                if common_ids is not None:
+                    common_ids.intersection_update(ids)
+                else:
+                    common_ids = ids
+                    # Deduplicate the ids with a dict to have a consistent zone ordering that matches the first file being read
+                    zone_id_order = list(dict.fromkeys(row_ids))
+
+        if common_ids is None or len(common_ids) == 0:
+            logger.warning("Unable to initialize the zone ID store: no common zone IDs were found.")
+            return [], False
+
+        zone_ids = [zone_id for zone_id in zone_id_order if zone_id in common_ids]
+        if not zone_ids:
+            logger.warning("Unable to initialize the zone ID store: no zone IDs are shared by all full-zone inputs.")
+            return [], False
+
+        ordered_common_ids = [id for id in zone_id_order if id in common_ids]
+
+        return ordered_common_ids, discovery_valid
 
 
 def validate_config(config, strict=True, log_lvl=logging.WARNING):

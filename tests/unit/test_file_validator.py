@@ -5,6 +5,8 @@ import pytest
 
 from ikob.config import validate
 from ikob.config.validate import FileValidator
+from ikob.id_store import ZoneIdStoreSingleton
+from ikob.utils import read_csv
 
 
 @pytest.fixture
@@ -32,6 +34,7 @@ def test_validate_input_files_runs_all_stages(config, monkeypatch, caplog, faile
     stages = Mock()
     for name in ("hubs", "segs", "motive", "skims"):
         getattr(stages, name).return_value = name != failed_stage
+    monkeypatch.setattr(validator, "_initialize_zone_id_store", Mock(return_value=True))
     monkeypatch.setattr(validate.Hubs, "validate", stages.hubs)
     monkeypatch.setattr(validator, "_segs_files_validation", stages.segs)
     monkeypatch.setattr(validator, "_motive_files_validation", stages.motive)
@@ -41,6 +44,81 @@ def test_validate_input_files_runs_all_stages(config, monkeypatch, caplog, faile
 
     assert stages.mock_calls == [call.hubs(config), call.segs(), call.motive(), call.skims()]
     assert ("Unable to run ikob" in caplog.text) is (failed_stage is not None)
+
+
+@pytest.mark.parametrize(
+    "missing_file, expected_valid",
+    [
+        (None, True),
+        ("Fiets_Afstand.csv", True),
+        ("custom_parking_times.csv", True),
+        # kunst.csv is the file for kunstmab (artificial car possession) and kunstmab is used.
+        ("kunst.csv", False),
+        ("population.csv", False),
+    ],
+)
+def test_zone_id_store_uses_intersection_of_full_zone_inputs(tmp_path, missing_file, expected_valid):
+    skims_dir = tmp_path / "skims"
+    segs_dir = tmp_path / "segs"
+    external_dir = tmp_path / "external"
+
+    def write_ids(path, ids, matrix=False):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if matrix:
+            header = "zone," + ",".join(ids)
+            rows = [f"{zone_id}," + ",".join("0" for _ in ids) for zone_id in ids]
+        else:
+            header = "zone,value"
+            rows = [f"{zone_id},1" for zone_id in ids]
+        path.write_text("\n".join([header, *rows]) + "\n", encoding="utf-8")
+
+    skim_ids = ["Auto_Tijd", "Auto_Afstand", "Fiets_Tijd", "Fiets_Afstand", "OV_Tijd", "OV_Afstand"]
+    for skim_id in skim_ids:
+        write_ids(skims_dir / "Morning" / f"{skim_id}.csv", ["z3", "z2", f"skim_extra {skim_id}"], matrix=True)
+
+    write_ids(segs_dir / "CBS_autos_per_huishouden.csv", ["z2", "z3", "cbs_extra"])
+    write_ids(segs_dir / "Stedelijkheidsgraad.csv", ["z2", "z3", "urban_extra"])
+    write_ids(segs_dir / "2023" / "population.csv", ["z2", "z3", "population_extra"])
+    write_ids(segs_dir / "2023" / "destinations.csv", ["z2", "z3", "destinations_extra"])
+    write_ids(segs_dir / "custom_parking_times.csv", ["z2", "z3", "parking_times_extra"])
+    write_ids(external_dir / "kunst.csv", ["z2", "z3", "kunst_extra"])
+    write_ids(external_dir / "parking_costs.csv", ["z2", "z3", "parking_costs_extra"])
+    write_ids(external_dir / "additional_costs.csv", ["z2", "z3", "additional_costs_extra"])
+
+    config = {
+        "project": {
+            "paden": {"skims_directory": str(skims_dir), "segs_directory": str(segs_dir)},
+            "verstedelijkingsscenario": "2023",
+            "motief": {
+                "reizende populatie": "population.csv",
+                "bestemmingsplaatsen": "destinations.csv",
+            },
+        },
+        "skims": {
+            "dagsoort": ["Morning"],
+            "OV kostenbestand": {"gebruiken": False},
+            "parkeerzoektijden_bestand": str(segs_dir / "custom_parking_times.csv"),
+        },
+        "geavanceerd": {
+            "kunstmab": {"gebruiken": True, "bestand": str(external_dir / "kunst.csv")},
+            "parkeerkosten": {"gebruiken": True, "bestand": str(external_dir / "parking_costs.csv")},
+            "additionele_kosten": {"gebruiken": True, "bestand": str(external_dir / "additional_costs.csv")},
+        },
+    }
+
+    if missing_file is not None:
+        next(tmp_path.rglob(missing_file)).unlink()
+
+    assert FileValidator(config)._initialize_zone_id_store() is expected_valid
+
+    store = ZoneIdStoreSingleton.get_instance(config)
+    assert store._zone_ids == ("z3", "z2")
+    skim = read_csv(
+        skims_dir / "Morning" / "Auto_Tijd.csv",
+        has_id_header=True,
+        id_store=store,
+    )
+    assert skim.shape == (2, 2)
 
 
 @pytest.mark.parametrize("failed_file", [None, "CBS_autos_per_huishouden", "GeenRijbewijs"])
@@ -161,7 +239,7 @@ def test_skims_validation_checks_parking_costs(config, monkeypatch, caplog, park
 def test_skims_validation_continues_with_next_period_after_read_error(config, monkeypatch, caplog):
     source = Mock()
     source.read_parking_times.return_value = np.zeros((2, 2))
-    source.read.side_effect = [OSError("Cannot read skim"), *[np.zeros((2, 2))] * 5]
+    source.read.side_effect = [OSError("Cannot read skim"), *[np.zeros((2, 2))] * 6]
     monkeypatch.setattr(validate, "SkimsSource", Mock(return_value=source))
 
     assert FileValidator(config)._skims_files_validation() is False

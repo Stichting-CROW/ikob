@@ -4,9 +4,10 @@ import pytest
 from ikob.id_store import IdStore
 
 
-def test_from_zone_ids_rejects_duplicates():
-    with pytest.raises(ValueError):
-        IdStore.from_zone_ids(["z1", "z2", "z1"])
+def test_from_zone_ids_ignores_duplicates(caplog):
+    store = IdStore.from_zone_ids(["z1", "z2", "z1"])
+
+    assert store._zone_ids == ("z1", "z2")
 
 
 @pytest.mark.parametrize(
@@ -53,12 +54,22 @@ def test_reorder_preserves_already_aligned_values(reorder):
     np.testing.assert_array_equal(reorder(store, ["z2", "z1"], values, "input.csv"), values)
 
 
-@pytest.mark.parametrize("reorder", [IdStore.reorder_rows_to_internal_idx, IdStore.reorder_columns_to_internal_idx])
-def test_reorder_rejects_duplicate_ids(reorder):
-    store = IdStore.from_zone_ids(["z1", "z2"])
+def test_reorder_uses_first_duplicate_row():
+    store = IdStore.from_zone_ids(["z1", "z2"], allow_extra_ids=True)
+    values = np.array([[10], [20], [30]])
 
-    with pytest.raises(ValueError):
-        reorder(store, ["z1", "z2", "z1"], np.zeros((3, 3)), "input.csv")
+    actual = store.reorder_rows_to_internal_idx(["z1", "z2", "z1"], values, "input.csv")
+
+    np.testing.assert_array_equal(actual, [[10], [20]])
+
+
+def test_reorder_uses_first_duplicate_column():
+    store = IdStore.from_zone_ids(["z1", "z2"], allow_extra_ids=True)
+    values = np.array([[10, 20, 30]])
+
+    actual = store.reorder_columns_to_internal_idx(["z1", "z2", "z1"], values, "input.csv")
+
+    np.testing.assert_array_equal(actual, [[10, 20]])
 
 
 @pytest.mark.parametrize("reorder", [IdStore.reorder_rows_to_internal_idx, IdStore.reorder_columns_to_internal_idx])
@@ -75,6 +86,24 @@ def test_reorder_rejects_extra_ids(reorder):
 
     with pytest.raises(ValueError, match="id mismatch"):
         reorder(store, ["z1", "z2", "z3"], np.zeros((3, 3)), "input.csv")
+
+
+def test_reorder_ignores_extra_ids_when_configured():
+    store = IdStore.from_zone_ids(["z2", "z1"], allow_extra_ids=True)
+    row_values = np.array([[10], [20], [30]])
+    column_values = np.array([[10, 20, 30], [11, 21, 31]])
+
+    np.testing.assert_array_equal(
+        store.reorder_rows_to_internal_idx(["z1", "extra", "z2"], row_values, "input.csv"),
+        [[30], [10]],
+    )
+    np.testing.assert_array_equal(
+        store.reorder_columns_to_internal_idx(["z1", "extra", "z2"], column_values, "input.csv"),
+        [[30, 10], [31, 11]],
+    )
+
+    with pytest.raises(ValueError, match="id mismatch"):
+        store.reorder_rows_to_internal_idx(["z1", "extra"], np.zeros((2, 1)), "input.csv")
 
 
 def test_reorder_rows_rejects_id_count_mismatch_with_values():
