@@ -6,6 +6,7 @@ from pathlib import Path
 from ikob.chain_generator import Hubs
 from ikob.configuration_definition import default_config, default_configuration_definition
 from ikob.datasource import SegsSource, SkimsSource, read_csv_from_config
+from ikob.utils import URBANIZATION_GRADE_ID_STORE
 
 logger = logging.getLogger(__name__)
 
@@ -17,17 +18,67 @@ class FileValidator:
     def validate_input_files(self):
         logger.info("validating input files (continues on error until all files have been validated)")
         # This mainly reads in a bunch of files from to config to see if it works, validation of the zone ids is done in the id store
-        valid = Hubs.validate(self.config)
+        valid = True
+
+        logger.info("Validating chain files..")
+        valid &= Hubs.validate(self.config)
+        logger.info("done")
+
+        logger.info("Validating segs files..")
+        valid &= self._segs_files_validation()
+        logger.info("done")
+
+        logger.info("Validating motive files..")
         valid &= self._motive_files_validation()
+        logger.info("done")
+
+        logger.info("Validating skims files (this may take some minutes for large projects)..")
         # Validate skims at last because they may load slowly
         valid &= self._skims_files_validation()
+        logger.info("done")
 
         if not valid:
-            # This is only an error when we are trying to run ikob right now when loading / saving config a warning is good.
+            # This is only an error when we are trying to run ikob right now, an error can be thrown based on the return value of this method.
+            # When loading / saving config a warning is sufficient.
             logger.warning(
                 "Unable to run ikob with the current config + input directory.",
             )
         return valid
+
+    def _segs_files_validation(self):
+        all_valid = True
+        segs_source = SegsSource(self.config)
+
+        # split segs by the type of ids because those require different id stores to read.
+        # Motive files are segs files, but are validated separately in _motive_files_validation()
+        segs_with_zone_ids = ["CBS_autos_per_huishouden", "Stedelijkheidsgraad"]
+        segs_with_urbanization_ids = ["GeenRijbewijs", "GeenAuto", "WelAuto", "Voorkeuren", "VoorkeurenGeenAuto"]
+
+        for zone_segs in segs_with_zone_ids:
+            try:
+                segs_source.read(zone_segs)
+            except Exception as e:
+                logger.warning(f"A problem occurred while attempting to load the segs file {zone_segs}: \n", exc_info=e)
+                all_valid = False
+
+        for urbanization_segs in segs_with_urbanization_ids:
+            try:
+                segs_source.read(urbanization_segs, id_store=URBANIZATION_GRADE_ID_STORE)
+            except Exception as e:
+                logger.warning(
+                    f"A problem occurred while attempting to load the segs file {urbanization_segs}: \n", exc_info=e
+                )
+                all_valid = False
+
+        if self.config["geavanceerd"]["kunstmab"]["gebruiken"]:
+            try:
+                read_csv_from_config(self.config, key="geavanceerd", id="kunstmab", type_caster=int)
+            except Exception as e:
+                logger.warning(
+                    "A problem occurred while attempting to load the artificial car possession file: \n", exc_info=e
+                )
+                all_valid = False
+        return all_valid
 
     def _skims_files_validation(self):
         part_of_day = self.config["skims"]["dagsoort"]
@@ -59,19 +110,42 @@ class FileValidator:
             )
             all_valid = False
 
-        for pod in part_of_day:
+        num_skim_files = 6
+        total_skims = len(part_of_day) * num_skim_files
+        for i, pod in enumerate(part_of_day):
             try:
                 skims_reader.read("Auto_Tijd", pod)
+                logger.info(f"{i * num_skim_files + 1}/{total_skims} skim matrices validated")
+
                 skims_reader.read("Auto_Afstand", pod)
+                logger.info(f"{i * num_skim_files + 2}/{total_skims} skim matrices validated")
+
                 bike_time_matrix = skims_reader.read("Fiets_Tijd", pod)
+                logger.info(f"{i * num_skim_files + 3}/{total_skims} skim matrices validated")
+
                 skims_reader.read("Fiets_Afstand", pod, default=bike_time_matrix)
+                logger.info(f"{i * num_skim_files + 4}/{total_skims} skim matrices validated")
+
                 skims_reader.read("OV_Tijd", pod)
+                logger.info(f"{i * num_skim_files + 5}/{total_skims} skim matrices validated")
+
+                if self.config["skims"]["OV kostenbestand"]["gebruiken"]:
+                    skims_reader.read("OV_Kosten", pod)
+                else:
+                    skims_reader.read("OV_Afstand", pod)
+                logger.info(f"{i * num_skim_files + 6}/{total_skims} skim matrices validated")
+
             except Exception as e:
                 logger.warning(
                     "A problem occurred while attempting to load the skims files: \n",
                     exc_info=e,
                 )
                 all_valid = False
+
+        if self.config["geavanceerd"]["additionele_kosten"]["gebruiken"]:
+            logger.info("Validating additional cost matrix")
+            read_csv_from_config(self.config, key="geavanceerd", id="additionele_kosten")
+            logger.info("Done")
 
         return all_valid
 
