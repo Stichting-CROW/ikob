@@ -1,3 +1,4 @@
+import csv
 import logging
 import pathlib
 from dataclasses import dataclass, field
@@ -25,6 +26,31 @@ def zeros(lengte):
 
 def transpose(matrix):
     return np.asarray(matrix).T
+
+
+def read_zone_ids(filename, has_id_header=False) -> tuple[list[str], list[str] | None]:
+    if not isinstance(filename, pathlib.Path):
+        filename = pathlib.Path(filename)
+
+    with filename.open("r", encoding="utf-8-sig", newline="") as file:
+        header = next(csv.reader(file), None)
+
+    if not header:
+        raise ValueError(f"CSV file {filename} is empty.")
+    if has_id_header and len(header) < 2:
+        raise ValueError(f"CSV file {filename} must contain zone IDs in its header.")
+
+    ids_array = np.loadtxt(
+        filename,
+        dtype=str,
+        delimiter=",",
+        skiprows=1,
+        usecols=(0,),
+        ndmin=1,
+        encoding="utf-8-sig",
+    )
+    column_ids = [value.strip() for value in header[1:]] if has_id_header else None
+    return ids_array.tolist(), column_ids
 
 
 @lru_cache

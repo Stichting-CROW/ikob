@@ -2,21 +2,18 @@ import numpy as np
 
 from ikob import datasource as datasource_module
 from ikob.datasource import DataKey, DataSource, DataType
+from ikob.id_store import IdStore, ZoneIdStoreSingleton
 
 
 def test_get_falls_back_to_read_csv_on_cache_miss(tmp_path, monkeypatch):
-    # Prepare the config
-    skims_dir = tmp_path / "skims"
-    skim_day_dir = skims_dir / "ochtend"
-    skim_day_dir.mkdir(parents=True)
-    (skim_day_dir / "Auto_Tijd.csv").write_text("zone,tijd\nz1,0\nz2,0\n", encoding="utf-8")
+    ZoneIdStoreSingleton.set_instance(IdStore.from_zone_ids(["z1", "z2"]))
 
+    # Prepare the config
     config = {
         "__filename__": "test-project",
         "project": {
             "paden": {
                 "output_directory": str(tmp_path / "output"),
-                "skims_directory": str(skims_dir),
             }
         },
         "skims": {"dagsoort": ["ochtend"]},
