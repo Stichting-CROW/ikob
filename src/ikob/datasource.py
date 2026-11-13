@@ -35,27 +35,30 @@ def get_temporary_directory(config) -> pathlib.Path:
     return project_dir / "tussenresultaten"
 
 
+def configured_csv_path(config, key: str, id: str) -> pathlib.Path | None:
+    csv_path = config[key][id]
+    if isinstance(csv_path, dict):
+        csv_path = csv_path["bestand"]
+    return None if csv_path == "" else pathlib.Path(csv_path)
+
+
 def read_csv_from_config(
     config, key: str, id: str, type_caster: type = utils.FLOAT_DTYPE, has_id_column=True, has_id_header=False
 ):
     """Read key from id section in the configuration file."""
-    csv_path = config[key][id]
-    if isinstance(csv_path, dict):
-        csv_path = csv_path["bestand"]
-
-    if csv_path == "":
+    csv_path = configured_csv_path(config, key, id)
+    if csv_path is None:
         raise DataSourceError(
             f"Problem occurred while reading path from config with key: '{key}' and id '{id}'. Path is empty"
         )
 
-    csv_path = pathlib.Path(csv_path)
     try:
         return utils.read_csv(
             csv_path,
             type_caster,
             has_id_column=has_id_column,
             has_id_header=has_id_header,
-            id_store=ZoneIdStoreSingleton.get_instance(config),
+            id_store=ZoneIdStoreSingleton.get_instance(),
         )
     except FileNotFoundError:
         raise DataSourceError(
@@ -70,6 +73,15 @@ class SkimsSource:
         self.skims_dir = pathlib.Path(config["project"]["paden"]["skims_directory"])
         self.config = config
 
+    def path_for(self, id: str, dagdeel: str) -> pathlib.Path:
+        return (self.skims_dir / dagdeel / id).with_suffix(".csv")
+
+    @staticmethod
+    def parking_times_path(config) -> pathlib.Path:
+        config_skims = config["skims"]
+        segs_dir = pathlib.Path(config["project"]["paden"]["segs_directory"])
+        return pathlib.Path(config_skims.get("parkeerzoektijden_bestand", segs_dir / "Parkeerzoektijd.csv"))
+
     def read(
         self,
         id: str,
@@ -81,14 +93,14 @@ class SkimsSource:
         Reads the skim file formed by the identifier and dagdeel.
         The ``type_caster`` allows to cast the data to a desired type.
         """
-        path = (self.skims_dir / dagdeel / id).with_suffix(".csv")
+        path = self.path_for(id, dagdeel)
         if os.path.exists(path):
             return utils.read_csv(
                 path,
                 type_caster=utils.FLOAT_DTYPE,
                 has_id_column=True,
                 has_id_header=True,
-                id_store=ZoneIdStoreSingleton.get_instance(self.config),
+                id_store=ZoneIdStoreSingleton.get_instance(),
             )
         if default is None:
             raise FileNotFoundError(f"Skim file {path} not found, with no default.")
@@ -102,13 +114,10 @@ class SkimsSource:
         to generate the parkeerzoektijden from stedelijkheidsgraad.
         """
 
-        config_skims = self.config["skims"]
         segs_dir = pathlib.Path(self.config["project"]["paden"]["segs_directory"])
-        id_store = ZoneIdStoreSingleton.get_instance(self.config)
+        id_store = ZoneIdStoreSingleton.get_instance()
 
-        parking_time_path = pathlib.Path(
-            config_skims.get("parkeerzoektijden_bestand", segs_dir / "Parkeerzoektijd.csv")
-        )
+        parking_time_path = self.parking_times_path(self.config)
 
         if parking_time_path.exists():
             return utils.read_csv(parking_time_path, type_caster=utils.INT_DTYPE, id_store=id_store)
@@ -134,23 +143,15 @@ class SegsSource:
         self.tmp_dir = get_temporary_directory(config)
         self.config = config
 
-    def _segs_input_dir(self, id, jaar, scenario):
-        return self._segs_dir(self.segs_dir, id, jaar, scenario)
-
-    def _segs_output_dir(self, id, jaar, scenario, group="", modifier=""):
-        root = self.tmp_dir / "groepenverdeling"
-        return self._segs_dir(root, id, jaar, scenario, group, modifier)
-
-    def _segs_dir(self, path, id, jaar, scenario, group="", modifier=""):
+    @staticmethod
+    def path_for(path, id, jaar="", scenario="", group="", modifier="") -> pathlib.Path:
         filename = id + jaar
 
         for postfix in [group, modifier]:
             if postfix:
                 filename += f"_{postfix}"
 
-        path = path / scenario
-        os.makedirs(path, exist_ok=True)
-        return path / filename
+        return (pathlib.Path(path) / scenario / filename).with_suffix(".csv")
 
     def read(
         self,
@@ -174,18 +175,18 @@ class SegsSource:
         should_read_from_output = "Verdeling_over_groepen" in id
 
         if should_read_from_output:
-            path = self._segs_output_dir(id=id, jaar=jaar, scenario=scenario, group=group, modifier=modifier)
+            path = self.path_for(self.tmp_dir / "groepenverdeling", id, jaar, scenario, group, modifier)
         else:
-            path = self._segs_input_dir(id, jaar, scenario)
+            path = self.path_for(self.segs_dir, id, jaar, scenario, group, modifier)
 
-        path = path.with_suffix(".csv")
+        os.makedirs(path.parent, exist_ok=True)
         try:
             return utils.read_csv(
                 path,
                 type_caster=type_caster,
                 has_id_column=has_id_column,
                 has_id_header=False,
-                id_store=id_store if id_store is not None else ZoneIdStoreSingleton.get_instance(self.config),
+                id_store=id_store if id_store is not None else ZoneIdStoreSingleton.get_instance(),
             )
         except FileNotFoundError:
             raise DataSourceError(
@@ -193,9 +194,10 @@ class SegsSource:
             )
 
     def write_csv(self, data, id, header, group="", jaar="", modifier="", scenario=""):
-        index = utils.CsvIdColumn.from_zone_ids(ZoneIdStoreSingleton.get_instance(self.config)._zone_ids)
+        index = utils.CsvIdColumn.from_zone_ids(ZoneIdStoreSingleton.get_instance()._zone_ids)
 
-        path = self._segs_output_dir(id, jaar, scenario, group, modifier).with_suffix(".csv")
+        path = self.path_for(self.tmp_dir / "groepenverdeling", id, jaar, scenario, group, modifier)
+        os.makedirs(path.parent, exist_ok=True)
         return utils.write_csv(data, path, header=header, index=index)
 
 
@@ -311,9 +313,7 @@ class DataSource:
 
     def read_csv(self, key: DataKey) -> NDArray:
         path = self._make_file_path(key).with_suffix(".csv")
-        return utils.read_csv(
-            path, id_store=ZoneIdStoreSingleton.get_instance(self.config), has_id_header=self.has_zone_id_header
-        )
+        return utils.read_csv(path, id_store=ZoneIdStoreSingleton.get_instance(), has_id_header=self.has_zone_id_header)
 
     def write_csv(self, data, key: DataKey, write_intermediate_results: bool = False):
         assert isinstance(key, DataKey)
@@ -325,7 +325,7 @@ class DataSource:
 
         path = self._make_file_path(key).with_suffix(".csv")
 
-        id_store = ZoneIdStoreSingleton.get_instance(self.config)
+        id_store = ZoneIdStoreSingleton.get_instance()
 
         header = key.header if key.header is not None else id_store._zone_ids
         index = utils.CsvIdColumn.from_zone_ids(id_store._zone_ids)

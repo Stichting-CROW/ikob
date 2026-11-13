@@ -34,7 +34,7 @@ class Hubs:
 
         hub_raw = cls._read_hubs_from_file(config)
 
-        zone_id_store = ZoneIdStoreSingleton.get_instance(config)
+        zone_id_store = ZoneIdStoreSingleton.get_instance()
 
         zone_indices: list[int] = [zone_id_store._id_to_idx[zone_id] for zone_id in hub_raw[:, 0]]
         hub_costs_cents: npt.NDArray[FLOAT_DTYPE] = hub_raw[:, 1].astype(FLOAT_DTYPE)
@@ -130,7 +130,7 @@ class Hubs:
         destination_list_path = Path(config["ketens"]["bestemmingslijst"]["bestand"])
         destination_list_id = np.loadtxt(destination_list_path, dtype=str, skiprows=1, delimiter=",", ndmin=1)
 
-        zone_id_store = ZoneIdStoreSingleton.get_instance(config)
+        zone_id_store = ZoneIdStoreSingleton.get_instance()
 
         destination_list_idx = np.asarray(
             [zone_id_store._id_to_idx[destination_id] for destination_id in destination_list_id]
@@ -189,7 +189,7 @@ def build_chain_travel_time_calculator(config, parking_times, additional_costs) 
     if hubs.num_hubs == 0:
         logger.warning("Chain generator called but no hubs found in file at config['ketens']['chains'].")
 
-    zone_id_store = ZoneIdStoreSingleton.get_instance(config)
+    zone_id_store = ZoneIdStoreSingleton.get_instance()
     if config["ketens"]["bestemmingslijst"]["gebruiken"]:
         destination_list = Hubs.read_destinations_from_file(config)
     else:

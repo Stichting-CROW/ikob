@@ -1,12 +1,13 @@
 import pathlib
 
+from ikob.config.validate import FileValidator
 from ikob.distribute_over_groups import distribute_population_over_groups
 from ikob.id_store import IdStore, ZoneIdStoreSingleton
 from ikob.ikobconfig import get_config_from_args
 from tests.e2e.test_end_to_end import compare_directories, remove_directory
 
 
-def test_group_distribution():
+def test_group_distribution(monkeypatch):
     """Data set showing division by zero in group_distribution calculations.
 
     This input configuration ``eb-eindhoven.json`` ran into division by
@@ -14,11 +15,11 @@ def test_group_distribution():
     in other end-to-end tests. In specific, this example does show 0.0/0.0
     divisions resulting in ``nan`` rather than ``inf`` (which were covered).
     """
+    monkeypatch.setattr(FileValidator, "validate_input_files", lambda self: True)
+    ZoneIdStoreSingleton._instance = IdStore.from_zone_ids([str(i) for i in range(1, 1207)])
     case = "eb-eindhoven"
     project_dir = pathlib.Path(f"tests/{case}/")
     config, _ = get_config_from_args(project_dir / f"{case}.json")
-
-    ZoneIdStoreSingleton._instance = IdStore.from_zone_ids([str(i) for i in range(1, 1207)])
 
     distribute_population_over_groups(config)
 

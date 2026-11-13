@@ -12,8 +12,7 @@ from ikob.utils import INT_DTYPE, read_csv
 
 def test_stedelijkheid_converter():
     segs_dir = pathlib.Path("tests/vlaanderen/SEGS")
-    config, _ = get_config_from_args("tests/vlaanderen/vlaanderen.json")
-    id_store = ZoneIdStoreSingleton.get_instance(config)
+    id_store = ZoneIdStoreSingleton.get_instance()
 
     reference = read_csv(segs_dir / "Parkeerzoektijd.csv", type_caster=INT_DTYPE, id_store=id_store)
     stedelijkheid = read_csv(segs_dir / "Stedelijkheidsgraad.csv", type_caster=INT_DTYPE, id_store=id_store)
@@ -26,7 +25,7 @@ def test_generate_parkeerzoektijden():
     project_dir = pathlib.Path("tests") / case
     project_file = project_dir.joinpath(f"{case}.json")
     config, _ = get_config_from_args(project_file)
-    id_store = ZoneIdStoreSingleton.get_instance(config)
+    id_store = ZoneIdStoreSingleton.get_instance()
 
     reference = read_csv(project_dir / "SEGS" / "Parkeerzoektijd.csv", type_caster=INT_DTYPE, id_store=id_store)
 
