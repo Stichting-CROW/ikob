@@ -149,7 +149,7 @@ def setup_generalized_travel_time_input(monkeypatch, gtt):
 
 @pytest.mark.parametrize("use_chains", [False, True], ids=["without-chains", "with-chains"])
 @pytest.mark.parametrize("write_travel_time", [False, True], ids=["do-not-write", "do-write"])
-def test_generalized_travel_time_computed_keys(monkeypatch, use_chains, write_travel_time):
+def test_generalized_travel_time_datasource(monkeypatch, use_chains, write_travel_time):
     import ikob.generalized_travel_time as gtt
     from ikob.chain_generator import ChainTravelTimeCalculator, Hubs
     from ikob.datasource import DataKey
