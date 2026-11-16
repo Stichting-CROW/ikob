@@ -1,9 +1,9 @@
 import enum
 import logging
 import os
-import pathlib
 import shutil
 from dataclasses import dataclass, field
+from pathlib import Path
 
 import numpy.typing as npt
 from numpy.typing import NDArray
@@ -24,22 +24,22 @@ def get_project_name(config) -> str:
     return config["__filename__"]
 
 
-def get_project_directory(config) -> pathlib.Path:
+def get_project_directory(config) -> Path:
     paths = config["project"]["paden"]
-    output_dir = pathlib.Path(paths["output_directory"])
+    output_dir = Path(paths["output_directory"])
     return output_dir / get_project_name(config)
 
 
-def get_temporary_directory(config) -> pathlib.Path:
+def get_temporary_directory(config) -> Path:
     project_dir = get_project_directory(config)
     return project_dir / "tussenresultaten"
 
 
-def configured_csv_path(config, key: str, id: str) -> pathlib.Path | None:
+def configured_csv_path(config, key: str, id: str) -> Path | None:
     csv_path = config[key][id]
     if isinstance(csv_path, dict):
         csv_path = csv_path["bestand"]
-    return None if csv_path == "" else pathlib.Path(csv_path)
+    return None if csv_path == "" else Path(csv_path)
 
 
 def read_csv_from_config(
@@ -70,17 +70,17 @@ class SkimsSource:
     """A data provider for skims files."""
 
     def __init__(self, config):
-        self.skims_dir = pathlib.Path(config["project"]["paden"]["skims_directory"])
+        self.skims_dir = Path(config["project"]["paden"]["skims_directory"])
         self.config = config
 
-    def path_for(self, id: str, dagdeel: str) -> pathlib.Path:
+    def path_for(self, id: str, dagdeel: str) -> Path:
         return (self.skims_dir / dagdeel / id).with_suffix(".csv")
 
     @staticmethod
-    def parking_times_path(config) -> pathlib.Path:
+    def parking_times_path(config) -> Path:
         config_skims = config["skims"]
-        segs_dir = pathlib.Path(config["project"]["paden"]["segs_directory"])
-        return pathlib.Path(config_skims.get("parkeerzoektijden_bestand", segs_dir / "Parkeerzoektijd.csv"))
+        segs_dir = Path(config["project"]["paden"]["segs_directory"])
+        return Path(config_skims.get("parkeerzoektijden_bestand", segs_dir / "Parkeerzoektijd.csv"))
 
     def read(
         self,
@@ -114,7 +114,6 @@ class SkimsSource:
         to generate the parkeerzoektijden from stedelijkheidsgraad.
         """
 
-        segs_dir = pathlib.Path(self.config["project"]["paden"]["segs_directory"])
         id_store = ZoneIdStoreSingleton.get_instance()
 
         parking_time_path = self.parking_times_path(self.config)
@@ -122,7 +121,7 @@ class SkimsSource:
         if parking_time_path.exists():
             return utils.read_csv(parking_time_path, type_caster=utils.INT_DTYPE, id_store=id_store)
 
-        urbanization_path = segs_dir / "Stedelijkheidsgraad.csv"
+        urbanization_path = SegsSource(self.config).segs_input_dir("Stedelijkheidsgraad")
         assert urbanization_path.exists(), (
             "Missing both Parkeerzoektijden, Stedelijkheidsgraad files.Parkeerzoektijden file cannot be generated."
         )
@@ -137,21 +136,30 @@ class SegsSource:
     """A data provider for SEGS files."""
 
     def __init__(self, config):
-        self.segs_dir = pathlib.Path(config["project"]["paden"]["segs_directory"])
+        self.segs_dir = Path(config["project"]["paden"]["segs_directory"])
         if self.segs_dir == "":
             raise DataSourceError("Skims source initialized with empty skims dir")
         self.tmp_dir = get_temporary_directory(config)
         self.config = config
 
+    def segs_input_dir(self, id, jaar="", scenario=""):
+        """Return the input CSV path for a SEGS file."""
+        return self._segs_dir(self.segs_dir, id, jaar, scenario)
+
+    def _segs_output_dir(self, id, jaar, scenario, group="", modifier=""):
+        root = self.tmp_dir / "groepenverdeling"
+        return self._segs_dir(root, id, jaar, scenario, group, modifier)
+
     @staticmethod
-    def path_for(path, id, jaar="", scenario="", group="", modifier="") -> pathlib.Path:
+    def _segs_dir(path: Path, id, jaar="", scenario="", group="", modifier="") -> Path:
         filename = id + jaar
 
         for postfix in [group, modifier]:
             if postfix:
                 filename += f"_{postfix}"
 
-        return (pathlib.Path(path) / scenario / filename).with_suffix(".csv")
+        os.makedirs(path / scenario, exist_ok=True)
+        return (Path(path) / scenario / filename).with_suffix(".csv")
 
     def read(
         self,
@@ -175,11 +183,10 @@ class SegsSource:
         should_read_from_output = "Verdeling_over_groepen" in id
 
         if should_read_from_output:
-            path = self.path_for(self.tmp_dir / "groepenverdeling", id, jaar, scenario, group, modifier)
+            path = self._segs_output_dir(id=id, jaar=jaar, scenario=scenario, group=group, modifier=modifier)
         else:
-            path = self.path_for(self.segs_dir, id, jaar, scenario, group, modifier)
+            path = self.segs_input_dir(id, jaar, scenario)
 
-        os.makedirs(path.parent, exist_ok=True)
         try:
             return utils.read_csv(
                 path,
@@ -196,8 +203,7 @@ class SegsSource:
     def write_csv(self, data, id, header, group="", jaar="", modifier="", scenario=""):
         index = utils.CsvIdColumn.from_zone_ids(ZoneIdStoreSingleton.get_instance()._zone_ids)
 
-        path = self.path_for(self.tmp_dir / "groepenverdeling", id, jaar, scenario, group, modifier)
-        os.makedirs(path.parent, exist_ok=True)
+        path = self._segs_output_dir(id, jaar, scenario, group, modifier)
         return utils.write_csv(data, path, header=header, index=index)
 
 
@@ -265,7 +271,7 @@ class DataSource:
                 id += f"_{suffix}"
         return id
 
-    def _make_file_path(self, key: DataKey) -> pathlib.Path:
+    def _make_file_path(self, key: DataKey) -> Path:
         base = self._get_base_dir(key)
         id_with_suffix = self._add_id_suffix(key)
         dagdeel = key.part_of_day.lower()

@@ -16,6 +16,7 @@ class IdStore:
     files with different id's such as urbanization grades.
     """
 
+    # Only fields that are inputs to IdStore.from_zone_ids are in the hash
     _zone_ids: tuple[str, ...] = field(hash=True)
     # MappingProxyType is essentially an immutable dict
     _id_to_idx: MappingProxyType[str, int] = field(hash=False)
@@ -35,6 +36,7 @@ class IdStore:
             logger.warning(
                 "IdStore initialized with duplicate IDs found in %s: %s.", zone_source or "zone IDs", duplicates
             )
+            # Deduplicate while preserving the original order
             zone_ids = list(dict.fromkeys(zone_ids))
 
         id_to_idx = {zone_id: idx for idx, zone_id in enumerate(zone_ids)}
@@ -54,10 +56,13 @@ class IdStore:
         current = set(ids)
         missing_ids = reference - current
         extra_ids = current - reference
-        if missing_ids or (extra_ids and not self._allow_extra_ids):
+        if missing_ids or extra_ids:
             msg = f"id mismatch for {source_name}.\nMissing ids: {missing_ids}\nextra ids: {extra_ids}"
             msg += ("\nid's have been read from " + self._zone_source) if self._zone_source else ""
-            raise ValueError(msg)
+            if missing_ids or (extra_ids and not self._allow_extra_ids):
+                raise ValueError(msg)
+            else:
+                logger.info(msg)
 
     def reorder_rows_to_internal_idx(self, row_ids: list[str], values: NDArray, source_name: str) -> NDArray:
         self._validate_exact_ids(row_ids, source_name)
