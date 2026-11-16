@@ -45,7 +45,7 @@ def run_scripts(
                                     To continue on weights or travel time steps that output should be enabled too.
     """
     logger.info("Reading project file: %s.", project_file)
-    config, valid = get_config_from_args(project_file, allow_extra_zone_ids=allow_extra_zone_ids)
+    config, valid = get_config_from_args(project_file, validate_files=True, allow_extra_zone_ids=allow_extra_zone_ids)
 
     if not valid:
         raise ValueError("Invalid input files, see console warnings.")

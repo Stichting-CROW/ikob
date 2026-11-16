@@ -105,6 +105,11 @@ python src/ikob/ikobconfig.py
 python src/ikob/ikobrunner.py
 ```
 
+The runner always validates input files before starting calculations.
+Loading a configuration does not read input data. Saving config in ikobconfig
+also initializes the zone mapping and validates input files, but input problems
+only produce warnings and do not prevent saving.
+
 ## Development
 
 For IKOB development first install IKOB following the manual installation

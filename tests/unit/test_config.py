@@ -128,7 +128,7 @@ def test_load_fixable_config(tmpdir):
     tmpdir = pathlib.Path(tmpdir)
     config_file = tmpdir / "test.json"
     config_file.write_text(old_config)
-    load_config(config_file)
+    load_config(config_file, validate_files=False)
 
 
 @pytest.mark.parametrize(
@@ -141,7 +141,7 @@ def test_load_fixable_config(tmpdir):
 def test_detect_invalid_choice(tmpdir, gui_tab, key, item, invalid_value):
     # Assert the original file loads properly.
     filename = pathlib.Path("tests/vlaanderen/vlaanderen.json")
-    _ = load_config(filename)
+    _ = load_config(filename, validate_files=False)
 
     # Insert invalid entries.
     config = json.loads(filename.read_text())
@@ -153,4 +153,4 @@ def test_detect_invalid_choice(tmpdir, gui_tab, key, item, invalid_value):
 
     # Loading with an invalid entry should fail.
     with pytest.raises(ValueError):
-        load_config(tmpfile)
+        load_config(tmpfile, validate_files=False)
