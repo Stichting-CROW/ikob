@@ -121,7 +121,10 @@ def weight_matrix_request(
     ratio_electric: float,
 ) -> tuple[DataSource, DataKey, DataKey | None]:
 
-    if modality == "Fiets" or modality == "EFiets":
+    if any(component not in {"Auto", "OV", "Fiets"} for component in modality.split("_")):
+        raise ValueError(f"Unknown modality: '{modality}'")
+
+    if modality == "Fiets":
         key = DataKey(
             modality,
             part_of_day=part_of_day,

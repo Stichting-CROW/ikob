@@ -248,9 +248,7 @@ def combined_group(mod, gr):
                 string = string + "OV"
             else:
                 string = string + "_OV"
-    if "EFiets" in mod:
-        string = string + "_EFiets"
-    elif "Fiets" in mod:
+    if "Fiets" in mod:
         string = string + "_Fiets"
     return string
 

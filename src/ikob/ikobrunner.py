@@ -197,7 +197,7 @@ class ConfigApp(Tk):
     stappen = (
         "Gegeneraliseerde reistijd berekenen uit tijd en kosten",
         "Verdeling van de groepen over de buurten of zones",
-        "Gewichten (reistijdvervalscurven) voor auto, OV, fiets en E-fiets apart",
+        "Gewichten (reistijdvervalscurven) voor auto, OV en fiets apart",
         "Maximum gewichten van meerdere modaliteiten",
         "Bereikbaarheid arbeidsplaatsen voor inwoners",
         "Potentie bereikbaarheid voor bedrijven en instellingen",

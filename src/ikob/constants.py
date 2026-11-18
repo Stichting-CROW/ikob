@@ -29,7 +29,7 @@ def _daily_shopping_constants(modality):
     alpha = 0.225
     omega = 12.5
     scaling = 1
-    if modality in ("Fiets", "EFiets"):
+    if modality == "Fiets":
         omega = 10
 
     return alpha, omega, scaling
@@ -39,7 +39,7 @@ def _non_daily_shopping_constants(modality):
     alpha = 0.225
     omega = 20
     scaling = 1
-    if modality in ("Fiets", "EFiets"):
+    if modality == "Fiets":
         omega = 15
 
     return alpha, omega, scaling
