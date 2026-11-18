@@ -8,7 +8,7 @@ import numpy.typing as npt
 from ikob import utils
 from ikob.combined_weights import load_weight_matrix, weight_matrix_request
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
-from ikob.distribute_over_groups import BASE_GROUPS, INCOME_LEVELS, NUM_GROUPS_PER_INCOME_CLASS
+from ikob.distribute_over_groups import CAR_PT_TYPES, INCOME_LEVELS, NUM_GROUPS_PER_INCOME_CLASS
 from ikob.output_tables import assemble_income_tables
 
 logger = logging.getLogger(__name__)
@@ -163,7 +163,7 @@ def competition(
                         motive=motive_name,
                         modality=modality,
                         income=income_group,
-                        group=car_possession_group,
+                        car_possession_group=car_possession_group,
                     )
                     reach = origins.get(key)
 
@@ -180,14 +180,16 @@ def competition(
                     # cache the matrix vector products, this is much more memory friendly than caching the matrix itself
                     competition_vectors_cache = {}
 
-                    for i_group, group in enumerate(BASE_GROUPS, start=i_income_group * NUM_GROUPS_PER_INCOME_CLASS):
+                    for i_group, car_pt_types in enumerate(
+                        CAR_PT_TYPES, start=i_income_group * NUM_GROUPS_PER_INCOME_CLASS
+                    ):
                         distribution = distribution_matrix[:, i_group]
                         income_distribution = income_distributions[:, i_income_group]
 
                         weights, weight_key, electric_key = weight_matrix_request(
                             single_weights,
                             combined_weights,
-                            group,
+                            car_pt_types,
                             modality,
                             motive_name,
                             regimes,
@@ -223,7 +225,7 @@ def competition(
                         income=income_group,
                         motive=motive_name,
                         modality=modality,
-                        group=car_possession_group,
+                        car_possession_group=car_possession_group,
                         is_intermediate=True,
                     )
                     competitions.set(key, competition_total)
@@ -237,7 +239,7 @@ def competition(
                     subtopic=subtopic_competition,
                     income=income_group,
                     motive=motive_name,
-                    group=car_possession_group,
+                    car_possession_group=car_possession_group,
                     header=modalities,
                 )
                 competitions.set(key, general_totals_transpose)

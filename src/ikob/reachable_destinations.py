@@ -7,7 +7,7 @@ import numpy as np
 from ikob import utils
 from ikob.combined_weights import load_weight_matrix, weight_matrix_request
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
-from ikob.distribute_over_groups import BASE_GROUPS, INCOME_LEVELS, NUM_GROUPS_PER_INCOME_CLASS
+from ikob.distribute_over_groups import CAR_PT_TYPES, NUM_GROUPS_PER_INCOME_CLASS
 from ikob.output_tables import assemble_income_tables
 
 logger = logging.getLogger(__name__)
@@ -95,14 +95,16 @@ def calculate_reachable_destinations(
                     # cache the matrix vector products, this is much more memory friendly than caching the matrix itself
                     possibility_vectors_cache = {}
 
-                    for i_group, group in enumerate(BASE_GROUPS, start=i_income_group * NUM_GROUPS_PER_INCOME_CLASS):
+                    for i_group, car_pt_types in enumerate(
+                        CAR_PT_TYPES, start=i_income_group * NUM_GROUPS_PER_INCOME_CLASS
+                    ):
                         distribution = np.asarray(distribution_matrix_transpose[i_group], dtype=utils.FLOAT_DTYPE)
 
                         K = electric_percentage.get(income_group) / 100
                         weights, weight_key, electric_key = weight_matrix_request(
                             single_weights,
                             combined_weights,
-                            group,
+                            car_pt_types,
                             modality,
                             motive_name,
                             regime,
@@ -135,7 +137,7 @@ def calculate_reachable_destinations(
                         utils.INCOME_VECTOR_RESULT_ID,
                         part_of_day=part_of_day,
                         income=income_group,
-                        group=car_possession_group,
+                        car_possession_group=car_possession_group,
                         motive=motive_name,
                         modality=modality,
                         is_intermediate=True,
@@ -149,7 +151,7 @@ def calculate_reachable_destinations(
                 key = DataKey(
                     "Ontpl_totaal",
                     part_of_day=part_of_day,
-                    group=car_possession_group,
+                    car_possession_group=car_possession_group,
                     income=income_group,
                     motive=motive_name,
                     header=modalities,

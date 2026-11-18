@@ -7,7 +7,7 @@ import numpy as np
 from ikob import utils
 from ikob.combined_weights import load_weight_matrix, weight_matrix_request
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
-from ikob.distribute_over_groups import BASE_GROUPS, INCOME_LEVELS, NUM_GROUPS_PER_INCOME_CLASS
+from ikob.distribute_over_groups import CAR_PT_TYPES, INCOME_LEVELS, NUM_GROUPS_PER_INCOME_CLASS
 from ikob.output_tables import assemble_income_tables
 
 logger = logging.getLogger(__name__)
@@ -88,13 +88,15 @@ def calculate_reachable_population(
                     # We can sum all vectors using the same matrix and do a single load_weight_matrix call and product
                     citizens_by_weight_matrix = {}
 
-                    active_groups = BASE_GROUPS if income_group in configured_income_groups else ()
-                    for igroup, group in enumerate(active_groups, start=i_income_group * NUM_GROUPS_PER_INCOME_CLASS):
+                    active_types = CAR_PT_TYPES if income_group in configured_income_groups else ()
+                    for igroup, car_pt_types in enumerate(
+                        active_types, start=i_income_group * NUM_GROUPS_PER_INCOME_CLASS
+                    ):
                         K = electric_percentage.get(income_group) / 100
                         weights, weight_key, electric_key = weight_matrix_request(
                             single_weights,
                             combined_weights,
-                            group,
+                            car_pt_types,
                             modality,
                             motive_name,
                             regimes,
@@ -122,7 +124,7 @@ def calculate_reachable_population(
                     key = DataKey(
                         id=utils.INCOME_VECTOR_RESULT_ID,
                         part_of_day=part_of_day,
-                        group=car_possession_group,
+                        car_possession_group=car_possession_group,
                         income=income_group,
                         motive=motive_name,
                         modality=modality,
@@ -134,7 +136,7 @@ def calculate_reachable_population(
                 key = DataKey(
                     id="Pot_totaal",
                     part_of_day=part_of_day,
-                    group=car_possession_group,
+                    car_possession_group=car_possession_group,
                     income=income_group,
                     motive=motive_name,
                     header=modalities,
