@@ -145,7 +145,7 @@ def test_reachable_destinations_totals(modality, income_group, income_index, rea
         utils.INCOME_VECTOR_RESULT_ID,
         part_of_day=pod,
         income=income_group,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )
@@ -171,7 +171,7 @@ def test_reachable_destinations_ontpl_totaal(modality, reachable_destinations_se
     key = DataKey(
         "Ontpl_totaal",
         part_of_day=pod,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )
@@ -185,7 +185,7 @@ def test_reachable_destinations_ontpl_totaal(modality, reachable_destinations_se
     key = DataKey(
         "Ontpl_totaalproduct",
         part_of_day=pod,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )

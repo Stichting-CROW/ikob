@@ -139,7 +139,7 @@ def test_reachable_population_totals(modality, income_group, income_index, reach
         utils.INCOME_VECTOR_RESULT_ID,
         part_of_day=pod,
         income=income_group,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )
@@ -163,7 +163,7 @@ def test_reachable_population_pot_totaal(modality, reachable_population_setup):
     key = DataKey(
         "Pot_totaal",
         part_of_day=pod,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )
@@ -177,7 +177,7 @@ def test_reachable_population_pot_totaal(modality, reachable_population_setup):
     key = DataKey(
         "Pot_totaalproduct",
         part_of_day=pod,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )

@@ -28,7 +28,7 @@ def test_get_weight_matrix_auto_with_electric_ratio(ratio_electric):
     result = get_weight_matrix(
         single_weights,  # type: ignore
         combined_weights,  # type: ignore
-        group="WelAuto_vkAuto_laag",
+        car_pt_types=("Auto", "OV"),
         modality="Auto",
         motive="werk",
         regime="Basis",
@@ -62,7 +62,7 @@ def test_get_weight_matrix_ov_modality():
     result = get_weight_matrix(
         single_weights,  # type: ignore
         combined_weights,  # type: ignore
-        group="GeenAuto_vkOV_laag",
+        car_pt_types=("GeenAuto", "OV"),
         modality="OV",
         motive="werk",
         regime="Basis",
@@ -96,7 +96,7 @@ def test_get_weight_matrix_combined_modality():
     result = get_weight_matrix(
         single_weights,  # type: ignore
         combined_weights,  # type: ignore
-        group="WelAuto_vkOV_laag",
+        car_pt_types=("Auto", "OV"),
         modality="Auto_OV",
         motive="werk",
         regime="Basis",
@@ -238,7 +238,7 @@ def test_competition_on_jobs_per_capita_sensitivity(modality, income_group, inco
         income=income_group,
         motive=config["project"]["motief"]["naam"],
         modality=modality,
-        group=config["geavanceerd"]["welke_groepen"][0],
+        car_possession_group=config["geavanceerd"]["welke_groepen"][0],
     )
     total = competitions.get(key)
 

@@ -229,7 +229,7 @@ class DataKey:
     income: str = ""
     hub_name: str = ""
     motive: str = ""
-    group: str = ""
+    car_possession_group: str = ""
     modality: str = ""
     fuel_kind: str = ""
 
@@ -272,7 +272,7 @@ class DataSource:
             / base
             / regime
             / key.motive
-            / key.group
+            / key.car_possession_group
             / self.datatype.value
             / key.subtopic
             / dagdeel

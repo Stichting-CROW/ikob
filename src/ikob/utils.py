@@ -194,50 +194,6 @@ def write_csv(matrix, filenaam, index: CsvIdColumn, header: list[str]):
     np.savetxt(filenaam, matrix, fmt=fmt, delimiter=delim, header=header_line, comments="")
 
 
-def single_group(mod, gr):
-    if mod == "Auto":
-        if "GratisAuto" in gr:
-            return "GratisAuto"
-        elif "Wel" in gr:
-            return "Auto"
-        if "GeenAuto" in gr:
-            return "GeenAuto"
-        if "GeenRijbewijs" in gr:
-            return "GeenRijbewijs"
-    if mod == "OV":
-        if "GratisOV" in gr:
-            return "GratisOV"
-        else:
-            return "OV"
-
-
-def combined_group(mod, gr):
-    string = ""
-    if "Auto" in mod:
-        if "GratisAuto" in gr:
-            string = "GratisAuto"
-        elif "Wel" in gr:
-            string = "Auto"
-        if "GeenAuto" in gr:
-            string = "GeenAuto"
-        if "GeenRijbewijs" in gr:
-            string = "GeenRijbewijs"
-    if "OV" in mod:
-        if "GratisOV" in gr:
-            if string == "":
-                string = string + "GratisOV"
-            else:
-                string = string + "_GratisOV"
-        else:
-            if string == "":
-                string = string + "OV"
-            else:
-                string = string + "_OV"
-    if "Fiets" in mod:
-        string = string + "_Fiets"
-    return string
-
-
 """
 Some functions that compute general travel time / costs to avoid copying this logic
 """

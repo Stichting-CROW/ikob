@@ -12,17 +12,17 @@ logger = logging.getLogger(__name__)
 
 
 INCOME_LEVELS = ("laag", "middellaag", "middelhoog", "hoog")
-BASE_GROUPS = (
-    "GratisAuto",
-    "GratisAuto_GratisOV",
-    "WelAuto_GratisOV",
-    "WelAuto",
-    "GeenAuto_GratisOV",
-    "GeenAuto",
-    "GeenRijbewijs_GratisOV",
-    "GeenRijbewijs",
+CAR_PT_TYPES = (
+    ("GratisAuto", "OV"),
+    ("GratisAuto", "GratisOV"),
+    ("Auto", "GratisOV"),
+    ("Auto", "OV"),
+    ("GeenAuto", "GratisOV"),
+    ("GeenAuto", "OV"),
+    ("GeenRijbewijs", "GratisOV"),
+    ("GeenRijbewijs", "OV"),
 )
-NUM_GROUPS_PER_INCOME_CLASS = len(BASE_GROUPS)
+NUM_GROUPS_PER_INCOME_CLASS = len(CAR_PT_TYPES)
 
 
 def _validate_car_possession_segs(
@@ -126,11 +126,20 @@ def distribute_population_over_groups(config):
     total_survey = []
     survey_per_income_class = []
 
-    def add_group(zone_index: int, income: str, group: str, share: float, car_owner_share: float) -> None:
+    def add_group(
+        zone_index: int, income: str, car_pt_types: tuple[str, str], share: float, car_owner_share: float
+    ) -> None:
+        expected_types = CAR_PT_TYPES[len(total_survey[zone_index]) % NUM_GROUPS_PER_INCOME_CLASS]
+        if car_pt_types != expected_types:
+            raise ValueError(f"Expected car/PT types {expected_types}, got {car_pt_types}")
         total_survey[zone_index].append(share)
         survey_per_income_class[zone_index].append(car_owner_share)
         if zone_index == 0:
-            header.append(f"{group}_{income}")
+            car_type, pt_type = car_pt_types
+            # This renaming scheme is to keep output headers equal to old code
+            car_label = "WelAuto" if car_type == "Auto" else car_type
+            pt_label = "_GratisOV" if pt_type == "GratisOV" else ""
+            header.append(f"{car_label}{pt_label}_{income}")
 
     traveling_population = segs_source.read(traveling_population_path.name, scenario=scenario)
 
@@ -181,28 +190,28 @@ def distribute_population_over_groups(config):
             free_car = with_car * free_car_per_income[i_income]
             no_free_car = with_car - free_car
             free_car_share = free_car * (1 - free_pt_percentage) * income_share
-            add_group(i, income, "GratisAuto", free_car_share, free_car_share / with_car)
+            add_group(i, income, ("GratisAuto", "OV"), free_car_share, free_car_share / with_car)
 
             free_car_and_pt_share = free_car * free_pt_percentage * income_share
-            add_group(i, income, "GratisAuto_GratisOV", free_car_and_pt_share, free_car_and_pt_share / with_car)
+            add_group(i, income, ("GratisAuto", "GratisOV"), free_car_and_pt_share, free_car_and_pt_share / with_car)
 
             free_pt_share = no_free_car * free_pt_percentage * income_share
-            add_group(i, income, "WelAuto_GratisOV", free_pt_share, free_pt_share / with_car)
+            add_group(i, income, ("Auto", "GratisOV"), free_pt_share, free_pt_share / with_car)
 
             car_share = no_free_car * (1 - free_pt_percentage) * income_share
-            add_group(i, income, "WelAuto", car_share, car_share / with_car)
+            add_group(i, income, ("Auto", "OV"), car_share, car_share / with_car)
 
             no_car_free_pt_share = no_car_with_license * free_pt_percentage * income_share
-            add_group(i, income, "GeenAuto_GratisOV", no_car_free_pt_share, 0)
+            add_group(i, income, ("GeenAuto", "GratisOV"), no_car_free_pt_share, 0)
 
             no_car_share = no_car_with_license * (1 - free_pt_percentage) * income_share
-            add_group(i, income, "GeenAuto", no_car_share, 0)
+            add_group(i, income, ("GeenAuto", "OV"), no_car_share, 0)
 
             no_license_free_pt_share = no_license * free_pt_percentage * income_share
-            add_group(i, income, "GeenRijbewijs_GratisOV", no_license_free_pt_share, 0)
+            add_group(i, income, ("GeenRijbewijs", "GratisOV"), no_license_free_pt_share, 0)
 
             no_license_share = no_license * (1 - free_pt_percentage) * income_share
-            add_group(i, income, "GeenRijbewijs", no_license_share, 0)
+            add_group(i, income, ("GeenRijbewijs", "OV"), no_license_share, 0)
 
     segs_source.write_csv(
         survey_per_income_class,
