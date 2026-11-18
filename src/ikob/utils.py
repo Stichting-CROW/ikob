@@ -194,21 +194,6 @@ def write_csv(matrix, filenaam, index: CsvIdColumn, header: list[str]):
     np.savetxt(filenaam, matrix, fmt=fmt, delimiter=delim, header=header_line, comments="")
 
 
-def group_income_level(naam):
-    if naam[-4:] == "hoog":
-        if naam[-10:] == "middelhoog":
-            return "middelhoog"
-        else:
-            return "hoog"
-    elif naam[-4:] == "laag":
-        if naam[-10:] == "middellaag":
-            return "middellaag"
-        else:
-            return "laag"
-    else:
-        return ""
-
-
 def single_group(mod, gr):
     if mod == "Auto":
         if "GratisAuto" in gr:

@@ -8,6 +8,7 @@ import numpy.typing as npt
 from ikob import utils
 from ikob.combined_weights import load_weight_matrix, weight_matrix_request
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.distribute_over_groups import BASE_GROUPS, INCOME_LEVELS, NUM_GROUPS_PER_INCOME_CLASS
 from ikob.output_tables import assemble_income_tables
 
 logger = logging.getLogger(__name__)
@@ -119,71 +120,7 @@ def competition(
     car_possession_groups = advanced_config["welke_groepen"]
     electric_percentage = distribution_config["Percelektrisch"]
 
-    groups = [
-        "GratisAuto_laag",
-        "GratisAuto_GratisOV_laag",
-        "WelAuto_GratisOV_laag",
-        "WelAuto_vkAuto_laag",
-        "WelAuto_vkNeutraal_laag",
-        "WelAuto_vkFiets_laag",
-        "WelAuto_vkOV_laag",
-        "GeenAuto_GratisOV_laag",
-        "GeenAuto_vkNeutraal_laag",
-        "GeenAuto_vkFiets_laag",
-        "GeenAuto_vkOV_laag",
-        "GeenRijbewijs_GratisOV_laag",
-        "GeenRijbewijs_vkNeutraal_laag",
-        "GeenRijbewijs_vkFiets_laag",
-        "GeenRijbewijs_vkOV_laag",
-        "GratisAuto_middellaag",
-        "GratisAuto_GratisOV_middellaag",
-        "WelAuto_GratisOV_middellaag",
-        "WelAuto_vkAuto_middellaag",
-        "WelAuto_vkNeutraal_middellaag",
-        "WelAuto_vkFiets_middellaag",
-        "WelAuto_vkOV_middellaag",
-        "GeenAuto_GratisOV_middellaag",
-        "GeenAuto_vkNeutraal_middellaag",
-        "GeenAuto_vkFiets_middellaag",
-        "GeenAuto_vkOV_middellaag",
-        "GeenRijbewijs_GratisOV_middellaag",
-        "GeenRijbewijs_vkNeutraal_middellaag",
-        "GeenRijbewijs_vkFiets_middellaag",
-        "GeenRijbewijs_vkOV_middellaag",
-        "GratisAuto_middelhoog",
-        "GratisAuto_GratisOV_middelhoog",
-        "WelAuto_GratisOV_middelhoog",
-        "WelAuto_vkAuto_middelhoog",
-        "WelAuto_vkNeutraal_middelhoog",
-        "WelAuto_vkFiets_middelhoog",
-        "WelAuto_vkOV_middelhoog",
-        "GeenAuto_GratisOV_middelhoog",
-        "GeenAuto_vkNeutraal_middelhoog",
-        "GeenAuto_vkFiets_middelhoog",
-        "GeenAuto_vkOV_middelhoog",
-        "GeenRijbewijs_GratisOV_middelhoog",
-        "GeenRijbewijs_vkNeutraal_middelhoog",
-        "GeenRijbewijs_vkFiets_middelhoog",
-        "GeenRijbewijs_vkOV_middelhoog",
-        "GratisAuto_hoog",
-        "GratisAuto_GratisOV_hoog",
-        "WelAuto_GratisOV_hoog",
-        "WelAuto_vkAuto_hoog",
-        "WelAuto_vkNeutraal_hoog",
-        "WelAuto_vkFiets_hoog",
-        "WelAuto_vkOV_hoog",
-        "GeenAuto_GratisOV_hoog",
-        "GeenAuto_vkNeutraal_hoog",
-        "GeenAuto_vkFiets_hoog",
-        "GeenAuto_vkOV_hoog",
-        "GeenRijbewijs_GratisOV_hoog",
-        "GeenRijbewijs_vkNeutraal_hoog",
-        "GeenRijbewijs_vkFiets_hoog",
-        "GeenRijbewijs_vkOV_hoog",
-    ]
-
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
-    income_groups = ["laag", "middellaag", "middelhoog", "hoog"]
 
     segs_source = SegsSource(config)
 
@@ -212,7 +149,7 @@ def competition(
         )
 
         for part_of_day in part_of_days:
-            for i_income_group, income_group in enumerate(income_groups):
+            for i_income_group, income_group in enumerate(INCOME_LEVELS):
                 K = electric_percentage.get(income_group) / 100
 
                 if selected_income is not None and income_group != selected_income:
@@ -243,43 +180,41 @@ def competition(
                     # cache the matrix vector products, this is much more memory friendly than caching the matrix itself
                     competition_vectors_cache = {}
 
-                    for i_group, group in enumerate(groups):
+                    for i_group, group in enumerate(BASE_GROUPS, start=i_income_group * NUM_GROUPS_PER_INCOME_CLASS):
                         distribution = distribution_matrix[:, i_group]
                         income_distribution = income_distributions[:, i_income_group]
 
-                        income = utils.group_income_level(group)
-                        if income_group == income or income_group == "alle":
-                            weights, weight_key, electric_key = weight_matrix_request(
-                                single_weights,
-                                combined_weights,
-                                group,
-                                modality,
-                                motive_name,
-                                regimes,
-                                part_of_day,
-                                income,
-                                K,
-                            )
-                            cache_key = (weights is combined_weights, weight_key, electric_key)
+                        weights, weight_key, electric_key = weight_matrix_request(
+                            single_weights,
+                            combined_weights,
+                            group,
+                            modality,
+                            motive_name,
+                            regimes,
+                            part_of_day,
+                            income_group,
+                            K,
+                        )
+                        cache_key = (weights is combined_weights, weight_key, electric_key)
 
-                            # Section D6/D7 competition term:
-                            # Compute a scarcity/competition ratio per zone and propagate it through the origin-destination weights.
-                            # - citizens=False (D6 / competition_on_destinations): `citizens_or_destinations` is $A_{ib}$ (jobs/places per
-                            #   destination). Dividing by `reach` discounts destinations with many competing residents.
-                            # - citizens=True  (D7 / competition_on_citizens): `citizens_or_destinations` is $I_{ih}$ (residents per
-                            #   origin). Dividing by `reach` discounts origins with many reachable opportunities.
-                            if cache_key not in competition_vectors_cache:
-                                matrix = load_weight_matrix(weights, weight_key, electric_key, K)
-                                competition_vectors_cache[cache_key] = matrix @ citizens_or_destinations_per_reach
-                            competition = competition_vectors_cache[cache_key]
+                        # Section D6/D7 competition term:
+                        # Compute a scarcity/competition ratio per zone and propagate it through the origin-destination weights.
+                        # - citizens=False (D6 / competition_on_destinations): `citizens_or_destinations` is $A_{ib}$ (jobs/places per
+                        #   destination). Dividing by `reach` discounts destinations with many competing residents.
+                        # - citizens=True  (D7 / competition_on_citizens): `citizens_or_destinations` is $I_{ih}$ (residents per
+                        #   origin). Dividing by `reach` discounts origins with many reachable opportunities.
+                        if cache_key not in competition_vectors_cache:
+                            matrix = load_weight_matrix(weights, weight_key, electric_key, K)
+                            competition_vectors_cache[cache_key] = matrix @ citizens_or_destinations_per_reach
+                        competition = competition_vectors_cache[cache_key]
 
-                            # aggregation to income-class level:
-                            # We sum across all groups whose income level matches `income_group`.
-                            # The `distribution` and `income_distribution` scaling makes this an income-class level
-                            # score rather than a raw per-group score.
-                            competition_total += (
-                                competition * distribution / np.where(income_distribution > 0, income_distribution, 1)
-                            )
+                        # aggregation to income-class level:
+                        # We sum across all groups whose income level matches `income_group`.
+                        # The `distribution` and `income_distribution` scaling makes this an income-class level
+                        # score rather than a raw per-group score.
+                        competition_total += (
+                            competition * distribution / np.where(income_distribution > 0, income_distribution, 1)
+                        )
 
                     key = DataKey(
                         id=utils.INCOME_VECTOR_RESULT_ID,

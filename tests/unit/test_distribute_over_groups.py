@@ -38,18 +38,11 @@ def _expected_header(income_group: str) -> list[str]:
         f"GratisAuto_{income_group}",
         f"GratisAuto_GratisOV_{income_group}",
         f"WelAuto_GratisOV_{income_group}",
-        f"WelAuto_vkAuto_{income_group}",
-        f"WelAuto_vkNeutraal_{income_group}",
-        f"WelAuto_vkFiets_{income_group}",
-        f"WelAuto_vkOV_{income_group}",
+        f"WelAuto_{income_group}",
         f"GeenAuto_GratisOV_{income_group}",
-        f"GeenAuto_vkNeutraal_{income_group}",
-        f"GeenAuto_vkFiets_{income_group}",
-        f"GeenAuto_vkOV_{income_group}",
+        f"GeenAuto_{income_group}",
         f"GeenRijbewijs_GratisOV_{income_group}",
-        f"GeenRijbewijs_vkNeutraal_{income_group}",
-        f"GeenRijbewijs_vkFiets_{income_group}",
-        f"GeenRijbewijs_vkOV_{income_group}",
+        f"GeenRijbewijs_{income_group}",
     ]
 
 
@@ -124,16 +117,15 @@ def _expected_block(
     out.append(free_car * free_pt_percentage * income_share_of_population)
     # WelAuto_GratisOV_{income_group}
     out.append(no_free_car * free_pt_percentage * income_share_of_population)
-    # WelAuto_vk* columns
-    for i_pref in range(len(preferences)):
-        share_pref = no_free_car * (1 - free_pt_percentage) * (preferences_segs[urb][i_pref] / 100)
-        out.append(share_pref * income_share_of_population)
-    # GeenAuto_GratisOV + GeenAuto_vk*
+
+    # WelAuto without free public transport
+    out.append(no_free_car * (1 - free_pt_percentage) * income_share_of_population)
+
+    # GeenAuto with and without free public transport
     out.append(no_car_with_license * free_pt_percentage * income_share_of_population)
-    for i_pref in range(len(preferences_no_car)):
-        share_pref = no_car_with_license * (1 - free_pt_percentage) * (preferences_no_car_segs[urb][i_pref] / 100)
-        out.append(share_pref * income_share_of_population)
-    # GeenRijbewijs_GratisOV + GeenRijbewijs_vk*
+    out.append(no_car_with_license * (1 - free_pt_percentage) * income_share_of_population)
+
+    # GeenRijbewijs with and without free public transport
     out.append(no_license * free_pt_percentage * income_share_of_population)
     for i_pref in range(len(preferences_no_car)):
         share_pref = no_license * (1 - free_pt_percentage) * (preferences_no_car_segs[urb][i_pref] / 100)
