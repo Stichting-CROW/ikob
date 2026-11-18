@@ -54,7 +54,7 @@ def _same_directory(dcmp: filecmp.dircmp, allow_too_many_results: bool = False) 
     result_files_only = dcmp.left_only
     reference_files_only = dcmp.right_only
     if reference_files_only or (result_files_only and not allow_too_many_results):
-        msg = f"Files only in result: {result_files_only}\nFiles only in reference: {reference_files_only}"
+        msg = f"Files only in result ({pathlib.Path(dcmp.left)}):\n {result_files_only}\nFiles only in reference ({pathlib.Path(dcmp.right)}):\n{reference_files_only}"
         logger.warning(msg)
         same = False
 
