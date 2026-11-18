@@ -67,8 +67,7 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource, 
         store()
 
     elif key.id == "Fiets":
-        modality = "E-fiets" if project_config["fiets of E-fiets"]["E-fiets"] else "Fiets"
-        store(modality=modality)
+        store(modality="Fiets")
 
     elif key.id == "OV":
         store(modality="OV")
@@ -118,7 +117,7 @@ def calculate_single_weights(
     Loops over the computed generalized travel time from the previous step and applies a decay curve to them.
     """
 
-    logger.info("Starting step: Weights (travel time decay curves) for car, PT, bike, and E-bike.")
+    logger.info("Starting step: Weights (travel time decay curves) for car, PT, and bike.")
 
     skims_config = config["skims"]
 

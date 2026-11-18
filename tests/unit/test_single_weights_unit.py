@@ -78,7 +78,6 @@ def test_calculate_single_weights_writes_expected_keys(selected_income):
                 "reistijdvervalscurve": DecayCurveName.WORK_AND_SOCIAL,
             },
             "beprijzingsregime": regime,
-            "fiets of E-fiets": {"E-fiets": False},
             "paden": {
                 "output_directory": "out",
                 "skims_directory": "skims",
