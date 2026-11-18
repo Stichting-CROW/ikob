@@ -198,23 +198,25 @@ def generalized_travel_time(
                     if write_travel_time:
                         travel_time_output.set(
                             DataKey(
-                                id=f"Pplusfiets_{fuel_kind}",
+                                id="Pplusfiets",
                                 part_of_day=pod,
                                 income=income_level,
                                 hub_name=hub_name,
                                 motive=motive_name,
                                 regime=regime,
+                                fuel_kind=fuel_kind,
                             ),
                             chain_bike,
                         )
                         travel_time_output.set(
                             DataKey(
-                                id=f"PplusR_{fuel_kind}",
+                                id="PplusR",
                                 part_of_day=pod,
                                 income=income_level,
                                 hub_name=hub_name,
                                 motive=motive_name,
                                 regime=regime,
+                                fuel_kind=fuel_kind,
                             ),
                             chain_ride,
                         )
@@ -222,11 +224,12 @@ def generalized_travel_time(
                     gtr_skim = np.minimum(gtr_skim, chain_ride)
 
                 key = DataKey(
-                    id=f"Auto_{fuel_kind}",
+                    id="Auto",
                     part_of_day=pod,
                     income=income_level,
                     regime=regime,
                     motive=motive_name,
+                    fuel_kind=fuel_kind,
                 )
                 publish(key, gtr_skim)
 

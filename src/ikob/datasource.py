@@ -226,7 +226,6 @@ class DataKey:
     part_of_day: str
     regime: str = ""
     subtopic: str = ""
-    preference: str = ""
     income: str = ""
     hub_name: str = ""
     motive: str = ""
