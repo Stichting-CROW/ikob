@@ -12,7 +12,6 @@ from ikob.utils import FLOAT_DTYPE
 
 logger = logging.getLogger(__name__)
 
-ALL_PREFERENCES = ["Auto", "Neutraal", "Fiets", "OV"]
 MIN_WEIGHT = 0.001
 
 
@@ -24,13 +23,13 @@ def inverse_decay_curve(weight, alpha, omega, scaling):
     return omega + math.log(scaling / weight - 1) / alpha
 
 
-def calculate_weights(generalized_travel_time, modality: str, preference: str, decay_curve_name: DecayCurveName):
+def calculate_weights(generalized_travel_time, modality: str, decay_curve_name: DecayCurveName):
     """
     Applies a decay curve to the generalized travel time to compute a weight or 'resistance' for the movement.
     A weight of 1 means a movement with very little resistance (a short & cheap movement).
     A weight of 0 means a movement with a lot of resistance (a long & expensive movement).
     """
-    constants = work_constants(modality, preference, decay_curve_name)
+    constants = work_constants(modality, decay_curve_name)
     cutoff = inverse_decay_curve(MIN_WEIGHT, *constants)
     rows, cols = np.nonzero(generalized_travel_time <= cutoff)
     if rows.size == 0:
@@ -50,51 +49,37 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource, 
     regimes = project_config["beprijzingsregime"]
     motive_name = project_config["motief"]["naam"]
 
-    def store(weight_id, preference, income=key.income, fuel_kind="", modality="Auto", weight_matrix=None):
+    def store(weight_id, income=key.income, modality="Auto", weight_matrix=None):
         weight_key = DataKey(
             weight_id,
             part_of_day=key.part_of_day,
             income=income,
             regime=regimes,
             motive=motive_name,
-            preference=preference,
-            fuel_kind=fuel_kind,
+            fuel_kind=key.fuel_kind,
         )
 
         if weight_matrix is None:
-            weight_matrix = calculate_weights(travel_time, modality, preference, decay_curve_name)
+            weight_matrix = calculate_weights(travel_time, modality, decay_curve_name)
         weights.set(weight_key, weight_matrix)
 
     if key.id == "Fiets":
         modality = "E-fiets" if project_config["fiets of E-fiets"]["E-fiets"] else "Fiets"
-        # The empty preference is only used for modality bike, this is to keep behavior identical to old code.
-        for preference in ("", "Fiets"):
-            store("Fiets_vk", preference, modality=modality)
+        store("Fiets_vk", modality=modality)
 
-    elif key.id.startswith("Auto_"):
-        fuel_kind = key.id.removeprefix("Auto_")
-        for preference in ALL_PREFERENCES:
-            store("Auto_vk", preference, fuel_kind=fuel_kind)
+    elif key.id == "Auto":
+        store("Auto_vk")
 
     elif key.id in ("GeenAuto", "GeenRijbewijs"):
-        for preference in ("Neutraal", "OV", "Fiets"):
-            store(f"{key.id}_vk", preference)
+        store(f"{key.id}_vk")
 
     elif key.id == "OV":
-        for preference in ALL_PREFERENCES:
-            store("OV_vk", preference, modality="OV")
+        store("OV_vk", modality="OV")
 
     elif key.id == "GratisAuto":
-        # The free car weights always use the car preference, even though the preference stored at the key
-        # might be neutral. This is to keep behavior identical to old code.
-        weight_matrix = calculate_weights(travel_time, "Auto", "Auto", decay_curve_name)
-        for preference in ("Neutraal", "Auto"):
-            store("GratisAuto_vk", preference, weight_matrix=weight_matrix)
+        store("GratisAuto_vk")
 
     elif key.id == "GratisOV":
-        # The free PT weights always use the PT preference, even though the preference stored at the key
-        # might be neutral. This is to keep behavior identical to old code.
-        weight_matrix = calculate_weights(travel_time, "OV", "OV", decay_curve_name)
         # Here we have to loop over the income classes as well because the travel time computation
         # Only computes the free PT travel time once (as it's not dependent on the income group)
         # The weights are not dependent on the income group either, but for ease of implementation
@@ -104,10 +89,10 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource, 
         # Note that the free car travel time _is_ dependent on income class,
         # because there are still costs associated with car free car travel counterintuitively.
         # see generalized_travel_time.py for details
+        weight_matrix = calculate_weights(travel_time, "OV", decay_curve_name)
         incomes = [selected_income] if selected_income is not None else ["hoog", "middelhoog", "middellaag", "laag"]
         for income in incomes:
-            for preference in ("Neutraal", "OV"):
-                store("GratisOV_vk", preference, income=income, weight_matrix=weight_matrix)
+            store("GratisOV_vk", income=income, weight_matrix=weight_matrix)
 
 
 def calculate_single_weights_on_demand(
@@ -163,7 +148,12 @@ def calculate_single_weights(
             # car
             for fuel_kind in ("fossiel", "elektrisch"):
                 key = DataKey(
-                    f"Auto_{fuel_kind}", part_of_day=part_of_day, income=income, regime=regimes, motive=motive_name
+                    "Auto",
+                    part_of_day=part_of_day,
+                    income=income,
+                    regime=regimes,
+                    motive=motive_name,
+                    fuel_kind=fuel_kind,
                 )
                 travel_time = generalized_travel_time.get(key)
                 consume_travel_time(config, key, travel_time, weights)
