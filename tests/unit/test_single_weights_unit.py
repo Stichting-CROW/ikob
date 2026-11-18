@@ -18,8 +18,7 @@ def test_decay_curve_and_inverse_round_trip(alpha, omega, scaling, travel_time, 
 
 
 @pytest.mark.parametrize("modality", ["Auto", "OV", "Fiets"])
-@pytest.mark.parametrize("preference", ["Auto", "OV", "Fiets"])
-def test_calculate_weights_threshold_and_monotonicity(modality, preference):
+def test_calculate_weights_threshold_and_monotonicity(modality):
     from ikob.configuration_definition import DecayCurveName
     from ikob.single_weights import calculate_weights
 
@@ -35,9 +34,7 @@ def test_calculate_weights_threshold_and_monotonicity(modality, preference):
     )
 
     # Act
-    weights = calculate_weights(
-        gtt, modality=modality, preference=preference, decay_curve_name=DecayCurveName.WORK_AND_SOCIAL
-    )
+    weights = calculate_weights(gtt, modality=modality, decay_curve_name=DecayCurveName.WORK_AND_SOCIAL)
 
     # Assert
     # Hard threshold at 180 minutes.
@@ -100,28 +97,26 @@ def test_calculate_single_weights_writes_expected_keys(selected_income):
 
     # Assert
     # A set of representative keys that must be produced.
-    assert weights.get(DataKey("Fiets_vk", part_of_day=pod, regime=regime, motive=motive, income="laag")).shape == (
+    assert weights.get(DataKey("Fiets", part_of_day=pod, regime=regime, motive=motive, income="laag")).shape == (
         2,
         2,
     )
     assert weights.get(
         DataKey(
-            "Auto_vk",
+            "Auto",
             part_of_day=pod,
             income="laag",
             regime=regime,
             motive=motive,
-            preference="Auto",
             fuel_kind="fossiel",
         )
     ).shape == (2, 2)
     assert weights.get(
         DataKey(
-            "OV_vk",
+            "OV",
             part_of_day=pod,
             income="laag",
             regime=regime,
             motive=motive,
-            preference="OV",
         )
     ).shape == (2, 2)

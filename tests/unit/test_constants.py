@@ -5,16 +5,14 @@ from ikob.constants import work_constants
 
 # Valid combinations based on the code analysis
 VALID_MODALITIES = ["Auto", "OV", "Fiets", "EFiets"]
-VALID_PREFERENCES = ["Auto", "OV", "Fiets"]
 
 
 @pytest.mark.parametrize("modality", VALID_MODALITIES)
-@pytest.mark.parametrize("preference", VALID_PREFERENCES)
-def test_different_decay_curve_name_different_constants(modality, preference):
+def test_different_decay_curve_name_different_constants(modality):
     """Test that constants differ when choosing a different decay curve."""
-    constants_work = work_constants(modality, preference, DecayCurveName.WORK_AND_SOCIAL)
-    constants_daily = work_constants(modality, preference, DecayCurveName.DAILY_SHOPPING_AND_HEALTH)
-    constants_non_daily = work_constants(modality, preference, DecayCurveName.NON_DAILY_SHOPPING_AND_EDUCATION)
+    constants_work = work_constants(modality, DecayCurveName.WORK_AND_SOCIAL)
+    constants_daily = work_constants(modality, DecayCurveName.DAILY_SHOPPING_AND_HEALTH)
+    constants_non_daily = work_constants(modality, DecayCurveName.NON_DAILY_SHOPPING_AND_EDUCATION)
 
     # Check that at least one constant differs noticeably (not just floating point noise)
     # Allow for small floating point differences (relative tolerance of 1%)

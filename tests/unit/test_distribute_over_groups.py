@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from ikob.configuration_definition import DecayCurveName, TvomType
+from ikob.distribute_over_groups import NUM_GROUPS_PER_INCOME_CLASS
 from tests.unit.conftest import SegsCapture
 
 
@@ -37,19 +38,12 @@ def _expected_header(income_group: str) -> list[str]:
     return [
         f"GratisAuto_{income_group}",
         f"GratisAuto_GratisOV_{income_group}",
+        f"WelAuto_{income_group}",
         f"WelAuto_GratisOV_{income_group}",
-        f"WelAuto_vkAuto_{income_group}",
-        f"WelAuto_vkNeutraal_{income_group}",
-        f"WelAuto_vkFiets_{income_group}",
-        f"WelAuto_vkOV_{income_group}",
+        f"GeenAuto_{income_group}",
         f"GeenAuto_GratisOV_{income_group}",
-        f"GeenAuto_vkNeutraal_{income_group}",
-        f"GeenAuto_vkFiets_{income_group}",
-        f"GeenAuto_vkOV_{income_group}",
+        f"GeenRijbewijs_{income_group}",
         f"GeenRijbewijs_GratisOV_{income_group}",
-        f"GeenRijbewijs_vkNeutraal_{income_group}",
-        f"GeenRijbewijs_vkFiets_{income_group}",
-        f"GeenRijbewijs_vkOV_{income_group}",
     ]
 
 
@@ -69,8 +63,6 @@ def _expected_block(
 
     # Fixed values from the implementation.
     free_car_per_income = [0, 0.02, 0.175, 0.275]
-    preferences = ["Auto", "Neutraal", "Fiets", "OV"]
-    preferences_no_car = ["Neutraal", "Fiets", "OV"]
 
     car_possessions_per_household = np.array(segs[("CBS_autos_per_huishouden", "")], dtype=float)
     urbanization_grade = np.array(segs[("Stedelijkheidsgraad", "")], dtype=int)
@@ -79,8 +71,6 @@ def _expected_block(
     no_license_segs = np.array(segs[("GeenRijbewijs", "")], dtype=float)
     no_car_segs = np.array(segs[("GeenAuto", "")], dtype=float)
     with_car_segs = np.array(segs[("WelAuto", "")], dtype=float)
-    preferences_segs = np.array(segs[("Voorkeuren", "")], dtype=float)
-    preferences_no_car_segs = np.array(segs[("VoorkeurenGeenAuto", "")], dtype=float)
     citizens_per_class = np.array(segs[("Beroepsbevolking_inkomensklasse", scenario)], dtype=float)
 
     income_distribution_over_population = citizens_per_class[zone_index, :] / np.sum(citizens_per_class[zone_index, :])
@@ -118,26 +108,26 @@ def _expected_block(
     no_free_car = with_car - free_car
 
     out: list[float] = []
+
     # GratisAuto_{income_group}
     out.append(free_car * (1 - free_pt_percentage) * income_share_of_population)
+
     # GratisAuto_GratisOV_{income_group}
     out.append(free_car * free_pt_percentage * income_share_of_population)
+
     # WelAuto_GratisOV_{income_group}
     out.append(no_free_car * free_pt_percentage * income_share_of_population)
+
     # WelAuto_vk* columns
-    for i_pref in range(len(preferences)):
-        share_pref = no_free_car * (1 - free_pt_percentage) * (preferences_segs[urb][i_pref] / 100)
-        out.append(share_pref * income_share_of_population)
+    out.append(no_free_car * (1 - free_pt_percentage) * income_share_of_population)
+
     # GeenAuto_GratisOV + GeenAuto_vk*
     out.append(no_car_with_license * free_pt_percentage * income_share_of_population)
-    for i_pref in range(len(preferences_no_car)):
-        share_pref = no_car_with_license * (1 - free_pt_percentage) * (preferences_no_car_segs[urb][i_pref] / 100)
-        out.append(share_pref * income_share_of_population)
+    out.append(no_car_with_license * (1 - free_pt_percentage) * income_share_of_population)
+
     # GeenRijbewijs_GratisOV + GeenRijbewijs_vk*
     out.append(no_license * free_pt_percentage * income_share_of_population)
-    for i_pref in range(len(preferences_no_car)):
-        share_pref = no_license * (1 - free_pt_percentage) * (preferences_no_car_segs[urb][i_pref] / 100)
-        out.append(share_pref * income_share_of_population)
+    out.append(no_license * (1 - free_pt_percentage) * income_share_of_population)
 
     return np.array(out, dtype=float)
 
@@ -161,10 +151,6 @@ def test_distribute_over_groups_computation(zone_index, income_group, income_ind
         ("GeenRijbewijs", ""): np.array([[10, 10, 10, 10], [5, 5, 5, 5]]),
         ("GeenAuto", ""): np.array([[10, 10, 10, 10], [5, 5, 5, 5]]),
         ("WelAuto", ""): np.array([[80, 80, 80, 80], [90, 90, 90, 90]]),
-        # Urbanization grades x 4 preference categories (model-specific preference bins).
-        ("Voorkeuren", ""): np.array([[25, 25, 25, 25], [25, 25, 25, 25]]),
-        # Urbanization grades x 3 preferences (only for the "GeenAuto" segment).
-        ("VoorkeurenGeenAuto", ""): np.array([[34, 33, 33], [34, 33, 33]]),
         # Per-zone x 4 income classes: population counts per income class.
         ("Beroepsbevolking_inkomensklasse", "2023"): np.array([[10, 10, 10, 10], [20, 20, 20, 20]]),
     }
@@ -187,23 +173,22 @@ def test_distribute_over_groups_computation(zone_index, income_group, income_ind
     data = writes[0]["data"]
     header = writes[0]["header"]
 
-    # 2 zones, 60 group categories. The total number of groups over which the population is distributed is 60.
-    assert data.shape == (2, 60)
+    assert data.shape == (2, NUM_GROUPS_PER_INCOME_CLASS * 4)
 
     # The total distribution of the population over all groups sums to 1 per zone.
     np.testing.assert_allclose(data.sum(axis=1), np.ones(2))
 
     # Each income block is a partition of that income's population share.
-    # The 60 total groups can be split up in 4 sections of 15 groups belonging to each income group.
+    # The total groups can be split up in 4 sections of NUM_GROUPS_PER_INCOME_CLASS groups belonging to each income group.
     # With these segs, each income class is an equal share of the total population: 0.25.
     for income_group_i in range(4):
-        start = income_group_i * 15
-        end = start + 15
+        start = income_group_i * NUM_GROUPS_PER_INCOME_CLASS
+        end = start + NUM_GROUPS_PER_INCOME_CLASS
         np.testing.assert_allclose(data[0, start:end].sum(), 0.25)
 
     # Assert every output value for the income group
     # using the same calculations as the implementation.
-    income_slice = slice(income_index * 15, (income_index + 1) * 15)
+    income_slice = slice(income_index * NUM_GROUPS_PER_INCOME_CLASS, (income_index + 1) * NUM_GROUPS_PER_INCOME_CLASS)
     assert header[income_slice] == _expected_header(income_group)
     expected = _expected_block(
         zone_index=zone_index,
@@ -228,8 +213,6 @@ def test_distribution_of_income_group_is_independent_of_population_distribution(
         ("GeenRijbewijs", ""): np.array([[40, 10, 10, 10], [40, 10, 10, 10]]),
         ("GeenAuto", ""): np.array([[50, 10, 10, 10], [50, 10, 10, 10]]),
         ("WelAuto", ""): np.array([[10, 80, 80, 80], [10, 80, 80, 80]]),
-        ("Voorkeuren", ""): np.array([[25, 25, 25, 25], [25, 25, 25, 25]]),
-        ("VoorkeurenGeenAuto", ""): np.array([[34, 33, 33], [34, 33, 33]]),
         ("Beroepsbevolking_inkomensklasse", "2023"): np.array([[209, 209, 209, 208], [2, 209, 209, 208]]),
     }
     capture: SegsCapture = segs_capture(segs)
@@ -243,12 +226,18 @@ def test_distribution_of_income_group_is_independent_of_population_distribution(
     ]
     data = writes[0]["data"]
 
-    # Normalize the 'laag' income group distribution (columns 0-15) for each zone.
-    laag_dist_zone0 = data[0, 0:15] / data[0, 0:15].sum()
-    laag_dist_zone1 = data[1, 0:15] / data[1, 0:15].sum()
-    # Do the same for 'high' income group distribution (column 45-60)
-    hoog_dist_zone0 = data[0, 45:60] / data[0, 45:60].sum()
-    hoog_dist_zone1 = data[1, 45:60] / data[1, 45:60].sum()
+    # Normalize the 'laag' income group distribution (columns 0-NUM_GROUPS_PER_INCOME_CLASS) for each zone.
+    laag_dist_zone0 = data[0, 0:NUM_GROUPS_PER_INCOME_CLASS] / data[0, 0:NUM_GROUPS_PER_INCOME_CLASS].sum()
+    laag_dist_zone1 = data[1, 0:NUM_GROUPS_PER_INCOME_CLASS] / data[1, 0:NUM_GROUPS_PER_INCOME_CLASS].sum()
+    # Do the same for 'high' income group distribution
+    hoog_dist_zone0 = (
+        data[0, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4]
+        / data[0, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4].sum()
+    )
+    hoog_dist_zone1 = (
+        data[1, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4]
+        / data[1, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4].sum()
+    )
 
     # The normalized distribution within the income group should be identical
     # regardless of how the total population is distributed across income classes.
@@ -258,12 +247,12 @@ def test_distribution_of_income_group_is_independent_of_population_distribution(
     # It's also true that the sizes of all the groups belonging to a single income group should sum to the to the size of the income group in the total population
     np.testing.assert_allclose(data.sum(axis=1), np.ones(2))
     np.testing.assert_allclose(
-        data[0, 0:15].sum(),
+        data[0, 0:NUM_GROUPS_PER_INCOME_CLASS].sum(),
         segs[("Beroepsbevolking_inkomensklasse", "2023")][0][0]
         / segs[("Beroepsbevolking_inkomensklasse", "2023")][0].sum(),
     )
     np.testing.assert_allclose(
-        data[1, 0:15].sum(),
+        data[1, 0:NUM_GROUPS_PER_INCOME_CLASS].sum(),
         segs[("Beroepsbevolking_inkomensklasse", "2023")][1][0]
         / segs[("Beroepsbevolking_inkomensklasse", "2023")][1].sum(),
     )
@@ -291,8 +280,6 @@ def test_distribution_of_groups_dependent_on_car_possession_correction_factor(se
         ("GeenRijbewijs", ""): np.array([[40, 10, 10, 10], [40, 10, 10, 10]]),
         ("GeenAuto", ""): np.array([[50, 10, 10, 10], [50, 10, 10, 10]]),
         ("WelAuto", ""): np.array([[10, 80, 80, 80], [10, 80, 80, 80]]),
-        ("Voorkeuren", ""): np.array([[25, 25, 25, 25], [25, 25, 25, 25]]),
-        ("VoorkeurenGeenAuto", ""): np.array([[34, 33, 33], [34, 33, 33]]),
         ("Beroepsbevolking_inkomensklasse", "2023"): np.array([[209, 209, 209, 208], [2, 209, 209, 208]]),
     }
     capture: SegsCapture = segs_capture(segs)
@@ -307,12 +294,18 @@ def test_distribution_of_groups_dependent_on_car_possession_correction_factor(se
     ]
     data = writes[0]["data"]
 
-    # Normalize the 'laag' income group distribution (columns 0-15) for each zone.
-    laag_dist_zone0 = data[0, 0:15] / data[0, 0:15].sum()
-    laag_dist_zone1 = data[1, 0:15] / data[1, 0:15].sum()
-    # Do the same for 'high' income group distribution (column 45-60)
-    hoog_dist_zone0 = data[0, 45:60] / data[0, 45:60].sum()
-    hoog_dist_zone1 = data[1, 45:60] / data[1, 45:60].sum()
+    # Normalize the 'laag' income group distribution (columns 0-NUM_GROUPS_PER_INCOME_CLASS) for each zone.
+    laag_dist_zone0 = data[0, 0:NUM_GROUPS_PER_INCOME_CLASS] / data[0, 0:NUM_GROUPS_PER_INCOME_CLASS].sum()
+    laag_dist_zone1 = data[1, 0:NUM_GROUPS_PER_INCOME_CLASS] / data[1, 0:NUM_GROUPS_PER_INCOME_CLASS].sum()
+    # Do the same for 'high' income group distribution
+    hoog_dist_zone0 = (
+        data[0, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4]
+        / data[0, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4].sum()
+    )
+    hoog_dist_zone1 = (
+        data[1, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4]
+        / data[1, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4].sum()
+    )
 
     # The normalized distribution within the income group should be identical
     # regardless of how the total population is distributed across income classes.
@@ -322,12 +315,12 @@ def test_distribution_of_groups_dependent_on_car_possession_correction_factor(se
     # It's also true that the sizes of all the groups belonging to a single income group should sum to the to the size of the income group in the total population
     np.testing.assert_allclose(data.sum(axis=1), np.ones(2))
     np.testing.assert_allclose(
-        data[0, 0:15].sum(),
+        data[0, 0:NUM_GROUPS_PER_INCOME_CLASS].sum(),
         segs[("Beroepsbevolking_inkomensklasse", "2023")][0][0]
         / segs[("Beroepsbevolking_inkomensklasse", "2023")][0].sum(),
     )
     np.testing.assert_allclose(
-        data[1, 0:15].sum(),
+        data[1, 0:NUM_GROUPS_PER_INCOME_CLASS].sum(),
         segs[("Beroepsbevolking_inkomensklasse", "2023")][1][0]
         / segs[("Beroepsbevolking_inkomensklasse", "2023")][1].sum(),
     )

@@ -5,46 +5,26 @@ from scipy import sparse
 from ikob.combined_weights import sparse_elementwise_max
 
 
-def test_has_preference_rules():
-    from ikob.combined_weights import has_preference
-
-    assert has_preference(kind_car="GeenAuto", kind_pt="OV", preference="Auto") is False
-    assert has_preference(kind_car="GeenRijbewijs", kind_pt="GratisOV", preference="Neutraal") is False
-    assert has_preference(kind_car="GeenRijbewijs", kind_pt="GratisOV", preference="OV") is True
-
-    assert has_preference(kind_car="GratisAuto", kind_pt="OV", preference="Auto") is True
-    assert has_preference(kind_car="GratisAuto", kind_pt="OV", preference="Neutraal") is False
-    assert has_preference(kind_car="GratisAuto", kind_pt="GratisOV", preference="Neutraal") is True
-    assert has_preference(kind_car="GratisAuto", kind_pt="GratisOV", preference="OV") is False
-
-    assert has_preference(kind_car="Auto", kind_pt="GratisOV", preference="OV") is True
-    assert has_preference(kind_car="Auto", kind_pt="GratisOV", preference="Auto") is False
-
-
 @pytest.mark.parametrize(
-    ("modality_key", "modalities", "preference", "income", "fuel_kind"),
+    ("modality_key", "modalities", "income", "fuel_kind"),
     [
         # First all combinations of two modalities (with electric and fossil cars separate)
-        ("Auto_OV_vk", ["car", "pt"], "Neutraal", "laag", "fossiel"),
-        ("Auto_OV_vk", ["car", "pt"], "Neutraal", "laag", "elektrisch"),
-        ("OV_Fiets_vk", ["bike", "pt"], "Neutraal", "laag", None),
-        ("Auto_Fiets_vk", ["bike", "car"], "Neutraal", "laag", "fossiel"),
-        ("Auto_Fiets_vk", ["bike", "car"], "Neutraal", "laag", "elektrisch"),
-        ("Auto_OV_Fiets_vk", ["car", "pt", "bike"], "Neutraal", "laag", "fossiel"),
-        ("Auto_OV_Fiets_vk", ["car", "pt", "bike"], "Neutraal", "laag", "elektrisch"),
+        ("Auto_OV", ["car", "pt"], "laag", "fossiel"),
+        ("Auto_OV", ["car", "pt"], "laag", "elektrisch"),
+        ("OV_Fiets", ["bike", "pt"], "laag", None),
+        ("Auto_Fiets", ["bike", "car"], "laag", "fossiel"),
+        ("Auto_Fiets", ["bike", "car"], "laag", "elektrisch"),
+        ("Auto_OV_Fiets", ["car", "pt", "bike"], "laag", "fossiel"),
+        ("Auto_OV_Fiets", ["car", "pt", "bike"], "laag", "elektrisch"),
         # Then try different car kinds (no car / free car / etc.)
-        ("GeenAuto_Fiets_vk", ["bike", "car"], "Neutraal", "middelhoog", None),
-        ("GratisAuto_OV_vk", ["car", "pt"], "Auto", "middellaag", None),
-        ("GeenRijbewijs_OV_vk", ["car", "pt"], "Neutraal", "laag", None),
+        ("GeenAuto_Fiets", ["bike", "car"], "middelhoog", None),
+        ("GratisAuto_OV", ["car", "pt"], "middellaag", None),
+        ("GeenRijbewijs_OV", ["car", "pt"], "laag", None),
         # Then try different pt kinds
-        ("GratisOV_Fiets_vk", ["bike", "pt"], "OV", "hoog", None),
-        # And finally different preferences
-        ("Auto_OV_Fiets_vk", ["car", "pt", "bike"], "OV", "laag", "fossiel"),
-        ("Auto_OV_Fiets_vk", ["car", "pt", "bike"], "Auto", "laag", "fossiel"),
-        ("Auto_OV_Fiets_vk", ["car", "pt", "bike"], "Fiets", "laag", "fossiel"),
+        ("GratisOV_Fiets", ["bike", "pt"], "hoog", None),
     ],
 )
-def test_combined_modalities_use_elementwise_max(modality_key, modalities, preference, income, fuel_kind):
+def test_combined_modalities_use_elementwise_max(modality_key, modalities, income, fuel_kind):
     """Test that combined modalities compute the elementwise maximum of their component modalities."""
     import numpy as np
 
@@ -65,11 +45,11 @@ def test_combined_modalities_use_elementwise_max(modality_key, modalities, prefe
 
     class _FakeSingleWeights:
         def get(self, key: DataKey):
-            if key.id == "Fiets_vk":
+            if key.id == "Fiets":
                 return bike
-            if key.id in {"OV_vk", "GratisOV_vk"}:
+            if key.id in {"OV", "GratisOV"}:
                 return pt
-            if key.id in {"Auto_vk", "GeenAuto_vk", "GeenRijbewijs_vk", "GratisAuto_vk"}:
+            if key.id in {"Auto", "GeenAuto", "GeenRijbewijs", "GratisAuto"}:
                 if key.fuel_kind == "fossiel":
                     return car_fossil
                 else:
@@ -105,7 +85,6 @@ def test_combined_modalities_use_elementwise_max(modality_key, modalities, prefe
         "income": income,
         "regime": regime,
         "motive": motive,
-        "preference": preference,
         "subtopic": "combinaties",
     }
     if fuel_kind:
@@ -153,12 +132,11 @@ def test_materialized_combined_weights_match_on_the_fly():
         fuel_kinds = ["fossiel", "elektrisch"] if modality == "Auto" else [""]
         for preference, fuel_kind in product(component_preferences, fuel_kinds):
             key = DataKey(
-                f"{modality}_vk",
+                modality,
                 part_of_day=part_of_day,
                 regime="Basis",
                 motive="werk",
                 income=income,
-                preference=preference,
                 fuel_kind=fuel_kind,
             )
             single_weights.set(key, sparse.csr_matrix(rng.integers(0, 5, size=(3, 3)) / 4))

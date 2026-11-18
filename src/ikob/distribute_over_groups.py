@@ -10,6 +10,9 @@ from ikob.utils import URBANIZATION_GRADE_ID_STORE
 logger = logging.getLogger(__name__)
 
 
+NUM_GROUPS_PER_INCOME_CLASS = 8
+
+
 def _validate_car_possession_segs(
     with_car_segs: npt.NDArray[np.integer],
     no_car_segs: npt.NDArray[np.integer],
