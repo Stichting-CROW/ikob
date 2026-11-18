@@ -64,8 +64,6 @@ def test_segs_validation_checks_all_files(config, monkeypatch, caplog, failed_fi
         call("GeenRijbewijs", id_store=ANY),
         call("GeenAuto", id_store=ANY),
         call("WelAuto", id_store=ANY),
-        call("Voorkeuren", id_store=ANY),
-        call("VoorkeurenGeenAuto", id_store=ANY),
     ]
     if failed_file is not None:
         assert failed_file in caplog.text

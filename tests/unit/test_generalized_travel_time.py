@@ -180,19 +180,23 @@ def test_generalized_travel_time_datasource(monkeypatch, use_chains, write_trave
     expected_keys = {DataKey(id="GratisOV", part_of_day=pod, regime=regime, motive=motive)}
     incomes = [selected_income] if selected_income is not None else ["laag", "middellaag", "middelhoog", "hoog"]
     for income in incomes:
-        for mode in ["Fiets", "Auto_fossiel", "Auto_elektrisch", "OV", "GeenAuto", "GeenRijbewijs", "GratisAuto"]:
-            expected_keys.add(DataKey(id=mode, part_of_day=pod, regime=regime, motive=motive, income=income))
-        if use_chains:
-            for fuel in ["fossiel", "elektrisch"]:
+        for mode in ["Fiets", "Auto", "OV", "GeenAuto", "GeenRijbewijs", "GratisAuto"]:
+            for fuel in ["fossiel", "elektrisch"] if mode == "Auto" else [""]:
+                expected_keys.add(
+                    DataKey(id=mode, part_of_day=pod, regime=regime, motive=motive, income=income, fuel_kind=fuel)
+                )
+        for fuel in ["fossiel", "elektrisch"]:
+            if use_chains:
                 for prefix in ["Pplusfiets", "PplusR"]:
                     expected_keys.add(
                         DataKey(
-                            id=f"{prefix}_{fuel}",
+                            id=prefix,
                             part_of_day=pod,
                             regime=regime,
                             motive=motive,
                             income=income,
                             hub_name="test_hubset",
+                            fuel_kind=fuel,
                         )
                     )
     if write_travel_time:
@@ -274,7 +278,7 @@ def test_generalized_travel_time_auto_fossiel(monkeypatch):
 
     datasource = gtt.generalized_travel_time(config)
 
-    auto_key = DataKey(id="Auto_fossiel", part_of_day=pod, income=income, regime=regime, motive=motive)
+    auto_key = DataKey(id="Auto", part_of_day=pod, income=income, regime=regime, motive=motive, fuel_kind="fossiel")
     auto = datasource.get(auto_key)
     # total_time = car_time + parking_arrival(origin) + parking_departure(dest)
     total_time = car_time + parking_times[:, [0]] + parking_times[[0, 1, 2], [1]]
@@ -359,7 +363,7 @@ def test_generalized_travel_time_includes_additional_and_parking_costs(monkeypat
 
     datasource = gtt.generalized_travel_time(config)
 
-    auto_key = DataKey(id="Auto_fossiel", part_of_day=pod, income=income, regime=regime, motive=motive)
+    auto_key = DataKey(id="Auto", part_of_day=pod, income=income, regime=regime, motive=motive, fuel_kind="fossiel")
     auto = datasource.get(auto_key)
 
     # Focus assertion on one cell to keep intent clear:

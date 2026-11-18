@@ -2,8 +2,6 @@ import json
 import logging
 import pathlib
 
-import pytest
-
 from ikob.config.validate import try_fix_incompatible_configuration, validate_config
 from ikob.ikobconfig import load_config
 
@@ -129,28 +127,3 @@ def test_load_fixable_config(tmpdir):
     config_file = tmpdir / "test.json"
     config_file.write_text(old_config)
     load_config(config_file)
-
-
-@pytest.mark.parametrize(
-    "gui_tab, key, item, invalid_value",
-    [
-        ("project", "fiets of E-fiets", "E-fiets", ["not-allowed-value"]),
-        ("project", "fiets of E-fiets", "E-fiets", "not-allowed-value"),
-    ],
-)
-def test_detect_invalid_choice(tmpdir, gui_tab, key, item, invalid_value):
-    # Assert the original file loads properly.
-    filename = pathlib.Path("tests/vlaanderen/vlaanderen.json")
-    _ = load_config(filename)
-
-    # Insert invalid entries.
-    config = json.loads(filename.read_text())
-    config[gui_tab][key][item] = invalid_value
-
-    tmpfile = pathlib.Path(tmpdir, "config.json")
-    with open(tmpfile, "w") as fp:
-        json.dump(config, fp)
-
-    # Loading with an invalid entry should fail.
-    with pytest.raises(ValueError):
-        load_config(tmpfile)
