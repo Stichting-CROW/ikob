@@ -86,9 +86,7 @@ def distribute_population_over_groups(config):
 
     # Vaste waarden
     income_levels = ["laag", "middellaag", "middelhoog", "hoog"]
-    preferences = ["Auto", "Neutraal", "Fiets", "OV"]
-    preferences_no_car = ["Neutraal", "Fiets", "OV"]
-    kinds = ["GratisAuto", "WelAuto", "GeenAuto", "GeenRijbewijs"]
+    car_possession_kind = ["GratisAuto", "WelAuto", "GeenAuto", "GeenRijbewijs"]
 
     segs_source = SegsSource(config)
 
@@ -113,24 +111,11 @@ def distribute_population_over_groups(config):
     # Validate that the car possession data is consistent
     _validate_car_possession_segs(with_car_segs, no_car_segs, no_license_segs, income_levels)
 
-    # Tables 6-7 of IKOB-algorithm.pdf
-    preferences_segs = segs_source.read("Voorkeuren", id_store=URBANIZATION_GRADE_ID_STORE)
-    preferences_no_car_segs = segs_source.read("VoorkeurenGeenAuto", id_store=URBANIZATION_GRADE_ID_STORE)
-
     header = []
-    for ink in income_levels:
-        for srt in kinds:
-            if srt == "GratisAuto":
-                header.append(f"{srt}_{ink}")
-                header.append(f"{srt}_GratisOV_{ink}")
-            elif srt == "WelAuto":
-                header.append(f"{srt}_GratisOV_{ink}")
-                for vk in preferences:
-                    header.append(f"{srt}_vk{vk}_{ink}")
-            else:
-                header.append(f"{srt}_GratisOV_{ink}")
-                for vkg in preferences_no_car:
-                    header.append(f"{srt}_vk{vkg}_{ink}")
+    for income in income_levels:
+        for kind in car_possession_kind:
+            header.append(f"{kind}_{income}")
+            header.append(f"{kind}_GratisOV_{income}")
 
     total_survey = []
     total_car_possession_survey = []
@@ -203,40 +188,25 @@ def distribute_population_over_groups(config):
             survey_per_income_class[i].append(free_pt_share / with_car)
 
             # Step 3 of section B of IKOB-algorithm.pdf
-            for i_preference in range(len(preferences)):
-                share_preference = (
-                    no_free_car * (1 - free_pt_percentage) * preferences_segs[urbanization[i]][i_preference] / 100
-                )
-                preference_share = share_preference * income_share
-                total_survey[i].append(preference_share)
-                survey_per_income_class[i].append(preference_share / with_car)
+            preference_share = no_free_car * (1 - free_pt_percentage) * income_share
+            total_survey[i].append(preference_share)
+            survey_per_income_class[i].append(preference_share / with_car)
 
             no_car_free_pt_share = no_car_with_license * free_pt_percentage * income_share
             total_survey[i].append(no_car_free_pt_share)
             survey_per_income_class[i].append(0)
 
-            for i_preference in range(len(preferences_no_car)):
-                share_preference = (
-                    no_car_with_license
-                    * (1 - free_pt_percentage)
-                    * preferences_no_car_segs[urbanization[i]][i_preference]
-                    / 100
-                )
-                preference_share = share_preference * income_share
-                total_survey[i].append(preference_share)
-                survey_per_income_class[i].append(0)
+            preference_share = no_car_with_license * (1 - free_pt_percentage) * income_share
+            total_survey[i].append(preference_share)
+            survey_per_income_class[i].append(0)
 
             no_license_free_pt_share = no_license * free_pt_percentage * income_share
             total_survey[i].append(no_license_free_pt_share)
             survey_per_income_class[i].append(0)
 
-            for i_preference in range(len(preferences_no_car)):
-                share_preference = (
-                    no_license * (1 - free_pt_percentage) * preferences_no_car_segs[urbanization[i]][i_preference] / 100
-                )
-                preference_share = share_preference * income_share
-                total_survey[i].append(preference_share)
-                survey_per_income_class[i].append(0)
+            preference_share = no_license * (1 - free_pt_percentage) * income_share
+            total_survey[i].append(preference_share)
+            survey_per_income_class[i].append(0)
 
     logger.debug("Total car possessions: %s", total_car_possession_survey)
     segs_source.write_csv(

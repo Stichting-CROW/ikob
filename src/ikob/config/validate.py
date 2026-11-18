@@ -52,7 +52,7 @@ class FileValidator:
         # split segs by the type of ids because those require different id stores to read.
         # Motive files are segs files, but are validated separately in _motive_files_validation()
         segs_with_zone_ids = ["CBS_autos_per_huishouden", "Stedelijkheidsgraad"]
-        segs_with_urbanization_ids = ["GeenRijbewijs", "GeenAuto", "WelAuto", "Voorkeuren", "VoorkeurenGeenAuto"]
+        segs_with_urbanization_ids = ["GeenRijbewijs", "GeenAuto", "WelAuto"]
 
         for zone_segs in segs_with_zone_ids:
             try:

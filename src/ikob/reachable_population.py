@@ -54,18 +54,11 @@ def calculate_reachable_population(
         "GratisAuto",
         "GratisAuto_GratisOV",
         "WelAuto_GratisOV",
-        "WelAuto_vkAuto",
-        "WelAuto_vkNeutraal",
-        "WelAuto_vkFiets",
-        "WelAuto_vkOV",
+        "WelAuto",
         "GeenAuto_GratisOV",
-        "GeenAuto_vkNeutraal",
-        "GeenAuto_vkFiets",
-        "GeenAuto_vkOV",
+        "GeenAuto",
         "GeenRijbewijs_GratisOV",
-        "GeenRijbewijs_vkNeutraal",
-        "GeenRijbewijs_vkFiets",
-        "GeenRijbewijs_vkOV",
+        "GeenRijbewijs",
     ]
     groups = []
     for income_group in income_groups:
