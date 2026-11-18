@@ -257,7 +257,7 @@ class DataSource:
         # - Support multi-lingual directory names.
 
     def _add_id_suffix(self, key: DataKey) -> str:
-        id = key.id + key.preference
+        id = key.id
         for suffix in [key.modality, key.hub_name, key.income]:
             if suffix:
                 id += f"_{suffix}"
