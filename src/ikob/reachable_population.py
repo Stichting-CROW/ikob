@@ -7,6 +7,7 @@ import numpy as np
 from ikob import utils
 from ikob.combined_weights import load_weight_matrix, weight_matrix_request
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.distribute_over_groups import BASE_GROUPS, INCOME_LEVELS, NUM_GROUPS_PER_INCOME_CLASS
 from ikob.output_tables import assemble_income_tables
 
 logger = logging.getLogger(__name__)
@@ -46,34 +47,14 @@ def calculate_reachable_population(
     motive_name = project_config["motief"]["naam"]
     traveling_population_path = Path(project_config["motief"]["reizende populatie"])
     car_possession_groups = advanced_config["welke_groepen"]
-    income_groups = project_config["welke_inkomensgroepen"]
+    configured_income_groups = project_config["welke_inkomensgroepen"]
     electric_percentage = distribution_config["Percelektrisch"]
 
-    # Vaste waarden
-    base_groups = [
-        "GratisAuto",
-        "GratisAuto_GratisOV",
-        "WelAuto_GratisOV",
-        "WelAuto",
-        "GeenAuto_GratisOV",
-        "GeenAuto",
-        "GeenRijbewijs_GratisOV",
-        "GeenRijbewijs",
-    ]
-    groups = []
-    for income_group in income_groups:
-        for base_group in base_groups:
-            groups.append(f"{base_group}_{income_group}")
-
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
-
-    income_groups = ["laag", "middellaag", "middelhoog", "hoog"]
 
     segs_source = SegsSource(config)
 
     traveling_population = segs_source.read(traveling_population_path.name, scenario=scenario)
-
-    working_population = []
 
     working_population = np.asarray(traveling_population, dtype=utils.FLOAT_DTYPE).sum(axis=1)
 
@@ -96,7 +77,7 @@ def calculate_reachable_population(
         citizens_transpose = utils.transpose(citizens)
 
         for part_of_day in part_of_days:
-            for income_group in income_groups:
+            for i_income_group, income_group in enumerate(INCOME_LEVELS):
                 if selected_income is not None and income_group != selected_income:
                     continue
                 general_possibility_totals = []
@@ -107,26 +88,25 @@ def calculate_reachable_population(
                     # We can sum all vectors using the same matrix and do a single load_weight_matrix call and product
                     citizens_by_weight_matrix = {}
 
-                    for igroup, group in enumerate(groups):
-                        income = utils.group_income_level(group)
-                        if income_group == income or income_group == "alle":
-                            K = electric_percentage.get(income_group) / 100
-                            weights, weight_key, electric_key = weight_matrix_request(
-                                single_weights,
-                                combined_weights,
-                                group,
-                                modality,
-                                motive_name,
-                                regimes,
-                                part_of_day,
-                                income,
-                                K,
-                            )
-                            cache_key = (weights is combined_weights, weight_key, electric_key, K)
-                            if cache_key not in citizens_by_weight_matrix:
-                                citizens_by_weight_matrix[cache_key] = citizens_transpose[igroup].copy()
-                            else:
-                                citizens_by_weight_matrix[cache_key] += citizens_transpose[igroup]
+                    active_groups = BASE_GROUPS if income_group in configured_income_groups else ()
+                    for igroup, group in enumerate(active_groups, start=i_income_group * NUM_GROUPS_PER_INCOME_CLASS):
+                        K = electric_percentage.get(income_group) / 100
+                        weights, weight_key, electric_key = weight_matrix_request(
+                            single_weights,
+                            combined_weights,
+                            group,
+                            modality,
+                            motive_name,
+                            regimes,
+                            part_of_day,
+                            income_group,
+                            K,
+                        )
+                        cache_key = (weights is combined_weights, weight_key, electric_key, K)
+                        if cache_key not in citizens_by_weight_matrix:
+                            citizens_by_weight_matrix[cache_key] = citizens_transpose[igroup].copy()
+                        else:
+                            citizens_by_weight_matrix[cache_key] += citizens_transpose[igroup]
 
                     # Section D5: $B_{gbv} = \sum_h I_{gh} \cdot G_{ghbvm}$ and
                     # $B_{ibv} = \sum_{g \in i} B_{gbv}$. K mixes fuel weights when applicable.

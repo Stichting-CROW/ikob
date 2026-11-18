@@ -38,12 +38,12 @@ def _expected_header(income_group: str) -> list[str]:
     return [
         f"GratisAuto_{income_group}",
         f"GratisAuto_GratisOV_{income_group}",
-        f"WelAuto_{income_group}",
         f"WelAuto_GratisOV_{income_group}",
-        f"GeenAuto_{income_group}",
+        f"WelAuto_{income_group}",
         f"GeenAuto_GratisOV_{income_group}",
-        f"GeenRijbewijs_{income_group}",
+        f"GeenAuto_{income_group}",
         f"GeenRijbewijs_GratisOV_{income_group}",
+        f"GeenRijbewijs_{income_group}",
     ]
 
 
@@ -118,14 +118,14 @@ def _expected_block(
     # WelAuto_GratisOV_{income_group}
     out.append(no_free_car * free_pt_percentage * income_share_of_population)
 
-    # WelAuto_vk* columns
+    # WelAuto without free public transport
     out.append(no_free_car * (1 - free_pt_percentage) * income_share_of_population)
 
-    # GeenAuto_GratisOV + GeenAuto_vk*
+    # GeenAuto with and without free public transport
     out.append(no_car_with_license * free_pt_percentage * income_share_of_population)
     out.append(no_car_with_license * (1 - free_pt_percentage) * income_share_of_population)
 
-    # GeenRijbewijs_GratisOV + GeenRijbewijs_vk*
+    # GeenRijbewijs with and without free public transport
     out.append(no_license * free_pt_percentage * income_share_of_population)
     out.append(no_license * (1 - free_pt_percentage) * income_share_of_population)
 
