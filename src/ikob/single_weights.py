@@ -1,4 +1,5 @@
 import logging
+import math
 
 import numpy as np
 from scipy import sparse
@@ -12,23 +13,31 @@ from ikob.utils import FLOAT_DTYPE, INCOME_GROUPS
 logger = logging.getLogger(__name__)
 
 ALL_PREFERENCES = ["Auto", "Neutraal", "Fiets", "OV"]
+MIN_WEIGHT = 0.001
 
 
-def calculate_weights(generalized_travel_time, modality, preference, decay_curve_name: DecayCurveName):
+def decay_curve(travel_time, alpha, omega, scaling):
+    return scaling / (1 + np.exp((travel_time - omega) * alpha))
+
+
+def inverse_decay_curve(weight, alpha, omega, scaling):
+    return omega + math.log(scaling / weight - 1) / alpha
+
+
+def calculate_weights(generalized_travel_time, modality: str, preference: str, decay_curve_name: DecayCurveName):
     """
     Applies a decay curve to the generalized travel time to compute a weight or 'resistance' for the movement.
     A weight of 1 means a movement with very little resistance (a short & cheap movement).
     A weight of 0 means a movement with a lot of resistance (a long & expensive movement).
     """
-    alpha, omega, scaling = work_constants(modality, preference, decay_curve_name)
-
-    # Build a sparse matrix directly from in-range entries.
-    rows, cols = np.nonzero(generalized_travel_time < 180)
+    constants = work_constants(modality, preference, decay_curve_name)
+    cutoff = inverse_decay_curve(MIN_WEIGHT, *constants)
+    rows, cols = np.nonzero(generalized_travel_time <= cutoff)
     if rows.size == 0:
         return sparse.csr_matrix(generalized_travel_time.shape, dtype=FLOAT_DTYPE)
 
-    values = scaling / (1 + np.exp((generalized_travel_time[rows, cols] - omega) * alpha))
-    keep = values >= 0.001
+    values = decay_curve(generalized_travel_time[rows, cols], *constants)
+    keep = values >= MIN_WEIGHT
     return sparse.csr_matrix(
         (values[keep], (rows[keep], cols[keep])), shape=generalized_travel_time.shape, dtype=FLOAT_DTYPE
     )
@@ -45,7 +54,7 @@ def consume_travel_time(
 ):
     """Convert one GTT matrix to all single-weight matrices that use it."""
     project_config = config["project"]
-    decay_curve = project_config["motief"]["reistijdvervalscurve"]
+    decay_curve_name = project_config["motief"]["reistijdvervalscurve"]
     regimes = project_config["beprijzingsregime"]
     motive_name = project_config["motief"]["naam"]
 
@@ -61,7 +70,7 @@ def consume_travel_time(
         )
 
         if weight_matrix is None:
-            weight_matrix = calculate_weights(travel_time, modality, preference, decay_curve)
+            weight_matrix = calculate_weights(travel_time, modality, preference, decay_curve_name)
         weights.set(weight_key, weight_matrix)
 
     if key.id == "Fiets":
@@ -86,7 +95,7 @@ def consume_travel_time(
     elif key.id == "GratisAuto":
         # The free car weights always use the car preference, even though the preference stored at the key
         # might be neutral. This is to keep behavior identical to old code.
-        weight_matrix = calculate_weights(travel_time, "Auto", "Auto", decay_curve)
+        weight_matrix = calculate_weights(travel_time, "Auto", "Auto", decay_curve_name)
         for preference in ("Neutraal", "Auto"):
             store("GratisAuto_vk", preference, weight_matrix=weight_matrix)
 
@@ -101,7 +110,7 @@ def consume_travel_time(
         else:
             # The free PT weights always use the PT preference, even though the preference stored at the key
             # might be neutral. This is to keep behavior identical to old code.
-            weight_matrix = calculate_weights(travel_time, "OV", "OV", decay_curve)
+            weight_matrix = calculate_weights(travel_time, "OV", "OV", decay_curve_name)
             if shared_weights:
                 shared_weights.set(shared_key, weight_matrix)
 
