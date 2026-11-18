@@ -17,6 +17,9 @@ def component_preference(component, preference):
 class CombinedWeightsSource(DataSource):
     """Compute combined weights from single weights when they are requested."""
 
+    # cutoff determined experimentally
+    MATRIX_NUM_NON_ZERO_CACHE_CUTOFF = 5_000_000
+
     def __init__(self, config, single_weights: DataSource):
         super().__init__(config, DataType.WEIGHTS, has_zone_id_header=True)
         self.single_weights = single_weights
@@ -24,7 +27,6 @@ class CombinedWeightsSource(DataSource):
     def get(self, key: DataKey):
 
         if key in self.cache:
-            # If the _materialize_combined_weights() the cache is filled
             return self.cache[key]
 
         components = key.id.removesuffix("_vk").split("_")
@@ -53,11 +55,15 @@ class CombinedWeightsSource(DataSource):
                 matrix = self.single_weights.get(component_key)
             except (FileNotFoundError, OSError) as error:
                 raise KeyError(f"Missing single weight {component_key} required for combined weight {key}") from error
-            result = matrix if result is None else sparse_elementwise_max(result, matrix)
+            result = sparse.csr_matrix(matrix) if result is None else sparse_elementwise_max(result, matrix)
 
         if result is None:
             raise KeyError(f"Cannot compute combined weight key: {key}")
-        # Do not cache the results here to save on memory usage at the cost of some performance
+
+        # Only cache if the matrix is sufficiently small to limit memory usage on large projects
+        if result.nnz <= CombinedWeightsSource.MATRIX_NUM_NON_ZERO_CACHE_CUTOFF:
+            self.cache[key] = result
+
         return result
 
 
