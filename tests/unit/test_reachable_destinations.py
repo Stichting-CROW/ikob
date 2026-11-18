@@ -63,7 +63,7 @@ def reachable_destinations_setup(request, monkeypatch, segs_capture):
     )
 
     # Use the parametrized weight matrix
-    monkeypatch.setattr(rd, "get_weight_matrix", lambda *args, **kwargs: request.param)
+    monkeypatch.setattr(rd, "load_weight_matrix", lambda *args, **kwargs: request.param)
 
     class _Weights:
         def get(self, _key):
