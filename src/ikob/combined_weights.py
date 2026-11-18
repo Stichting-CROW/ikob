@@ -23,7 +23,7 @@ class CombinedWeightsSource(DataSource):
         if key in self.cache:
             return self.cache[key]
 
-        components = key.id.removesuffix("_vk").split("_")
+        components = key.id.split("_")
         if (
             key.subtopic != "combinaties"
             or not components
@@ -37,7 +37,7 @@ class CombinedWeightsSource(DataSource):
         result = None
         for component in components:
             component_key = DataKey(
-                f"{component}_vk",
+                f"{component}",
                 part_of_day=key.part_of_day,
                 regime=key.regime,
                 motive=key.motive,
@@ -123,7 +123,7 @@ def weight_matrix_request(
 
     if modality == "Fiets" or modality == "EFiets":
         key = DataKey(
-            f"{modality}_vk",
+            modality,
             part_of_day=part_of_day,
             regime=regime,
             motive=motive,
@@ -137,9 +137,13 @@ def weight_matrix_request(
     if modality == "Auto" and "WelAuto" in group or combined_group[0] == "A":
         subtopic = "" if modality == "Auto" else "combinaties"
         weights = single_weights if modality == "Auto" else combined_weights
-        string = single_group if modality == "Auto" else combined_group
+        id = single_group if modality == "Auto" else combined_group
+        if id is None or id == "":
+            raise ValueError(
+                f"Computed key id is {id}. Unable to compute valid id from modality {modality} and group {group}"
+            )
         key = DataKey(
-            f"{string}_vk",
+            id,
             part_of_day=part_of_day,
             regime=regime,
             motive=motive,
@@ -150,7 +154,7 @@ def weight_matrix_request(
         if ratio_electric == 0:
             return weights, key, None
         electric_key = DataKey(
-            f"{string}_vk",
+            id,
             part_of_day=part_of_day,
             regime=regime,
             motive=motive,
@@ -162,8 +166,12 @@ def weight_matrix_request(
         return weights, fossil_key, electric_key
 
     if modality == "Auto" or modality == "OV":
+        if single_group is None or single_group == "":
+            raise ValueError(
+                f"Computed key id is {single_group}. Unable to compute valid id from modality {modality} and group {group}"
+            )
         key = DataKey(
-            f"{single_group}_vk",
+            single_group,
             part_of_day=part_of_day,
             regime=regime,
             motive=motive,
@@ -171,8 +179,12 @@ def weight_matrix_request(
         )
         return single_weights, key, None
 
+    if combined_group is None or combined_group == "":
+        raise ValueError(
+            f"Computed key id is {combined_group}. Unable to compute valid id from modality {modality} and group {group}"
+        )
     key = DataKey(
-        f"{combined_group}_vk",
+        combined_group,
         part_of_day=part_of_day,
         regime=regime,
         motive=motive,
@@ -218,7 +230,7 @@ def _materialize_combined_weights(
                 fuel_kinds = ("fossiel", "elektrisch") if "Auto" in components else ("",)
                 for fuel_kind in fuel_kinds:
                     key = DataKey(
-                        f"{'_'.join(components)}_vk",
+                        "_".join(components),
                         part_of_day=part_of_day,
                         income=income,
                         regime=regimes,

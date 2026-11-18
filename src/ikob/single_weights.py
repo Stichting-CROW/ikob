@@ -49,9 +49,9 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource, 
     regimes = project_config["beprijzingsregime"]
     motive_name = project_config["motief"]["naam"]
 
-    def store(weight_id, income=key.income, modality="Auto", weight_matrix=None):
+    def store(income=key.income, modality="Auto", weight_matrix=None):
         weight_key = DataKey(
-            weight_id,
+            key.id,
             part_of_day=key.part_of_day,
             income=income,
             regime=regimes,
@@ -63,21 +63,15 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource, 
             weight_matrix = calculate_weights(travel_time, modality, decay_curve_name)
         weights.set(weight_key, weight_matrix)
 
-    if key.id == "Fiets":
+    if key.id in ("Auto", "GeenAuto", "GeenRijbewijs", "GratisAuto"):
+        store()
+
+    elif key.id == "Fiets":
         modality = "E-fiets" if project_config["fiets of E-fiets"]["E-fiets"] else "Fiets"
-        store("Fiets_vk", modality=modality)
-
-    elif key.id == "Auto":
-        store("Auto_vk")
-
-    elif key.id in ("GeenAuto", "GeenRijbewijs"):
-        store(f"{key.id}_vk")
+        store(modality=modality)
 
     elif key.id == "OV":
-        store("OV_vk", modality="OV")
-
-    elif key.id == "GratisAuto":
-        store("GratisAuto_vk")
+        store(modality="OV")
 
     elif key.id == "GratisOV":
         # Here we have to loop over the income classes as well because the travel time computation
@@ -92,7 +86,7 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource, 
         weight_matrix = calculate_weights(travel_time, "OV", decay_curve_name)
         incomes = [selected_income] if selected_income is not None else ["hoog", "middelhoog", "middellaag", "laag"]
         for income in incomes:
-            store("GratisOV_vk", income=income, weight_matrix=weight_matrix)
+            store(income=income, weight_matrix=weight_matrix)
 
 
 def calculate_single_weights_on_demand(
