@@ -16,6 +16,9 @@ FLOAT_DTYPE = np.float32
 INT_DTYPE = np.int32
 
 
+URBANIZATION_GRADE_ID_STORE = IdStore.from_zone_ids(["1", "2", "3", "4", "5"])
+
+
 def zeros(lengte):
     return np.zeros(lengte, dtype=FLOAT_DTYPE)
 
