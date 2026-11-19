@@ -2,6 +2,7 @@ import logging
 
 from scipy import sparse
 
+from ikob import utils
 from ikob.datasource import DataKey, DataSource, DataType
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,9 @@ def component_preference(component, preference):
 class CombinedWeightsSource(DataSource):
     """Compute combined weights from single weights when they are requested."""
 
+    # cutoff determined experimentally
+    MATRIX_NUM_NON_ZERO_CACHE_CUTOFF = 5_000_000
+
     def __init__(self, config, single_weights: DataSource):
         super().__init__(config, DataType.WEIGHTS, has_zone_id_header=True)
         self.single_weights = single_weights
@@ -23,7 +27,6 @@ class CombinedWeightsSource(DataSource):
     def get(self, key: DataKey):
 
         if key in self.cache:
-            # If the _materialize_combined_weights() the cache is filled
             return self.cache[key]
 
         components = key.id.removesuffix("_vk").split("_")
@@ -52,11 +55,15 @@ class CombinedWeightsSource(DataSource):
                 matrix = self.single_weights.get(component_key)
             except (FileNotFoundError, OSError) as error:
                 raise KeyError(f"Missing single weight {component_key} required for combined weight {key}") from error
-            result = matrix if result is None else sparse_elementwise_max(result, matrix)
+            result = sparse.csr_matrix(matrix) if result is None else sparse_elementwise_max(result, matrix)
 
         if result is None:
             raise KeyError(f"Cannot compute combined weight key: {key}")
-        # Do not cache the results here to save on memory usage at the cost of some performance
+
+        # Only cache if the matrix is sufficiently small to limit memory usage on large projects
+        if result.nnz <= CombinedWeightsSource.MATRIX_NUM_NON_ZERO_CACHE_CUTOFF:
+            self.cache[key] = result
+
         return result
 
 
@@ -94,6 +101,119 @@ def calculate_combined_weights(
     if write_weights:
         _materialize_combined_weights(config, single_weights, combined_weights, selected_income=selected_income)
     return combined_weights
+
+
+def get_weight_matrix(
+    single_weights: DataSource,
+    combined_weights: DataSource,
+    group,
+    modality,
+    motive,
+    regime,
+    part_of_day,
+    income,
+    ratio_electric: float,
+):
+    weights, key, electric_key = weight_matrix_request(
+        single_weights,
+        combined_weights,
+        group,
+        modality,
+        motive,
+        regime,
+        part_of_day,
+        income,
+        ratio_electric,
+    )
+    return load_weight_matrix(weights, key, electric_key, ratio_electric)
+
+
+def load_weight_matrix(weights: DataSource, key: DataKey, electric_key: DataKey | None, ratio_electric: float):
+    matrix = weights.get(key)
+    if electric_key is None or ratio_electric == 0:
+        return matrix
+    matrix_electric = weights.get(electric_key)
+    return ratio_electric * matrix_electric + (1 - ratio_electric) * matrix
+
+
+def weight_matrix_request(
+    single_weights: DataSource,
+    combined_weights: DataSource,
+    group,
+    modality,
+    motive,
+    regime,
+    part_of_day,
+    income,
+    ratio_electric: float,
+) -> tuple[DataSource, DataKey, DataKey | None]:
+    preference = utils.find_preference(group, modality)
+
+    if modality == "Fiets" or modality == "EFiets":
+        preference_bike = "Fiets" if preference == "Fiets" else ""
+        key = DataKey(
+            f"{modality}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference_bike,
+            income=income,
+        )
+        return single_weights, key, None
+
+    single_group = utils.single_group(modality, group)
+    combined_group = utils.combined_group(modality, group)
+
+    if modality == "Auto" and "WelAuto" in group or combined_group[0] == "A":
+        subtopic = "" if modality == "Auto" else "combinaties"
+        weights = single_weights if modality == "Auto" else combined_weights
+        string = single_group if modality == "Auto" else combined_group
+        key = DataKey(
+            f"{string}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference,
+            income=income,
+            subtopic=subtopic,
+            fuel_kind="fossiel",
+        )
+        if ratio_electric == 0:
+            return weights, key, None
+        electric_key = DataKey(
+            f"{string}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference,
+            income=income,
+            subtopic=subtopic,
+            fuel_kind="elektrisch",
+        )
+        fossil_key = key
+        return weights, fossil_key, electric_key
+
+    if modality == "Auto" or modality == "OV":
+        key = DataKey(
+            f"{single_group}_vk",
+            part_of_day=part_of_day,
+            regime=regime,
+            motive=motive,
+            preference=preference,
+            income=income,
+        )
+        return single_weights, key, None
+
+    key = DataKey(
+        f"{combined_group}_vk",
+        part_of_day=part_of_day,
+        regime=regime,
+        motive=motive,
+        preference=preference,
+        income=income,
+        subtopic="combinaties",
+    )
+    return combined_weights, key, None
 
 
 def _materialize_combined_weights(

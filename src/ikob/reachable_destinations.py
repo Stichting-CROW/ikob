@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 from ikob import utils
-from ikob.competition import get_weight_matrix
+from ikob.combined_weights import load_weight_matrix, weight_matrix_request
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
 from ikob.output_tables import assemble_income_tables
 
@@ -114,6 +114,8 @@ def calculate_reachable_destinations(
 
                 for modality in modalities:
                     possibility_sum = np.zeros(len(destinations_segs), dtype=utils.FLOAT_DTYPE)
+                    # cache the matrix vector products, this is much more memory friendly than caching the matrix itself
+                    possibility_vectors_cache = {}
 
                     for i_group, group in enumerate(groups):
                         distribution = np.asarray(distribution_matrix_transpose[i_group], dtype=utils.FLOAT_DTYPE)
@@ -121,7 +123,7 @@ def calculate_reachable_destinations(
                         income = utils.group_income_level(group)
                         if income_group == income or income_group == "alle":
                             K = electric_percentage.get(income_group) / 100
-                            matrix = get_weight_matrix(
+                            weights, weight_key, electric_key = weight_matrix_request(
                                 single_weights,
                                 combined_weights,
                                 group,
@@ -132,12 +134,16 @@ def calculate_reachable_destinations(
                                 income,
                                 K,
                             )
+                            cache_key = (weights is combined_weights, weight_key, electric_key, K)
 
                             # section D4: compute reachable opportunities via origin-destination weights and destination totals.
                             # - `matrix` corresponds to $G_{ghbvm}$
                             # - `destinations_for_income` corresponds to $A_{ib}$ (chosen by motive)
                             # The matrix-vector product yields $\sum_b G_{ghbvm} \cdot A_{ib}$ per origin zone $h$.
-                            possibility = matrix @ destinations_for_income
+                            if cache_key not in possibility_vectors_cache:
+                                matrix = load_weight_matrix(weights, weight_key, electric_key, K)
+                                possibility_vectors_cache[cache_key] = matrix @ destinations_for_income
+                            possibility = possibility_vectors_cache[cache_key]
 
                             # D4: apply group size/share in the origin zone.
                             # This corresponds to multiplying by $V_{gh}$ to obtain $B_{ghv}$ for the current group.
