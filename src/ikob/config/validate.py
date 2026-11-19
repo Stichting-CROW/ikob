@@ -144,7 +144,11 @@ class FileValidator:
 
         if self.config["geavanceerd"]["additionele_kosten"]["gebruiken"]:
             logger.info("Validating additional cost matrix")
-            read_csv_from_config(self.config, key="geavanceerd", id="additionele_kosten")
+            try:
+                read_csv_from_config(self.config, key="geavanceerd", id="additionele_kosten")
+            except Exception as e:
+                logger.warning("A problem occurred while attempting to load the additional costs file: \n", exc_info=e)
+                all_valid = False
             logger.info("Done")
 
         return all_valid
