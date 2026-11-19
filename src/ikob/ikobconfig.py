@@ -14,6 +14,7 @@ from ikob.configuration_definition import (
     default_configuration_definition,
     project_name,
 )
+from ikob.zone_ids import initialize_zone_id_store
 
 logger = logging.getLogger(__name__)
 
@@ -34,23 +35,26 @@ def _project_filename(project_name, make_safe=True):
     return filename + ".json"
 
 
-def get_config_from_args(project=None):
+def get_config_from_args(project=None, validate_files: bool = True, allow_extra_zone_ids: bool = True):
+    """Load a project, prepare its zone store, and validate its inputs.
+
+    Returns the configuration and whether input validation succeeded.
     """
-    Leest een configuratiebestand die is opgegeven in de 'command line'.
-    Resultaat: Een geldige, ingeladen configuratie.
-    Fouten: IOError - Als het opgegeven bestand niet bestaat of niet geopend kon worden.
-            ValueError - Als het opgegeven bestand geen geldige configuratie bevat.
+    if not project:
+        parser = argparse.ArgumentParser()
+        parser.add_argument("project", type=str, help="Het .json project bestand.")
+        args = parser.parse_args()
+        project = args.project
+
+    config, valid = load_config(project, validate_files=validate_files, allow_extra_zone_ids=allow_extra_zone_ids)
+    return config, valid
+
+
+def load_config(filename, *, validate_files: bool, allow_extra_zone_ids: bool = True):
+    """Read and migrate a configuration without reading its input data or preparing runtime state.
+
+    Validates the files in the config based on input flags.
     """
-    if project:
-        return load_config(project)
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("project", type=str, help="Het .json project bestand.")
-    args = parser.parse_args()
-    return load_config(args.project)
-
-
-def load_config(filename):
     try:
         with open(filename) as json_file:
             config = json.load(json_file)
@@ -73,20 +77,31 @@ def load_config(filename):
 
     config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
 
-    valid = validate.FileValidator(config).validate_input_files()
+    valid = None
+    if validate_files:
+        valid = initialize_zone_id_store(config, allow_extra_ids=allow_extra_zone_ids)
+        if valid:
+            valid = validate.FileValidator(config).validate_input_files()
     return config, valid
 
 
-def saveConfig(filename, config):
+def save_config(filename, config):
+    """Save the configuration, reporting input problems as warnings rather than save failures."""
     try:
-        config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
-        config_is_valid = validate.FileValidator(config).validate_input_files()
-        del config["__filename__"]
+        if "__filename__" in config:
+            del config["__filename__"]
         with open(filename, "w") as json_file:
             json.dump(config, json_file, indent=2)
     except BaseException as e:
         logger.error(f"Kan configuratie niet wegschrijven naar: {filename}.", exc_info=e)
         raise OSError(f"Kan configuratie niet wegschrijven naar: {filename}.")
+
+    logger.info(f"Config written to {filename}. Starting config validation.")
+    config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
+    config_is_valid = initialize_zone_id_store(config)
+    if config_is_valid:
+        config_is_valid = validate.FileValidator(config).validate_input_files()
+    del config["__filename__"]
     return config_is_valid
 
 
@@ -123,7 +138,7 @@ class ConfigApp(tk.Tk):
         )
         if filename:
             try:
-                read_config, _ = load_config(filename)
+                read_config, _ = load_config(filename, validate_files=False)
             except ValueError:
                 messagebox.showerror(
                     title="Fout",
@@ -149,7 +164,7 @@ class ConfigApp(tk.Tk):
         filename = _project_filename(filename, make_safe=False)
         config_is_valid = True
         try:
-            config_is_valid = saveConfig(filename, config)
+            config_is_valid = save_config(filename, config)
         except BaseException:  # noqa: BLE001
             messagebox.showerror(title="Fout", message="Het bestand kan niet worden opgeslagen.")
         else:

@@ -6,7 +6,7 @@ from ikob.ikobconfig import get_config_from_args
 from tests.e2e.test_end_to_end import compare_directories, remove_directory
 
 
-def test_group_distribution():
+def test_group_distribution(monkeypatch):
     """Data set showing division by zero in group_distribution calculations.
 
     This input configuration ``eb-eindhoven.json`` ran into division by
@@ -16,7 +16,7 @@ def test_group_distribution():
     """
     case = "eb-eindhoven"
     project_dir = pathlib.Path(f"tests/{case}/")
-    config, _ = get_config_from_args(project_dir / f"{case}.json")
+    config, _ = get_config_from_args(project_dir / f"{case}.json", validate_files=False)
 
     ZoneIdStoreSingleton._instance = IdStore.from_zone_ids([str(i) for i in range(1, 1207)])
 

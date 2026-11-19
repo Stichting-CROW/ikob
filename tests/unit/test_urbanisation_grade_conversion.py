@@ -21,7 +21,7 @@ def test_stedelijkheid_converter():
     assert np.all(parkeerzoektijden == reference)
 
 
-def test_generate_parkeerzoektijden():
+def test_generate_parkeerzoektijden(tmp_path):
     case = "vlaanderen"
     project_dir = pathlib.Path("tests") / case
     project_file = project_dir.joinpath(f"{case}.json")
@@ -38,11 +38,11 @@ def test_generate_parkeerzoektijden():
     assert np.all(reference == SkimsSource(config).read_parking_times())
 
     # Set config to unknown path, trigger conversion on the fly.
-    config["skims"]["parkeerzoektijden_bestand"] = "unset"
+    config["skims"]["parkeerzoektijden_bestand"] = str(tmp_path / "missing_parking_times.csv")
     assert np.all(reference == SkimsSource(config).read_parking_times())
 
 
-def test_assert_failed_parkeerzoektijden_conversion():
+def test_assert_failed_parkeerzoektijden_conversion(tmp_path):
     case = "vlaanderen"
     project_dir = pathlib.Path("tests") / case
     project_file = project_dir.joinpath(f"{case}.json")
@@ -50,8 +50,8 @@ def test_assert_failed_parkeerzoektijden_conversion():
     # Overwrite SEGS directory to trigger failure in converting
     # parkeerzoektijden as stedelijkheidsgraad is not present.
     config, _ = get_config_from_args(project_file)
-    config["skims"]["parkeerzoektijden_bestand"] = "unset"
-    config["project"]["paden"]["segs_directory"] = "unset"
+    config["skims"]["parkeerzoektijden_bestand"] = str(tmp_path / "missing_parking_times.csv")
+    config["project"]["paden"]["segs_directory"] = str(tmp_path / "missing_segs")
 
     skims = SkimsSource(config)
 

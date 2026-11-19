@@ -16,8 +16,9 @@ class FileValidator:
         self.config = config
 
     def validate_input_files(self):
+        """Check input files using the zone store already prepared for this project."""
+
         logger.info("validating input files (continues on error until all files have been validated)")
-        # This mainly reads in a bunch of files from to config to see if it works, validation of the zone ids is done in the id store
         valid = True
 
         logger.info("Validating chain files..")
