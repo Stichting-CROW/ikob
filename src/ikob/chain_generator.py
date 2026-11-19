@@ -5,10 +5,8 @@ import numpy as np
 import numpy.typing as npt
 
 from ikob import utils
-from ikob.configuration_definition import TvomType
-from ikob.datasource import DataKey, DataSource, SkimsSource, read_csv_from_config
 from ikob.id_store import ZoneIdStoreSingleton
-from ikob.utils import FLOAT_DTYPE, IKOB_INFINITE, costs_public_transport
+from ikob.utils import FLOAT_DTYPE, IKOB_INFINITE
 
 logger = logging.getLogger(__name__)
 
@@ -146,6 +144,65 @@ class Hubs:
         return np.loadtxt(hubs_path, dtype=str, skiprows=1, delimiter=",", ndmin=2)
 
 
+class ChainTravelTimeCalculator:
+    """Compute chain matrices for one set of skim matrices at a time."""
+
+    def __init__(self, hubs: Hubs, additional_costs: npt.NDArray, parking_times: npt.NDArray, destination_list):
+        self.hubs = hubs
+        self.additional_costs = additional_costs
+        self.parking_times = parking_times
+        self.destination_list = destination_list
+
+    def compute(
+        self,
+        car_time: npt.NDArray,
+        car_dist: npt.NDArray,
+        bike_time: npt.NDArray,
+        bike_dist: npt.NDArray,
+        pt_time: npt.NDArray,
+        pt_cost: npt.NDArray,
+        tvom_factor: float,
+        var_car_rate: float,
+        road_pricing: float,
+        bike_cost_euro_per_km: float,
+    ) -> tuple[npt.NDArray, npt.NDArray]:
+        return compute_chain_travel_time(
+            hubs=self.hubs,
+            car_time=car_time,
+            car_dist=car_dist,
+            bike_time=bike_time,
+            bike_dist=bike_dist,
+            pt_time=pt_time,
+            pt_cost=pt_cost,
+            tvom_factor=tvom_factor,
+            var_car_rate=var_car_rate,
+            road_pricing=road_pricing,
+            bike_cost_euro_per_km=bike_cost_euro_per_km,
+            additional_costs=self.additional_costs,
+            parking_times=self.parking_times,
+            destination_list=self.destination_list,
+        )
+
+
+def build_chain_travel_time_calculator(config, parking_times, additional_costs) -> ChainTravelTimeCalculator:
+    hubs = Hubs.build_from_config(config)
+    if hubs.num_hubs == 0:
+        logger.warning("Chain generator called but no hubs found in file at config['ketens']['chains'].")
+
+    zone_id_store = ZoneIdStoreSingleton.get_instance(config)
+    if config["ketens"]["bestemmingslijst"]["gebruiken"]:
+        destination_list = Hubs.read_destinations_from_file(config)
+    else:
+        destination_list = np.arange(zone_id_store._num_zones)
+
+    return ChainTravelTimeCalculator(
+        hubs=hubs,
+        additional_costs=additional_costs,
+        parking_times=np.asarray(parking_times, dtype=utils.FLOAT_DTYPE),
+        destination_list=destination_list,
+    )
+
+
 def compute_chain_travel_time(
     hubs: Hubs,
     car_time: npt.NDArray,
@@ -235,126 +292,3 @@ def compute_chain_travel_time(
     result_bike = np.where(result_bike == np.inf, IKOB_INFINITE, result_bike)
     result_ride = np.where(result_ride == np.inf, IKOB_INFINITE, result_ride)
     return result_bike, result_ride
-
-
-def chain_generator(generalized_travel_time: DataSource, config: dict):
-    """Generate generalized travel time skims for chains (P+R and P+Bike).
-
-    For each origin, computes the cost of driving to each hub and then
-    continuing by bike or public transport. The result for each OD pair is
-    the minimum across all hubs:
-
-        P+Bike(i,j) = min_h( car(i,h) + bike(h,j) + transfer + hub_cost )
-        P+R(i,j)    = min_h( car(i,h) + PT(h,j) + transfer + PT_cost + hub_cost )
-
-    Results are stored in ``generalized_travel_time`` so they can be picked
-    up by the main generalized travel time computation.
-    """
-    logger.info("Starting step: Compute chain (P+R / P+Bike) generalized travel times.")
-
-    project_config = config["project"]
-    skims_config = config["skims"]
-    tvom_config = config["TVOM"]
-    ketens_config = config["ketens"]
-
-    regime = project_config["beprijzingsregime"]
-    motive_name = project_config["motief"]["naam"]
-    motive_tvom = project_config["motief"]["TVOM"]
-    hub_name = ketens_config["chains"]["naam hub"]
-    tvom_dict = tvom_config[TvomType.WORK] if motive_tvom == TvomType.WORK else tvom_config[TvomType.OTHER]
-
-    var_fossil = skims_config["Kosten auto fossiele brandstof"]["variabele kosten"] / 100
-    road_pricing_fossil = skims_config["Kosten auto fossiele brandstof"]["kmheffing"] / 100
-    var_electric = skims_config["Kosten elektrische auto"]["variabele kosten"] / 100
-    road_pricing_electric = skims_config["Kosten elektrische auto"]["kmheffing"] / 100
-    pt_km_price = skims_config["OV kosten"]["kmkosten"] / 100
-    starting_rate = skims_config["OV kosten"]["starttarief"] / 100
-    pt_cost_file = skims_config["OV kostenbestand"]["gebruiken"]
-    pricecap = skims_config["pricecap"]["gebruiken"]
-    pricecap_value = skims_config["pricecap"]["getal"]
-    bike_cost_euro_per_km = skims_config["bike_cost_ct_per_km"] / 100
-    part_of_day = skims_config["dagsoort"]
-
-    income_levels = ["laag", "middellaag", "middelhoog", "hoog"]
-    fuel_kinds = ["fossiel", "elektrisch"]
-
-    skims_reader = SkimsSource(config)
-
-    parking_times = skims_reader.read_parking_times()
-    num_zones = len(parking_times)
-    if config["geavanceerd"]["additionele_kosten"]["gebruiken"]:
-        additional_cost_matrix = read_csv_from_config(config, key="geavanceerd", id="additionele_kosten")
-    else:
-        additional_cost_matrix = np.zeros((num_zones, num_zones), dtype=utils.FLOAT_DTYPE)
-
-    hubs = Hubs.build_from_config(config)
-    if hubs.num_hubs == 0:
-        logger.warning("Chain generator called but no hubs found in file at config['ketens']['chains'].")
-
-    zone_id_store = ZoneIdStoreSingleton.get_instance(config)
-    if config["ketens"]["bestemmingslijst"]["gebruiken"]:
-        destination_list_idx = Hubs.read_destinations_from_file(config)
-    else:
-        destination_list_idx = np.arange(zone_id_store._num_zones)
-
-    for pod in part_of_day:
-        car_time = skims_reader.read("Auto_Tijd", pod)
-        car_dist = skims_reader.read("Auto_Afstand", pod)
-        bike_time = skims_reader.read("Fiets_Tijd", pod)
-        default_speed_km_p_minute = 15 / 60
-        bike_dist = skims_reader.read("Fiets_Afstand", pod, default=(bike_time * default_speed_km_p_minute))
-        pt_time = skims_reader.read("OV_Tijd", pod)
-
-        if pt_cost_file:
-            pt_cost = skims_reader.read("OV_Kosten", pod)
-        else:
-            pt_dist = skims_reader.read("OV_Afstand", pod)
-            pt_cost = costs_public_transport(pt_dist, pt_km_price, starting_rate, pricecap, pricecap_value)
-
-        for income_level in income_levels:
-            tvom_factor = tvom_dict.get(income_level)
-
-            for fuel_kind in fuel_kinds:
-                if fuel_kind == "fossiel":
-                    var_car_rate = var_fossil
-                    road_pricing = road_pricing_fossil
-                else:
-                    var_car_rate = var_electric
-                    road_pricing = road_pricing_electric
-
-                result_bike, result_ride = compute_chain_travel_time(
-                    hubs=hubs,
-                    car_time=car_time,
-                    car_dist=car_dist,
-                    bike_time=bike_time,
-                    bike_dist=bike_dist,
-                    pt_time=pt_time,
-                    pt_cost=pt_cost,
-                    tvom_factor=tvom_factor,
-                    var_car_rate=var_car_rate,
-                    road_pricing=road_pricing,
-                    bike_cost_euro_per_km=bike_cost_euro_per_km,
-                    additional_costs=additional_cost_matrix,
-                    parking_times=np.asarray(parking_times, dtype=utils.FLOAT_DTYPE),
-                    destination_list=destination_list_idx,
-                )
-
-                key = DataKey(
-                    id=f"Pplusfiets_{fuel_kind}",
-                    part_of_day=pod,
-                    income=income_level,
-                    hub_name=hub_name,
-                    motive=motive_name,
-                    regime=regime,
-                )
-                generalized_travel_time.set(key, result_bike)
-
-                key = DataKey(
-                    id=f"PplusR_{fuel_kind}",
-                    part_of_day=pod,
-                    income=income_level,
-                    hub_name=hub_name,
-                    motive=motive_name,
-                    regime=regime,
-                )
-                generalized_travel_time.set(key, result_ride)
