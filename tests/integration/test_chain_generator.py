@@ -127,54 +127,36 @@ def test_chain_time_equals_sum_of_parts(monkeypatch, hub_zone, income, fuel):
     datasource = gtt.generalized_travel_time(config)
 
     gen_car = datasource.get(
-        DataKey(
-            id=f"Auto_{fuel}",
-            part_of_day="restdag",
-            income=income,
-            regime="basis",
-            motive="woon-werk",
-        )
+        DataKey(id="Auto", part_of_day="restdag", income=income, regime="basis", motive="woon-werk", fuel_kind=fuel)
     )
 
     gen_bike = datasource.get(
-        DataKey(
-            id="Fiets",
-            part_of_day="restdag",
-            income=income,
-            regime="basis",
-            motive="woon-werk",
-        )
+        DataKey(id="Fiets", part_of_day="restdag", income=income, regime="basis", motive="woon-werk")
     )
 
-    gen_pt = datasource.get(
-        DataKey(
-            id="OV",
-            part_of_day="restdag",
-            income=income,
-            regime="basis",
-            motive="woon-werk",
-        )
-    )
+    gen_pt = datasource.get(DataKey(id="OV", part_of_day="restdag", income=income, regime="basis", motive="woon-werk"))
 
     chain_bike = datasource.get(
         DataKey(
-            id=f"Pplusfiets_{fuel}",
+            id="Pplusfiets",
             part_of_day="restdag",
             income=income,
             hub_name="test_hubset",
             motive="woon-werk",
             regime="basis",
+            fuel_kind=fuel,
         )
     )
 
     chain_pt = datasource.get(
         DataKey(
-            id=f"PplusR_{fuel}",
+            id="PplusR",
             part_of_day="restdag",
             income=income,
             hub_name="test_hubset",
             motive="woon-werk",
             regime="basis",
+            fuel_kind=fuel,
         )
     )
 

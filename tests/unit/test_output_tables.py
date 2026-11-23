@@ -91,7 +91,7 @@ def test_assemble_source_tables_keeps_contexts_separate(tmp_path):
                     key = DataKey(
                         utils.INCOME_VECTOR_RESULT_ID,
                         part_of_day=part_of_day,
-                        group=group,
+                        car_possession_group=group,
                         modality=modality,
                         income=income,
                         is_intermediate=True,

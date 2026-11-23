@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from ikob import utils
+from ikob.distribute_over_groups import NUM_GROUPS_PER_INCOME_CLASS
 
 
 @pytest.fixture(
@@ -39,9 +40,9 @@ def reachable_destinations_setup(request, monkeypatch, segs_capture):
         ]
     )
 
-    # Distribution matrix for target group: 3 zones × 60 columns (15 per income class).
+    # Distribution matrix for target group: 3 zones × NUM_GROUPS_PER_INCOME_CLASS per income class zones
     # The distribution over the groups should be inline with the actual working population.
-    distribution_per_income = np.zeros((3, 15), dtype=float)
+    distribution_per_income = np.zeros((3, NUM_GROUPS_PER_INCOME_CLASS), dtype=float)
     distribution_per_income[0, 0] = 1.0
     distribution_per_income[1, 0] = 0.5
     distribution_per_income[1, 1] = 0.5
@@ -49,10 +50,12 @@ def reachable_destinations_setup(request, monkeypatch, segs_capture):
     distribution_per_income[2, 1] = 0.4
     distribution_per_income[2, 2] = 0.3
 
-    distribution = np.zeros((3, 60), dtype=float)
-    distribution[:, 0:15] = distribution_per_income * (1 / 4)
-    distribution[:, 15:30] = distribution_per_income * (1 / 4)
-    distribution[:, 45:60] = distribution_per_income * (1 / 2)
+    distribution = np.zeros((3, NUM_GROUPS_PER_INCOME_CLASS * 4), dtype=float)
+    distribution[:, 0:NUM_GROUPS_PER_INCOME_CLASS] = distribution_per_income * (1 / 4)
+    distribution[:, NUM_GROUPS_PER_INCOME_CLASS : NUM_GROUPS_PER_INCOME_CLASS * 2] = distribution_per_income * (1 / 4)
+    distribution[:, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4] = distribution_per_income * (
+        1 / 2
+    )
 
     segs_capture(
         {
@@ -142,7 +145,7 @@ def test_reachable_destinations_totals(modality, income_group, income_index, rea
         utils.INCOME_VECTOR_RESULT_ID,
         part_of_day=pod,
         income=income_group,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )
@@ -168,7 +171,7 @@ def test_reachable_destinations_ontpl_totaal(modality, reachable_destinations_se
     key = DataKey(
         "Ontpl_totaal",
         part_of_day=pod,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )
@@ -182,7 +185,7 @@ def test_reachable_destinations_ontpl_totaal(modality, reachable_destinations_se
     key = DataKey(
         "Ontpl_totaalproduct",
         part_of_day=pod,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )

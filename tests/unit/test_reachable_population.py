@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from ikob import utils
+from ikob.distribute_over_groups import NUM_GROUPS_PER_INCOME_CLASS
 
 
 @pytest.fixture(
@@ -39,9 +40,9 @@ def reachable_population_setup(request, segs_capture):
         ]
     )
 
-    # Distribution matrix for target group: 3 zones × 60 columns.
+    # Distribution matrix for target group: 3 zones × NUM_GROUPS_PER_INCOME_CLASS*4 columns.
     # Total results should not be dependent on this distribution.
-    distribution_per_income = np.zeros((3, 15), dtype=float)
+    distribution_per_income = np.zeros((3, NUM_GROUPS_PER_INCOME_CLASS), dtype=float)
     distribution_per_income[0, 0] = 1.0
     distribution_per_income[1, 0] = 0.5
     distribution_per_income[1, 1] = 0.5
@@ -49,11 +50,12 @@ def reachable_population_setup(request, segs_capture):
     distribution_per_income[2, 1] = 0.4
     distribution_per_income[2, 2] = 0.3
 
-    distribution = np.zeros((3, 60), dtype=float)
-    distribution[:, 0:15] = distribution_per_income * (1 / 4)
-    distribution[:, 15:30] = distribution_per_income * (1 / 4)
-    distribution[:, 45:60] = distribution_per_income * (1 / 2)
-
+    distribution = np.zeros((3, NUM_GROUPS_PER_INCOME_CLASS * 4), dtype=float)
+    distribution[:, 0:NUM_GROUPS_PER_INCOME_CLASS] = distribution_per_income * (1 / 4)
+    distribution[:, NUM_GROUPS_PER_INCOME_CLASS : NUM_GROUPS_PER_INCOME_CLASS * 2] = distribution_per_income * (1 / 4)
+    distribution[:, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4] = distribution_per_income * (
+        1 / 2
+    )
     segs_capture(
         {
             ("Beroepsbevolking_inkomensklasse", "2023"): working_pop_income,
@@ -137,7 +139,7 @@ def test_reachable_population_totals(modality, income_group, income_index, reach
         utils.INCOME_VECTOR_RESULT_ID,
         part_of_day=pod,
         income=income_group,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )
@@ -161,7 +163,7 @@ def test_reachable_population_pot_totaal(modality, reachable_population_setup):
     key = DataKey(
         "Pot_totaal",
         part_of_day=pod,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )
@@ -175,7 +177,7 @@ def test_reachable_population_pot_totaal(modality, reachable_population_setup):
     key = DataKey(
         "Pot_totaalproduct",
         part_of_day=pod,
-        group="alle groepen",
+        car_possession_group="alle groepen",
         motive=motive,
         modality=modality,
     )

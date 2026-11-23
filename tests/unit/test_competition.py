@@ -3,6 +3,7 @@ import pytest
 
 from ikob import utils
 from ikob.datasource import DataKey
+from ikob.distribute_over_groups import NUM_GROUPS_PER_INCOME_CLASS
 
 
 @pytest.mark.parametrize(("ratio_electric"), ([0, 0.3, 1.0]))
@@ -27,7 +28,7 @@ def test_get_weight_matrix_auto_with_electric_ratio(ratio_electric):
     result = get_weight_matrix(
         single_weights,  # type: ignore
         combined_weights,  # type: ignore
-        group="WelAuto_vkAuto_laag",
+        car_pt_types=("Auto", "OV"),
         modality="Auto",
         motive="werk",
         regime="Basis",
@@ -61,7 +62,7 @@ def test_get_weight_matrix_ov_modality():
     result = get_weight_matrix(
         single_weights,  # type: ignore
         combined_weights,  # type: ignore
-        group="GeenAuto_vkOV_laag",
+        car_pt_types=("GeenAuto", "OV"),
         modality="OV",
         motive="werk",
         regime="Basis",
@@ -95,7 +96,7 @@ def test_get_weight_matrix_combined_modality():
     result = get_weight_matrix(
         single_weights,  # type: ignore
         combined_weights,  # type: ignore
-        group="WelAuto_vkOV_laag",
+        car_pt_types=("Auto", "OV"),
         modality="Auto_OV",
         motive="werk",
         regime="Basis",
@@ -152,7 +153,7 @@ def competition_input(request, monkeypatch, segs_capture):
 
     # Distribution matrix for target group: 3 zones × 60 columns (15 per income class).
     # The distribution over the groups should be inline with the actual working population.
-    distribution_per_income = np.zeros((3, 15), dtype=float)
+    distribution_per_income = np.zeros((3, NUM_GROUPS_PER_INCOME_CLASS), dtype=float)
     distribution_per_income[0, 0] = 1.0
     distribution_per_income[1, 0] = 0.5
     distribution_per_income[1, 1] = 0.5
@@ -160,10 +161,12 @@ def competition_input(request, monkeypatch, segs_capture):
     distribution_per_income[2, 1] = 0.4
     distribution_per_income[2, 2] = 0.3
 
-    distribution = np.zeros((3, 60), dtype=float)
-    distribution[:, 0:15] = distribution_per_income * (1 / 4)
-    distribution[:, 15:30] = distribution_per_income * (1 / 4)
-    distribution[:, 45:60] = distribution_per_income * (1 / 2)
+    distribution = np.zeros((3, NUM_GROUPS_PER_INCOME_CLASS * 4), dtype=float)
+    distribution[:, 0:NUM_GROUPS_PER_INCOME_CLASS] = distribution_per_income * (1 / 4)
+    distribution[:, NUM_GROUPS_PER_INCOME_CLASS : NUM_GROUPS_PER_INCOME_CLASS * 2] = distribution_per_income * (1 / 4)
+    distribution[:, NUM_GROUPS_PER_INCOME_CLASS * 3 : NUM_GROUPS_PER_INCOME_CLASS * 4] = distribution_per_income * (
+        1 / 2
+    )
 
     segs_capture(
         {
@@ -235,7 +238,7 @@ def test_competition_on_jobs_per_capita_sensitivity(modality, income_group, inco
         income=income_group,
         motive=config["project"]["motief"]["naam"],
         modality=modality,
-        group=config["geavanceerd"]["welke_groepen"][0],
+        car_possession_group=config["geavanceerd"]["welke_groepen"][0],
     )
     total = competitions.get(key)
 

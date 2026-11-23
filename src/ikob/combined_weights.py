@@ -2,16 +2,9 @@ import logging
 
 from scipy import sparse
 
-from ikob import utils
 from ikob.datasource import DataKey, DataSource, DataType
 
 logger = logging.getLogger(__name__)
-
-
-def component_preference(component, preference):
-    if component == "Fiets":
-        return "Fiets" if preference == "Fiets" else ""
-    return preference
 
 
 class CombinedWeightsSource(DataSource):
@@ -29,7 +22,7 @@ class CombinedWeightsSource(DataSource):
         if key in self.cache:
             return self.cache[key]
 
-        components = key.id.removesuffix("_vk").split("_")
+        components = key.id.split("_")
         if (
             key.subtopic != "combinaties"
             or not components
@@ -43,11 +36,10 @@ class CombinedWeightsSource(DataSource):
         result = None
         for component in components:
             component_key = DataKey(
-                f"{component}_vk",
+                f"{component}",
                 part_of_day=key.part_of_day,
                 regime=key.regime,
                 motive=key.motive,
-                preference=component_preference(component, key.preference),
                 income=key.income,
                 fuel_kind=key.fuel_kind if component == "Auto" else "",
             )
@@ -74,39 +66,19 @@ def sparse_elementwise_max(left, right) -> sparse.csr_matrix:
     return left_sparse.maximum(right_sparse).tocsr()
 
 
-def has_preference(kind_car, kind_pt, preference):
-    if kind_car == "GeenAuto" or kind_car == "GeenRijbewijs":
-        if preference == "Auto":
-            return False
-        else:
-            if kind_pt == "GratisOV":
-                return preference == "OV"
-            else:
-                return True
-    elif kind_car == "GratisAuto":
-        if kind_pt == "GratisOV":
-            return preference == "Neutraal"
-        else:
-            return preference == "Auto"
-    elif kind_pt == "GratisOV":
-        return preference == "OV"
-    else:
-        return True
-
-
 def calculate_combined_weights(
     config, single_weights: DataSource, write_weights: bool = False, *, selected_income: str | None = None
 ) -> DataSource:
     combined_weights = CombinedWeightsSource(config, single_weights)
     if write_weights:
-        _materialize_combined_weights(config, single_weights, combined_weights, selected_income=selected_income)
+        _materialize_combined_weights(config, combined_weights, selected_income=selected_income)
     return combined_weights
 
 
 def get_weight_matrix(
     single_weights: DataSource,
     combined_weights: DataSource,
-    group,
+    car_pt_types: tuple[str, str],
     modality,
     motive,
     regime,
@@ -117,7 +89,7 @@ def get_weight_matrix(
     weights, key, electric_key = weight_matrix_request(
         single_weights,
         combined_weights,
-        group,
+        car_pt_types,
         modality,
         motive,
         regime,
@@ -139,7 +111,7 @@ def load_weight_matrix(weights: DataSource, key: DataKey, electric_key: DataKey 
 def weight_matrix_request(
     single_weights: DataSource,
     combined_weights: DataSource,
-    group,
+    car_pt_types: tuple[str, str],
     modality,
     motive,
     regime,
@@ -147,77 +119,51 @@ def weight_matrix_request(
     income,
     ratio_electric: float,
 ) -> tuple[DataSource, DataKey, DataKey | None]:
-    preference = utils.find_preference(group, modality)
 
-    if modality == "Fiets" or modality == "EFiets":
-        preference_bike = "Fiets" if preference == "Fiets" else ""
-        key = DataKey(
-            f"{modality}_vk",
-            part_of_day=part_of_day,
-            regime=regime,
-            motive=motive,
-            preference=preference_bike,
-            income=income,
-        )
-        return single_weights, key, None
+    modalities = modality.split("_")
+    if any(component not in {"Auto", "OV", "Fiets"} for component in modalities):
+        raise ValueError(f"Unknown modality: '{modality}'")
 
-    single_group = utils.single_group(modality, group)
-    combined_group = utils.combined_group(modality, group)
+    components = []
+    if "Auto" in modalities or "OV" in modalities:
+        car_type, pt_type = car_pt_types
+        if "Auto" in modalities:
+            components.append(car_type)
+        if "OV" in modalities:
+            components.append(pt_type)
+    if "Fiets" in modalities:
+        components.append("Fiets")
 
-    if modality == "Auto" and "WelAuto" in group or combined_group[0] == "A":
-        subtopic = "" if modality == "Auto" else "combinaties"
-        weights = single_weights if modality == "Auto" else combined_weights
-        string = single_group if modality == "Auto" else combined_group
-        key = DataKey(
-            f"{string}_vk",
-            part_of_day=part_of_day,
-            regime=regime,
-            motive=motive,
-            preference=preference,
-            income=income,
-            subtopic=subtopic,
-            fuel_kind="fossiel",
-        )
-        if ratio_electric == 0:
-            return weights, key, None
+    weight_id = "_".join(components)
+    is_single = modality in {"Auto", "OV", "Fiets"}
+    subtopic = "" if is_single else "combinaties"
+    weights = single_weights if is_single else combined_weights
+    uses_fuel = "Auto" in components
+    key = DataKey(
+        weight_id,
+        part_of_day=part_of_day,
+        regime=regime,
+        motive=motive,
+        income=income,
+        subtopic=subtopic,
+        fuel_kind="fossiel" if uses_fuel else "",
+    )
+    electric_key = None
+    if uses_fuel and ratio_electric != 0:
         electric_key = DataKey(
-            f"{string}_vk",
+            weight_id,
             part_of_day=part_of_day,
             regime=regime,
             motive=motive,
-            preference=preference,
             income=income,
             subtopic=subtopic,
             fuel_kind="elektrisch",
         )
-        fossil_key = key
-        return weights, fossil_key, electric_key
-
-    if modality == "Auto" or modality == "OV":
-        key = DataKey(
-            f"{single_group}_vk",
-            part_of_day=part_of_day,
-            regime=regime,
-            motive=motive,
-            preference=preference,
-            income=income,
-        )
-        return single_weights, key, None
-
-    key = DataKey(
-        f"{combined_group}_vk",
-        part_of_day=part_of_day,
-        regime=regime,
-        motive=motive,
-        preference=preference,
-        income=income,
-        subtopic="combinaties",
-    )
-    return combined_weights, key, None
+    return weights, key, electric_key
 
 
 def _materialize_combined_weights(
-    config, single_weights: DataSource, combined_weights: DataSource, *, selected_income: str | None = None
+    config, combined_weights: CombinedWeightsSource, *, selected_income: str | None = None
 ) -> None:
     """
     From weights for single travel modes to combined weights.
@@ -237,260 +183,27 @@ def _materialize_combined_weights(
     part_of_days = skims_config["dagsoort"]
 
     incomes = [selected_income] if selected_income is not None else ["hoog", "middelhoog", "middellaag", "laag"]
-    preferences = ["Auto", "Neutraal", "Fiets", "OV"]
-    modalities_bike = ["Fiets"]
     car_kinds = ["Auto", "GeenAuto", "GeenRijbewijs", "GratisAuto"]
     pt_kinds = ["OV", "GratisOV"]
-    fuel_kinds = ["fossiel", "elektrisch"]
+    combinations = (
+        [(pt, "Fiets") for pt in pt_kinds]
+        + [(car, "Fiets") for car in car_kinds]
+        + [(car, pt) for pt in pt_kinds for car in car_kinds]
+        + [(car, pt, "Fiets") for pt in pt_kinds for car in car_kinds]
+    )
 
     for part_of_day in part_of_days:
         for income in incomes:
-            for preference in preferences:
-                for modality_bike in modalities_bike:
-                    for pt_kind in pt_kinds:
-                        if not has_preference("Auto", pt_kind, preference):
-                            continue
-
-                        preference_bike = "Fiets" if preference == "Fiets" else ""
-                        key = DataKey(
-                            f"{modality_bike}_vk",
-                            part_of_day=part_of_day,
-                            preference=preference_bike,
-                            income=income,
-                            regime=regimes,
-                            motive=motive_name,
-                        )
-                        bike_matrix = single_weights.get(key)
-
-                        key = DataKey(
-                            f"{pt_kind}_vk",
-                            part_of_day=part_of_day,
-                            preference=preference,
-                            income=income,
-                            regime=regimes,
-                            motive=motive_name,
-                        )
-                        pt_matrix = single_weights.get(key)
-
-                        max_matrix = sparse_elementwise_max(bike_matrix, pt_matrix)
-                        key = DataKey(
-                            f"{pt_kind}_{modality_bike}_vk",
-                            part_of_day=part_of_day,
-                            income=income,
-                            regime=regimes,
-                            motive=motive_name,
-                            preference=preference,
-                            subtopic="combinaties",
-                        )
-                        # Max weight of taking either pt or the bike
-                        combined_weights.set(key, max_matrix)
-
-                    for car_kind in car_kinds:
-                        if not has_preference(car_kind, "OV", preference):
-                            continue
-
-                        preference_bike = "Fiets" if preference == "Fiets" else ""
-                        key = DataKey(
-                            f"{modality_bike}_vk",
-                            part_of_day=part_of_day,
-                            preference=preference_bike,
-                            income=income,
-                            regime=regimes,
-                            motive=motive_name,
-                        )
-                        bike_matrix = single_weights.get(key)
-
-                        if car_kind == "Auto":
-                            for fuel_kind in fuel_kinds:
-                                key = DataKey(
-                                    f"{car_kind}_vk",
-                                    part_of_day=part_of_day,
-                                    preference=preference,
-                                    income=income,
-                                    regime=regimes,
-                                    motive=motive_name,
-                                    fuel_kind=fuel_kind,
-                                )
-                                car_matrix = single_weights.get(key)
-
-                                max_matrix = sparse_elementwise_max(bike_matrix, car_matrix)
-                                key = DataKey(
-                                    f"{car_kind}_{modality_bike}_vk",
-                                    part_of_day=part_of_day,
-                                    income=income,
-                                    regime=regimes,
-                                    motive=motive_name,
-                                    preference=preference,
-                                    subtopic="combinaties",
-                                    fuel_kind=fuel_kind,
-                                )
-                                # Max weight of taking either the car or the bike
-                                combined_weights.set(key, max_matrix)
-                        else:
-                            key = DataKey(
-                                f"{car_kind}_vk",
-                                part_of_day=part_of_day,
-                                preference=preference,
-                                income=income,
-                                regime=regimes,
-                                motive=motive_name,
-                            )
-                            car_matrix = single_weights.get(key)
-
-                            max_matrix = sparse_elementwise_max(bike_matrix, car_matrix)
-                            key = DataKey(
-                                f"{car_kind}_{modality_bike}_vk",
-                                part_of_day=part_of_day,
-                                income=income,
-                                regime=regimes,
-                                motive=motive_name,
-                                preference=preference,
-                                subtopic="combinaties",
-                            )
-                            # Max weight of taking either the car or the bike
-                            combined_weights.set(key, max_matrix)
-
-                for pt_kind in pt_kinds:
-                    for car_kind in car_kinds:
-                        if not has_preference(car_kind, pt_kind, preference):
-                            continue
-
-                        key = DataKey(
-                            f"{pt_kind}_vk",
-                            part_of_day=part_of_day,
-                            preference=preference,
-                            income=income,
-                            regime=regimes,
-                            motive=motive_name,
-                        )
-                        pt_matrix = single_weights.get(key)
-
-                        if car_kind == "Auto":
-                            for fuel_kind in fuel_kinds:
-                                key = DataKey(
-                                    f"{car_kind}_vk",
-                                    part_of_day=part_of_day,
-                                    preference=preference,
-                                    income=income,
-                                    regime=regimes,
-                                    motive=motive_name,
-                                    fuel_kind=fuel_kind,
-                                )
-                                car_matrix = single_weights.get(key)
-                                max_matrix = sparse_elementwise_max(pt_matrix, car_matrix)
-                                key = DataKey(
-                                    f"{car_kind}_{pt_kind}_vk",
-                                    part_of_day=part_of_day,
-                                    income=income,
-                                    regime=regimes,
-                                    motive=motive_name,
-                                    preference=preference,
-                                    subtopic="combinaties",
-                                    fuel_kind=fuel_kind,
-                                )
-                                # Max weight of taking either the car or pt
-                                combined_weights.set(key, max_matrix)
-                        else:
-                            key = DataKey(
-                                f"{car_kind}_vk",
-                                part_of_day=part_of_day,
-                                preference=preference,
-                                income=income,
-                                regime=regimes,
-                                motive=motive_name,
-                            )
-                            car_matrix = single_weights.get(key)
-
-                            max_matrix = sparse_elementwise_max(pt_matrix, car_matrix)
-                            key = DataKey(
-                                f"{car_kind}_{pt_kind}_vk",
-                                part_of_day=part_of_day,
-                                income=income,
-                                regime=regimes,
-                                motive=motive_name,
-                                preference=preference,
-                                subtopic="combinaties",
-                            )
-                            # Max weight of taking either the car or pt
-                            combined_weights.set(key, max_matrix)
-
-                for modality_bike in modalities_bike:
-                    for pt_kind in pt_kinds:
-                        for car_kind in car_kinds:
-                            if not has_preference(car_kind, pt_kind, preference):
-                                continue
-
-                            preference_bike = "Fiets" if preference == "Fiets" else ""
-                            key = DataKey(
-                                f"{modality_bike}_vk",
-                                part_of_day=part_of_day,
-                                preference=preference_bike,
-                                income=income,
-                                regime=regimes,
-                                motive=motive_name,
-                            )
-                            bike_matrix = single_weights.get(key)
-
-                            key = DataKey(
-                                f"{pt_kind}_vk",
-                                part_of_day=part_of_day,
-                                preference=preference,
-                                income=income,
-                                regime=regimes,
-                                motive=motive_name,
-                            )
-                            pt_matrix = single_weights.get(key)
-
-                            if car_kind == "Auto":
-                                for fuel_kind in fuel_kinds:
-                                    key = DataKey(
-                                        f"{car_kind}_vk",
-                                        part_of_day=part_of_day,
-                                        preference=preference,
-                                        income=income,
-                                        regime=regimes,
-                                        motive=motive_name,
-                                        fuel_kind=fuel_kind,
-                                    )
-                                    car_matrix = single_weights.get(key)
-
-                                    max_matrix = sparse_elementwise_max(
-                                        sparse_elementwise_max(car_matrix, bike_matrix), pt_matrix
-                                    )
-                                    key = DataKey(
-                                        f"{car_kind}_{pt_kind}_{modality_bike}_vk",
-                                        part_of_day=part_of_day,
-                                        income=income,
-                                        regime=regimes,
-                                        motive=motive_name,
-                                        preference=preference,
-                                        subtopic="combinaties",
-                                        fuel_kind=fuel_kind,
-                                    )
-                                    # Max weight of taking either the car or pt or the bike
-                                    combined_weights.set(key, max_matrix)
-                            else:
-                                key = DataKey(
-                                    f"{car_kind}_vk",
-                                    part_of_day=part_of_day,
-                                    preference=preference,
-                                    income=income,
-                                    regime=regimes,
-                                    motive=motive_name,
-                                )
-                                car_matrix = single_weights.get(key)
-
-                                max_matrix = sparse_elementwise_max(
-                                    sparse_elementwise_max(car_matrix, bike_matrix), pt_matrix
-                                )
-                                key = DataKey(
-                                    f"{car_kind}_{pt_kind}_{modality_bike}_vk",
-                                    part_of_day=part_of_day,
-                                    income=income,
-                                    regime=regimes,
-                                    motive=motive_name,
-                                    preference=preference,
-                                    subtopic="combinaties",
-                                )
-                                # Max weight of taking either the car or pt or the bike
-                                combined_weights.set(key, max_matrix)
+            for components in combinations:
+                fuel_kinds = ("fossiel", "elektrisch") if "Auto" in components else ("",)
+                for fuel_kind in fuel_kinds:
+                    key = DataKey(
+                        "_".join(components),
+                        part_of_day=part_of_day,
+                        income=income,
+                        regime=regimes,
+                        motive=motive_name,
+                        subtopic="combinaties",
+                        fuel_kind=fuel_kind,
+                    )
+                    combined_weights.set(key, combined_weights.get(key))

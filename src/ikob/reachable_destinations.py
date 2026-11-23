@@ -7,6 +7,7 @@ import numpy as np
 from ikob import utils
 from ikob.combined_weights import load_weight_matrix, weight_matrix_request
 from ikob.datasource import DataKey, DataSource, DataType, SegsSource
+from ikob.distribute_over_groups import CAR_PT_TYPES, NUM_GROUPS_PER_INCOME_CLASS
 from ikob.output_tables import assemble_income_tables
 
 logger = logging.getLogger(__name__)
@@ -47,29 +48,6 @@ def calculate_reachable_destinations(
     car_possession_groups = advanced_config["welke_groepen"]
     income_groups = project_config["welke_inkomensgroepen"]
     electric_percentage = distribution_config["Percelektrisch"]
-
-    base_groups = [
-        "GratisAuto",
-        "GratisAuto_GratisOV",
-        "WelAuto_GratisOV",
-        "WelAuto_vkAuto",
-        "WelAuto_vkNeutraal",
-        "WelAuto_vkFiets",
-        "WelAuto_vkOV",
-        "GeenAuto_GratisOV",
-        "GeenAuto_vkNeutraal",
-        "GeenAuto_vkFiets",
-        "GeenAuto_vkOV",
-        "GeenRijbewijs_GratisOV",
-        "GeenRijbewijs_vkNeutraal",
-        "GeenRijbewijs_vkFiets",
-        "GeenRijbewijs_vkOV",
-    ]
-
-    groups = []
-    for income_group in income_groups:
-        for base_group in base_groups:
-            groups.append(f"{base_group}_{income_group}")
 
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
 
@@ -117,50 +95,49 @@ def calculate_reachable_destinations(
                     # cache the matrix vector products, this is much more memory friendly than caching the matrix itself
                     possibility_vectors_cache = {}
 
-                    for i_group, group in enumerate(groups):
+                    for i_group, car_pt_types in enumerate(
+                        CAR_PT_TYPES, start=i_income_group * NUM_GROUPS_PER_INCOME_CLASS
+                    ):
                         distribution = np.asarray(distribution_matrix_transpose[i_group], dtype=utils.FLOAT_DTYPE)
 
-                        income = utils.group_income_level(group)
-                        if income_group == income or income_group == "alle":
-                            K = electric_percentage.get(income_group) / 100
-                            weights, weight_key, electric_key = weight_matrix_request(
-                                single_weights,
-                                combined_weights,
-                                group,
-                                modality,
-                                motive_name,
-                                regime,
-                                part_of_day,
-                                income,
-                                K,
-                            )
-                            cache_key = (weights is combined_weights, weight_key, electric_key, K)
+                        K = electric_percentage.get(income_group) / 100
+                        weights, weight_key, electric_key = weight_matrix_request(
+                            single_weights,
+                            combined_weights,
+                            car_pt_types,
+                            modality,
+                            motive_name,
+                            regime,
+                            part_of_day,
+                            income_group,
+                            K,
+                        )
+                        cache_key = (weights is combined_weights, weight_key, electric_key, K)
 
-                            # section D4: compute reachable opportunities via origin-destination weights and destination totals.
-                            # - `matrix` corresponds to $G_{ghbvm}$
-                            # - `destinations_for_income` corresponds to $A_{ib}$ (chosen by motive)
-                            # The matrix-vector product yields $\sum_b G_{ghbvm} \cdot A_{ib}$ per origin zone $h$.
-                            if cache_key not in possibility_vectors_cache:
-                                matrix = load_weight_matrix(weights, weight_key, electric_key, K)
-                                possibility_vectors_cache[cache_key] = matrix @ destinations_for_income
-                            possibility = possibility_vectors_cache[cache_key]
+                        # section D4: compute reachable opportunities via origin-destination weights and destination totals.
+                        # - `matrix` corresponds to $G_{ghbvm}$
+                        # - `destinations_for_income` corresponds to $A_{ib}$ (chosen by motive)
+                        # The matrix-vector product yields $\sum_b G_{ghbvm} \cdot A_{ib}$ per origin zone $h$.
+                        if cache_key not in possibility_vectors_cache:
+                            matrix = load_weight_matrix(weights, weight_key, electric_key, K)
+                            possibility_vectors_cache[cache_key] = matrix @ destinations_for_income
+                        possibility = possibility_vectors_cache[cache_key]
 
-                            # D4: apply group size/share in the origin zone.
-                            # This corresponds to multiplying by $V_{gh}$ to obtain $B_{ghv}$ for the current group.
-                            # Since the 'distribution' is a distribution of the whole target population over groups (e.g. WelAuto_vkAuto_laag, WelAuto_vkFiets_hoog)
-                            # and here we need the distribution on a specific income group (e.g. laag), we need to divide by the share of the income group in the total population
-                            possibility = possibility * distribution
-                            np.divide(possibility, incomes, where=incomes != 0, out=possibility)
-                            possibility[incomes <= 0] = 0
-
-                            # Sum contributions of all groups that belong to the selected `income_group`, this computes B_{ihv}
-                            possibility_sum += possibility
+                        # D4: apply group size/share in the origin zone.
+                        # This corresponds to multiplying by $V_{gh}$ to obtain $B_{ghv}$ for the current group.
+                        # Since the 'distribution' is a distribution of the whole target population over groups (e.g. WelAuto_laag, WelAuto_GratisOV_hoog)
+                        # and here we need the distribution on a specific income group (e.g. laag), we need to divide by the share of the income group in the total population
+                        possibility = possibility * distribution
+                        np.divide(possibility, incomes, where=incomes != 0, out=possibility)
+                        possibility[incomes <= 0] = 0
+                        # Sum contributions of all groups that belong to the selected `income_group`, this computes B_{ihv}
+                        possibility_sum += possibility
 
                     key = DataKey(
                         utils.INCOME_VECTOR_RESULT_ID,
                         part_of_day=part_of_day,
                         income=income_group,
-                        group=car_possession_group,
+                        car_possession_group=car_possession_group,
                         motive=motive_name,
                         modality=modality,
                         is_intermediate=True,
@@ -174,7 +151,7 @@ def calculate_reachable_destinations(
                 key = DataKey(
                     "Ontpl_totaal",
                     part_of_day=part_of_day,
-                    group=car_possession_group,
+                    car_possession_group=car_possession_group,
                     income=income_group,
                     motive=motive_name,
                     header=modalities,

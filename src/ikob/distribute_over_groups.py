@@ -1,4 +1,5 @@
 import logging
+from collections.abc import Sequence
 from pathlib import Path
 
 import numpy as np
@@ -10,11 +11,25 @@ from ikob.utils import URBANIZATION_GRADE_ID_STORE
 logger = logging.getLogger(__name__)
 
 
+INCOME_LEVELS = ("laag", "middellaag", "middelhoog", "hoog")
+CAR_PT_TYPES = (
+    ("GratisAuto", "OV"),
+    ("GratisAuto", "GratisOV"),
+    ("Auto", "GratisOV"),
+    ("Auto", "OV"),
+    ("GeenAuto", "GratisOV"),
+    ("GeenAuto", "OV"),
+    ("GeenRijbewijs", "GratisOV"),
+    ("GeenRijbewijs", "OV"),
+)
+NUM_GROUPS_PER_INCOME_CLASS = len(CAR_PT_TYPES)
+
+
 def _validate_car_possession_segs(
     with_car_segs: npt.NDArray[np.integer],
     no_car_segs: npt.NDArray[np.integer],
     no_license_segs: npt.NDArray[np.integer],
-    income_levels: list[str],
+    income_levels: Sequence[str],
 ):
     """
     Validate that WelAuto, GeenAuto, and GeenRijbewijs sum to 100
@@ -58,13 +73,12 @@ def distribute_population_over_groups(config):
     These groups refer to slices of the population who's mobility should be computed in their own way.
     These groups are defined by:
     - income class
-    - preference for a specific modality
     - the level of access to a car (e.g. no car, no drivers license)
     - the presence of a free modality (e.g. a free (company) car, or free public transport)
 
     These group definitions are stored as strings. For example:
-    - WelAuto_GratisOV_middelhoog is the slice of the population with car, with free public transport, and a medium-high income (people with free pt always have pt as their preferred modality.
-    - GeenAuto_vkFiets_laag is the slice of the population with no car, a preference for transport by bike, and a low income.
+    - WelAuto_GratisOV_middelhoog has a car, free public transport, and a medium-high income.
+    - GeenAuto_laag has no car, a driver's license, and a low income.
 
     Corresponds to section B in IKOB-algorithm.pdf
 
@@ -85,11 +99,6 @@ def distribute_population_over_groups(config):
     traveling_population_path = Path(project_config["motief"]["reizende populatie"])
 
     # Vaste waarden
-    income_levels = ["laag", "middellaag", "middelhoog", "hoog"]
-    preferences = ["Auto", "Neutraal", "Fiets", "OV"]
-    preferences_no_car = ["Neutraal", "Fiets", "OV"]
-    kinds = ["GratisAuto", "WelAuto", "GeenAuto", "GeenRijbewijs"]
-
     segs_source = SegsSource(config)
 
     car_possessions_per_household_segs = segs_source.read("CBS_autos_per_huishouden")
@@ -111,34 +120,26 @@ def distribute_population_over_groups(config):
     with_car_segs = segs_source.read("WelAuto", id_store=URBANIZATION_GRADE_ID_STORE)
 
     # Validate that the car possession data is consistent
-    _validate_car_possession_segs(with_car_segs, no_car_segs, no_license_segs, income_levels)
-
-    # Tables 6-7 of IKOB-algorithm.pdf
-    preferences_segs = segs_source.read("Voorkeuren", id_store=URBANIZATION_GRADE_ID_STORE)
-    preferences_no_car_segs = segs_source.read("VoorkeurenGeenAuto", id_store=URBANIZATION_GRADE_ID_STORE)
+    _validate_car_possession_segs(with_car_segs, no_car_segs, no_license_segs, INCOME_LEVELS)
 
     header = []
-    for ink in income_levels:
-        for srt in kinds:
-            if srt == "GratisAuto":
-                header.append(f"{srt}_{ink}")
-                header.append(f"{srt}_GratisOV_{ink}")
-            elif srt == "WelAuto":
-                header.append(f"{srt}_GratisOV_{ink}")
-                for vk in preferences:
-                    header.append(f"{srt}_vk{vk}_{ink}")
-            else:
-                header.append(f"{srt}_GratisOV_{ink}")
-                for vkg in preferences_no_car:
-                    header.append(f"{srt}_vk{vkg}_{ink}")
-
     total_survey = []
-    total_car_possession_survey = []
     survey_per_income_class = []
 
-    free_car = []
-    no_free_car = []
-    no_car_with_license = []
+    def add_group(
+        zone_index: int, income: str, car_pt_types: tuple[str, str], share: float, car_owner_share: float
+    ) -> None:
+        expected_types = CAR_PT_TYPES[len(total_survey[zone_index]) % NUM_GROUPS_PER_INCOME_CLASS]
+        if car_pt_types != expected_types:
+            raise ValueError(f"Expected car/PT types {expected_types}, got {car_pt_types}")
+        total_survey[zone_index].append(share)
+        survey_per_income_class[zone_index].append(car_owner_share)
+        if zone_index == 0:
+            car_type, pt_type = car_pt_types
+            # This renaming scheme is to keep output headers equal to old code
+            car_label = "WelAuto" if car_type == "Auto" else car_type
+            pt_label = "_GratisOV" if pt_type == "GratisOV" else ""
+            header.append(f"{car_label}{pt_label}_{income}")
 
     traveling_population = segs_source.read(traveling_population_path.name, scenario=scenario)
 
@@ -152,7 +153,6 @@ def distribute_population_over_groups(config):
 
     for i, income_distribution in enumerate(income_distributions):
         total_survey.append([])
-        total_car_possession_survey.append([])
         survey_per_income_class.append([])
         # First determine theoretical car and possessions.
         # See Step 1 in section B of IKOB-algorithm.pdf
@@ -170,10 +170,9 @@ def distribute_population_over_groups(config):
         car_possession_correction = 1
         if min_car_possession[i] > 0 and min_car_possession[i] / 100 < car_possession_shares:
             car_possession_correction = (min_car_possession[i] / 100) / car_possession_shares
-            car_possession_shares = min_car_possession[i] / 100
 
         # Car possessions, license possessions, income classes.
-        for i_income in range(len(income_levels)):
+        for i_income, income in enumerate(INCOME_LEVELS):
             with_car_share_theoretical = with_car_segs[urbanization[i]][i_income] / 100
             with_car = with_car_share_theoretical * car_possession_correction
             if car_possession_correction != 1:
@@ -184,61 +183,36 @@ def distribute_population_over_groups(config):
             no_car_with_license = no_car_segs[urbanization[i]][i_income] / 100 * no_car_correction
             no_license = no_license_segs[urbanization[i]][i_income] / 100 * no_car_correction
 
-            # Step 2 of section B of IKOB-algorithm.pdf
+            # Step 2/3 of section B of IKOB-algorithm.pdf
             # Also computes free pt data
             income_share = income_distribution[i_income]
 
             free_car = with_car * free_car_per_income[i_income]
             no_free_car = with_car - free_car
             free_car_share = free_car * (1 - free_pt_percentage) * income_share
-            total_survey[i].append(free_car_share)
-            survey_per_income_class[i].append(free_car_share / with_car)
+            add_group(i, income, ("GratisAuto", "OV"), free_car_share, free_car_share / with_car)
 
             free_car_and_pt_share = free_car * free_pt_percentage * income_share
-            total_survey[i].append(free_car_and_pt_share)
-            survey_per_income_class[i].append(free_car_and_pt_share / with_car)
+            add_group(i, income, ("GratisAuto", "GratisOV"), free_car_and_pt_share, free_car_and_pt_share / with_car)
 
             free_pt_share = no_free_car * free_pt_percentage * income_share
-            total_survey[i].append(free_pt_share)
-            survey_per_income_class[i].append(free_pt_share / with_car)
+            add_group(i, income, ("Auto", "GratisOV"), free_pt_share, free_pt_share / with_car)
 
-            # Step 3 of section B of IKOB-algorithm.pdf
-            for i_preference in range(len(preferences)):
-                share_preference = (
-                    no_free_car * (1 - free_pt_percentage) * preferences_segs[urbanization[i]][i_preference] / 100
-                )
-                preference_share = share_preference * income_share
-                total_survey[i].append(preference_share)
-                survey_per_income_class[i].append(preference_share / with_car)
+            car_share = no_free_car * (1 - free_pt_percentage) * income_share
+            add_group(i, income, ("Auto", "OV"), car_share, car_share / with_car)
 
             no_car_free_pt_share = no_car_with_license * free_pt_percentage * income_share
-            total_survey[i].append(no_car_free_pt_share)
-            survey_per_income_class[i].append(0)
+            add_group(i, income, ("GeenAuto", "GratisOV"), no_car_free_pt_share, 0)
 
-            for i_preference in range(len(preferences_no_car)):
-                share_preference = (
-                    no_car_with_license
-                    * (1 - free_pt_percentage)
-                    * preferences_no_car_segs[urbanization[i]][i_preference]
-                    / 100
-                )
-                preference_share = share_preference * income_share
-                total_survey[i].append(preference_share)
-                survey_per_income_class[i].append(0)
+            no_car_share = no_car_with_license * (1 - free_pt_percentage) * income_share
+            add_group(i, income, ("GeenAuto", "OV"), no_car_share, 0)
 
             no_license_free_pt_share = no_license * free_pt_percentage * income_share
-            total_survey[i].append(no_license_free_pt_share)
-            survey_per_income_class[i].append(0)
+            add_group(i, income, ("GeenRijbewijs", "GratisOV"), no_license_free_pt_share, 0)
 
-            for i_preference in range(len(preferences_no_car)):
-                share_preference = (
-                    no_license * (1 - free_pt_percentage) * preferences_no_car_segs[urbanization[i]][i_preference] / 100
-                )
-                preference_share = share_preference * income_share
-                total_survey[i].append(preference_share)
-                survey_per_income_class[i].append(0)
+            no_license_share = no_license * (1 - free_pt_percentage) * income_share
+            add_group(i, income, ("GeenRijbewijs", "OV"), no_license_share, 0)
 
-    logger.debug("Total car possessions: %s", total_car_possession_survey)
     segs_source.write_csv(
         survey_per_income_class,
         "Verdeling_over_groepen",
