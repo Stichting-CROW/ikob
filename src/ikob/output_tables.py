@@ -1,4 +1,4 @@
-from collections.abc import Iterator, Sequence
+from collections.abc import Sequence
 from dataclasses import replace
 
 import numpy as np
@@ -53,7 +53,7 @@ class IncomeTableAssembler:
         return self._table
 
 
-def assemble_income_tables(source: DataSource, incomes: Sequence[str]) -> Iterator[tuple[DataKey, NDArray]]:
+def assemble_income_tables(source: DataSource, incomes: Sequence[str]) -> list[tuple[DataKey, IncomeTable]]:
     assemblers: dict[DataKey, IncomeTableAssembler] = {}
 
     for key, values in source.cache.items():
@@ -68,5 +68,8 @@ def assemble_income_tables(source: DataSource, incomes: Sequence[str]) -> Iterat
             assemblers[table_key] = IncomeTableAssembler(values.shape[0], incomes)
         assemblers[table_key].add(key.income, values)
 
+    result: list[tuple[DataKey, IncomeTable]] = []
     for key, assembler in assemblers.items():
-        yield key, assembler.finalize()
+        result.append((key, assembler.finalize()))
+
+    return result
