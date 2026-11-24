@@ -81,11 +81,11 @@ def test_zone_id_store_uses_intersection_of_full_zone_inputs(tmp_path, missing_f
     ZoneIdStoreSingleton.set_instance(existing_store)
     if not expected_valid:
         assert initialize_zone_id_store(config) is False
-        assert ZoneIdStoreSingleton.get_instance(config) is existing_store
+        assert ZoneIdStoreSingleton.get_instance() is existing_store
         return
 
     assert initialize_zone_id_store(config) is True
-    store = ZoneIdStoreSingleton.get_instance(config)
+    store = ZoneIdStoreSingleton.get_instance()
     assert store is not existing_store
     assert store._zone_ids == ("z3", "z2")
     skim = read_csv(
@@ -107,7 +107,7 @@ def test_zone_id_store_rejects_empty_intersection(tmp_path, monkeypatch, caplog)
     assert initialize_zone_id_store(config) is False
 
     assert "no common zone IDs" in caplog.text
-    assert ZoneIdStoreSingleton.get_instance(config) is existing_store
+    assert ZoneIdStoreSingleton.get_instance() is existing_store
 
 
 @pytest.mark.parametrize("contents,has_zone_header", [("", False), ("zone\nz1\n", True)])
@@ -124,7 +124,7 @@ def test_zone_id_store_reports_invalid_input_file(tmp_path, monkeypatch, caplog,
     assert initialize_zone_id_store(config) is False
 
     assert "read zone IDs from" in caplog.text
-    assert ZoneIdStoreSingleton.get_instance(config) is existing_store
+    assert ZoneIdStoreSingleton.get_instance() is existing_store
 
 
 def test_zone_id_store_reports_input_discovery_error(monkeypatch, caplog):

@@ -12,6 +12,8 @@ from ikob.utils import INT_DTYPE, read_csv
 
 def test_stedelijkheid_converter():
     segs_dir = pathlib.Path("tests/vlaanderen/SEGS")
+    _ = get_config_from_args("tests/vlaanderen/vlaanderen.json")
+
     id_store = ZoneIdStoreSingleton.get_instance()
 
     reference = read_csv(segs_dir / "Parkeerzoektijd.csv", type_caster=INT_DTYPE, id_store=id_store)
