@@ -119,9 +119,7 @@ def test_reachable_destinations_selected_income(selected_income, reachable_desti
     )
 
     incomes = {key.income for key in results.cache if key.id == utils.INCOME_VECTOR_RESULT_ID}
-    assert incomes == (
-        {selected_income} if selected_income is not None else set(utils.INCOME_GROUPS)
-    )
+    assert incomes == ({selected_income} if selected_income is not None else set(utils.INCOME_GROUPS))
 
 
 @pytest.mark.parametrize("modality", modalities)

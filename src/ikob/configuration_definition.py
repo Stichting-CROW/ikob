@@ -254,9 +254,7 @@ def default_tvom_tab():
 
 
 def default_verdeling_tab():
-    electric_share = {
-        level: config_item(level.capitalize(), DataType.NUMBER, unit="%") for level in INCOME_GROUPS
-    }
+    electric_share = {level: config_item(level.capitalize(), DataType.NUMBER, unit="%") for level in INCOME_GROUPS}
 
     return {
         "label": "Verdeling Over Groepen",

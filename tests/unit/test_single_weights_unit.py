@@ -80,9 +80,7 @@ def test_calculate_single_weights_writes_expected_keys(selected_income):
     # Act
     weights = sw.calculate_single_weights(config, _FakeGTT(), selected_income=selected_income)  # type: ignore
 
-    expected_incomes = (
-        {selected_income} if selected_income is not None else set(INCOME_GROUPS)
-    )
+    expected_incomes = {selected_income} if selected_income is not None else set(INCOME_GROUPS)
     assert {key.income for key in weights.cache} == expected_incomes
 
     # Assert
