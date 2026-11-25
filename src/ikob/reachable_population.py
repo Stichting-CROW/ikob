@@ -29,7 +29,7 @@ def calculate_reachable_population(
     Corresponds to section D5 in the IKOB-algorithm.pdf.
 
     If a selected income is given, the full results cannot be assembled directly as they include overviews of
-    reach across all income groups. The caller will have to call assemble_destination_outputs on the final datasource
+    reach across all income groups. The caller will have to call assemble_population_outputs on the final datasource
     containing results for all income groups.
     """
     logger.info("Starting step: Reachable population for destinations.")
