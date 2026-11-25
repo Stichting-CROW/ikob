@@ -67,6 +67,8 @@ def run_scripts(
     competition_destinations = DataSource(config, DataType.COMPETITION)
     competition_citizens = DataSource(config, DataType.COMPETITION)
 
+    shared_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
+
     for income in INCOME_GROUPS:
         logger.info("Processing income class: %s", income)
         _run_income(
@@ -80,6 +82,7 @@ def run_scripts(
             write_weights=write_weights,
             write_travel_time=write_travel_time,
             write_intermediate_results=write_intermediate_results,
+            shared_weights=shared_weights,
         )
 
     # Since we run the steps per income group, we cannot assemble results that combine income groups during the normal steps
@@ -110,6 +113,7 @@ def _run_income(
     write_weights: bool,
     write_travel_time: bool,
     write_intermediate_results: bool,
+    shared_weights: DataSource,
 ):
     single_weights: DataSource | None = None
     if not skip_steps[0] and not skip_steps[2]:
@@ -119,7 +123,7 @@ def _run_income(
         # The travel time is still returned here because we might need to write these results to disk
         # The travel time only contains data when write_travel_time is true
         single_weights, travel_time = calculate_single_weights_on_demand(
-            config, write_travel_time=write_travel_time, selected_income=income
+            config, write_travel_time=write_travel_time, shared_weights=shared_weights, selected_income=income
         )
     elif not skip_steps[0]:
         # if step 0 is not skipped, but step 2 is, we only need to compute the travel time if we want to write the results,
