@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 
+from ikob import utils
+
 
 @pytest.fixture(
     params=[
@@ -74,7 +76,7 @@ def reachable_population_setup(request, segs_capture):
                 "reizende populatie": "path/to/Beroepsbevolking_inkomensklasse",
                 "bestemmingsplaatsen": "path/to/Arbeidsplaatsen_inkomensklasse",
             },
-            "welke_inkomensgroepen": ["laag", "middellaag", "middelhoog", "hoog"],
+            "welke_inkomensgroepen": utils.INCOME_GROUPS,
             "paden": {
                 "output_directory": "out",
                 "skims_directory": "skims",
@@ -89,6 +91,8 @@ def reachable_population_setup(request, segs_capture):
     reachable_populations = rp.calculate_reachable_population(config, _Weights(), _Weights())  # type: ignore
 
     return {
+        "config": config,
+        "weights": _Weights(),
         "reachable_populations": reachable_populations,
         "pod": pod,
         "motive": motive,
@@ -102,9 +106,22 @@ def reachable_population_setup(request, segs_capture):
 modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
 
 
+@pytest.mark.parametrize("selected_income", [None, "laag"], ids=["all-incomes", "single-income"])
+def test_reachable_population_selected_income(selected_income, reachable_population_setup):
+    from ikob.reachable_population import calculate_reachable_population
+
+    setup = reachable_population_setup
+    results = calculate_reachable_population(
+        setup["config"], setup["weights"], setup["weights"], selected_income=selected_income
+    )
+
+    incomes = {key.income for key in results.cache if key.id == utils.INCOME_VECTOR_RESULT_ID}
+    assert incomes == ({selected_income} if selected_income is not None else set(utils.INCOME_GROUPS))
+
+
 @pytest.mark.parametrize("modality", modalities)
 @pytest.mark.parametrize(
-    ("income_group", "income_index"), (("laag", 0), ("middellaag", 1), ("middelhoog", 2), ("hoog", 3))
+    ("income_group", "income_index"), [(income, index) for index, income in enumerate(utils.INCOME_GROUPS)]
 )
 def test_reachable_population_totals(modality, income_group, income_index, reachable_population_setup):
     """Reachable citizens (potential workforce) totals are independent of job counts and distribution over groups."""
@@ -117,7 +134,7 @@ def test_reachable_population_totals(modality, income_group, income_index, reach
     weight_matrix = reachable_population_setup["weight_matrix"]
 
     key = DataKey(
-        "Totaal",
+        utils.INCOME_VECTOR_RESULT_ID,
         part_of_day=pod,
         income=income_group,
         group="alle groepen",

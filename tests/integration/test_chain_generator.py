@@ -3,6 +3,7 @@ import pytest
 
 from ikob.datasource import DataKey
 from ikob.id_store import IdStore
+from ikob.utils import INCOME_GROUPS
 
 
 def _simple_matrices(num_zones):
@@ -90,7 +91,7 @@ def _make_config():
 
 
 @pytest.mark.parametrize("hub_zone", [1, 2])
-@pytest.mark.parametrize("income", ["laag", "middellaag", "middelhoog", "hoog"])
+@pytest.mark.parametrize("income", INCOME_GROUPS)
 @pytest.mark.parametrize("fuel", ["fossiel", "elektrisch"])
 def test_chain_time_equals_sum_of_parts(monkeypatch, hub_zone, income, fuel):
     """With a zero-cost hub, the P+R chain time equals the generalized travel time to the hub plus the time to the destination.

@@ -12,6 +12,8 @@ logger = logging.getLogger(__name__)
 
 # This is used throughout the code as a pseudo infinite travel time that's still outputted as a number
 IKOB_INFINITE = 9999.0
+INCOME_VECTOR_RESULT_ID = "Totaal"
+INCOME_GROUPS = ["laag", "middellaag", "middelhoog", "hoog"]
 FLOAT_DTYPE = np.float32
 INT_DTYPE = np.int32
 
@@ -192,18 +194,10 @@ def write_csv(matrix, filenaam, index: CsvIdColumn, header: list[str]):
 
 
 def group_income_level(naam):
-    if naam[-4:] == "hoog":
-        if naam[-10:] == "middelhoog":
-            return "middelhoog"
-        else:
-            return "hoog"
-    elif naam[-4:] == "laag":
-        if naam[-10:] == "middellaag":
-            return "middellaag"
-        else:
-            return "laag"
-    else:
-        return ""
+    for income_group in INCOME_GROUPS:
+        if naam == income_group or naam.endswith(f"_{income_group}"):
+            return income_group
+    return ""
 
 
 def find_preference(naam, mod):

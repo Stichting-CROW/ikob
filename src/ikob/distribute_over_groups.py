@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 
 from ikob.datasource import SegsSource, read_csv_from_config
-from ikob.utils import URBANIZATION_GRADE_ID_STORE
+from ikob.utils import INCOME_GROUPS, URBANIZATION_GRADE_ID_STORE
 
 logger = logging.getLogger(__name__)
 
@@ -85,7 +85,6 @@ def distribute_population_over_groups(config):
     traveling_population_path = Path(project_config["motief"]["reizende populatie"])
 
     # Vaste waarden
-    income_levels = ["laag", "middellaag", "middelhoog", "hoog"]
     preferences = ["Auto", "Neutraal", "Fiets", "OV"]
     preferences_no_car = ["Neutraal", "Fiets", "OV"]
     kinds = ["GratisAuto", "WelAuto", "GeenAuto", "GeenRijbewijs"]
@@ -111,14 +110,14 @@ def distribute_population_over_groups(config):
     with_car_segs = segs_source.read("WelAuto", id_store=URBANIZATION_GRADE_ID_STORE)
 
     # Validate that the car possession data is consistent
-    _validate_car_possession_segs(with_car_segs, no_car_segs, no_license_segs, income_levels)
+    _validate_car_possession_segs(with_car_segs, no_car_segs, no_license_segs, INCOME_GROUPS)
 
     # Tables 6-7 of IKOB-algorithm.pdf
     preferences_segs = segs_source.read("Voorkeuren", id_store=URBANIZATION_GRADE_ID_STORE)
     preferences_no_car_segs = segs_source.read("VoorkeurenGeenAuto", id_store=URBANIZATION_GRADE_ID_STORE)
 
     header = []
-    for ink in income_levels:
+    for ink in INCOME_GROUPS:
         for srt in kinds:
             if srt == "GratisAuto":
                 header.append(f"{srt}_{ink}")
@@ -173,7 +172,7 @@ def distribute_population_over_groups(config):
             car_possession_shares = min_car_possession[i] / 100
 
         # Car possessions, license possessions, income classes.
-        for i_income in range(len(income_levels)):
+        for i_income in range(len(INCOME_GROUPS)):
             with_car_share_theoretical = with_car_segs[urbanization[i]][i_income] / 100
             with_car = with_car_share_theoretical * car_possession_correction
             if car_possession_correction != 1:

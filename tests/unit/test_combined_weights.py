@@ -3,6 +3,7 @@ import pytest
 from scipy import sparse
 
 from ikob.combined_weights import sparse_elementwise_max
+from ikob.utils import INCOME_GROUPS
 
 
 def test_has_preference_rules():
@@ -143,7 +144,7 @@ def test_materialized_combined_weights_match_on_the_fly():
         "skims": {"dagsoort": ["Ochtend", "Restdag"]},
     }
     single_weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
-    incomes = ["hoog", "middelhoog", "middellaag", "laag"]
+    incomes = INCOME_GROUPS
     preferences = ["Auto", "Neutraal", "Fiets", "OV"]
     modalities = ["Auto", "GeenAuto", "GeenRijbewijs", "GratisAuto", "OV", "GratisOV", "Fiets"]
     rng = np.random.default_rng(42)

@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from ikob.configuration_definition import DecayCurveName, TvomType
+from ikob.utils import INCOME_GROUPS
 from tests.unit.conftest import SegsCapture
 
 
@@ -144,7 +145,7 @@ def _expected_block(
 
 @pytest.mark.parametrize("zone_index", (0, 1))
 @pytest.mark.parametrize(
-    ("income_group", "income_index"), (("laag", 0), ("middellaag", 1), ("middelhoog", 2), ("hoog", 3))
+    ("income_group", "income_index"), [(income, index) for index, income in enumerate(INCOME_GROUPS)]
 )
 def test_distribute_over_groups_computation(zone_index, income_group, income_index, segs_capture):
     from ikob.distribute_over_groups import distribute_population_over_groups
