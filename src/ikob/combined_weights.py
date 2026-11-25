@@ -3,6 +3,7 @@ import logging
 from scipy import sparse
 
 from ikob.datasource import DataKey, DataSource, DataType
+from ikob.utils import INCOME_GROUPS
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +117,7 @@ def _materialize_combined_weights(
     regimes = project_config["beprijzingsregime"]
     part_of_days = skims_config["dagsoort"]
 
-    incomes = [selected_income] if selected_income is not None else ["hoog", "middelhoog", "middellaag", "laag"]
+    incomes = [selected_income] if selected_income is not None else INCOME_GROUPS
     preferences = ["Auto", "Neutraal", "Fiets", "OV"]
     modalities_bike = ["Fiets"]
     car_kinds = ["Auto", "GeenAuto", "GeenRijbewijs", "GratisAuto"]

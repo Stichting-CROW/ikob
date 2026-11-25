@@ -7,7 +7,7 @@ from ikob.output_tables import IncomeTableAssembler, assemble_income_tables
 
 
 def test_assemble_income_columns_in_header_order():
-    incomes = ["laag", "middellaag", "middelhoog", "hoog"]
+    incomes = utils.INCOME_GROUPS
     num_zones = 4
 
     assembler = IncomeTableAssembler(num_zones, incomes)

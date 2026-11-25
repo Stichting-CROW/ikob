@@ -7,7 +7,7 @@ from ikob.configuration_definition import DecayCurveName
 from ikob.constants import work_constants
 from ikob.datasource import DataKey, DataSource, DataType
 from ikob.generalized_travel_time import generalized_travel_time
-from ikob.utils import FLOAT_DTYPE
+from ikob.utils import FLOAT_DTYPE, INCOME_GROUPS
 
 logger = logging.getLogger(__name__)
 
@@ -95,7 +95,7 @@ def consume_travel_time(config, key: DataKey, travel_time, weights: DataSource, 
         # Note that the free car travel time _is_ dependent on income class,
         # because there are still costs associated with car free car travel counterintuitively.
         # see generalized_travel_time.py for details
-        incomes = [selected_income] if selected_income is not None else ["hoog", "middelhoog", "middellaag", "laag"]
+        incomes = [selected_income] if selected_income is not None else INCOME_GROUPS
         for income in incomes:
             for preference in ("Neutraal", "OV"):
                 store("GratisOV_vk", preference, income=income, weight_matrix=weight_matrix)
@@ -140,7 +140,7 @@ def calculate_single_weights(
     regimes = config["project"]["beprijzingsregime"]
 
     # Vaste waarden
-    incomes = [selected_income] if selected_income is not None else ["hoog", "middelhoog", "middellaag", "laag"]
+    incomes = [selected_income] if selected_income is not None else INCOME_GROUPS
 
     weights = DataSource(config, DataType.WEIGHTS, has_zone_id_header=True)
 

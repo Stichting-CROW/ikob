@@ -198,72 +198,26 @@ def competition(
     car_possession_groups = advanced_config["welke_groepen"]
     electric_percentage = distribution_config["Percelektrisch"]
 
-    groups = [
-        "GratisAuto_laag",
-        "GratisAuto_GratisOV_laag",
-        "WelAuto_GratisOV_laag",
-        "WelAuto_vkAuto_laag",
-        "WelAuto_vkNeutraal_laag",
-        "WelAuto_vkFiets_laag",
-        "WelAuto_vkOV_laag",
-        "GeenAuto_GratisOV_laag",
-        "GeenAuto_vkNeutraal_laag",
-        "GeenAuto_vkFiets_laag",
-        "GeenAuto_vkOV_laag",
-        "GeenRijbewijs_GratisOV_laag",
-        "GeenRijbewijs_vkNeutraal_laag",
-        "GeenRijbewijs_vkFiets_laag",
-        "GeenRijbewijs_vkOV_laag",
-        "GratisAuto_middellaag",
-        "GratisAuto_GratisOV_middellaag",
-        "WelAuto_GratisOV_middellaag",
-        "WelAuto_vkAuto_middellaag",
-        "WelAuto_vkNeutraal_middellaag",
-        "WelAuto_vkFiets_middellaag",
-        "WelAuto_vkOV_middellaag",
-        "GeenAuto_GratisOV_middellaag",
-        "GeenAuto_vkNeutraal_middellaag",
-        "GeenAuto_vkFiets_middellaag",
-        "GeenAuto_vkOV_middellaag",
-        "GeenRijbewijs_GratisOV_middellaag",
-        "GeenRijbewijs_vkNeutraal_middellaag",
-        "GeenRijbewijs_vkFiets_middellaag",
-        "GeenRijbewijs_vkOV_middellaag",
-        "GratisAuto_middelhoog",
-        "GratisAuto_GratisOV_middelhoog",
-        "WelAuto_GratisOV_middelhoog",
-        "WelAuto_vkAuto_middelhoog",
-        "WelAuto_vkNeutraal_middelhoog",
-        "WelAuto_vkFiets_middelhoog",
-        "WelAuto_vkOV_middelhoog",
-        "GeenAuto_GratisOV_middelhoog",
-        "GeenAuto_vkNeutraal_middelhoog",
-        "GeenAuto_vkFiets_middelhoog",
-        "GeenAuto_vkOV_middelhoog",
-        "GeenRijbewijs_GratisOV_middelhoog",
-        "GeenRijbewijs_vkNeutraal_middelhoog",
-        "GeenRijbewijs_vkFiets_middelhoog",
-        "GeenRijbewijs_vkOV_middelhoog",
-        "GratisAuto_hoog",
-        "GratisAuto_GratisOV_hoog",
-        "WelAuto_GratisOV_hoog",
-        "WelAuto_vkAuto_hoog",
-        "WelAuto_vkNeutraal_hoog",
-        "WelAuto_vkFiets_hoog",
-        "WelAuto_vkOV_hoog",
-        "GeenAuto_GratisOV_hoog",
-        "GeenAuto_vkNeutraal_hoog",
-        "GeenAuto_vkFiets_hoog",
-        "GeenAuto_vkOV_hoog",
-        "GeenRijbewijs_GratisOV_hoog",
-        "GeenRijbewijs_vkNeutraal_hoog",
-        "GeenRijbewijs_vkFiets_hoog",
-        "GeenRijbewijs_vkOV_hoog",
+    base_groups = [
+        "GratisAuto",
+        "GratisAuto_GratisOV",
+        "WelAuto_GratisOV",
+        "WelAuto_vkAuto",
+        "WelAuto_vkNeutraal",
+        "WelAuto_vkFiets",
+        "WelAuto_vkOV",
+        "GeenAuto_GratisOV",
+        "GeenAuto_vkNeutraal",
+        "GeenAuto_vkFiets",
+        "GeenAuto_vkOV",
+        "GeenRijbewijs_GratisOV",
+        "GeenRijbewijs_vkNeutraal",
+        "GeenRijbewijs_vkFiets",
+        "GeenRijbewijs_vkOV",
     ]
+    groups = [f"{group}_{income}" for income in utils.INCOME_GROUPS for group in base_groups]
 
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
-    income_groups = ["laag", "middellaag", "middelhoog", "hoog"]
-
     segs_source = SegsSource(config)
 
     traveling_population = segs_source.read(traveling_population_path.name, scenario=scenario)
@@ -291,7 +245,7 @@ def competition(
         )
 
         for part_of_day in part_of_days:
-            for i_income_group, income_group in enumerate(income_groups):
+            for i_income_group, income_group in enumerate(utils.INCOME_GROUPS):
                 if selected_income is not None and income_group != selected_income:
                     continue
                 general_possibility_totals = []
@@ -395,7 +349,7 @@ def assemble_competition_outputs(config, competitions: DataSource, *, citizens: 
     multiplier = population if citizens else destinations
     condition = destinations > 0 if citizens else population > 0
     prefix = "Pot" if citizens else "Ontpl"
-    for key, values in assemble_income_tables(competitions, ["laag", "middellaag", "middelhoog", "hoog"]):
+    for key, values in assemble_income_tables(competitions, utils.INCOME_GROUPS):
         # Rename the per income group result for output
         competitions.set(replace(key, id=f"{prefix}_conc"), values)
         # D6/D7 regional aggregation weights each zone by jobs (Ontpl) or residents (Pot).

@@ -74,8 +74,6 @@ def calculate_reachable_population(
 
     modalities = ["Fiets", "Auto", "OV", "Auto_Fiets", "OV_Fiets", "Auto_OV", "Auto_OV_Fiets"]
 
-    income_groups = ["laag", "middellaag", "middelhoog", "hoog"]
-
     segs_source = SegsSource(config)
 
     traveling_population = segs_source.read(traveling_population_path.name, scenario=scenario)
@@ -103,7 +101,7 @@ def calculate_reachable_population(
         citizens_transpose = utils.transpose(citizens)
 
         for part_of_day in part_of_days:
-            for income_group in income_groups:
+            for income_group in utils.INCOME_GROUPS:
                 if selected_income is not None and income_group != selected_income:
                     continue
                 general_possibility_totals = []
@@ -265,7 +263,7 @@ def assemble_population_outputs(config, origins: DataSource):
     destinations = SegsSource(config).read(
         Path(project["motief"]["bestemmingsplaatsen"]).name, scenario=project["verstedelijkingsscenario"]
     )
-    for key, values in assemble_income_tables(origins, ["laag", "middellaag", "middelhoog", "hoog"]):
+    for key, values in assemble_income_tables(origins, utils.INCOME_GROUPS):
         # Rename the per income group result for output
         total_id = "Pot_totaal"
         origins.set(replace(key, id=total_id), np.round(values).astype(int))

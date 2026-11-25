@@ -179,14 +179,7 @@ def competition_input(request, monkeypatch, segs_capture):
     class _Destinations:
         def get(self, _key: DataKey):
             # Reach of each zone to each zone
-            if _key.income == "laag":
-                return jobs_income_reachable[:, 0]
-            elif _key.income == "middellaag":
-                return jobs_income_reachable[:, 1]
-            elif _key.income == "middelhoog":
-                return jobs_income_reachable[:, 2]
-            elif _key.income == "hoog":
-                return jobs_income_reachable[:, 3]
+            return jobs_income_reachable[:, utils.INCOME_GROUPS.index(_key.income)]
 
     class _Weights:
         def get(self, _key):
@@ -219,7 +212,7 @@ def competition_input(request, monkeypatch, segs_capture):
 
 @pytest.mark.parametrize("modality", modalities)
 @pytest.mark.parametrize(
-    ("income_group", "income_index"), (("laag", 0), ("middellaag", 1), ("middelhoog", 2), ("hoog", 3))
+    ("income_group", "income_index"), [(income, index) for index, income in enumerate(utils.INCOME_GROUPS)]
 )
 def test_competition_on_jobs_per_capita_sensitivity(modality, income_group, income_index, competition_input):
     from ikob.competition import competition_on_destinations
@@ -260,5 +253,5 @@ def test_competition_selected_income(competition_input, selected_income, citizen
 
     incomes = {key.income for key in competitions.cache if key.id == utils.INCOME_VECTOR_RESULT_ID}
     assert incomes == (
-        {selected_income} if selected_income is not None else {"laag", "middellaag", "middelhoog", "hoog"}
+        {selected_income} if selected_income is not None else set(utils.INCOME_GROUPS)
     )

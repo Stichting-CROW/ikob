@@ -15,6 +15,7 @@ from ikob.ikobconfig import get_config_from_args, load_config
 from ikob.reachable_destinations import assemble_destination_outputs, calculate_reachable_destinations
 from ikob.reachable_population import assemble_population_outputs, calculate_reachable_population
 from ikob.single_weights import calculate_single_weights, calculate_single_weights_on_demand
+from ikob.utils import INCOME_GROUPS
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,7 @@ def run_scripts(
     competition_destinations = DataSource(config, DataType.COMPETITION)
     competition_citizens = DataSource(config, DataType.COMPETITION)
 
-    for income in ["laag", "middellaag", "middelhoog", "hoog"]:
+    for income in INCOME_GROUPS:
         logger.info("Processing income class: %s", income)
         _run_income(
             config,

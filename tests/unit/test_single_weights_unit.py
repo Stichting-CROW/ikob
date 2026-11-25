@@ -1,6 +1,8 @@
 import numpy as np
 import pytest
 
+from ikob.utils import INCOME_GROUPS
+
 
 @pytest.mark.parametrize("modality", ["Auto", "OV", "Fiets"])
 @pytest.mark.parametrize("preference", ["Auto", "OV", "Fiets"])
@@ -79,7 +81,7 @@ def test_calculate_single_weights_writes_expected_keys(selected_income):
     weights = sw.calculate_single_weights(config, _FakeGTT(), selected_income=selected_income)  # type: ignore
 
     expected_incomes = (
-        {selected_income} if selected_income is not None else {"laag", "middellaag", "middelhoog", "hoog"}
+        {selected_income} if selected_income is not None else set(INCOME_GROUPS)
     )
     assert {key.income for key in weights.cache} == expected_incomes
 

@@ -2,7 +2,7 @@ import logging
 from enum import Enum, StrEnum
 
 from ikob.config import build
-from ikob.utils import IKOB_INFINITE
+from ikob.utils import IKOB_INFINITE, INCOME_GROUPS
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +114,8 @@ def default_project_tab():
         "welke_inkomensgroepen": config_item(
             "Welke inkomensgroepen moeten worden meegenomen",
             DataType.CHECKLIST,
-            default=["laag", "middellaag", "middelhoog", "hoog"],
-            items=["laag", "middellaag", "middelhoog", "hoog"],
+            default=INCOME_GROUPS.copy(),
+            items=INCOME_GROUPS.copy(),
         ),
     }
 
@@ -227,18 +227,17 @@ def default_skims_tab():
 
 
 def default_tvom_tab():
-    levels = ["Hoog", "Middelhoog", "Middellaag", "Laag"]
-    werk_values = [4, 6, 9, 12]
+    werk_values = [12, 9, 6, 4]
 
     werk_levels = {
-        level.lower(): config_item(level, DataType.NUMBER, default=value, unit="Minuten/Euro")
-        for level, value in zip(levels, werk_values)
+        level: config_item(level.capitalize(), DataType.NUMBER, default=value, unit="Minuten/Euro")
+        for level, value in zip(INCOME_GROUPS, werk_values)
     }
 
-    overig_values = [4.8, 7.25, 10.9, 15.5]
+    overig_values = [15.5, 10.9, 7.25, 4.8]
     overig_levels = {
-        level.lower(): config_item(level, DataType.NUMBER, default=value, unit="Minuten/Euro")
-        for level, value in zip(levels, overig_values)
+        level: config_item(level.capitalize(), DataType.NUMBER, default=value, unit="Minuten/Euro")
+        for level, value in zip(INCOME_GROUPS, overig_values)
     }
 
     return {
@@ -255,9 +254,9 @@ def default_tvom_tab():
 
 
 def default_verdeling_tab():
-    levels = ["Laag", "Middellaag", "Middelhoog", "Hoog"]
-
-    electric_share = {level.lower(): config_item(level, DataType.NUMBER, unit="%") for level in levels}
+    electric_share = {
+        level: config_item(level.capitalize(), DataType.NUMBER, unit="%") for level in INCOME_GROUPS
+    }
 
     return {
         "label": "Verdeling Over Groepen",
