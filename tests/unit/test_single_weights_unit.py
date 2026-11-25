@@ -4,6 +4,21 @@ import pytest
 from ikob.utils import INCOME_GROUPS
 
 
+@pytest.mark.parametrize(("alpha", "omega", "scaling"), [(0.125, 50, 1), (0.225, 10, 0.75), (0.12, 60, 0.95)])
+@pytest.mark.parametrize(("travel_time", "weight_fraction"), [(0, 0.001), (20, 0.1), (60, 0.5), (120, 0.9)])
+def test_decay_curve_and_inverse_round_trip(alpha, omega, scaling, travel_time, weight_fraction):
+    from ikob.single_weights import decay_curve, inverse_decay_curve
+
+    # a weight above the scaling is impossible, as the decay curve will never reach the scaling value
+    weight = scaling * weight_fraction
+    assert inverse_decay_curve(decay_curve(travel_time, alpha, omega, scaling), alpha, omega, scaling) == pytest.approx(
+        travel_time, abs=1e-10
+    )
+    assert decay_curve(inverse_decay_curve(weight, alpha, omega, scaling), alpha, omega, scaling) == pytest.approx(
+        weight, abs=1e-10
+    )
+
+
 @pytest.mark.parametrize("modality", ["Auto", "OV", "Fiets"])
 @pytest.mark.parametrize("preference", ["Auto", "OV", "Fiets"])
 def test_calculate_weights_threshold_and_monotonicity(modality, preference):

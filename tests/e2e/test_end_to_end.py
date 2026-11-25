@@ -3,6 +3,7 @@ import logging
 import pathlib
 import shutil
 
+import numpy as np
 import pandas as pd
 
 from ikob.ikobrunner import run_scripts
@@ -83,6 +84,12 @@ def remove_directory(dir: pathlib.Path):
 
 
 def test_end_to_end():
+    from ikob import utils
+
+    # Set the dtypes to 64 bits to avoid differences with the reference results due to floating point math
+    utils.FLOAT_DTYPE = np.float64
+    utils.INT_DTYPE = np.int64
+
     test_dir = pathlib.Path("tests")
     project_dir = test_dir.joinpath("vlaanderen").resolve()
     project = project_dir.joinpath("vlaanderen.json")
@@ -105,6 +112,12 @@ def test_end_to_end():
 
 
 def test_end_to_end_skipping_steps():
+    from ikob import utils
+
+    # Set the dtypes to 64 bits to avoid differences with the reference results due to floating point math
+    utils.FLOAT_DTYPE = np.float64
+    utils.INT_DTYPE = np.int64
+
     test_dir = pathlib.Path("tests")
     project_dir = test_dir.joinpath("vlaanderen").resolve()
     project = project_dir.joinpath("vlaanderen.json")
