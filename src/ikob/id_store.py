@@ -47,9 +47,9 @@ class IdStore:
         reference = set(self._zone_ids)
         duplicates = {zone_id for zone_id, count in Counter(ids).items() if count > 1}
         if duplicates:
-            msg = f"Duplicate IDs found in {source_name}: {duplicates}. Using the first occurrence."
+            msg = f"Duplicate IDs found in {source_name}: {duplicates}."
             if self._allow_extra_ids:
-                logger.warning(msg)
+                logger.warning(msg + " Using the first occurrence.")
             else:
                 raise ValueError(msg)
 

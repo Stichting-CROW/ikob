@@ -63,6 +63,7 @@ def initialize_zone_id_store(config, allow_extra_ids: bool = True) -> bool:
     An error can be thrown based on the return value of this method.
     When loading / saving config a warning is sufficient.
     """
+    logger.info("Scanning zone id's used in project..")
     common_ids: set[str] | None = None
     zone_id_order: list[str] = []
 
@@ -99,4 +100,6 @@ def initialize_zone_id_store(config, allow_extra_ids: bool = True) -> bool:
         allow_extra_ids=allow_extra_ids,
     )
     ZoneIdStoreSingleton.set_instance(store)
+
+    logger.info("Done.")
     return True

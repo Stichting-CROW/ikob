@@ -88,6 +88,30 @@ def test_reorder_rejects_extra_ids(reorder):
         reorder(store, ["z1", "z2", "z3"], np.zeros((3, 3)), "input.csv")
 
 
+@pytest.mark.parametrize("reorder", [IdStore.reorder_rows_to_internal_idx, IdStore.reorder_columns_to_internal_idx])
+def test_reorder_allows_duplicate_id(reorder):
+    store = IdStore.from_zone_ids(["z1", "z2"])
+
+    with pytest.raises(ValueError, match="Duplicate IDs"):
+        reorder(store, ["z1", "z2", "z2"], np.zeros((3, 3)), "input.csv")
+
+
+@pytest.mark.parametrize("reorder", [IdStore.reorder_rows_to_internal_idx, IdStore.reorder_columns_to_internal_idx])
+def test_reorder_allows_duplicate_id_when_configured(reorder):
+    store = IdStore.from_zone_ids(["z2", "z1"], allow_extra_ids=True)
+    row_values = np.array([[10], [20], [30]])
+    column_values = np.array([[10, 20, 30], [11, 21, 31]])
+
+    np.testing.assert_array_equal(
+        store.reorder_rows_to_internal_idx(["z2", "z1", "z2"], row_values, "input.csv"),
+        [[10], [20]],
+    )
+    np.testing.assert_array_equal(
+        store.reorder_columns_to_internal_idx(["z2", "z1", "z2"], column_values, "input.csv"),
+        [[10, 20], [11, 21]],
+    )
+
+
 def test_reorder_ignores_extra_ids_when_configured():
     store = IdStore.from_zone_ids(["z2", "z1"], allow_extra_ids=True)
     row_values = np.array([[10], [20], [30]])
