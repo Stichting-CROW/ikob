@@ -3,7 +3,7 @@ import argparse
 import logging
 import sys
 import threading
-from tkinter import BooleanVar, Button, Checkbutton, Frame, LabelFrame, StringVar, Tk, Widget, filedialog, messagebox
+from tkinter import BooleanVar, Button, Checkbutton, Frame, LabelFrame, StringVar, Tk, Widget, messagebox
 
 from ikob.combined_weights import calculate_combined_weights
 from ikob.competition import competition_on_citizens, competition_on_destinations
@@ -11,10 +11,11 @@ from ikob.config import widgets
 from ikob.datasource import DataSource, DataType
 from ikob.distribute_over_groups import distribute_population_over_groups
 from ikob.generalized_travel_time import generalized_travel_time
-from ikob.ikobconfig import get_config_from_args, load_config
+from ikob.ikobconfig import get_config_from_args
 from ikob.reachable_destinations import calculate_reachable_destinations
 from ikob.reachable_population import calculate_reachable_population
 from ikob.single_weights import calculate_single_weights, calculate_single_weights_on_demand
+from ikob.utils import read_csv
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ def run_scripts(
     write_weights: bool = False,
     write_travel_time: bool = False,
     write_intermediate_results: bool = False,
+    allow_extra_zone_ids: bool = True,
 ):
     """
     Run through all steps for a given project.
@@ -42,9 +44,34 @@ def run_scripts(
         write_intermediate_results: Write all intermediate results so that a future run can continue on steps computed by this run.
                                     These intermediate results do not contain useful end results.
                                     To continue on weights or travel time steps that output should be enabled too.
+        allow_extra_zone_ids: Allow missing/duplicate/extra zone ids in input files.
+                              Called allow extra because it allows extra zones that are not in the set of zone ids common to all files.
+
+    The CSV read cache is cleared when the run finishes, including on failure, because files might change in between runs when using the ikob runner gui.
     """
+    try:
+        return _run_scripts(
+            project_file,
+            skip_steps,
+            write_weights,
+            write_travel_time,
+            write_intermediate_results,
+            allow_extra_zone_ids,
+        )
+    finally:
+        read_csv.cache_clear()
+
+
+def _run_scripts(
+    project_file,
+    skip_steps: list[bool] | None = None,
+    write_weights: bool = False,
+    write_travel_time: bool = False,
+    write_intermediate_results: bool = False,
+    allow_extra_zone_ids: bool = True,
+):
     logger.info("Reading project file: %s.", project_file)
-    config, valid = get_config_from_args(project_file)
+    config, valid = get_config_from_args(project_file, validate_files=True, allow_extra_zone_ids=allow_extra_zone_ids)
 
     if not valid:
         raise ValueError("Invalid input files, see console warnings.")
@@ -158,6 +185,7 @@ class ConfigApp(Tk):
         self.title("IKOB Runner")
         self._checks = [BooleanVar(value=True) for _ in self.stappen]
         self._configvar = StringVar()
+        self._allow_extra_zone_ids = BooleanVar(value=True)
         self._write_weights = BooleanVar(value=False)
         self._write_travel_time = BooleanVar(value=False)
         self._write_intermediate_results = BooleanVar(value=False)
@@ -176,9 +204,21 @@ class ConfigApp(Tk):
         labels = [stap for stap in self.stappen]
         self.widgets.extend(widgets.checklistWidget(frame, "Stappen", labels, self._checks, row=1, itemsperrow=1))
 
-        # Add optional output checkboxes
+        run_frame = LabelFrame(master=frame, text="Run configuration", borderwidth=2, padx=5)
+        run_frame.grid(row=2, column=0, columnspan=3, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
+        self.widgets.extend(
+            widgets.checkboxWidget(
+                run_frame,
+                "Allow missing/duplicate/extra zone ids in input files",
+                self._allow_extra_zone_ids,
+                row=0,
+                column=0,
+                cspan=1,
+            )
+        )
+
         output_frame = LabelFrame(master=frame, text="Extra output (slow for large projects)", borderwidth=2, padx=5)
-        output_frame.grid(row=2, column=0, columnspan=3, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
+        output_frame.grid(row=3, column=0, columnspan=3, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
         self.widgets.append(output_frame)
 
         self.widgets.extend(
@@ -201,7 +241,7 @@ class ConfigApp(Tk):
         self.widgets.append(cb)
 
         button = Button(master=frame, text="Start", command=lambda: threading.Thread(target=self.run_cmd).start())
-        button.grid(row=3, column=2, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
+        button.grid(row=4, column=2, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
         self.run_button = button
         self.widgets.append(button)
 
@@ -224,6 +264,7 @@ class ConfigApp(Tk):
                 write_weights=self._write_weights.get(),
                 write_travel_time=self._write_travel_time.get(),
                 write_intermediate_results=self._write_intermediate_results.get(),
+                allow_extra_zone_ids=self._allow_extra_zone_ids.get(),
             )
         except BaseException as err:  # noqa: BLE001
             msg = f"An error occurred: {err}"
@@ -234,22 +275,6 @@ class ConfigApp(Tk):
 
         # After success/error the run button can be re-enabled.
         self.run_button.configure(state="active")
-
-    def cmdLaadProject(self):
-        filename = filedialog.askopenfilename(
-            title="Kies een .json project bestand.",
-            filetypes=[("project file", ".json")],
-        )
-        if filename:
-            try:
-                _ = load_config(filename)
-            except ValueError:
-                messagebox.showerror(
-                    title="Fout",
-                    message="Het bestand bevat geen geldige configuratie.",
-                )
-            except OSError:
-                messagebox.showerror(title="Fout", message="Het bestand kan niet worden geladen.")
 
 
 def main():

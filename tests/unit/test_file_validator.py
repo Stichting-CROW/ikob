@@ -32,6 +32,7 @@ def test_validate_input_files_runs_all_stages(config, monkeypatch, caplog, faile
     stages = Mock()
     for name in ("hubs", "segs", "motive", "skims"):
         getattr(stages, name).return_value = name != failed_stage
+
     monkeypatch.setattr(validate.Hubs, "validate", stages.hubs)
     monkeypatch.setattr(validator, "_segs_files_validation", stages.segs)
     monkeypatch.setattr(validator, "_motive_files_validation", stages.motive)

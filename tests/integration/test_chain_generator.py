@@ -121,7 +121,7 @@ def test_chain_time_equals_sum_of_parts(monkeypatch, hub_zone, income, fuel):
     monkeypatch.setattr(
         cg.ZoneIdStoreSingleton,
         "get_instance",
-        lambda _config: IdStore.from_zone_ids([str(i) for i in range(num_zones)]),
+        lambda: IdStore.from_zone_ids([str(i) for i in range(num_zones)]),
     )
 
     datasource = gtt.generalized_travel_time(config)

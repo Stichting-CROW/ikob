@@ -427,7 +427,7 @@ def test_hubs_build_from_config_parses_string_zero_one_pay_for_pt(tmp_path, monk
     config = _make_config()
     config["ketens"]["chains"]["bestand"] = str(hubs_path)
 
-    monkeypatch.setattr(cg.ZoneIdStoreSingleton, "get_instance", lambda _config: IdStore.from_zone_ids(["z2", "z5"]))
+    monkeypatch.setattr(cg.ZoneIdStoreSingleton, "get_instance", lambda: IdStore.from_zone_ids(["z2", "z5"]))
 
     hubs = cg.Hubs.build_from_config(config)
 
