@@ -98,16 +98,17 @@ def test_reorder_allows_duplicate_id(reorder):
 
 @pytest.mark.parametrize("reorder", [IdStore.reorder_rows_to_internal_idx, IdStore.reorder_columns_to_internal_idx])
 def test_reorder_allows_duplicate_id_when_configured(reorder):
-    store = IdStore.from_zone_ids(["z2", "z1"], allow_extra_ids=True)
+    store = IdStore.from_zone_ids(["z1", "z2"], allow_extra_ids=True)
     row_values = np.array([[10], [20], [30]])
     column_values = np.array([[10, 20, 30], [11, 21, 31]])
 
     np.testing.assert_array_equal(
-        store.reorder_rows_to_internal_idx(["z2", "z1", "z2"], row_values, "input.csv"),
+        store.reorder_rows_to_internal_idx(["z1", "z2", "z1"], row_values, "input.csv"),
+        # First z1 is kept, so the order matches order in row_values
         [[10], [20]],
     )
     np.testing.assert_array_equal(
-        store.reorder_columns_to_internal_idx(["z2", "z1", "z2"], column_values, "input.csv"),
+        store.reorder_columns_to_internal_idx(["z1", "z2", "z1"], column_values, "input.csv"),
         [[10, 20], [11, 21]],
     )
 

@@ -32,13 +32,13 @@ def _zone_id_input_files(config) -> list[ZoneIdInputFile]:
         )
 
     input_files.extend(
-        ZoneIdInputFile(segs_reader.segs_input_dir(filename), False)
+        ZoneIdInputFile(segs_reader.segs_input_path(filename), False)
         for filename in ("CBS_autos_per_huishouden", "Stedelijkheidsgraad")
     )
     scenario = project["verstedelijkingsscenario"]
     motive = project["motief"]
     input_files.extend(
-        ZoneIdInputFile(segs_reader.segs_input_dir(Path(motive[key]).name, scenario=scenario), False)
+        ZoneIdInputFile(segs_reader.segs_input_path(Path(motive[key]).name, scenario=scenario), False)
         for key in ("reizende populatie", "bestemmingsplaatsen")
     )
     input_files.append(ZoneIdInputFile(SkimsSource.parking_times_path(config), False, optional=True))
@@ -56,10 +56,10 @@ def _zone_id_input_files(config) -> list[ZoneIdInputFile]:
     return input_files
 
 
-def initialize_zone_id_store(config, allow_extra_ids: bool = True) -> bool:
+def initialize_zone_id_store(config, allow_extra_zone_ids: bool = True) -> bool:
     """Install the common zone mapping, returning False with a warning if discovery fails.
 
-    Returns wether the id store initialization was successful. A failure is only an error when we are trying to run ikob right now.
+    Returns whether the id store initialization was successful. A failure is only an error when we are trying to run ikob right now.
     An error can be thrown based on the return value of this method.
     When loading / saving config a warning is sufficient.
     """
@@ -97,7 +97,7 @@ def initialize_zone_id_store(config, allow_extra_ids: bool = True) -> bool:
     store = IdStore.from_zone_ids(
         [zone_id for zone_id in zone_id_order if zone_id in common_ids],
         zone_source="intersection of full-zone input files",
-        allow_extra_ids=allow_extra_ids,
+        allow_extra_ids=allow_extra_zone_ids,
     )
     ZoneIdStoreSingleton.set_instance(store)
 

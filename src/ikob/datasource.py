@@ -121,7 +121,7 @@ class SkimsSource:
         if parking_time_path.exists():
             return utils.read_csv(parking_time_path, type_caster=utils.INT_DTYPE, id_store=id_store)
 
-        urbanization_path = SegsSource(self.config).segs_input_dir("Stedelijkheidsgraad")
+        urbanization_path = SegsSource(self.config).segs_input_path("Stedelijkheidsgraad")
         assert urbanization_path.exists(), (
             "Missing both Parkeerzoektijden, Stedelijkheidsgraad files.Parkeerzoektijden file cannot be generated."
         )
@@ -142,16 +142,16 @@ class SegsSource:
         self.tmp_dir = get_temporary_directory(config)
         self.config = config
 
-    def segs_input_dir(self, id, jaar="", scenario=""):
+    def segs_input_path(self, id, jaar="", scenario=""):
         """Return the input CSV path for a SEGS file."""
-        return self._segs_dir(self.segs_dir, id, jaar, scenario)
+        return self._segs_path(self.segs_dir, id, jaar, scenario)
 
-    def _segs_output_dir(self, id, jaar, scenario, group="", modifier=""):
+    def _segs_output_path(self, id, jaar, scenario, group="", modifier=""):
         root = self.tmp_dir / "groepenverdeling"
-        return self._segs_dir(root, id, jaar, scenario, group, modifier)
+        return self._segs_path(root, id, jaar, scenario, group, modifier)
 
     @staticmethod
-    def _segs_dir(path: Path, id, jaar="", scenario="", group="", modifier="") -> Path:
+    def _segs_path(path: Path, id, jaar="", scenario="", group="", modifier="") -> Path:
         filename = id + jaar
 
         for postfix in [group, modifier]:
@@ -183,9 +183,9 @@ class SegsSource:
         should_read_from_output = "Verdeling_over_groepen" in id
 
         if should_read_from_output:
-            path = self._segs_output_dir(id=id, jaar=jaar, scenario=scenario, group=group, modifier=modifier)
+            path = self._segs_output_path(id=id, jaar=jaar, scenario=scenario, group=group, modifier=modifier)
         else:
-            path = self.segs_input_dir(id, jaar, scenario)
+            path = self.segs_input_path(id, jaar, scenario)
 
         try:
             return utils.read_csv(
@@ -203,7 +203,7 @@ class SegsSource:
     def write_csv(self, data, id, header, group="", jaar="", modifier="", scenario=""):
         index = utils.CsvIdColumn.from_zone_ids(ZoneIdStoreSingleton.get_instance()._zone_ids)
 
-        path = self._segs_output_dir(id, jaar, scenario, group, modifier)
+        path = self._segs_output_path(id, jaar, scenario, group, modifier)
         return utils.write_csv(data, path, header=header, index=index)
 
 
