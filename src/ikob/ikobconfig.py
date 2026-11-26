@@ -77,9 +77,9 @@ def load_config(filename, *, validate_files: bool, allow_extra_zone_ids: bool = 
 
     config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
 
-    valid = None
+    valid = True
     if validate_files:
-        valid = initialize_zone_id_store(config, allow_extra_ids=allow_extra_zone_ids)
+        valid = initialize_zone_id_store(config, allow_extra_zone_ids=allow_extra_zone_ids)
         if valid:
             valid = validate.FileValidator(config).validate_input_files()
     return config, valid
@@ -96,12 +96,17 @@ def save_config(filename, config):
         logger.error(f"Kan configuratie niet wegschrijven naar: {filename}.", exc_info=e)
         raise OSError(f"Kan configuratie niet wegschrijven naar: {filename}.")
 
-    logger.info(f"Config written to {filename}. Starting config validation.")
-    config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
-    config_is_valid = initialize_zone_id_store(config)
-    if config_is_valid:
-        config_is_valid = validate.FileValidator(config).validate_input_files()
-    del config["__filename__"]
+    try:
+        logger.info(f"Config written to {filename}. Starting config validation.")
+        config["__filename__"] = os.path.splitext(os.path.basename(filename))[0]
+        config_is_valid = initialize_zone_id_store(config)
+        if config_is_valid:
+            config_is_valid = validate.FileValidator(config).validate_input_files()
+        del config["__filename__"]
+    except BaseException as e:
+        logger.error(f"Unexpected Error during config validation: {filename}.", exc_info=e)
+        config_is_valid = False
+
     return config_is_valid
 
 
@@ -165,7 +170,7 @@ class ConfigApp(tk.Tk):
         config_is_valid = True
         try:
             config_is_valid = save_config(filename, config)
-        except BaseException:  # noqa: BLE001
+        except OSError:
             messagebox.showerror(title="Fout", message="Het bestand kan niet worden opgeslagen.")
         else:
             if not config_is_valid:
