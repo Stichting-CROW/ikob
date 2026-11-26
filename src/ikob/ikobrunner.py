@@ -15,6 +15,7 @@ from ikob.ikobconfig import get_config_from_args
 from ikob.reachable_destinations import calculate_reachable_destinations
 from ikob.reachable_population import calculate_reachable_population
 from ikob.single_weights import calculate_single_weights, calculate_single_weights_on_demand
+from ikob.utils import read_csv
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,32 @@ def run_scripts(
         write_intermediate_results: Write all intermediate results so that a future run can continue on steps computed by this run.
                                     These intermediate results do not contain useful end results.
                                     To continue on weights or travel time steps that output should be enabled too.
+        allow_extra_zone_ids: Allow missing/duplicate/extra zone ids in input files.
+                              Called allow extra because it allows extra zones that are not in the set of zone ids common to all files.
+
+    The CSV read cache is cleared when the run finishes, including on failure, because files might change in between runs when using the ikob runner gui.
     """
+    try:
+        return _run_scripts(
+            project_file,
+            skip_steps,
+            write_weights,
+            write_travel_time,
+            write_intermediate_results,
+            allow_extra_zone_ids,
+        )
+    finally:
+        read_csv.cache_clear()
+
+
+def _run_scripts(
+    project_file,
+    skip_steps: list[bool] | None = None,
+    write_weights: bool = False,
+    write_travel_time: bool = False,
+    write_intermediate_results: bool = False,
+    allow_extra_zone_ids: bool = True,
+):
     logger.info("Reading project file: %s.", project_file)
     config, valid = get_config_from_args(project_file, validate_files=True, allow_extra_zone_ids=allow_extra_zone_ids)
 
@@ -178,11 +204,11 @@ class ConfigApp(Tk):
         labels = [stap for stap in self.stappen]
         self.widgets.extend(widgets.checklistWidget(frame, "Stappen", labels, self._checks, row=1, itemsperrow=1))
 
-        output_frame = LabelFrame(master=frame, text="Run configuration", borderwidth=2, padx=5)
-        output_frame.grid(row=2, column=0, columnspan=3, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
+        run_frame = LabelFrame(master=frame, text="Run configuration", borderwidth=2, padx=5)
+        run_frame.grid(row=2, column=0, columnspan=3, sticky="ew", padx=self.PAD_X, pady=self.PAD_Y)
         self.widgets.extend(
             widgets.checkboxWidget(
-                output_frame,
+                run_frame,
                 "Allow missing/duplicate/extra zone ids in input files",
                 self._allow_extra_zone_ids,
                 row=0,
